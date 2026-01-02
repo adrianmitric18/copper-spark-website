@@ -13,6 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { motion, useInView } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const projectTypes = [
   "Dépannage urgent",
@@ -44,23 +45,43 @@ const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          projectType: formData.projectType,
+          message: formData.message.trim(),
+          wantsCallback: formData.wantsCallback,
+        },
+      });
 
-    toast({
-      title: "Demande envoyée !",
-      description: "Nous vous recontacterons dans les plus brefs délais.",
-    });
+      if (error) throw error;
 
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      projectType: "",
-      message: "",
-      wantsCallback: false,
-    });
-    setIsSubmitting(false);
+      toast({
+        title: "Demande envoyée !",
+        description: "Vous recevrez une confirmation par email. Nous vous recontacterons sous 48h.",
+      });
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        projectType: "",
+        message: "",
+        wantsCallback: false,
+      });
+    } catch (error: any) {
+      console.error("Error sending contact form:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer ou nous appeler directement.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
