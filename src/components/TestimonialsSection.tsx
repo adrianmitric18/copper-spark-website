@@ -1,13 +1,12 @@
 import { Star, Quote, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useRef, useState, memo } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
 interface Testimonial {
   id: number;
   name: string;
@@ -52,29 +51,35 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const StarRating = ({ rating, interactive = false, onRate }: { rating: number; interactive?: boolean; onRate?: (r: number) => void }) => {
+const StarRating = memo(({ rating, interactive = false, onRate }: { rating: number; interactive?: boolean; onRate?: (r: number) => void }) => {
   const [hover, setHover] = useState(0);
   
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <Star
+        <button
           key={star}
-          className={`w-5 h-5 transition-colors ${
-            star <= (interactive ? (hover || rating) : rating)
-              ? 'fill-primary text-primary'
-              : 'text-muted-foreground/30'
-          } ${interactive ? 'cursor-pointer' : ''}`}
+          type="button"
+          className={`w-5 h-5 transition-colors ${interactive ? 'cursor-pointer' : 'cursor-default'}`}
           onClick={() => interactive && onRate?.(star)}
           onMouseEnter={() => interactive && setHover(star)}
           onMouseLeave={() => interactive && setHover(0)}
-        />
+          disabled={!interactive}
+        >
+          <Star
+            className={`w-5 h-5 ${
+              star <= (interactive ? (hover || rating) : rating)
+                ? 'fill-primary text-primary'
+                : 'text-muted-foreground/30'
+            }`}
+          />
+        </button>
       ))}
     </div>
   );
-};
+});
 
-const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; index: number }) => {
+const TestimonialCard = memo(({ testimonial, index }: { testimonial: Testimonial; index: number }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -86,30 +91,21 @@ const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; ind
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className="relative bg-card border border-border/50 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
     >
-      {/* Quote icon */}
-      <Quote className="absolute top-4 right-4 w-8 h-8 text-primary/20" />
-      
-      {/* Rating */}
+      <Quote className="absolute top-4 right-4 w-8 h-8 text-primary/20" aria-hidden="true" />
       <StarRating rating={testimonial.rating} />
-      
-      {/* Service tag */}
       <span className="inline-block mt-3 px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
         {testimonial.service}
       </span>
-      
-      {/* Text */}
       <p className="mt-4 text-muted-foreground leading-relaxed">
         "{testimonial.text}"
       </p>
-      
-      {/* Author */}
       <div className="mt-4 pt-4 border-t border-border/50">
         <p className="font-semibold text-foreground">{testimonial.name}</p>
         <p className="text-sm text-muted-foreground">{testimonial.location}</p>
       </div>
     </motion.div>
   );
-};
+});
 
 const ReviewForm = ({ onClose }: { onClose: () => void }) => {
   const [rating, setRating] = useState(5);
@@ -279,6 +275,7 @@ const TestimonialsSection = () => {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-xl font-display">Partagez votre expérience</DialogTitle>
+                <DialogDescription>Laissez-nous votre avis sur nos services électriques.</DialogDescription>
               </DialogHeader>
               <ReviewForm onClose={() => setDialogOpen(false)} />
             </DialogContent>
