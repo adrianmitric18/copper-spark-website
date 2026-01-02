@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Send, Phone, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { motion, useInView } from "framer-motion";
 
 const projectTypes = [
   "Dépannage urgent",
@@ -33,6 +34,11 @@ const ContactSection = () => {
     message: "",
     wantsCallback: false,
   });
+
+  const leftRef = useRef(null);
+  const rightRef = useRef(null);
+  const isLeftInView = useInView(leftRef, { once: true, margin: "-100px" });
+  const isRightInView = useInView(rightRef, { once: true, margin: "-100px" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,60 +64,112 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-24 md:py-32 bg-background relative">
+    <section id="contact" className="py-24 md:py-32 bg-background relative overflow-hidden">
       {/* Background accents */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]" />
+      <motion.div 
+        className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]"
+        animate={{ 
+          scale: [1, 1.2, 1],
+          x: [-50, 50, -50]
+        }}
+        transition={{ 
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
       
       <div className="container mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Left column - Info */}
-          <div>
-            <span className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6 opacity-0 animate-fade-up">
+          <div ref={leftRef}>
+            <motion.span 
+              initial={{ opacity: 0, y: 20 }}
+              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5 }}
+              className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6"
+            >
               Contact
-            </span>
-            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 opacity-0 animate-fade-up animation-delay-100">
+            </motion.span>
+            <motion.h2 
+              initial={{ opacity: 0, y: 30 }}
+              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
+            >
               Demandez votre{" "}
               <span className="text-gradient-copper">devis gratuit</span>
-            </h2>
-            <p className="text-muted-foreground mb-10 text-lg leading-relaxed opacity-0 animate-fade-up animation-delay-200">
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 30 }}
+              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-muted-foreground mb-10 text-lg leading-relaxed"
+            >
               Décrivez-nous votre projet et recevez un devis détaillé sous 48h. Sans engagement.
-            </p>
+            </motion.p>
 
             {/* Contact cards */}
-            <div className="space-y-4 opacity-0 animate-fade-up animation-delay-300">
-              <a
+            <div className="space-y-4">
+              <motion.a
+                initial={{ opacity: 0, x: -30 }}
+                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                whileHover={{ x: 5, scale: 1.02 }}
                 href="tel:+32485755227"
-                className="bento-card flex items-center gap-4 !p-5 group"
+                className="bento-card flex items-center gap-4 !p-5 group block"
               >
-                <div className="w-14 h-14 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-shadow">
+                <motion.div 
+                  className="w-14 h-14 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-shadow"
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.4 }}
+                >
                   <Phone className="w-6 h-6 text-primary-foreground" />
-                </div>
+                </motion.div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Appelez-nous</p>
                   <p className="font-display text-xl font-bold text-foreground">
                     0485 75 52 27
                   </p>
                 </div>
-              </a>
+              </motion.a>
 
-              <a
+              <motion.a
+                initial={{ opacity: 0, x: -30 }}
+                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                whileHover={{ x: 5, scale: 1.02 }}
                 href="mailto:cuivre.electrique@gmail.com"
-                className="bento-card flex items-center gap-4 !p-5 group"
+                className="bento-card flex items-center gap-4 !p-5 group block"
               >
-                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <motion.div 
+                  className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.4 }}
+                >
                   <Mail className="w-6 h-6 text-primary" />
-                </div>
+                </motion.div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Écrivez-nous</p>
                   <p className="font-display text-lg font-bold text-foreground">
                     cuivre.electrique@gmail.com
                   </p>
                 </div>
-              </a>
+              </motion.a>
 
-              <div className="bento-card !p-5 border-primary/20">
+              <motion.div 
+                initial={{ opacity: 0, x: -30 }}
+                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="bento-card !p-5 border-primary/20"
+              >
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  </motion.div>
                   <div>
                     <p className="font-medium text-foreground mb-1">Réponse rapide garantie</p>
                     <p className="text-sm text-muted-foreground">
@@ -119,12 +177,18 @@ const ContactSection = () => {
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
 
           {/* Right column - Form */}
-          <div className="bento-card opacity-0 animate-slide-in-right animation-delay-200">
+          <motion.div 
+            ref={rightRef}
+            initial={{ opacity: 0, x: 50 }}
+            animate={isRightInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bento-card"
+          >
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -251,24 +315,29 @@ const ContactSection = () => {
                 </label>
               </div>
 
-              <Button
-                type="submit"
-                variant="copper"
-                size="xl"
-                className="w-full"
-                disabled={isSubmitting}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                {isSubmitting ? (
-                  "Envoi en cours..."
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Envoyer ma demande
-                  </>
-                )}
-              </Button>
+                <Button
+                  type="submit"
+                  variant="copper"
+                  size="xl"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    "Envoi en cours..."
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Envoyer ma demande
+                    </>
+                  )}
+                </Button>
+              </motion.div>
             </form>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

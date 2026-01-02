@@ -1,5 +1,7 @@
 import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 interface BentoCardProps {
   icon: LucideIcon;
@@ -8,23 +10,40 @@ interface BentoCardProps {
   features: string[];
   accent?: boolean;
   className?: string;
-  delay: number;
+  index: number;
 }
 
-const BentoCard = ({ icon: Icon, title, description, features, accent, className = "", delay }: BentoCardProps) => {
+const BentoCard = ({ icon: Icon, title, description, features, accent, className = "", index }: BentoCardProps) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
   return (
-    <div
-      className={`bento-card group ${accent ? 'bg-gradient-copper border-primary/50' : ''} ${className} opacity-0 animate-fade-up`}
-      style={{ animationDelay: `${delay}ms` }}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ 
+        y: -8,
+        rotateX: 5,
+        rotateY: 5,
+        transition: { duration: 0.3 }
+      }}
+      style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+      className={`bento-card group ${accent ? 'bg-gradient-copper border-primary/50' : ''} ${className}`}
     >
       {/* Icon */}
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-        accent 
-          ? 'bg-primary-foreground/20 group-hover:bg-primary-foreground/30' 
-          : 'bg-primary/10 group-hover:bg-primary/20'
-      }`}>
+      <motion.div 
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
+          accent 
+            ? 'bg-primary-foreground/20 group-hover:bg-primary-foreground/30' 
+            : 'bg-primary/10 group-hover:bg-primary/20'
+        }`}
+        whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+        transition={{ duration: 0.5 }}
+      >
         <Icon className={`w-7 h-7 ${accent ? 'text-primary-foreground' : 'text-primary'}`} />
-      </div>
+      </motion.div>
       
       {/* Content */}
       <h3 className={`font-display text-2xl font-bold mb-3 ${accent ? 'text-primary-foreground' : 'text-foreground'}`}>
@@ -36,11 +55,17 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
       
       {/* Features list */}
       <ul className="space-y-2 mb-6">
-        {features.map((feature, index) => (
-          <li key={index} className={`flex items-center gap-2 text-sm ${accent ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+        {features.map((feature, i) => (
+          <motion.li 
+            key={i} 
+            initial={{ opacity: 0, x: -20 }}
+            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
+            className={`flex items-center gap-2 text-sm ${accent ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}
+          >
             <div className={`w-1.5 h-1.5 rounded-full ${accent ? 'bg-primary-foreground' : 'bg-primary'}`} />
             {feature}
-          </li>
+          </motion.li>
         ))}
       </ul>
 
@@ -56,7 +81,7 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
           <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
         </a>
       </Button>
-    </div>
+    </motion.div>
   );
 };
 
@@ -92,24 +117,53 @@ const services = [
 ];
 
 const ServicesSection = () => {
+  const headerRef = useRef(null);
+  const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
+
   return (
-    <section id="services" className="py-24 md:py-32 bg-background relative">
+    <section id="services" className="py-24 md:py-32 bg-background relative overflow-hidden">
       {/* Background accent */}
-      <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2" />
+      <motion.div 
+        className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2"
+        animate={{ 
+          x: [-50, 50, -50],
+          scale: [1, 1.2, 1]
+        }}
+        transition={{ 
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
       
       <div className="container mx-auto relative z-10">
         {/* Section header */}
-        <div className="text-center mb-16 md:mb-20">
-          <span className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6 opacity-0 animate-fade-up">
+        <div ref={headerRef} className="text-center mb-16 md:mb-20">
+          <motion.span 
+            initial={{ opacity: 0, y: 20 }}
+            animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.5 }}
+            className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6"
+          >
             Nos Services
-          </span>
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 opacity-0 animate-fade-up animation-delay-100">
+          </motion.span>
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
+          >
             Expertise électrique{" "}
             <span className="text-gradient-copper">haut de gamme</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto text-lg opacity-0 animate-fade-up animation-delay-200">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 30 }}
+            animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-muted-foreground max-w-2xl mx-auto text-lg"
+          >
             Des solutions professionnelles pour particuliers et entreprises, avec un souci constant de la qualité et de la propreté.
-          </p>
+          </motion.p>
         </div>
 
         {/* Bento Grid */}
@@ -122,7 +176,7 @@ const ServicesSection = () => {
               description={service.description}
               features={service.features}
               accent={service.accent}
-              delay={300 + index * 100}
+              index={index}
             />
           ))}
         </div>
