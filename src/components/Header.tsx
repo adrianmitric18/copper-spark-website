@@ -3,16 +3,20 @@ import { Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { label: "Services", href: "#services" },
-  { label: "Réalisations", href: "#realisations" },
-  { label: "Devis", href: "#contact" },
+  { label: "Accueil", href: "/" },
+  { label: "Services", href: "/services" },
+  { label: "Réalisations", href: "/realisations" },
+  { label: "Avis", href: "/avis" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +29,8 @@ const Header = () => {
   const handleNavClick = () => {
     setIsOpen(false);
   };
+
+  const isActive = (href: string) => location.pathname === href;
 
   return (
     <motion.header
@@ -43,23 +49,32 @@ const Header = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Logo />
+          <Link to="/">
+            <Logo />
+          </Link>
         </motion.div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-10">
+        <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item, index) => (
-            <motion.a
+            <motion.div
               key={item.href}
-              href={item.href}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
               whileHover={{ y: -2 }}
-              className="text-foreground/70 hover:text-primary font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
             >
-              {item.label}
-            </motion.a>
+              <Link
+                to={item.href}
+                className={`font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
+                  isActive(item.href)
+                    ? "text-primary after:w-full"
+                    : "text-foreground/70 hover:text-primary after:w-0 hover:after:w-full"
+                }`}
+              >
+                {item.label}
+              </Link>
+            </motion.div>
           ))}
         </nav>
 
@@ -84,7 +99,7 @@ const Header = () => {
             whileTap={{ scale: 0.95 }}
           >
             <Button variant="copper" size="default" asChild>
-              <a href="#contact">Devis gratuit</a>
+              <Link to="/contact">Devis gratuit</Link>
             </Button>
           </motion.div>
         </motion.div>
@@ -144,17 +159,24 @@ const Header = () => {
           >
             <nav className="container mx-auto py-6 flex flex-col gap-4">
               {navItems.map((item, index) => (
-                <motion.a
+                <motion.div
                   key={item.href}
-                  href={item.href}
-                  onClick={handleNavClick}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="text-foreground/80 hover:text-primary font-medium py-2 transition-colors"
                 >
-                  {item.label}
-                </motion.a>
+                  <Link
+                    to={item.href}
+                    onClick={handleNavClick}
+                    className={`block font-medium py-2 transition-colors ${
+                      isActive(item.href)
+                        ? "text-primary"
+                        : "text-foreground/80 hover:text-primary"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </motion.div>
               ))}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
@@ -170,7 +192,7 @@ const Header = () => {
                   0485 75 52 27
                 </a>
                 <Button variant="copper" size="lg" className="w-full" asChild>
-                  <a href="#contact" onClick={handleNavClick}>Demander un devis</a>
+                  <Link to="/contact" onClick={handleNavClick}>Demander un devis</Link>
                 </Button>
               </motion.div>
             </nav>
