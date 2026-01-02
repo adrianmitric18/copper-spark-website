@@ -128,34 +128,169 @@ const HeroSection = () => {
         />
       ))}
 
-      {/* Electric arc animations */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.6 }}>
+      {/* LIGHTNING BOLTS - Electric sparks */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
+        {/* Lightning bolt 1 */}
         <motion.path
-          d="M0,300 Q200,250 400,350 T800,280"
+          d="M200,0 L180,80 L220,85 L160,180 L210,185 L120,320"
           fill="none"
-          stroke="url(#copper-gradient)"
+          stroke="hsl(35, 100%, 60%)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          filter="url(#glow)"
+          initial={{ opacity: 0, pathLength: 0 }}
+          animate={{ 
+            opacity: [0, 1, 1, 0],
+            pathLength: [0, 1, 1, 1],
+          }}
+          transition={{ 
+            duration: 0.3, 
+            repeat: Infinity, 
+            repeatDelay: 4,
+            times: [0, 0.3, 0.8, 1]
+          }}
+        />
+        {/* Lightning bolt 2 */}
+        <motion.path
+          d="M900,50 L920,120 L880,125 L940,220 L890,230 L970,380"
+          fill="none"
+          stroke="hsl(30, 100%, 55%)"
           strokeWidth="2"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: [0, 1, 0], opacity: [0, 1, 0] }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          strokeLinecap="round"
+          filter="url(#glow)"
+          initial={{ opacity: 0, pathLength: 0 }}
+          animate={{ 
+            opacity: [0, 1, 1, 0],
+            pathLength: [0, 1, 1, 1],
+          }}
+          transition={{ 
+            duration: 0.25, 
+            delay: 2,
+            repeat: Infinity, 
+            repeatDelay: 5,
+            times: [0, 0.3, 0.8, 1]
+          }}
+        />
+        {/* Lightning bolt 3 - smaller */}
+        <motion.path
+          d="M600,100 L580,150 L610,155 L560,230"
+          fill="none"
+          stroke="hsl(40, 100%, 65%)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          filter="url(#glow)"
+          initial={{ opacity: 0, pathLength: 0 }}
+          animate={{ 
+            opacity: [0, 1, 1, 0],
+            pathLength: [0, 1, 1, 1],
+          }}
+          transition={{ 
+            duration: 0.2, 
+            delay: 3.5,
+            repeat: Infinity, 
+            repeatDelay: 6,
+            times: [0, 0.3, 0.8, 1]
+          }}
+        />
+        
+        {/* Electric wires with current flowing */}
+        <motion.path
+          d="M0,450 Q150,420 300,480 T600,440 T900,500 T1200,460"
+          fill="none"
+          stroke="url(#wire-gradient)"
+          strokeWidth="1.5"
+          strokeDasharray="8 4"
+          initial={{ strokeDashoffset: 0 }}
+          animate={{ strokeDashoffset: -24 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         />
         <motion.path
-          d="M1200,400 Q1000,300 800,450 T400,350"
+          d="M0,520 Q200,550 400,510 T800,560 T1200,530"
           fill="none"
-          stroke="url(#copper-gradient)"
-          strokeWidth="2"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: [0, 1, 0], opacity: [0, 1, 0] }}
-          transition={{ duration: 2, delay: 1.5, repeat: Infinity, repeatDelay: 3 }}
+          stroke="url(#wire-gradient)"
+          strokeWidth="1"
+          strokeDasharray="6 3"
+          initial={{ strokeDashoffset: 0 }}
+          animate={{ strokeDashoffset: -18 }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
         />
+        
         <defs>
-          <linearGradient id="copper-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(25, 95%, 63%)" stopOpacity="1" />
-            <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0" />
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <linearGradient id="wire-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0.3" />
+            <stop offset="50%" stopColor="hsl(35, 100%, 60%)" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0.3" />
           </linearGradient>
         </defs>
       </svg>
+
+      {/* LAVA DRIPS - Flowing molten copper drops */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 4 }}>
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={`lava-${i}`}
+            className="absolute rounded-full"
+            style={{
+              width: 6 + Math.random() * 10,
+              height: 15 + Math.random() * 25,
+              left: `${5 + i * 8}%`,
+              top: '-5%',
+              background: `linear-gradient(180deg, hsl(40, 100%, 60%) 0%, hsl(25, 95%, 50%) 50%, hsl(15, 90%, 40%) 100%)`,
+              borderRadius: '50% 50% 50% 50% / 30% 30% 70% 70%',
+              boxShadow: `0 0 15px 5px hsl(30, 100%, 50% / 0.5), 0 0 30px 10px hsl(25, 95%, 45% / 0.3)`,
+            }}
+            animate={{
+              y: ['0vh', '110vh'],
+              opacity: [0, 1, 1, 0.8, 0],
+              scale: [0.8, 1, 1.1, 1, 0.6],
+            }}
+            transition={{
+              duration: 6 + Math.random() * 4,
+              delay: i * 0.8,
+              repeat: Infinity,
+              ease: "easeIn",
+              times: [0, 0.1, 0.5, 0.9, 1]
+            }}
+          />
+        ))}
+      </div>
+
+      {/* SPARKS - Small electric sparks */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 6 }}>
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={`spark-${i}`}
+            className="absolute"
+            style={{
+              width: 2,
+              height: 2,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              background: 'hsl(45, 100%, 70%)',
+              borderRadius: '50%',
+              boxShadow: '0 0 6px 3px hsl(40, 100%, 60%), 0 0 12px 6px hsl(30, 100%, 50% / 0.5)',
+            }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0, 1.5, 0],
+            }}
+            transition={{
+              duration: 0.3,
+              delay: i * 0.25,
+              repeat: Infinity,
+              repeatDelay: 2 + Math.random() * 3,
+            }}
+          />
+        ))}
+      </div>
 
       {/* Pulsing rings from center */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
