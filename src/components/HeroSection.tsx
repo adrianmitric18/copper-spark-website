@@ -2,6 +2,7 @@ import { Zap, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect } from "react";
+import heroImage from "@/assets/hero-electricite.jpg";
 
 const HeroSection = () => {
   const titleWords = ["L'excellence", "électrique"];
@@ -40,8 +41,25 @@ const HeroSection = () => {
       id="accueil"
       className="relative min-h-screen flex items-center justify-center pt-24 pb-20 bg-background overflow-hidden"
     >
+      {/* Hero background image */}
+      <motion.div 
+        className="absolute inset-0"
+        initial={{ scale: 1.1, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+      >
+        <img 
+          src={heroImage} 
+          alt="Installation électrique design" 
+          className="w-full h-full object-cover"
+        />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background/90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
+      </motion.div>
+
       {/* Background gradient effects with parallax */}
-      <div className="absolute inset-0 bg-gradient-dark" />
+      <div className="absolute inset-0 bg-gradient-dark opacity-50" />
       <motion.div 
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px]"
         style={{ x: parallaxX3, y: parallaxY3 }}
