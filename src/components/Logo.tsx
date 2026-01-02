@@ -3,7 +3,7 @@ import logoImage from "@/assets/logo-cuivre-electrique.png";
 
 const Logo = () => {
   return (
-    <a href="#accueil" className="flex items-center group">
+    <div className="flex items-center group">
       <motion.div 
         className="relative"
         whileHover={{ scale: 1.05 }}
@@ -49,7 +49,7 @@ const Logo = () => {
           }}
         />
       </motion.div>
-    </a>
+    </div>
   );
 };
 
