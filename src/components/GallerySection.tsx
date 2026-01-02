@@ -40,6 +40,13 @@ import lumieresNuit from "@/assets/gallery/noel/lumieres-nuit.jpg";
 import guirlandeLed from "@/assets/gallery/noel/guirlande-led.jpg";
 import decorationRue from "@/assets/gallery/noel/decoration-rue.jpg";
 import archeLumineuse from "@/assets/gallery/noel/arche-lumineuse.jpg";
+import montgolfiereChapitau from "@/assets/gallery/noel/montgolfiere-chapiteau.jpg";
+import sceneMusiciens from "@/assets/gallery/noel/scene-musiciens.jpg";
+import decorCadeaux from "@/assets/gallery/noel/decor-cadeaux.jpg";
+import installationGalerie from "@/assets/gallery/noel/installation-galerie.jpg";
+import guirlandesCentreCommercial from "@/assets/gallery/noel/guirlandes-centre-commercial.jpg";
+import sapinLumineuxNuit from "@/assets/gallery/noel/sapin-lumineux-nuit.jpg";
+import renneGeant from "@/assets/gallery/noel/renne-geant.jpg";
 
 // Catégories disponibles
 const categories = [
@@ -271,6 +278,55 @@ const galleryImages = [
     category: "noel",
     categoryLabel: "Décoration de Noël",
     image: archeLumineuse,
+  },
+  {
+    id: 32,
+    title: "Montgolfière sous chapiteau",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: montgolfiereChapitau,
+  },
+  {
+    id: 33,
+    title: "Scène musiciens de Noël",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: sceneMusiciens,
+  },
+  {
+    id: 34,
+    title: "Décor de cadeaux géants",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: decorCadeaux,
+  },
+  {
+    id: 35,
+    title: "Installation en galerie",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: installationGalerie,
+  },
+  {
+    id: 36,
+    title: "Guirlandes centre commercial",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: guirlandesCentreCommercial,
+  },
+  {
+    id: 37,
+    title: "Sapin lumineux nocturne",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: sapinLumineuxNuit,
+  },
+  {
+    id: 38,
+    title: "Renne géant décoratif",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: renneGeant,
   },
 ];
 
