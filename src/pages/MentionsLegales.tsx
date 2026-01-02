@@ -30,13 +30,13 @@ const MentionsLegales = () => {
                   1. Identité de l'entreprise
                 </h2>
                 <ul className="space-y-2">
-                  <li><strong className="text-foreground">Dénomination :</strong> Cuivre Électrique</li>
-                  <li><strong className="text-foreground">Forme juridique :</strong> [À compléter]</li>
+                  <li><strong className="text-foreground">Responsable :</strong> Adrian Mitric</li>
+                  <li><strong className="text-foreground">Forme juridique :</strong> Indépendant personne physique</li>
                   <li><strong className="text-foreground">N° TVA :</strong> BE 0805.376.944</li>
                   <li><strong className="text-foreground">N° BCE :</strong> 0805.376.944</li>
-                  <li><strong className="text-foreground">Siège social :</strong> [Adresse à compléter], Belgique</li>
-                  <li><strong className="text-foreground">Téléphone :</strong> +32 471 51 30 88</li>
-                  <li><strong className="text-foreground">Email :</strong> contact@cuivre-electrique.be</li>
+                  <li><strong className="text-foreground">Siège social :</strong> 1490 Court-Saint-Étienne, Belgique</li>
+                  <li><strong className="text-foreground">Téléphone :</strong> +32 485 75 52 27</li>
+                  <li><strong className="text-foreground">Email :</strong> cuivre.electrique@gmail.com</li>
                 </ul>
               </div>
 
