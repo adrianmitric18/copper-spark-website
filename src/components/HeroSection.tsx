@@ -1,20 +1,50 @@
 import { Zap, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useEffect } from "react";
 
 const HeroSection = () => {
   const titleWords = ["L'excellence", "électrique"];
   const subtitleWords = ["à", "Bruxelles", "&", "Wallonie"];
+
+  // Mouse parallax effect
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 30, stiffness: 100 };
+  const smoothMouseX = useSpring(mouseX, springConfig);
+  const smoothMouseY = useSpring(mouseY, springConfig);
+
+  // Transform for different parallax intensities
+  const parallaxX1 = useTransform(smoothMouseX, [0, 1], [-15, 15]);
+  const parallaxY1 = useTransform(smoothMouseY, [0, 1], [-15, 15]);
+  const parallaxX2 = useTransform(smoothMouseX, [0, 1], [-25, 25]);
+  const parallaxY2 = useTransform(smoothMouseY, [0, 1], [-25, 25]);
+  const parallaxX3 = useTransform(smoothMouseX, [0, 1], [-40, 40]);
+  const parallaxY3 = useTransform(smoothMouseY, [0, 1], [-40, 40]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      mouseX.set(x);
+      mouseY.set(y);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [mouseX, mouseY]);
 
   return (
     <section
       id="accueil"
       className="relative min-h-screen flex items-center justify-center pt-24 pb-20 bg-background overflow-hidden"
     >
-      {/* Background gradient effects */}
+      {/* Background gradient effects with parallax */}
       <div className="absolute inset-0 bg-gradient-dark" />
       <motion.div 
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px]"
+        style={{ x: parallaxX3, y: parallaxY3 }}
         animate={{ 
           scale: [1, 1.1, 1],
           opacity: [0.5, 0.8, 0.5]
@@ -27,10 +57,9 @@ const HeroSection = () => {
       />
       <motion.div 
         className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px]"
+        style={{ x: parallaxX2, y: parallaxY2 }}
         animate={{ 
           scale: [1, 1.15, 1],
-          x: [0, 30, 0],
-          y: [0, -20, 0]
         }}
         transition={{ 
           duration: 10,
@@ -39,17 +68,22 @@ const HeroSection = () => {
         }}
       />
       
-      {/* Grid pattern overlay */}
-      <div 
+      {/* Grid pattern overlay with subtle parallax */}
+      <motion.div 
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
+          backgroundSize: '60px 60px',
+          x: parallaxX1,
+          y: parallaxY1,
         }}
       />
 
       <div className="container mx-auto relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
+        <motion.div 
+          className="max-w-4xl mx-auto text-center"
+          style={{ x: parallaxX1, y: parallaxY1 }}
+        >
           {/* Badge */}
           <motion.div 
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -146,7 +180,7 @@ const HeroSection = () => {
               </Button>
             </motion.div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Scroll indicator */}
         <motion.div 

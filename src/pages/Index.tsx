@@ -7,10 +7,12 @@ import ZoneSection from "@/components/ZoneSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import MouseEffects from "@/components/MouseEffects";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <MouseEffects />
       <Header />
       <main>
         <HeroSection />
