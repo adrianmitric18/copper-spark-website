@@ -117,18 +117,18 @@ const ContactSection = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 whileHover={{ x: 5, scale: 1.02 }}
                 href="tel:+32485755227"
-                className="bento-card flex items-center gap-4 !p-5 group block"
+                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
               >
                 <motion.div 
-                  className="w-14 h-14 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-shadow"
+                  className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
                   whileHover={{ rotate: [0, -10, 10, 0] }}
                   transition={{ duration: 0.4 }}
                 >
-                  <Phone className="w-6 h-6 text-primary-foreground" />
+                  <Phone className="w-6 h-6 text-white" />
                 </motion.div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Appelez-nous</p>
-                  <p className="font-display text-xl font-bold text-foreground">
+                  <p className="font-display text-xl font-bold text-card-foreground">
                     0485 75 52 27
                   </p>
                 </div>
@@ -140,7 +140,7 @@ const ContactSection = () => {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 whileHover={{ x: 5, scale: 1.02 }}
                 href="mailto:cuivre.electrique@gmail.com"
-                className="bento-card flex items-center gap-4 !p-5 group block"
+                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
               >
                 <motion.div 
                   className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
@@ -151,7 +151,7 @@ const ContactSection = () => {
                 </motion.div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Écrivez-nous</p>
-                  <p className="font-display text-lg font-bold text-foreground">
+                  <p className="font-display text-lg font-bold text-card-foreground">
                     cuivre.electrique@gmail.com
                   </p>
                 </div>
@@ -161,7 +161,7 @@ const ContactSection = () => {
                 initial={{ opacity: 0, x: -30 }}
                 animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="bento-card !p-5 border-primary/20"
+                className="p-5 rounded-2xl bg-card border border-primary/20 shadow-lg shadow-black/5"
               >
                 <div className="flex items-start gap-3">
                   <motion.div
@@ -171,7 +171,7 @@ const ContactSection = () => {
                     <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   </motion.div>
                   <div>
-                    <p className="font-medium text-foreground mb-1">Réponse rapide garantie</p>
+                    <p className="font-medium text-card-foreground mb-1">Réponse rapide garantie</p>
                     <p className="text-sm text-muted-foreground">
                       Nous répondons à toutes les demandes sous 24h ouvrées.
                     </p>
@@ -187,14 +187,14 @@ const ContactSection = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={isRightInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bento-card"
+            className="p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl shadow-black/10"
           >
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-medium text-card-foreground mb-2"
                   >
                     Nom complet *
                   </label>
@@ -207,13 +207,13 @@ const ContactSection = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
-                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
+                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-medium text-card-foreground mb-2"
                   >
                     Email *
                   </label>
@@ -226,7 +226,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     required
-                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
+                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -235,7 +235,7 @@ const ContactSection = () => {
                 <div>
                   <label
                     htmlFor="phone"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-medium text-card-foreground mb-2"
                   >
                     Téléphone *
                   </label>
@@ -248,13 +248,13 @@ const ContactSection = () => {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     required
-                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
+                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="projectType"
-                    className="block text-sm font-medium text-foreground mb-2"
+                    className="block text-sm font-medium text-card-foreground mb-2"
                   >
                     Type de travaux *
                   </label>
@@ -265,12 +265,12 @@ const ContactSection = () => {
                     }
                     required
                   >
-                    <SelectTrigger className="h-12 bg-muted/50 border-border/50 rounded-xl">
+                    <SelectTrigger className="h-12 bg-background border-border rounded-xl text-foreground">
                       <SelectValue placeholder="Sélectionnez..." />
                     </SelectTrigger>
                     <SelectContent className="bg-card border border-border rounded-xl">
                       {projectTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
+                        <SelectItem key={type} value={type} className="text-card-foreground">
                           {type}
                         </SelectItem>
                       ))}
@@ -282,7 +282,7 @@ const ContactSection = () => {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-foreground mb-2"
+                  className="block text-sm font-medium text-card-foreground mb-2"
                 >
                   Message
                 </label>
@@ -294,7 +294,7 @@ const ContactSection = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
-                  className="bg-muted/50 border-border/50 rounded-xl resize-none focus:border-primary"
+                  className="bg-background border-border rounded-xl resize-none focus:border-primary text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -305,7 +305,7 @@ const ContactSection = () => {
                   onCheckedChange={(checked) =>
                     setFormData({ ...formData, wantsCallback: checked as boolean })
                   }
-                  className="border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <label
                   htmlFor="callback"
