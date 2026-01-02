@@ -3,6 +3,7 @@ import { HelpCircle, Euro, Wrench, Zap, CheckCircle, Sun, Car, Lightbulb, Clock,
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEO from "@/components/SEO";
 import {
   Accordion,
   AccordionContent,
@@ -106,6 +107,11 @@ const pricingCategories = [
 const FAQ = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="FAQ & Tarifs | Le Cuivre Électrique - Questions Fréquentes"
+        description="Retrouvez les réponses à vos questions et nos tarifs indicatifs. Dépannage, installation, mise en conformité RGIE. Devis gratuit."
+        keywords="FAQ électricien, tarifs électricien, prix électricité, questions fréquentes, devis électricité, Bruxelles, Wallonie"
+      />
       <Header />
       <WhatsAppButton />
 
