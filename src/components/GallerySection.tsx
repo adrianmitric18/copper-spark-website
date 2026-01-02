@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Images, Zap } from "lucide-react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 
@@ -124,35 +124,57 @@ const categories = [
 
 const GallerySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<typeof categories[0] | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState<{ image: string; title: string; index: number } | null>(null);
   const headerRef = useRef(null);
   const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
 
   const handleCategoryClick = (category: typeof categories[0]) => {
     setSelectedCategory(category);
-    setCurrentImageIndex(0);
   };
 
-  const handleClose = () => {
+  const handleCloseCategory = () => {
     setSelectedCategory(null);
-    setCurrentImageIndex(0);
   };
 
-  const handlePrev = () => {
-    if (selectedCategory) {
-      setCurrentImageIndex((prev) => 
-        prev === 0 ? selectedCategory.images.length - 1 : prev - 1
-      );
+  const handleImageClick = (image: string, title: string, index: number) => {
+    setLightboxImage({ image, title, index });
+  };
+
+  const handleCloseLightbox = () => {
+    setLightboxImage(null);
+  };
+
+  const handlePrevImage = () => {
+    if (lightboxImage && selectedCategory) {
+      const newIndex = lightboxImage.index === 0 
+        ? selectedCategory.images.length - 1 
+        : lightboxImage.index - 1;
+      const img = selectedCategory.images[newIndex];
+      setLightboxImage({ image: img.image, title: img.title, index: newIndex });
     }
   };
 
-  const handleNext = () => {
-    if (selectedCategory) {
-      setCurrentImageIndex((prev) => 
-        prev === selectedCategory.images.length - 1 ? 0 : prev + 1
-      );
+  const handleNextImage = () => {
+    if (lightboxImage && selectedCategory) {
+      const newIndex = lightboxImage.index === selectedCategory.images.length - 1 
+        ? 0 
+        : lightboxImage.index + 1;
+      const img = selectedCategory.images[newIndex];
+      setLightboxImage({ image: img.image, title: img.title, index: newIndex });
     }
   };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxImage) return;
+      if (e.key === "Escape") handleCloseLightbox();
+      if (e.key === "ArrowLeft") handlePrevImage();
+      if (e.key === "ArrowRight") handleNextImage();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImage, selectedCategory]);
 
   return (
     <section id="realisations" className="py-24 md:py-32 bg-background relative overflow-hidden">
@@ -213,16 +235,16 @@ const GallerySection = () => {
         </div>
       </div>
 
-      {/* Gallery Modal */}
+      {/* Category Gallery Modal - Grid of thumbnails */}
       <AnimatePresence>
-        {selectedCategory && (
+        {selectedCategory && !lightboxImage && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-6"
-            onClick={handleClose}
+            className="fixed inset-0 z-50 bg-background/95 backdrop-blur-xl overflow-y-auto"
+            onClick={handleCloseCategory}
           >
             {/* Close button */}
             <motion.button 
@@ -230,8 +252,80 @@ const GallerySection = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-card-foreground hover:text-primary transition-colors z-10"
-              onClick={handleClose}
+              className="fixed top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-card-foreground hover:text-primary transition-colors z-10"
+              onClick={handleCloseCategory}
+            >
+              <X className="w-6 h-6" />
+            </motion.button>
+
+            <div className="container mx-auto py-20 px-4" onClick={(e) => e.stopPropagation()}>
+              {/* Category Header */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="text-center mb-12"
+              >
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+                  {selectedCategory.label}
+                </h2>
+                <p className="text-muted-foreground">{selectedCategory.description}</p>
+                <p className="text-primary mt-2 font-medium">{selectedCategory.images.length} photos</p>
+              </motion.div>
+
+              {/* Images Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {selectedCategory.images.map((img, index) => (
+                  <motion.div
+                    key={img.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group"
+                    onClick={() => handleImageClick(img.image, img.title, index)}
+                  >
+                    <img
+                      src={img.image}
+                      alt={img.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-white text-sm font-medium truncate">{img.title}</p>
+                    </div>
+                    {/* Zoom icon */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Full Lightbox - Single Image View */}
+      <AnimatePresence>
+        {lightboxImage && selectedCategory && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-xl p-4"
+            onClick={handleCloseLightbox}
+          >
+            {/* Close button */}
+            <motion.button 
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-colors z-10"
+              onClick={handleCloseLightbox}
             >
               <X className="w-6 h-6" />
             </motion.button>
@@ -240,9 +334,8 @@ const GallerySection = () => {
             <motion.button
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="absolute left-4 md:left-8 w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10"
-              onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+              className="absolute left-4 md:left-8 w-12 h-12 rounded-full bg-primary/30 border border-primary/50 flex items-center justify-center text-white hover:bg-primary transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
             >
               <ChevronLeft className="w-6 h-6" />
             </motion.button>
@@ -250,51 +343,40 @@ const GallerySection = () => {
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="absolute right-4 md:right-8 w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10"
-              onClick={(e) => { e.stopPropagation(); handleNext(); }}
+              className="absolute right-4 md:right-8 w-12 h-12 rounded-full bg-primary/30 border border-primary/50 flex items-center justify-center text-white hover:bg-primary transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
             >
               <ChevronRight className="w-6 h-6" />
             </motion.button>
             
-            {/* Image container */}
+            {/* Image */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="max-w-5xl w-full max-h-[85vh] rounded-[2rem] overflow-hidden bg-card border border-border"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-6xl w-full max-h-[90vh] flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative">
-                <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={currentImageIndex}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    transition={{ duration: 0.2 }}
-                    src={selectedCategory.images[currentImageIndex].image} 
-                    alt={selectedCategory.images[currentImageIndex].title}
-                    className="w-full h-full object-contain max-h-[65vh]"
-                  />
-                </AnimatePresence>
-              </div>
-              <div className="p-6 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-card-foreground font-display font-bold text-xl mb-1">
-                      {selectedCategory.images[currentImageIndex].title}
-                    </p>
-                    <p className="text-primary">
-                      {selectedCategory.label}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Images className="w-5 h-5" />
-                    <span className="font-medium">{currentImageIndex + 1} / {selectedCategory.images.length}</span>
-                  </div>
-                </div>
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={lightboxImage.index}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.2 }}
+                  src={lightboxImage.image} 
+                  alt={lightboxImage.title}
+                  className="max-h-[75vh] w-auto object-contain rounded-2xl"
+                />
+              </AnimatePresence>
+              <div className="mt-4 text-center">
+                <p className="text-white font-display font-bold text-xl">
+                  {lightboxImage.title}
+                </p>
+                <p className="text-white/60 mt-1">
+                  {lightboxImage.index + 1} / {selectedCategory.images.length}
+                </p>
               </div>
             </motion.div>
           </motion.div>
