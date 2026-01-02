@@ -140,11 +140,11 @@ const Footer = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">N° TVA :</span>
-              <span className="ml-2 text-foreground font-medium">BE 0XXX.XXX.XXX</span>
+              <span className="ml-2 text-foreground font-medium">BE 0805.376.944</span>
             </div>
             <div>
               <span className="text-muted-foreground">N° BCE :</span>
-              <span className="ml-2 text-foreground font-medium">0XXX.XXX.XXX</span>
+              <span className="ml-2 text-foreground font-medium">0805.376.944</span>
             </div>
             <div>
               <span className="text-muted-foreground">Agréé :</span>
