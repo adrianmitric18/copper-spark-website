@@ -1,22 +1,54 @@
-import { Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import logoImage from "@/assets/logo-cuivre-electrique.png";
 
 const Logo = () => {
   return (
-    <a href="#accueil" className="flex items-center gap-3 group">
-      <div className="relative">
-        <div className="w-11 h-11 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-all duration-300">
-          <Zap className="w-6 h-6 text-primary-foreground" strokeWidth={2.5} />
-        </div>
-        <div className="absolute -inset-1 bg-gradient-copper rounded-xl opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-300" />
-      </div>
-      <div className="flex flex-col">
-        <span className="font-display text-lg font-bold text-foreground leading-tight tracking-tight">
-          Le Cuivre
-        </span>
-        <span className="font-display text-sm font-semibold text-primary leading-tight">
-          Électrique
-        </span>
-      </div>
+    <a href="#accueil" className="flex items-center group">
+      <motion.div 
+        className="relative"
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* Glow effect behind logo */}
+        <motion.div 
+          className="absolute inset-0 bg-primary/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          animate={{ 
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ 
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Logo image with animations */}
+        <motion.img 
+          src={logoImage} 
+          alt="Le Cuivre Électrique" 
+          className="h-14 md:h-16 w-auto relative z-10"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          whileHover={{ 
+            filter: "drop-shadow(0 0 15px rgba(205, 127, 50, 0.6))",
+          }}
+        />
+
+        {/* Subtle pulse animation on the logo */}
+        <motion.div 
+          className="absolute inset-0 border-2 border-primary/20 rounded-full opacity-0 group-hover:opacity-100"
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0, 0.5, 0]
+          }}
+          transition={{ 
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeOut"
+          }}
+        />
+      </motion.div>
     </a>
   );
 };
