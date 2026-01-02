@@ -74,27 +74,78 @@ const HeroSection = () => {
           }}
         />
         
-        {/* Mouse-following spotlight glow */}
+        {/* Mouse-following spotlight glow - DESKTOP ONLY */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none hidden md:block"
           style={{
             background: useMotionTemplate`radial-gradient(800px circle at ${useTransform(smoothMouseX, [0, 1], [0, 100])}% ${useTransform(smoothMouseY, [0, 1], [0, 100])}%, hsl(30, 100%, 50% / 0.25), transparent 50%)`,
           }}
         />
         
-        {/* Secondary smaller glow for intensity */}
+        {/* Secondary smaller glow for intensity - DESKTOP ONLY */}
         <motion.div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none hidden md:block"
           style={{
             background: useMotionTemplate`radial-gradient(400px circle at ${useTransform(smoothMouseX, [0, 1], [0, 100])}% ${useTransform(smoothMouseY, [0, 1], [0, 100])}%, hsl(40, 100%, 60% / 0.2), transparent 40%)`,
           }}
         />
         
-        {/* Brightness boost on mouse area */}
+        {/* Brightness boost on mouse area - DESKTOP ONLY */}
         <motion.div
-          className="absolute inset-0 pointer-events-none mix-blend-overlay"
+          className="absolute inset-0 pointer-events-none mix-blend-overlay hidden md:block"
           style={{
             background: useMotionTemplate`radial-gradient(600px circle at ${useTransform(smoothMouseX, [0, 1], [0, 100])}% ${useTransform(smoothMouseY, [0, 1], [0, 100])}%, hsl(35, 100%, 70% / 0.3), transparent 50%)`,
+          }}
+        />
+        
+        {/* MOBILE: Automatic breathing/pulsing light effect */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none md:hidden"
+          animate={{
+            opacity: [0.1, 0.35, 0.1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          style={{
+            background: 'radial-gradient(ellipse 80% 50% at 50% 30%, hsl(30, 100%, 50% / 0.4), transparent 60%)',
+          }}
+        />
+        
+        {/* MOBILE: Moving light spot */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none md:hidden"
+          animate={{
+            background: [
+              'radial-gradient(400px circle at 30% 40%, hsl(35, 100%, 55% / 0.25), transparent 50%)',
+              'radial-gradient(400px circle at 70% 50%, hsl(35, 100%, 55% / 0.25), transparent 50%)',
+              'radial-gradient(400px circle at 50% 60%, hsl(35, 100%, 55% / 0.25), transparent 50%)',
+              'radial-gradient(400px circle at 30% 40%, hsl(35, 100%, 55% / 0.25), transparent 50%)',
+            ],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* MOBILE: Subtle shimmer effect */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none md:hidden mix-blend-overlay"
+          animate={{
+            opacity: [0, 0.3, 0],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1.5
+          }}
+          style={{
+            background: 'linear-gradient(45deg, transparent 30%, hsl(40, 100%, 60% / 0.2) 50%, transparent 70%)',
           }}
         />
         
