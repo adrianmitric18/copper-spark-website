@@ -302,7 +302,7 @@ const HeroSection = () => {
             scale: 0.98
           }}>
               <Button variant="copper" size="xl" asChild className="min-w-[200px]">
-                <a href="#contact" className="flex items-center gap-2">
+                <a href="/contact" className="flex items-center gap-2">
                   Demander un devis gratuit
                 </a>
               </Button>
