@@ -4,60 +4,62 @@
 
 @layer base {
   :root {
-    /* Le Cuivre Électrique - Design System */
-    --background: 40 10% 97.5%;
-    --foreground: 180 2% 18%;
+    /* Le Cuivre Électrique - Premium Dark Design System */
+    --background: 0 0% 12%;
+    --foreground: 40 10% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 180 2% 18%;
+    --card: 0 0% 15%;
+    --card-foreground: 40 10% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 180 2% 18%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 40 10% 92%;
 
-    /* Cuivre vibrant */
-    --primary: 30 92% 43%;
+    /* Orange Cuivré - Accent principal */
+    --primary: 18 80% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* Anthracite léger */
-    --secondary: 180 2% 18%;
-    --secondary-foreground: 0 0% 100%;
+    /* Anthracite */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 40 10% 92%;
 
-    --muted: 40 10% 92%;
-    --muted-foreground: 180 2% 40%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 40 10% 60%;
 
-    /* Cuivre clair pour accents */
-    --accent: 30 92% 93%;
-    --accent-foreground: 30 92% 35%;
+    /* Cuivre pour accents subtils */
+    --accent: 18 60% 20%;
+    --accent-foreground: 18 80% 65%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 10% 88%;
-    --input: 40 10% 88%;
-    --ring: 30 92% 43%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 18 80% 55%;
 
-    --radius: 0.625rem;
+    --radius: 2rem;
 
-    /* Custom tokens */
-    --copper: 30 92% 43%;
-    --copper-light: 30 85% 55%;
-    --copper-dark: 30 92% 35%;
-    --copper-glow: 30 100% 50%;
-    --anthracite: 180 2% 18%;
-    --anthracite-light: 180 2% 35%;
-    --cream: 40 10% 97.5%;
-    --cream-dark: 40 10% 92%;
+    /* Custom tokens - Premium palette */
+    --copper: 18 80% 55%;
+    --copper-light: 18 75% 65%;
+    --copper-dark: 18 85% 45%;
+    --copper-glow: 18 100% 60%;
+    --anthracite: 0 0% 12%;
+    --anthracite-light: 0 0% 18%;
+    --cream: 40 10% 92%;
+    --cream-dark: 40 10% 85%;
 
     /* Gradients */
-    --gradient-copper: linear-gradient(135deg, hsl(30 92% 43%), hsl(30 85% 55%));
-    --gradient-copper-dark: linear-gradient(135deg, hsl(30 92% 35%), hsl(30 92% 43%));
-    --gradient-hero: linear-gradient(180deg, hsl(40 10% 97.5%) 0%, hsl(40 10% 92%) 100%);
+    --gradient-copper: linear-gradient(135deg, hsl(18 80% 55%), hsl(18 75% 65%));
+    --gradient-copper-dark: linear-gradient(135deg, hsl(18 85% 45%), hsl(18 80% 55%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 16%) 0%, hsl(0 0% 13%) 100%);
 
-    /* Shadows */
-    --shadow-copper: 0 4px 20px -4px hsl(30 92% 43% / 0.35);
-    --shadow-copper-lg: 0 8px 30px -6px hsl(30 92% 43% / 0.4);
-    --shadow-card: 0 4px 20px -4px hsl(180 2% 18% / 0.08);
-    --shadow-card-hover: 0 8px 30px -6px hsl(180 2% 18% / 0.12);
+    /* Shadows - Premium glow effects */
+    --shadow-copper: 0 4px 30px -4px hsl(18 80% 55% / 0.35);
+    --shadow-copper-lg: 0 8px 40px -6px hsl(18 80% 55% / 0.5);
+    --shadow-card: 0 4px 30px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card-hover: 0 12px 50px -6px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 60px -12px hsl(18 80% 55% / 0.4);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -67,28 +69,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 180 2% 12%;
-    --foreground: 40 10% 95%;
-    --card: 180 2% 15%;
-    --card-foreground: 40 10% 95%;
-    --popover: 180 2% 15%;
-    --popover-foreground: 40 10% 95%;
-    --primary: 30 92% 50%;
-    --primary-foreground: 180 2% 10%;
-    --secondary: 40 10% 90%;
-    --secondary-foreground: 180 2% 12%;
-    --muted: 180 2% 20%;
-    --muted-foreground: 40 10% 60%;
-    --accent: 30 50% 20%;
-    --accent-foreground: 30 92% 60%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 180 2% 25%;
-    --input: 180 2% 25%;
-    --ring: 30 92% 50%;
   }
 }
 
@@ -121,8 +101,12 @@
     background-image: var(--gradient-copper);
   }
 
-  .bg-gradient-hero {
-    background-image: var(--gradient-hero);
+  .bg-gradient-dark {
+    background-image: var(--gradient-dark);
+  }
+
+  .bg-gradient-card {
+    background-image: var(--gradient-card);
   }
 
   .shadow-copper {
@@ -141,11 +125,32 @@
     box-shadow: var(--shadow-card-hover);
   }
 
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Bento card styles */
+  .bento-card {
+    @apply bg-gradient-card rounded-[2rem] p-6 md:p-8 border border-border/50 transition-all duration-500;
+    box-shadow: var(--shadow-card);
+  }
+
+  .bento-card:hover {
+    @apply border-primary/30;
+    box-shadow: var(--shadow-card-hover), 0 0 40px -10px hsl(18 80% 55% / 0.2);
+    transform: translateY(-4px);
+  }
+
+  /* Glass morphism */
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
   /* Animations */
   @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(30px);
+      transform: translateY(40px);
     }
     to {
       opacity: 1;
@@ -165,7 +170,18 @@
   @keyframes slide-in-left {
     from {
       opacity: 0;
-      transform: translateX(-30px);
+      transform: translateX(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(40px);
     }
     to {
       opacity: 1;
@@ -175,10 +191,10 @@
 
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: 0 0 0 0 hsl(30 92% 43% / 0.4);
+      box-shadow: 0 0 0 0 hsl(18 80% 55% / 0.4);
     }
     50% {
-      box-shadow: 0 0 20px 10px hsl(30 92% 43% / 0);
+      box-shadow: 0 0 30px 15px hsl(18 80% 55% / 0);
     }
   }
 
@@ -187,20 +203,44 @@
       transform: translateY(0);
     }
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-15px);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 
   .animate-fade-up {
-    animation: fade-up 0.6s ease-out forwards;
+    animation: fade-up 0.8s ease-out forwards;
   }
 
   .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.6s ease-out forwards;
   }
 
   .animate-slide-in-left {
-    animation: slide-in-left 0.5s ease-out forwards;
+    animation: slide-in-left 0.7s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.7s ease-out forwards;
   }
 
   .animate-pulse-glow {
@@ -208,7 +248,11 @@
   }
 
   .animate-float {
-    animation: float 3s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.5s ease-out forwards;
   }
 
   .animation-delay-100 {
@@ -229,5 +273,9 @@
 
   .animation-delay-500 {
     animation-delay: 500ms;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 600ms;
   }
 }

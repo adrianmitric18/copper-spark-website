@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Phone, CheckCircle } from "lucide-react";
+import { Send, Phone, Mail, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,12 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 
 const projectTypes = [
-  "Installation électrique",
-  "Rénovation électrique",
+  "Dépannage urgent",
   "Mise en conformité RGIE",
-  "Photovoltaïque",
+  "Rénovation électrique",
+  "Installation neuve",
   "Borne de recharge",
-  "Dépannage",
   "Autre",
 ];
 
@@ -59,45 +58,62 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-20 md:py-28 bg-background">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+    <section id="contact" className="py-24 md:py-32 bg-background relative">
+      {/* Background accents */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]" />
+      
+      <div className="container mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Left column - Info */}
           <div>
-            <span className="inline-block px-4 py-1.5 bg-accent text-accent-foreground text-sm font-medium rounded-full mb-4">
+            <span className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6 opacity-0 animate-fade-up">
               Contact
             </span>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6">
+            <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 opacity-0 animate-fade-up animation-delay-100">
               Demandez votre{" "}
               <span className="text-gradient-copper">devis gratuit</span>
             </h2>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Décrivez-nous votre projet et recevez un devis détaillé sous 48h.
-              Sans engagement.
+            <p className="text-muted-foreground mb-10 text-lg leading-relaxed opacity-0 animate-fade-up animation-delay-200">
+              Décrivez-nous votre projet et recevez un devis détaillé sous 48h. Sans engagement.
             </p>
 
-            {/* Quick contact */}
-            <div className="space-y-4">
+            {/* Contact cards */}
+            <div className="space-y-4 opacity-0 animate-fade-up animation-delay-300">
               <a
-                href="tel:+32123456789"
-                className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-card hover:shadow-card-hover transition-all duration-300 group"
+                href="tel:+32485755227"
+                className="bento-card flex items-center gap-4 !p-5 group"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-shadow">
+                <div className="w-14 h-14 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper group-hover:shadow-copper-lg transition-shadow">
                   <Phone className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Appelez-nous</p>
-                  <p className="font-display font-bold text-foreground">
-                    +32 123 456 789
+                  <p className="text-sm text-muted-foreground mb-1">Appelez-nous</p>
+                  <p className="font-display text-xl font-bold text-foreground">
+                    0485 75 52 27
                   </p>
                 </div>
               </a>
 
-              <div className="p-4 bg-accent/50 rounded-xl border border-primary/10">
+              <a
+                href="mailto:cuivre.electrique@gmail.com"
+                className="bento-card flex items-center gap-4 !p-5 group"
+              >
+                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Mail className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Écrivez-nous</p>
+                  <p className="font-display text-lg font-bold text-foreground">
+                    cuivre.electrique@gmail.com
+                  </p>
+                </div>
+              </a>
+
+              <div className="bento-card !p-5 border-primary/20">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-foreground">Réponse rapide</p>
+                    <p className="font-medium text-foreground mb-1">Réponse rapide garantie</p>
                     <p className="text-sm text-muted-foreground">
                       Nous répondons à toutes les demandes sous 24h ouvrées.
                     </p>
@@ -108,13 +124,13 @@ const ContactSection = () => {
           </div>
 
           {/* Right column - Form */}
-          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-card">
+          <div className="bento-card opacity-0 animate-slide-in-right animation-delay-200">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-sm font-medium text-foreground mb-1.5"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Nom complet *
                   </label>
@@ -127,13 +143,13 @@ const ContactSection = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
-                    className="h-11"
+                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-foreground mb-1.5"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Email *
                   </label>
@@ -146,7 +162,7 @@ const ContactSection = () => {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     required
-                    className="h-11"
+                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
                   />
                 </div>
               </div>
@@ -155,7 +171,7 @@ const ContactSection = () => {
                 <div>
                   <label
                     htmlFor="phone"
-                    className="block text-sm font-medium text-foreground mb-1.5"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
                     Téléphone *
                   </label>
@@ -168,15 +184,15 @@ const ContactSection = () => {
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     required
-                    className="h-11"
+                    className="h-12 bg-muted/50 border-border/50 rounded-xl focus:border-primary"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="projectType"
-                    className="block text-sm font-medium text-foreground mb-1.5"
+                    className="block text-sm font-medium text-foreground mb-2"
                   >
-                    Type de projet *
+                    Type de travaux *
                   </label>
                   <Select
                     value={formData.projectType}
@@ -185,10 +201,10 @@ const ContactSection = () => {
                     }
                     required
                   >
-                    <SelectTrigger className="h-11">
+                    <SelectTrigger className="h-12 bg-muted/50 border-border/50 rounded-xl">
                       <SelectValue placeholder="Sélectionnez..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border border-border">
+                    <SelectContent className="bg-card border border-border rounded-xl">
                       {projectTypes.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type}
@@ -202,7 +218,7 @@ const ContactSection = () => {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-foreground mb-1.5"
+                  className="block text-sm font-medium text-foreground mb-2"
                 >
                   Message
                 </label>
@@ -214,17 +230,18 @@ const ContactSection = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
-                  className="resize-none"
+                  className="bg-muted/50 border-border/50 rounded-xl resize-none focus:border-primary"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Checkbox
                   id="callback"
                   checked={formData.wantsCallback}
                   onCheckedChange={(checked) =>
                     setFormData({ ...formData, wantsCallback: checked as boolean })
                   }
+                  className="border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <label
                   htmlFor="callback"
@@ -237,7 +254,7 @@ const ContactSection = () => {
               <Button
                 type="submit"
                 variant="copper"
-                size="lg"
+                size="xl"
                 className="w-full"
                 disabled={isSubmitting}
               >
