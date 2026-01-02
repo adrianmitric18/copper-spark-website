@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
 import { Shield, Sparkles, Handshake, Clock, Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,11 @@ const values = [
 const APropos = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="À propos | Le Cuivre Électrique - Adrian Mitric, Électricien"
+        description="Découvrez Le Cuivre Électrique et Adrian Mitric, électricien indépendant à Bruxelles et en Wallonie. Valeurs, expérience et engagement qualité."
+        keywords="électricien indépendant, Adrian Mitric, Le Cuivre Électrique, électricien Bruxelles, à propos"
+      />
       <Header />
       <main className="pt-24">
         {/* Hero section */}

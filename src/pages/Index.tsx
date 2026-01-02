@@ -4,10 +4,16 @@ import ReassuranceSection from "@/components/ReassuranceSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import MouseEffects from "@/components/MouseEffects";
+import SEO from "@/components/SEO";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Le Cuivre Électrique | Électricien à Bruxelles et Wallonie"
+        description="Électricien professionnel à Bruxelles et en Wallonie. Installation, mise en conformité RGIE, dépannage 24h/24. Devis gratuit et intervention rapide."
+        keywords="électricien Bruxelles, électricien Wallonie, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
+      />
       <MouseEffects />
       <Header />
       <main>

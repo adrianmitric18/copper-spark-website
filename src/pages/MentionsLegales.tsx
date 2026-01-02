@@ -1,11 +1,16 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
-
 const MentionsLegales = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Mentions Légales | Le Cuivre Électrique"
+        description="Mentions légales de Le Cuivre Électrique. Informations sur l'entreprise, protection des données RGPD, cookies et conditions d'utilisation."
+        keywords="mentions légales, RGPD, conditions utilisation, Le Cuivre Électrique"
+      />
       <Header />
       <main className="pt-24">
         <section className="py-16 md:py-24">
