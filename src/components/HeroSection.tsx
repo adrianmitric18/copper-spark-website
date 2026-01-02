@@ -55,7 +55,7 @@ const HeroSection = () => {
       id="accueil"
       className="relative min-h-screen flex items-center justify-center pt-24 pb-20 bg-background overflow-hidden"
     >
-      {/* Hero background image with scroll parallax */}
+      {/* Hero background image with scroll parallax - MORE VISIBLE */}
       <motion.div 
         className="absolute inset-0 overflow-hidden"
         style={{ opacity: scrollOpacity }}
@@ -64,42 +64,131 @@ const HeroSection = () => {
           src={heroImage} 
           alt="Installation électrique design" 
           className="w-full h-full object-cover"
-          initial={{ scale: 1.2, opacity: 0 }}
+          initial={{ scale: 1.3, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          transition={{ duration: 2, ease: "easeOut" }}
           style={{ 
             y: scrollParallax,
             scale: scrollScale,
           }}
         />
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background/90" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
+        {/* LIGHTER overlay - image more visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/30 to-background/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/30 via-transparent to-background/30" />
       </motion.div>
 
+      {/* Animated light beams */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(5)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute h-[200vh] w-[2px] bg-gradient-to-b from-transparent via-primary/40 to-transparent"
+            style={{ left: `${15 + i * 18}%`, top: '-50%' }}
+            initial={{ opacity: 0, y: '-100%' }}
+            animate={{ 
+              opacity: [0, 0.8, 0],
+              y: ['0%', '100%'],
+            }}
+            transition={{
+              duration: 3,
+              delay: i * 0.4,
+              repeat: Infinity,
+              repeatDelay: 2,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Floating orbs with glow */}
+      {[...Array(8)].map((_, i) => (
+        <motion.div
+          key={`orb-${i}`}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 4 + Math.random() * 8,
+            height: 4 + Math.random() * 8,
+            left: `${10 + Math.random() * 80}%`,
+            top: `${10 + Math.random() * 80}%`,
+            background: `radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)`,
+            boxShadow: `0 0 20px 10px hsl(var(--primary) / 0.3)`,
+          }}
+          animate={{
+            y: [0, -30, 0],
+            x: [0, Math.random() > 0.5 ? 20 : -20, 0],
+            scale: [1, 1.5, 1],
+            opacity: [0.4, 1, 0.4],
+          }}
+          transition={{
+            duration: 4 + Math.random() * 3,
+            delay: i * 0.3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+
+      {/* Electric arc animations */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.6 }}>
+        <motion.path
+          d="M0,300 Q200,250 400,350 T800,280"
+          fill="none"
+          stroke="url(#copper-gradient)"
+          strokeWidth="2"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: [0, 1, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+        />
+        <motion.path
+          d="M1200,400 Q1000,300 800,450 T400,350"
+          fill="none"
+          stroke="url(#copper-gradient)"
+          strokeWidth="2"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: [0, 1, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 2, delay: 1.5, repeat: Infinity, repeatDelay: 3 }}
+        />
+        <defs>
+          <linearGradient id="copper-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0" />
+            <stop offset="50%" stopColor="hsl(25, 95%, 63%)" stopOpacity="1" />
+            <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* Pulsing rings from center */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={`ring-${i}`}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
+            initial={{ width: 100, height: 100, opacity: 0.8 }}
+            animate={{ 
+              width: [100, 600],
+              height: [100, 600],
+              opacity: [0.6, 0],
+            }}
+            transition={{
+              duration: 4,
+              delay: i * 1.3,
+              repeat: Infinity,
+              ease: "easeOut"
+            }}
+          />
+        ))}
+      </div>
+
       {/* Background gradient effects with parallax */}
-      <div className="absolute inset-0 bg-gradient-dark opacity-50" />
       <motion.div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px]"
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px]"
         style={{ x: parallaxX3, y: parallaxY3 }}
         animate={{ 
-          scale: [1, 1.1, 1],
-          opacity: [0.5, 0.8, 0.5]
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3]
         }}
         transition={{ 
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      <motion.div 
-        className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[100px]"
-        style={{ x: parallaxX2, y: parallaxY2 }}
-        animate={{ 
-          scale: [1, 1.15, 1],
-        }}
-        transition={{ 
-          duration: 10,
+          duration: 6,
           repeat: Infinity,
           ease: "easeInOut"
         }}
@@ -107,7 +196,7 @@ const HeroSection = () => {
       
       {/* Grid pattern overlay with subtle parallax */}
       <motion.div 
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.02]"
         style={{
           backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
