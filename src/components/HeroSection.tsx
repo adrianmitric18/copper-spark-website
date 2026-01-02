@@ -2,7 +2,7 @@ import { Zap, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useEffect } from "react";
-import heroImage from "@/assets/hero-abstract.jpg";
+import heroImage from "@/assets/hero-lighting-design.jpg";
 
 const HeroSection = () => {
   const titleWords = ["L'excellence", "électrique"];
