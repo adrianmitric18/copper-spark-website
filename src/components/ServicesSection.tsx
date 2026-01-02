@@ -20,36 +20,48 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 60, scale: 0.9 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.9 }}
+      transition={{ 
+        duration: 0.6, 
+        delay: index * 0.15,
+        type: "spring",
+        stiffness: 100
+      }}
       whileHover={{ 
-        y: -8,
-        rotateX: 5,
-        rotateY: 5,
+        y: -12,
+        scale: 1.03,
         transition: { duration: 0.3 }
       }}
-      style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-      className={`bento-card group ${accent ? 'bg-gradient-copper border-primary/50' : ''} ${className}`}
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 ${
+        accent 
+          ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25' 
+          : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
+      } ${className}`}
     >
+      {/* Animated border glow on hover */}
+      <motion.div 
+        className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"
+      />
+
       {/* Icon */}
       <motion.div 
         className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
           accent 
-            ? 'bg-primary-foreground/20 group-hover:bg-primary-foreground/30' 
+            ? 'bg-white/20 group-hover:bg-white/30' 
             : 'bg-primary/10 group-hover:bg-primary/20'
         }`}
-        whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
+        whileHover={{ rotate: [0, -10, 10, -5, 0], scale: 1.15 }}
         transition={{ duration: 0.5 }}
       >
-        <Icon className={`w-7 h-7 ${accent ? 'text-primary-foreground' : 'text-primary'}`} />
+        <Icon className={`w-7 h-7 ${accent ? 'text-white' : 'text-primary'}`} />
       </motion.div>
       
       {/* Content */}
-      <h3 className={`font-display text-2xl font-bold mb-3 ${accent ? 'text-primary-foreground' : 'text-foreground'}`}>
+      <h3 className={`font-display text-2xl font-bold mb-3 ${accent ? 'text-white' : 'text-card-foreground'}`}>
         {title}
       </h3>
-      <p className={`mb-6 leading-relaxed ${accent ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+      <p className={`mb-6 leading-relaxed ${accent ? 'text-white/90' : 'text-muted-foreground'}`}>
         {description}
       </p>
       
@@ -60,10 +72,14 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
             key={i} 
             initial={{ opacity: 0, x: -20 }}
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, delay: 0.3 + i * 0.1 }}
-            className={`flex items-center gap-2 text-sm ${accent ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}
+            transition={{ duration: 0.3, delay: 0.4 + i * 0.1 }}
+            className={`flex items-center gap-2 text-sm ${accent ? 'text-white/80' : 'text-muted-foreground'}`}
           >
-            <div className={`w-1.5 h-1.5 rounded-full ${accent ? 'bg-primary-foreground' : 'bg-primary'}`} />
+            <motion.div 
+              className={`w-1.5 h-1.5 rounded-full ${accent ? 'bg-white' : 'bg-primary'}`}
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+            />
             {feature}
           </motion.li>
         ))}
