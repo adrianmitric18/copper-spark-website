@@ -4,6 +4,14 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 
 // Import gallery images - Tableaux électriques
 import tableauRgie from "@/assets/gallery/tableau-rgie.jpg";
+import tableauAbbOuvert from "@/assets/gallery/tableaux/tableau-abb-ouvert.jpg";
+import tableauVitreCe from "@/assets/gallery/tableaux/tableau-vitre-ce.jpg";
+import tableauGrandCablage from "@/assets/gallery/tableaux/tableau-grand-cablage.jpg";
+import tableauBornierTerre from "@/assets/gallery/tableaux/tableau-bornier-terre.jpg";
+import tableauCompact from "@/assets/gallery/tableaux/tableau-compact.jpg";
+import tableauSchneider from "@/assets/gallery/tableaux/tableau-schneider.jpg";
+import tableauVitre400v from "@/assets/gallery/tableaux/tableau-vitre-400v.jpg";
+import tableauSchneiderOuvert from "@/assets/gallery/tableaux/tableau-schneider-ouvert.jpg";
 
 // Import gallery images - Éclairage LED
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
@@ -30,6 +38,62 @@ const galleryImages = [
     category: "tableaux",
     categoryLabel: "Tableaux électriques",
     image: tableauRgie,
+  },
+  {
+    id: 7,
+    title: "Tableau ABB neuf",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauAbbOuvert,
+  },
+  {
+    id: 8,
+    title: "Tableau vitré 3x240V",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauVitreCe,
+  },
+  {
+    id: 9,
+    title: "Tableau complet câblé",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauGrandCablage,
+  },
+  {
+    id: 10,
+    title: "Tableau avec bornier de terre",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauBornierTerre,
+  },
+  {
+    id: 11,
+    title: "Tableau compact résidentiel",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauCompact,
+  },
+  {
+    id: 12,
+    title: "Tableau Schneider",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauSchneider,
+  },
+  {
+    id: 13,
+    title: "Tableau vitré 3x400V+N",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauVitre400v,
+  },
+  {
+    id: 14,
+    title: "Tableau Schneider ouvert",
+    category: "tableaux",
+    categoryLabel: "Tableaux électriques",
+    image: tableauSchneiderOuvert,
   },
   // Éclairage LED & Moderne
   {
