@@ -128,165 +128,145 @@ const HeroSection = () => {
         />
       ))}
 
-      {/* LIGHTNING BOLTS - Electric sparks */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 5 }}>
-        {/* Lightning bolt 1 */}
-        <motion.path
-          d="M200,0 L180,80 L220,85 L160,180 L210,185 L120,320"
-          fill="none"
-          stroke="hsl(35, 100%, 60%)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          filter="url(#glow)"
-          initial={{ opacity: 0, pathLength: 0 }}
-          animate={{ 
-            opacity: [0, 1, 1, 0],
-            pathLength: [0, 1, 1, 1],
-          }}
-          transition={{ 
-            duration: 0.3, 
-            repeat: Infinity, 
-            repeatDelay: 4,
-            times: [0, 0.3, 0.8, 1]
-          }}
-        />
-        {/* Lightning bolt 2 */}
-        <motion.path
-          d="M900,50 L920,120 L880,125 L940,220 L890,230 L970,380"
-          fill="none"
-          stroke="hsl(30, 100%, 55%)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          filter="url(#glow)"
-          initial={{ opacity: 0, pathLength: 0 }}
-          animate={{ 
-            opacity: [0, 1, 1, 0],
-            pathLength: [0, 1, 1, 1],
-          }}
-          transition={{ 
-            duration: 0.25, 
-            delay: 2,
-            repeat: Infinity, 
-            repeatDelay: 5,
-            times: [0, 0.3, 0.8, 1]
-          }}
-        />
-        {/* Lightning bolt 3 - smaller */}
-        <motion.path
-          d="M600,100 L580,150 L610,155 L560,230"
-          fill="none"
-          stroke="hsl(40, 100%, 65%)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          filter="url(#glow)"
-          initial={{ opacity: 0, pathLength: 0 }}
-          animate={{ 
-            opacity: [0, 1, 1, 0],
-            pathLength: [0, 1, 1, 1],
-          }}
-          transition={{ 
-            duration: 0.2, 
-            delay: 3.5,
-            repeat: Infinity, 
-            repeatDelay: 6,
-            times: [0, 0.3, 0.8, 1]
-          }}
-        />
-        
-        {/* Electric wires with current flowing */}
-        <motion.path
-          d="M0,450 Q150,420 300,480 T600,440 T900,500 T1200,460"
-          fill="none"
-          stroke="url(#wire-gradient)"
-          strokeWidth="1.5"
-          strokeDasharray="8 4"
-          initial={{ strokeDashoffset: 0 }}
-          animate={{ strokeDashoffset: -24 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
-        <motion.path
-          d="M0,520 Q200,550 400,510 T800,560 T1200,530"
-          fill="none"
-          stroke="url(#wire-gradient)"
-          strokeWidth="1"
-          strokeDasharray="6 3"
-          initial={{ strokeDashoffset: 0 }}
-          animate={{ strokeDashoffset: -18 }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
-        />
-        
-        <defs>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-          <linearGradient id="wire-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="hsl(35, 100%, 60%)" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="hsl(25, 95%, 53%)" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-      </svg>
+      {/* MINI LIGHTNING SPARKS - Everywhere! */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 15 }}>
+        {[...Array(35)].map((_, i) => {
+          const x = Math.random() * 100;
+          const y = Math.random() * 100;
+          const size = 8 + Math.random() * 20;
+          const delay = Math.random() * 5;
+          const duration = 0.15 + Math.random() * 0.2;
+          
+          return (
+            <motion.svg
+              key={`mini-bolt-${i}`}
+              className="absolute"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                width: size,
+                height: size * 2,
+              }}
+              viewBox="0 0 20 40"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: [0, 1, 1, 0],
+                scale: [0.5, 1.2, 1, 0],
+              }}
+              transition={{
+                duration: duration,
+                delay: delay,
+                repeat: Infinity,
+                repeatDelay: 1.5 + Math.random() * 3,
+                times: [0, 0.2, 0.6, 1]
+              }}
+            >
+              <path
+                d="M12,0 L8,15 L14,16 L6,40 L10,22 L4,21 L12,0"
+                fill="hsl(45, 100%, 70%)"
+                filter="url(#mini-glow)"
+              />
+              <defs>
+                <filter id="mini-glow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+            </motion.svg>
+          );
+        })}
+      </div>
 
-      {/* LAVA DRIPS - Flowing molten copper drops */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 4 }}>
-        {[...Array(12)].map((_, i) => (
+      {/* ELECTRIC CRACKLES - Tiny sparks that pop */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 14 }}>
+        {[...Array(50)].map((_, i) => (
           <motion.div
-            key={`lava-${i}`}
-            className="absolute rounded-full"
+            key={`crackle-${i}`}
+            className="absolute"
             style={{
-              width: 6 + Math.random() * 10,
-              height: 15 + Math.random() * 25,
-              left: `${5 + i * 8}%`,
-              top: '-5%',
-              background: `linear-gradient(180deg, hsl(40, 100%, 60%) 0%, hsl(25, 95%, 50%) 50%, hsl(15, 90%, 40%) 100%)`,
-              borderRadius: '50% 50% 50% 50% / 30% 30% 70% 70%',
-              boxShadow: `0 0 15px 5px hsl(30, 100%, 50% / 0.5), 0 0 30px 10px hsl(25, 95%, 45% / 0.3)`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
             }}
-            animate={{
-              y: ['0vh', '110vh'],
-              opacity: [0, 1, 1, 0.8, 0],
-              scale: [0.8, 1, 1.1, 1, 0.6],
-            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0] }}
             transition={{
-              duration: 6 + Math.random() * 4,
-              delay: i * 0.8,
+              duration: 0.1,
+              delay: i * 0.15,
               repeat: Infinity,
-              ease: "easeIn",
-              times: [0, 0.1, 0.5, 0.9, 1]
+              repeatDelay: 2 + Math.random() * 4,
             }}
-          />
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <motion.line
+                x1="8" y1="0" x2="8" y2="6"
+                stroke="hsl(40, 100%, 65%)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                filter="url(#spark-glow)"
+              />
+              <motion.line
+                x1="8" y1="10" x2="8" y2="16"
+                stroke="hsl(40, 100%, 65%)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                filter="url(#spark-glow)"
+              />
+              <motion.line
+                x1="0" y1="8" x2="6" y2="8"
+                stroke="hsl(40, 100%, 65%)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                filter="url(#spark-glow)"
+              />
+              <motion.line
+                x1="10" y1="8" x2="16" y2="8"
+                stroke="hsl(40, 100%, 65%)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                filter="url(#spark-glow)"
+              />
+              <defs>
+                <filter id="spark-glow" x="-200%" y="-200%" width="500%" height="500%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+          </motion.div>
         ))}
       </div>
 
-      {/* SPARKS - Small electric sparks */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 6 }}>
-        {[...Array(20)].map((_, i) => (
+      {/* SPARK BURSTS - Small explosions of light */}
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 13 }}>
+        {[...Array(25)].map((_, i) => (
           <motion.div
-            key={`spark-${i}`}
+            key={`burst-${i}`}
             className="absolute"
             style={{
-              width: 2,
-              height: 2,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              background: 'hsl(45, 100%, 70%)',
+              width: 4,
+              height: 4,
+              background: 'hsl(45, 100%, 75%)',
               borderRadius: '50%',
-              boxShadow: '0 0 6px 3px hsl(40, 100%, 60%), 0 0 12px 6px hsl(30, 100%, 50% / 0.5)',
+              boxShadow: '0 0 10px 5px hsl(40, 100%, 60%), 0 0 20px 10px hsl(30, 100%, 50% / 0.6), 0 0 30px 15px hsl(25, 95%, 45% / 0.3)',
             }}
             animate={{
               opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
+              scale: [0, 2, 0],
             }}
             transition={{
-              duration: 0.3,
-              delay: i * 0.25,
+              duration: 0.25,
+              delay: i * 0.2,
               repeat: Infinity,
-              repeatDelay: 2 + Math.random() * 3,
+              repeatDelay: 3 + Math.random() * 4,
             }}
           />
         ))}
