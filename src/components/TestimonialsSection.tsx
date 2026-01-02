@@ -30,8 +30,8 @@ const testimonials: Testimonial[] = [
     id: 2,
     name: "Philippe V.",
     location: "Waterloo",
-    rating: 5,
-    text: "Installation de notre borne de recharge effectuée en une demi-journée. Explications claires, travail soigné. Parfait !",
+    rating: 4,
+    text: "Installation de notre borne de recharge effectuée en une demi-journée. Travail soigné, juste un petit délai pour obtenir le rendez-vous mais le résultat est top.",
     service: "Borne de recharge"
   },
   {
@@ -46,8 +46,8 @@ const testimonials: Testimonial[] = [
     id: 4,
     name: "Jean-Marc B.",
     location: "Liège",
-    rating: 5,
-    text: "Rénovation complète de l'électricité avec éclairage LED design. Le résultat est superbe, on a l'impression d'être dans un autre appartement !",
+    rating: 4,
+    text: "Rénovation complète de l'électricité avec éclairage LED design. Très bon travail, quelques ajustements ont été nécessaires mais le rendu final est superbe.",
     service: "Rénovation & LED"
   },
 ];
