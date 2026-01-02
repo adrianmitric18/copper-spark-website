@@ -9,8 +9,11 @@ interface SplineSceneProps {
 const SplineScene = ({ url, className = "" }: SplineSceneProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Convert splinecode URL to embed URL
-  const embedUrl = url.replace("scene.splinecode", "scene.splinecode");
+  // Convert splinecode URL to proper embed URL
+  // From: https://prod.spline.design/MdJc2qKF77OpStwR/scene.splinecode
+  // To: https://my.spline.design/MdJc2qKF77OpStwR/
+  const sceneId = url.match(/\/([^/]+)\/scene\.splinecode/)?.[1];
+  const embedUrl = sceneId ? `https://my.spline.design/${sceneId}/` : url;
 
   return (
     <motion.div
@@ -37,11 +40,11 @@ const SplineScene = ({ url, className = "" }: SplineSceneProps) => {
       <iframe
         src={embedUrl}
         frameBorder="0"
-        className="w-full h-full relative z-0"
+        className="w-full h-full relative z-0 rounded-2xl"
         style={{ background: "transparent" }}
         onLoad={() => setIsLoading(false)}
         title="3D Scene"
-        allow="autoplay"
+        allow="autoplay; fullscreen"
       />
     </motion.div>
   );
