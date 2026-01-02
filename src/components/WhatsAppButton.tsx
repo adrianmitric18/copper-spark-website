@@ -1,15 +1,13 @@
 import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { forwardRef, memo } from "react";
 
-const WhatsAppButton = memo(forwardRef<HTMLAnchorElement>((_, ref) => {
+const WhatsAppButton = () => {
   const phoneNumber = "32485755227";
   const message = encodeURIComponent("Bonjour, je souhaite obtenir un devis pour mes travaux électriques.");
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
   return (
     <motion.a
-      ref={ref}
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -26,7 +24,7 @@ const WhatsAppButton = memo(forwardRef<HTMLAnchorElement>((_, ref) => {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
     >
-      {/* Pulse animation ring - CSS animation instead of framer-motion */}
+      {/* Pulse animation ring - CSS animation */}
       <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
       
       {/* Button */}
@@ -40,8 +38,6 @@ const WhatsAppButton = memo(forwardRef<HTMLAnchorElement>((_, ref) => {
       </div>
     </motion.a>
   );
-}));
-
-WhatsAppButton.displayName = "WhatsAppButton";
+};
 
 export default WhatsAppButton;
