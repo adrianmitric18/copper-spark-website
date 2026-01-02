@@ -1,11 +1,12 @@
-import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Zap } from "lucide-react";
+import { Mail, Phone, MapPin, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { forwardRef, memo } from "react";
 
-const Footer = () => {
+const Footer = memo(forwardRef<HTMLElement>((_, ref) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-card border-t border-border">
+    <footer ref={ref} className="bg-card border-t border-border">
       <div className="container mx-auto py-16 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
           {/* Logo & description */}
@@ -29,18 +30,6 @@ const Footer = () => {
             <p className="text-primary font-medium text-lg italic">
               "On alimente vos idées, sans court-circuiter votre journée !"
             </p>
-            
-            {/* Social links - À venir */}
-            {/* 
-            <div className="flex items-center gap-3 mt-6">
-              <a href="#" className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300" aria-label="Facebook">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300" aria-label="Instagram">
-                <Instagram className="w-5 h-5" />
-              </a>
-            </div>
-            */}
           </div>
 
           {/* Contact info */}
@@ -154,6 +143,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+}));
+
+Footer.displayName = "Footer";
 
 export default Footer;
