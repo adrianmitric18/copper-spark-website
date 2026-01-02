@@ -30,6 +30,16 @@ import calendrierAvent from "@/assets/gallery/noel/calendrier-avent.jpg";
 import grandeRoueNoel from "@/assets/gallery/noel/grande-roue-noel.jpg";
 import sapinGeant from "@/assets/gallery/noel/sapin-geant.jpg";
 import etoilesPlafond from "@/assets/gallery/noel/etoiles-plafond.jpg";
+import guirlandeBleu from "@/assets/gallery/noel/guirlande-bleu.jpg";
+import lumieresFacade from "@/assets/gallery/noel/lumieres-facade.jpg";
+import decorVitrine from "@/assets/gallery/noel/decor-vitrine.jpg";
+import sapinLumineux from "@/assets/gallery/noel/sapin-lumineux.jpg";
+import decorationExterieure from "@/assets/gallery/noel/decoration-exterieure.jpg";
+import illuminationBatiment from "@/assets/gallery/noel/illumination-batiment.jpg";
+import lumieresNuit from "@/assets/gallery/noel/lumieres-nuit.jpg";
+import guirlandeLed from "@/assets/gallery/noel/guirlande-led.jpg";
+import decorationRue from "@/assets/gallery/noel/decoration-rue.jpg";
+import archeLumineuse from "@/assets/gallery/noel/arche-lumineuse.jpg";
 
 // Catégories disponibles
 const categories = [
@@ -191,6 +201,76 @@ const galleryImages = [
     category: "noel",
     categoryLabel: "Décoration de Noël",
     image: etoilesPlafond,
+  },
+  {
+    id: 22,
+    title: "Guirlande bleue festive",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: guirlandeBleu,
+  },
+  {
+    id: 23,
+    title: "Lumières de façade",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: lumieresFacade,
+  },
+  {
+    id: 24,
+    title: "Décor de vitrine",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: decorVitrine,
+  },
+  {
+    id: 25,
+    title: "Sapin lumineux extérieur",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: sapinLumineux,
+  },
+  {
+    id: 26,
+    title: "Décoration extérieure",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: decorationExterieure,
+  },
+  {
+    id: 27,
+    title: "Illumination de bâtiment",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: illuminationBatiment,
+  },
+  {
+    id: 28,
+    title: "Lumières de nuit",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: lumieresNuit,
+  },
+  {
+    id: 29,
+    title: "Guirlande LED moderne",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: guirlandeLed,
+  },
+  {
+    id: 30,
+    title: "Décoration de rue festive",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: decorationRue,
+  },
+  {
+    id: 31,
+    title: "Arche lumineuse",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: archeLumineuse,
   },
 ];
 
