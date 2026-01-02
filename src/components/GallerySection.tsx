@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { X, ChevronLeft, ChevronRight, Images } from "lucide-react";
+import { useState, useRef, useMemo } from "react";
+import { X, ChevronLeft, ChevronRight, Images, Zap } from "lucide-react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 
 // Import gallery images - Tableaux électriques
@@ -313,6 +313,27 @@ interface CategoryCardProps {
 const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+  
+  // Generate orbital particles positions
+  const particles = useMemo(() => {
+    return Array.from({ length: 8 }, (_, i) => ({
+      id: i,
+      angle: (i * 45) * (Math.PI / 180),
+      radius: 55,
+      size: Math.random() * 4 + 3,
+      duration: 4 + Math.random() * 2,
+      delay: i * 0.2,
+    }));
+  }, []);
+
+  // Generate electric arc paths
+  const arcs = useMemo(() => {
+    return Array.from({ length: 3 }, (_, i) => ({
+      id: i,
+      rotation: i * 120,
+      delay: i * 0.8,
+    }));
+  }, []);
 
   return (
     <motion.div
@@ -333,86 +354,258 @@ const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
       />
       
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
       
-      {/* PERMANENT PULSING ANIMATION - Like WhatsApp button */}
-      {/* Outer pulse ring */}
-      <motion.div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-primary/40"
-        animate={{ 
-          scale: [1, 2, 1],
-          opacity: [0.6, 0, 0.6]
-        }}
-        transition={{ 
-          duration: 2.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: index * 0.3
-        }}
-      />
-      {/* Middle pulse ring */}
-      <motion.div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-primary/30"
-        animate={{ 
-          scale: [1, 1.6, 1],
-          opacity: [0.5, 0, 0.5]
-        }}
-        transition={{ 
-          duration: 2.5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: index * 0.3 + 0.4
-        }}
-      />
-      
-      {/* Central glowing button */}
-      <motion.div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-2xl"
-        animate={{
-          boxShadow: [
-            "0 0 20px rgba(232, 121, 59, 0.5)",
-            "0 0 40px rgba(232, 121, 59, 0.8)",
-            "0 0 20px rgba(232, 121, 59, 0.5)"
-          ]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        whileHover={{
-          scale: 1.1,
-          boxShadow: "0 0 50px rgba(232, 121, 59, 1)"
-        }}
-      >
-        <Images className="w-8 h-8 text-white" />
-      </motion.div>
-      
-      {/* Shimmer effect on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        {/* Animated border glow */}
-        <div className="absolute inset-0 rounded-[2rem] border-2 border-primary/50" />
+      {/* ===== ELECTRIC VORTEX ANIMATION ===== */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         
-        {/* Shimmer sweep */}
+        {/* Outer energy field - rotating ring */}
+        <motion.div
+          className="absolute -inset-16 rounded-full"
+          style={{
+            background: "conic-gradient(from 0deg, transparent, rgba(232, 121, 59, 0.3), transparent, rgba(232, 121, 59, 0.5), transparent)",
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Second rotating ring - opposite direction */}
+        <motion.div
+          className="absolute -inset-12 rounded-full"
+          style={{
+            background: "conic-gradient(from 180deg, transparent, rgba(255, 165, 89, 0.2), transparent, rgba(232, 121, 59, 0.4), transparent)",
+          }}
+          animate={{ rotate: -360 }}
+          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Orbiting particles with trails */}
+        {particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute"
+            style={{
+              width: particle.size,
+              height: particle.size,
+            }}
+            animate={{
+              x: [
+                Math.cos(particle.angle) * particle.radius,
+                Math.cos(particle.angle + Math.PI) * particle.radius,
+                Math.cos(particle.angle + Math.PI * 2) * particle.radius,
+              ],
+              y: [
+                Math.sin(particle.angle) * particle.radius,
+                Math.sin(particle.angle + Math.PI) * particle.radius,
+                Math.sin(particle.angle + Math.PI * 2) * particle.radius,
+              ],
+              scale: [1, 1.5, 1],
+              opacity: [0.6, 1, 0.6],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              ease: "linear",
+              delay: particle.delay + index * 0.5,
+            }}
+          >
+            <div 
+              className="w-full h-full rounded-full bg-primary"
+              style={{
+                boxShadow: "0 0 10px rgba(232, 121, 59, 0.8), 0 0 20px rgba(232, 121, 59, 0.5), 0 0 30px rgba(232, 121, 59, 0.3)",
+              }}
+            />
+            {/* Particle trail */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-1 bg-gradient-to-r from-primary/60 to-transparent rounded-full"
+              style={{
+                transformOrigin: "left center",
+              }}
+              animate={{
+                rotate: [0, 360],
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: particle.duration,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          </motion.div>
+        ))}
+        
+        {/* Electric arcs - lightning bolts */}
+        {arcs.map((arc) => (
+          <motion.div
+            key={arc.id}
+            className="absolute w-24 h-0.5 origin-left"
+            style={{
+              rotate: arc.rotation,
+              left: 0,
+              top: 0,
+            }}
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{
+              scaleX: [0, 1, 0.3, 1, 0],
+              opacity: [0, 1, 0.5, 1, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              delay: arc.delay + index * 0.3,
+              ease: "easeInOut",
+            }}
+          >
+            <svg viewBox="0 0 100 10" className="w-full h-full overflow-visible">
+              <motion.path
+                d="M0,5 L20,2 L35,8 L50,3 L65,7 L80,4 L100,5"
+                stroke="url(#electricGradient)"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                animate={{
+                  pathLength: [0, 1, 0],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  delay: arc.delay,
+                }}
+              />
+              <defs>
+                <linearGradient id="electricGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="rgba(232, 121, 59, 0.8)" />
+                  <stop offset="50%" stopColor="rgba(255, 200, 100, 1)" />
+                  <stop offset="100%" stopColor="rgba(232, 121, 59, 0.3)" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </motion.div>
+        ))}
+        
+        {/* Central pulsing core */}
+        <motion.div
+          className="absolute -inset-6 rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(232, 121, 59, 0.4) 0%, transparent 70%)",
+          }}
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.5, 0.8, 0.5],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        
+        {/* Energy burst effect */}
+        <motion.div
+          className="absolute -inset-10 rounded-full"
+          animate={{
+            boxShadow: [
+              "0 0 30px rgba(232, 121, 59, 0.3), inset 0 0 30px rgba(232, 121, 59, 0.2)",
+              "0 0 60px rgba(232, 121, 59, 0.6), inset 0 0 40px rgba(232, 121, 59, 0.4)",
+              "0 0 30px rgba(232, 121, 59, 0.3), inset 0 0 30px rgba(232, 121, 59, 0.2)",
+            ],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: index * 0.2,
+          }}
+        />
+        
+        {/* Central icon with electric glow */}
+        <motion.div 
+          className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary via-primary to-orange-400 flex items-center justify-center z-10"
+          animate={{
+            boxShadow: [
+              "0 0 20px rgba(232, 121, 59, 0.6), 0 0 40px rgba(232, 121, 59, 0.4), 0 0 60px rgba(232, 121, 59, 0.2)",
+              "0 0 30px rgba(255, 200, 100, 0.8), 0 0 60px rgba(232, 121, 59, 0.6), 0 0 90px rgba(232, 121, 59, 0.3)",
+              "0 0 20px rgba(232, 121, 59, 0.6), 0 0 40px rgba(232, 121, 59, 0.4), 0 0 60px rgba(232, 121, 59, 0.2)",
+            ],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          whileHover={{
+            scale: 1.15,
+            boxShadow: "0 0 50px rgba(255, 200, 100, 1), 0 0 80px rgba(232, 121, 59, 0.8)",
+          }}
+        >
+          <Zap className="w-7 h-7 text-white" fill="currentColor" />
+          
+          {/* Sparkle effects on the icon */}
+          <motion.div
+            className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full"
+            animate={{
+              scale: [0, 1, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0.3,
+            }}
+          />
+          <motion.div
+            className="absolute -bottom-1 -left-1 w-2 h-2 bg-orange-200 rounded-full"
+            animate={{
+              scale: [0, 1.2, 0],
+              opacity: [0, 0.8, 0],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              delay: 0.8,
+            }}
+          />
+        </motion.div>
+      </div>
+      
+      {/* Shimmer sweep on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 rounded-[2rem] border-2 border-primary/60" />
         <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
-          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent"
+            initial={{ x: "-100%" }}
+            whileInView={{ x: "100%" }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
+          />
         </div>
       </div>
       
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
         {/* Photo count badge */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-primary/90 text-white text-sm font-medium rounded-full backdrop-blur-sm">
+        <motion.div 
+          className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-primary/90 text-white text-sm font-medium rounded-full backdrop-blur-sm"
+          animate={{
+            boxShadow: [
+              "0 0 10px rgba(232, 121, 59, 0.3)",
+              "0 0 20px rgba(232, 121, 59, 0.6)",
+              "0 0 10px rgba(232, 121, 59, 0.3)",
+            ],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
           <Images className="w-4 h-4" />
           <span>{category.images.length} photos</span>
-        </div>
+        </motion.div>
         
         {/* Title & description */}
         <div className="transform transition-transform duration-300 group-hover:translate-y-[-8px]">
-          <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
+          <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">
             {category.label}
           </h3>
-          <p className="text-white/80 text-sm md:text-base">
+          <p className="text-white/80 text-sm md:text-base drop-shadow-md">
             {category.description}
           </p>
         </div>
@@ -420,11 +613,14 @@ const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
         {/* CTA hint */}
         <motion.div 
           className="mt-4 flex items-center gap-2 text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          initial={{ x: -10 }}
-          whileHover={{ x: 0 }}
         >
           <span>Voir les réalisations</span>
-          <ChevronRight className="w-5 h-5" />
+          <motion.div
+            animate={{ x: [0, 5, 0] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            <ChevronRight className="w-5 h-5" />
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>
