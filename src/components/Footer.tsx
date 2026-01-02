@@ -30,30 +30,17 @@ const Footer = () => {
               "On alimente vos idées, sans court-circuiter votre journée !"
             </p>
             
-            {/* Social links */}
+            {/* Social links - À venir */}
+            {/* 
             <div className="flex items-center gap-3 mt-6">
-              <a
-                href="#"
-                className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
-                aria-label="Facebook"
-              >
+              <a href="#" className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300" aria-label="Facebook">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a
-                href="#"
-                className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
-                aria-label="Instagram"
-              >
+              <a href="#" className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300" aria-label="Instagram">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a
-                href="#"
-                className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center hover:bg-primary hover:border-primary hover:text-primary-foreground transition-all duration-300"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
             </div>
+            */}
           </div>
 
           {/* Contact info */}
