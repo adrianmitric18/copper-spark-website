@@ -22,12 +22,22 @@ import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
 import switchReseau from "@/assets/gallery/switch-reseau.jpg";
 
+// Import gallery images - Décoration de Noël
+import illuminationsRue from "@/assets/gallery/noel/illuminations-rue.jpg";
+import chaletNoel from "@/assets/gallery/noel/chalet-noel.jpg";
+import centreCommercialSapin from "@/assets/gallery/noel/centre-commercial-sapin.jpg";
+import calendrierAvent from "@/assets/gallery/noel/calendrier-avent.jpg";
+import grandeRoueNoel from "@/assets/gallery/noel/grande-roue-noel.jpg";
+import sapinGeant from "@/assets/gallery/noel/sapin-geant.jpg";
+import etoilesPlafond from "@/assets/gallery/noel/etoiles-plafond.jpg";
+
 // Catégories disponibles
 const categories = [
   { id: "all", label: "Tout voir" },
   { id: "tableaux", label: "Tableaux électriques" },
   { id: "eclairage", label: "Éclairage LED & Moderne" },
   { id: "reseaux", label: "Installation Réseaux" },
+  { id: "noel", label: "Décoration de Noël" },
 ];
 
 const galleryImages = [
@@ -131,6 +141,56 @@ const galleryImages = [
     category: "reseaux",
     categoryLabel: "Installation Réseaux",
     image: switchReseau,
+  },
+  // Décoration de Noël
+  {
+    id: 15,
+    title: "Illuminations de rue",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: illuminationsRue,
+  },
+  {
+    id: 16,
+    title: "Décoration chalet festif",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: chaletNoel,
+  },
+  {
+    id: 17,
+    title: "Sapin géant centre commercial",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: centreCommercialSapin,
+  },
+  {
+    id: 18,
+    title: "Calendrier de l'Avent lumineux",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: calendrierAvent,
+  },
+  {
+    id: 19,
+    title: "Grande roue de Noël",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: grandeRoueNoel,
+  },
+  {
+    id: 20,
+    title: "Sapin et décor féerique",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: sapinGeant,
+  },
+  {
+    id: 21,
+    title: "Étoiles suspendues",
+    category: "noel",
+    categoryLabel: "Décoration de Noël",
+    image: etoilesPlafond,
   },
 ];
 
