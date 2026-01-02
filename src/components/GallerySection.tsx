@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, ZoomIn } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 
 // Import gallery images - Tableaux électriques
@@ -48,299 +48,111 @@ import guirlandesCentreCommercial from "@/assets/gallery/noel/guirlandes-centre-
 import sapinLumineuxNuit from "@/assets/gallery/noel/sapin-lumineux-nuit.jpg";
 import renneGeant from "@/assets/gallery/noel/renne-geant.jpg";
 
-// Catégories disponibles
+// Catégories avec image de référence et toutes les images
 const categories = [
-  { id: "all", label: "Tout voir" },
-  { id: "tableaux", label: "Tableaux électriques" },
-  { id: "eclairage", label: "Éclairage LED & Moderne" },
-  { id: "reseaux", label: "Installation Réseaux" },
-  { id: "noel", label: "Décoration de Noël" },
-];
-
-const galleryImages = [
-  // Tableaux électriques
   {
-    id: 1,
-    title: "Tableau électrique RGIE",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauRgie,
+    id: "tableaux",
+    label: "Tableaux électriques",
+    description: "Installations aux normes RGIE",
+    coverImage: tableauSchneider,
+    images: [
+      { id: 1, title: "Tableau électrique RGIE", image: tableauRgie },
+      { id: 2, title: "Tableau ABB neuf", image: tableauAbbOuvert },
+      { id: 3, title: "Tableau vitré 3x240V", image: tableauVitreCe },
+      { id: 4, title: "Tableau complet câblé", image: tableauGrandCablage },
+      { id: 5, title: "Tableau avec bornier de terre", image: tableauBornierTerre },
+      { id: 6, title: "Tableau compact résidentiel", image: tableauCompact },
+      { id: 7, title: "Tableau Schneider", image: tableauSchneider },
+      { id: 8, title: "Tableau vitré 3x400V+N", image: tableauVitre400v },
+      { id: 9, title: "Tableau Schneider ouvert", image: tableauSchneiderOuvert },
+    ],
   },
   {
-    id: 7,
-    title: "Tableau ABB neuf",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauAbbOuvert,
+    id: "eclairage",
+    label: "Éclairage LED & Moderne",
+    description: "Solutions d'éclairage innovantes",
+    coverImage: priseSolDesign,
+    images: [
+      { id: 1, title: "Installation complète", image: installationComplete },
+      { id: 2, title: "Prise de sol design", image: priseSolDesign },
+      { id: 3, title: "Prise étanche intégrée", image: priseEtancheBriques },
+    ],
   },
   {
-    id: 8,
-    title: "Tableau vitré 3x240V",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauVitreCe,
+    id: "reseaux",
+    label: "Installation Réseaux",
+    description: "Câblage et connectivité",
+    coverImage: switchReseau,
+    images: [
+      { id: 1, title: "Visiophone extérieur", image: visiophonieExterieur },
+      { id: 2, title: "Installation réseau", image: switchReseau },
+    ],
   },
   {
-    id: 9,
-    title: "Tableau complet câblé",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauGrandCablage,
-  },
-  {
-    id: 10,
-    title: "Tableau avec bornier de terre",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauBornierTerre,
-  },
-  {
-    id: 11,
-    title: "Tableau compact résidentiel",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauCompact,
-  },
-  {
-    id: 12,
-    title: "Tableau Schneider",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauSchneider,
-  },
-  {
-    id: 13,
-    title: "Tableau vitré 3x400V+N",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauVitre400v,
-  },
-  {
-    id: 14,
-    title: "Tableau Schneider ouvert",
-    category: "tableaux",
-    categoryLabel: "Tableaux électriques",
-    image: tableauSchneiderOuvert,
-  },
-  // Éclairage LED & Moderne
-  {
-    id: 2,
-    title: "Installation complète",
-    category: "eclairage",
-    categoryLabel: "Éclairage LED",
-    image: installationComplete,
-  },
-  {
-    id: 4,
-    title: "Prise de sol design",
-    category: "eclairage",
-    categoryLabel: "Éclairage LED",
-    image: priseSolDesign,
-  },
-  {
-    id: 5,
-    title: "Prise étanche intégrée",
-    category: "eclairage",
-    categoryLabel: "Éclairage LED",
-    image: priseEtancheBriques,
-  },
-  // Installation Réseaux
-  {
-    id: 3,
-    title: "Visiophone extérieur",
-    category: "reseaux",
-    categoryLabel: "Installation Réseaux",
-    image: visiophonieExterieur,
-  },
-  {
-    id: 6,
-    title: "Installation réseau",
-    category: "reseaux",
-    categoryLabel: "Installation Réseaux",
-    image: switchReseau,
-  },
-  // Décoration de Noël
-  {
-    id: 15,
-    title: "Illuminations de rue",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: illuminationsRue,
-  },
-  {
-    id: 16,
-    title: "Décoration chalet festif",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: chaletNoel,
-  },
-  {
-    id: 17,
-    title: "Sapin géant centre commercial",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: centreCommercialSapin,
-  },
-  {
-    id: 18,
-    title: "Calendrier de l'Avent lumineux",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: calendrierAvent,
-  },
-  {
-    id: 19,
-    title: "Grande roue de Noël",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: grandeRoueNoel,
-  },
-  {
-    id: 20,
-    title: "Sapin et décor féerique",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: sapinGeant,
-  },
-  {
-    id: 21,
-    title: "Étoiles suspendues",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: etoilesPlafond,
-  },
-  {
-    id: 22,
-    title: "Guirlande bleue festive",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: guirlandeBleu,
-  },
-  {
-    id: 23,
-    title: "Lumières de façade",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: lumieresFacade,
-  },
-  {
-    id: 24,
-    title: "Décor de vitrine",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: decorVitrine,
-  },
-  {
-    id: 25,
-    title: "Sapin lumineux extérieur",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: sapinLumineux,
-  },
-  {
-    id: 26,
-    title: "Décoration extérieure",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: decorationExterieure,
-  },
-  {
-    id: 27,
-    title: "Illumination de bâtiment",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: illuminationBatiment,
-  },
-  {
-    id: 28,
-    title: "Lumières de nuit",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: lumieresNuit,
-  },
-  {
-    id: 29,
-    title: "Guirlande LED moderne",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: guirlandeLed,
-  },
-  {
-    id: 30,
-    title: "Décoration de rue festive",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: decorationRue,
-  },
-  {
-    id: 31,
-    title: "Arche lumineuse",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: archeLumineuse,
-  },
-  {
-    id: 32,
-    title: "Montgolfière sous chapiteau",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: montgolfiereChapitau,
-  },
-  {
-    id: 33,
-    title: "Scène musiciens de Noël",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: sceneMusiciens,
-  },
-  {
-    id: 34,
-    title: "Décor de cadeaux géants",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: decorCadeaux,
-  },
-  {
-    id: 35,
-    title: "Installation en galerie",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: installationGalerie,
-  },
-  {
-    id: 36,
-    title: "Guirlandes centre commercial",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: guirlandesCentreCommercial,
-  },
-  {
-    id: 37,
-    title: "Sapin lumineux nocturne",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: sapinLumineuxNuit,
-  },
-  {
-    id: 38,
-    title: "Renne géant décoratif",
-    category: "noel",
-    categoryLabel: "Décoration de Noël",
-    image: renneGeant,
+    id: "noel",
+    label: "Décoration de Noël",
+    description: "Illuminations féeriques",
+    coverImage: montgolfiereChapitau,
+    images: [
+      { id: 1, title: "Montgolfière sous chapiteau", image: montgolfiereChapitau },
+      { id: 2, title: "Illuminations de rue", image: illuminationsRue },
+      { id: 3, title: "Décoration chalet festif", image: chaletNoel },
+      { id: 4, title: "Sapin géant centre commercial", image: centreCommercialSapin },
+      { id: 5, title: "Calendrier de l'Avent lumineux", image: calendrierAvent },
+      { id: 6, title: "Grande roue de Noël", image: grandeRoueNoel },
+      { id: 7, title: "Sapin et décor féerique", image: sapinGeant },
+      { id: 8, title: "Étoiles suspendues", image: etoilesPlafond },
+      { id: 9, title: "Guirlande bleue festive", image: guirlandeBleu },
+      { id: 10, title: "Lumières de façade", image: lumieresFacade },
+      { id: 11, title: "Décor de vitrine", image: decorVitrine },
+      { id: 12, title: "Sapin lumineux extérieur", image: sapinLumineux },
+      { id: 13, title: "Décoration extérieure", image: decorationExterieure },
+      { id: 14, title: "Illumination de bâtiment", image: illuminationBatiment },
+      { id: 15, title: "Lumières de nuit", image: lumieresNuit },
+      { id: 16, title: "Guirlande LED moderne", image: guirlandeLed },
+      { id: 17, title: "Décoration de rue festive", image: decorationRue },
+      { id: 18, title: "Arche lumineuse", image: archeLumineuse },
+      { id: 19, title: "Scène musiciens de Noël", image: sceneMusiciens },
+      { id: 20, title: "Décor de cadeaux géants", image: decorCadeaux },
+      { id: 21, title: "Installation en galerie", image: installationGalerie },
+      { id: 22, title: "Guirlandes centre commercial", image: guirlandesCentreCommercial },
+      { id: 23, title: "Sapin lumineux nocturne", image: sapinLumineuxNuit },
+      { id: 24, title: "Renne géant décoratif", image: renneGeant },
+    ],
   },
 ];
 
 const GallerySection = () => {
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<typeof categories[0] | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const headerRef = useRef(null);
   const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
 
-  const filteredImages = activeCategory === "all" 
-    ? galleryImages 
-    : galleryImages.filter(img => img.category === activeCategory);
+  const handleCategoryClick = (category: typeof categories[0]) => {
+    setSelectedCategory(category);
+    setCurrentImageIndex(0);
+  };
 
-  const selectedImageData = galleryImages.find(img => img.id === selectedImage);
+  const handleClose = () => {
+    setSelectedCategory(null);
+    setCurrentImageIndex(0);
+  };
+
+  const handlePrev = () => {
+    if (selectedCategory) {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? selectedCategory.images.length - 1 : prev - 1
+      );
+    }
+  };
+
+  const handleNext = () => {
+    if (selectedCategory) {
+      setCurrentImageIndex((prev) => 
+        prev === selectedCategory.images.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
 
   return (
     <section id="realisations" className="py-24 md:py-32 bg-background relative overflow-hidden">
@@ -388,70 +200,64 @@ const GallerySection = () => {
           </motion.p>
         </div>
 
-        {/* Category Filter */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
-        >
-          {categories.map((cat) => (
-            <motion.button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
-                activeCategory === cat.id
-                  ? "bg-primary text-white shadow-lg shadow-primary/30"
-                  : "bg-card text-card-foreground border border-border hover:border-primary/50"
-              }`}
-            >
-              {cat.label}
-            </motion.button>
+        {/* Category Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          {categories.map((category, index) => (
+            <CategoryCard 
+              key={category.id}
+              category={category}
+              index={index}
+              onClick={() => handleCategoryClick(category)}
+            />
           ))}
-        </motion.div>
-
-        {/* Gallery Grid */}
-        <motion.div 
-          layout
-          className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredImages.map((image, index) => (
-              <GalleryItem 
-                key={image.id}
-                image={image}
-                index={index}
-                onClick={() => setSelectedImage(image.id)}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Gallery Modal */}
       <AnimatePresence>
-        {selectedImage && selectedImageData && (
+        {selectedCategory && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-6"
-            onClick={() => setSelectedImage(null)}
+            onClick={handleClose}
           >
+            {/* Close button */}
             <motion.button 
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.2 }}
               className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-card-foreground hover:text-primary transition-colors z-10"
-              onClick={() => setSelectedImage(null)}
+              onClick={handleClose}
             >
               <X className="w-6 h-6" />
             </motion.button>
+
+            {/* Navigation arrows */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="absolute left-4 md:left-8 w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </motion.button>
+
+            <motion.button
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="absolute right-4 md:right-8 w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); handleNext(); }}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </motion.button>
             
+            {/* Image container */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -460,18 +266,35 @@ const GallerySection = () => {
               className="max-w-5xl w-full max-h-[85vh] rounded-[2rem] overflow-hidden bg-card border border-border"
               onClick={(e) => e.stopPropagation()}
             >
-              <img 
-                src={selectedImageData.image} 
-                alt={selectedImageData.title}
-                className="w-full h-full object-contain max-h-[70vh]"
-              />
+              <div className="relative">
+                <AnimatePresence mode="wait">
+                  <motion.img 
+                    key={currentImageIndex}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.2 }}
+                    src={selectedCategory.images[currentImageIndex].image} 
+                    alt={selectedCategory.images[currentImageIndex].title}
+                    className="w-full h-full object-contain max-h-[65vh]"
+                  />
+                </AnimatePresence>
+              </div>
               <div className="p-6 border-t border-border">
-                <p className="text-card-foreground font-display font-bold text-xl mb-1">
-                  {selectedImageData.title}
-                </p>
-                <p className="text-primary">
-                  {selectedImageData.categoryLabel}
-                </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-card-foreground font-display font-bold text-xl mb-1">
+                      {selectedCategory.images[currentImageIndex].title}
+                    </p>
+                    <p className="text-primary">
+                      {selectedCategory.label}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Images className="w-5 h-5" />
+                    <span className="font-medium">{currentImageIndex + 1} / {selectedCategory.images.length}</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -481,57 +304,110 @@ const GallerySection = () => {
   );
 };
 
-interface GalleryItemProps {
-  image: typeof galleryImages[0];
+interface CategoryCardProps {
+  category: typeof categories[0];
   index: number;
   onClick: () => void;
 }
 
-const GalleryItem = ({ image, index, onClick }: GalleryItemProps) => {
+const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
   return (
     <motion.div
       ref={ref}
-      layout
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-      whileHover={{ 
-        scale: 1.03,
-        rotateY: 5,
-        rotateX: -5,
-        transition: { duration: 0.3 }
-      }}
-      style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-      className="relative aspect-square rounded-[2rem] overflow-hidden cursor-pointer group"
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="relative aspect-[4/3] rounded-[2rem] overflow-hidden cursor-pointer group"
       onClick={onClick}
     >
-      {/* Actual image */}
+      {/* Image */}
       <img 
-        src={image.image} 
-        alt={image.title}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        src={category.coverImage} 
+        alt={category.label}
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
       
-      {/* Overlay with title */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
-        <p className="text-foreground font-display font-bold text-lg mb-1">{image.title}</p>
-        <p className="text-primary text-sm">{image.categoryLabel}</p>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      
+      {/* Shimmer effect - Orange glow */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        {/* Animated border glow */}
+        <div className="absolute inset-0 rounded-[2rem] border-2 border-primary/50" />
+        
+        {/* Shimmer sweep */}
+        <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        </div>
+        
+        {/* Corner sparkles */}
+        <motion.div 
+          className="absolute top-4 right-4 w-2 h-2 bg-primary rounded-full"
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        />
+        <motion.div 
+          className="absolute top-8 right-8 w-1.5 h-1.5 bg-primary/70 rounded-full"
+          animate={{ 
+            scale: [1, 1.8, 1],
+            opacity: [0.3, 0.8, 0.3]
+          }}
+          transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
+        />
+        <motion.div 
+          className="absolute top-6 right-12 w-1 h-1 bg-primary/50 rounded-full"
+          animate={{ 
+            scale: [1, 2, 1],
+            opacity: [0.2, 0.6, 0.2]
+          }}
+          transition={{ duration: 1.8, repeat: Infinity, delay: 0.6 }}
+        />
       </div>
       
-      {/* Zoom icon */}
+      {/* Pulsing glow effect on hover */}
       <motion.div 
-        className="absolute inset-0 flex items-center justify-center"
-        initial={{ opacity: 0, scale: 0.5 }}
-        whileHover={{ opacity: 1, scale: 1 }}
-      >
-        <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-300">
-          <ZoomIn className="w-5 h-5" />
+        className="absolute inset-0 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          boxShadow: "inset 0 0 60px rgba(232, 121, 59, 0.3), 0 0 40px rgba(232, 121, 59, 0.2)"
+        }}
+      />
+      
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+        {/* Photo count badge */}
+        <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-primary/90 text-white text-sm font-medium rounded-full backdrop-blur-sm">
+          <Images className="w-4 h-4" />
+          <span>{category.images.length} photos</span>
         </div>
-      </motion.div>
+        
+        {/* Title & description */}
+        <div className="transform transition-transform duration-300 group-hover:translate-y-[-8px]">
+          <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
+            {category.label}
+          </h3>
+          <p className="text-white/80 text-sm md:text-base">
+            {category.description}
+          </p>
+        </div>
+        
+        {/* CTA hint */}
+        <motion.div 
+          className="mt-4 flex items-center gap-2 text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          initial={{ x: -10 }}
+          whileHover={{ x: 0 }}
+        >
+          <span>Voir les réalisations</span>
+          <ChevronRight className="w-5 h-5" />
+        </motion.div>
+      </div>
     </motion.div>
   );
 };
