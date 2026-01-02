@@ -1,4 +1,5 @@
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -9,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
           {/* Logo & description */}
           <div className="lg:col-span-2">
-            <a href="#accueil" className="flex items-center gap-3 mb-6">
+            <Link to="/" className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper">
                 <Zap className="w-6 h-6 text-primary-foreground" strokeWidth={2.5} />
               </div>
@@ -21,7 +22,7 @@ const Footer = () => {
                   Électrique
                 </span>
               </div>
-            </a>
+            </Link>
             <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
               Électricien artisan de confiance à Bruxelles et en Wallonie. Installation, mise en conformité RGIE et dépannage 24h/24.
             </p>
@@ -91,54 +92,76 @@ const Footer = () => {
             <h4 className="font-display font-bold text-lg text-foreground mb-6">Liens rapides</h4>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="#services"
+                <Link
+                  to="/services"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Nos services
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#realisations"
+                <Link
+                  to="/realisations"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Réalisations
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#zone"
+                <Link
+                  to="/avis"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Zone d'intervention
-                </a>
+                  Avis clients
+                </Link>
               </li>
               <li>
-                <a
-                  href="#contact"
+                <Link
+                  to="/contact"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Demander un devis
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#"
+                <Link
+                  to="/mentions-legales"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
                   Mentions légales
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
+        {/* Infos entreprise */}
+        <div className="mt-12 p-6 bg-muted/30 border border-border/50 rounded-2xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">N° TVA :</span>
+              <span className="ml-2 text-foreground font-medium">BE 0XXX.XXX.XXX</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">N° BCE :</span>
+              <span className="ml-2 text-foreground font-medium">0XXX.XXX.XXX</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Agréé :</span>
+              <span className="ml-2 text-foreground font-medium">Électricien certifié</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Zone :</span>
+              <span className="ml-2 text-foreground font-medium">Bruxelles & Wallonie</span>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} Le Cuivre Électrique. Tous droits réservés.</p>
           <p>
-            TVA: BE 0XXX.XXX.XXX • Électricien agréé Belgique
+            Électricien agréé en Belgique • Conforme RGIE
           </p>
         </div>
       </div>

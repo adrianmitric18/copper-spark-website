@@ -1,0 +1,140 @@
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import { motion } from "framer-motion";
+
+const MentionsLegales = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="pt-24">
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto max-w-4xl">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="font-display text-4xl md:text-5xl font-bold text-foreground mb-8"
+            >
+              Mentions Légales
+            </motion.h1>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="space-y-8 text-muted-foreground"
+            >
+              {/* Identité */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  1. Identité de l'entreprise
+                </h2>
+                <ul className="space-y-2">
+                  <li><strong className="text-foreground">Dénomination :</strong> Cuivre Électrique</li>
+                  <li><strong className="text-foreground">Forme juridique :</strong> [À compléter]</li>
+                  <li><strong className="text-foreground">N° TVA :</strong> BE 0XXX.XXX.XXX</li>
+                  <li><strong className="text-foreground">N° BCE :</strong> 0XXX.XXX.XXX</li>
+                  <li><strong className="text-foreground">Siège social :</strong> [Adresse à compléter], Belgique</li>
+                  <li><strong className="text-foreground">Téléphone :</strong> +32 471 51 30 88</li>
+                  <li><strong className="text-foreground">Email :</strong> contact@cuivre-electrique.be</li>
+                </ul>
+              </div>
+
+              {/* Hébergement */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  2. Hébergement du site
+                </h2>
+                <ul className="space-y-2">
+                  <li><strong className="text-foreground">Hébergeur :</strong> Lovable (Netlify)</li>
+                  <li><strong className="text-foreground">Adresse :</strong> San Francisco, CA, USA</li>
+                </ul>
+              </div>
+
+              {/* Propriété intellectuelle */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  3. Propriété intellectuelle
+                </h2>
+                <p>
+                  L'ensemble du contenu de ce site (textes, images, logos, vidéos) est la propriété 
+                  exclusive de Cuivre Électrique ou de ses partenaires. Toute reproduction, 
+                  représentation ou diffusion, en tout ou partie, du contenu de ce site sans 
+                  autorisation expresse est interdite.
+                </p>
+              </div>
+
+              {/* RGPD */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  4. Protection des données (RGPD)
+                </h2>
+                <p className="mb-4">
+                  Conformément au Règlement Général sur la Protection des Données (RGPD) et à la 
+                  loi belge du 30 juillet 2018, vous disposez des droits suivants :
+                </p>
+                <ul className="list-disc list-inside space-y-2 mb-4">
+                  <li>Droit d'accès à vos données personnelles</li>
+                  <li>Droit de rectification</li>
+                  <li>Droit à l'effacement</li>
+                  <li>Droit à la limitation du traitement</li>
+                  <li>Droit à la portabilité des données</li>
+                  <li>Droit d'opposition</li>
+                </ul>
+                <p>
+                  Pour exercer ces droits, contactez-nous par email à{" "}
+                  <a href="mailto:contact@cuivre-electrique.be" className="text-primary hover:underline">
+                    contact@cuivre-electrique.be
+                  </a>
+                </p>
+              </div>
+
+              {/* Cookies */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  5. Cookies
+                </h2>
+                <p className="mb-4">
+                  Ce site utilise des cookies techniques nécessaires à son bon fonctionnement. 
+                  Ces cookies ne collectent aucune donnée personnelle à des fins publicitaires.
+                </p>
+                <p>
+                  Vous pouvez configurer votre navigateur pour refuser les cookies, mais certaines 
+                  fonctionnalités du site pourraient ne plus être accessibles.
+                </p>
+              </div>
+
+              {/* Responsabilité */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  6. Limitation de responsabilité
+                </h2>
+                <p>
+                  Cuivre Électrique s'efforce de fournir des informations exactes et à jour sur ce site. 
+                  Toutefois, nous ne pouvons garantir l'exactitude, la complétude ou l'actualité des 
+                  informations diffusées. L'utilisation des informations de ce site se fait sous 
+                  votre propre responsabilité.
+                </p>
+              </div>
+
+              {/* Droit applicable */}
+              <div className="bg-card border border-border/50 rounded-2xl p-6 md:p-8">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+                  7. Droit applicable
+                </h2>
+                <p>
+                  Les présentes mentions légales sont régies par le droit belge. En cas de litige, 
+                  les tribunaux de Bruxelles seront seuls compétents.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+      <WhatsAppButton />
+    </div>
+  );
+};
+
+export default MentionsLegales;
