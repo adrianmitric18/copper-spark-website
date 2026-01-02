@@ -12,6 +12,12 @@ const HeroSection = () => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
+  // Scroll parallax effect
+  const scrollY = useMotionValue(0);
+  const scrollParallax = useTransform(scrollY, [0, 800], [0, 200]);
+  const scrollOpacity = useTransform(scrollY, [0, 600], [1, 0.3]);
+  const scrollScale = useTransform(scrollY, [0, 800], [1, 1.15]);
+
   const springConfig = { damping: 30, stiffness: 100 };
   const smoothMouseX = useSpring(mouseX, springConfig);
   const smoothMouseY = useSpring(mouseY, springConfig);
@@ -32,26 +38,39 @@ const HeroSection = () => {
       mouseY.set(y);
     };
 
+    const handleScroll = () => {
+      scrollY.set(window.scrollY);
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [mouseX, mouseY, scrollY]);
 
   return (
     <section
       id="accueil"
       className="relative min-h-screen flex items-center justify-center pt-24 pb-20 bg-background overflow-hidden"
     >
-      {/* Hero background image */}
+      {/* Hero background image with scroll parallax */}
       <motion.div 
-        className="absolute inset-0"
-        initial={{ scale: 1.1, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1.5, ease: "easeOut" }}
+        className="absolute inset-0 overflow-hidden"
+        style={{ opacity: scrollOpacity }}
       >
-        <img 
+        <motion.img 
           src={heroImage} 
           alt="Installation électrique design" 
           className="w-full h-full object-cover"
+          initial={{ scale: 1.2, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          style={{ 
+            y: scrollParallax,
+            scale: scrollScale,
+          }}
         />
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background/90" />
