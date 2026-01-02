@@ -55,7 +55,7 @@
     --gradient-copper: linear-gradient(135deg, hsl(18 80% 55%), hsl(18 75% 65%));
     --gradient-copper-dark: linear-gradient(135deg, hsl(18 85% 45%), hsl(18 80% 55%));
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 16%) 0%, hsl(0 0% 13%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 22%) 0%, hsl(0 0% 18%) 100%);
 
     /* Shadows - Premium glow effects */
     --shadow-copper: 0 4px 30px -4px hsl(18 80% 55% / 0.35);
@@ -95,22 +95,22 @@
   .dark {
     --background: 0 0% 9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 14%;
+    --card: 0 0% 18%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 25%;
+    --popover: 0 0% 20%;
     --popover-foreground: 0 0% 98%;
     --primary: 27 95% 60%;
     --primary-foreground: 12 81% 14%;
-    --secondary: 0 0% 45%;
+    --secondary: 0 0% 25%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
-    --accent: 20 91% 14%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 75%;
+    --accent: 20 91% 18%;
     --accent-foreground: 43 96% 56%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 85% 97%;
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
+    --border: 0 0% 28%;
+    --input: 0 0% 25%;
     --ring: 27 95% 60%;
     --chart-1: 30 97% 72%;
     --chart-2: 45 96% 64%;
