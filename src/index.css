@@ -198,13 +198,13 @@
 
   /* Bento card styles */
   .bento-card {
-    @apply bg-gradient-card rounded-[2rem] p-6 md:p-8 border border-border/50 transition-all duration-500;
-    box-shadow: var(--shadow-card);
+    @apply bg-card rounded-[2rem] p-6 md:p-8 border border-border/50 transition-all duration-500;
+    box-shadow: 0 4px 30px -4px hsl(0 0% 0% / 0.1);
   }
 
   .bento-card:hover {
     @apply border-primary/30;
-    box-shadow: var(--shadow-card-hover), 0 0 40px -10px hsl(18 80% 55% / 0.2);
+    box-shadow: 0 12px 50px -6px hsl(0 0% 0% / 0.15), 0 0 40px -10px hsl(27 95% 55% / 0.15);
     transform: translateY(-4px);
   }
 
