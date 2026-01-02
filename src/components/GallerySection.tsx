@@ -1,47 +1,57 @@
 import { useState } from "react";
 import { X, ZoomIn } from "lucide-react";
 
+// Import gallery images
+import tableauRgie from "@/assets/gallery/tableau-rgie.jpg";
+import installationComplete from "@/assets/gallery/installation-complete.jpg";
+import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
+import priseSolDesign from "@/assets/gallery/prise-sol-design.jpg";
+import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
+import switchReseau from "@/assets/gallery/switch-reseau.jpg";
+
 const galleryImages = [
   {
     id: 1,
     title: "Tableau électrique RGIE",
     category: "Conformité",
-    placeholder: "bg-gradient-to-br from-secondary to-muted",
+    image: tableauRgie,
   },
   {
     id: 2,
-    title: "Câblage propre et organisé",
-    category: "Installation",
-    placeholder: "bg-gradient-to-br from-muted to-secondary",
+    title: "Installation complète",
+    category: "Neuf",
+    image: installationComplete,
   },
   {
     id: 3,
-    title: "Éclairage LED cuisine",
-    category: "Rénovation",
-    placeholder: "bg-gradient-to-br from-primary/20 to-secondary",
+    title: "Visiophone extérieur",
+    category: "Domotique",
+    image: visiophonieExterieur,
   },
   {
     id: 4,
-    title: "Borne de recharge",
-    category: "Mobilité",
-    placeholder: "bg-gradient-to-br from-secondary to-primary/20",
+    title: "Prise de sol design",
+    category: "Finitions",
+    image: priseSolDesign,
   },
   {
     id: 5,
-    title: "Dépannage tableau",
-    category: "Urgence",
-    placeholder: "bg-gradient-to-br from-muted to-primary/10",
+    title: "Prise étanche intégrée",
+    category: "Extérieur",
+    image: priseEtancheBriques,
   },
   {
     id: 6,
-    title: "Installation complète",
-    category: "Neuf",
-    placeholder: "bg-gradient-to-br from-primary/10 to-muted",
+    title: "Installation réseau",
+    category: "Technique",
+    image: switchReseau,
   },
 ];
 
 const GallerySection = () => {
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+
+  const selectedImageData = galleryImages.find(img => img.id === selectedImage);
 
   return (
     <section id="realisations" className="py-24 md:py-32 bg-background relative">
@@ -68,23 +78,25 @@ const GallerySection = () => {
           {galleryImages.map((image, index) => (
             <div
               key={image.id}
-              className={`relative aspect-square rounded-[2rem] overflow-hidden cursor-pointer group opacity-0 animate-scale-in ${image.placeholder}`}
+              className="relative aspect-square rounded-[2rem] overflow-hidden cursor-pointer group opacity-0 animate-scale-in"
               style={{ animationDelay: `${300 + index * 100}ms` }}
               onClick={() => setSelectedImage(image.id)}
             >
-              {/* Placeholder gradient */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center p-6">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                    <ZoomIn className="w-8 h-8 text-primary" />
-                  </div>
-                  <p className="text-foreground font-display font-bold text-lg mb-1">{image.title}</p>
-                  <p className="text-muted-foreground text-sm">{image.category}</p>
-                </div>
+              {/* Actual image */}
+              <img 
+                src={image.image} 
+                alt={image.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              
+              {/* Overlay with title */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-6">
+                <p className="text-foreground font-display font-bold text-lg mb-1">{image.title}</p>
+                <p className="text-primary text-sm">{image.category}</p>
               </div>
               
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/20 transition-all duration-300 flex items-center justify-center">
+              {/* Zoom icon */}
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-300">
                   <ZoomIn className="w-5 h-5" />
                 </div>
@@ -92,33 +104,36 @@ const GallerySection = () => {
             </div>
           ))}
         </div>
-
-        {/* Image note */}
-        <p className="text-center text-muted-foreground text-sm mt-8 opacity-0 animate-fade-up" style={{ animationDelay: '900ms' }}>
-          📸 Photos de nos chantiers réels - Ajoutez vos propres images pour personnaliser
-        </p>
       </div>
 
       {/* Lightbox Modal */}
-      {selectedImage && (
+      {selectedImage && selectedImageData && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-xl p-4 md:p-6"
           onClick={() => setSelectedImage(null)}
         >
           <button 
-            className="absolute top-6 right-6 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:text-primary transition-colors"
+            className="absolute top-4 right-4 md:top-6 md:right-6 w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center text-foreground hover:text-primary transition-colors z-10"
             onClick={() => setSelectedImage(null)}
           >
             <X className="w-6 h-6" />
           </button>
           
-          <div className="max-w-4xl w-full aspect-video rounded-[2rem] bg-gradient-card border border-border flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-foreground font-display font-bold text-2xl mb-2">
-                {galleryImages.find(img => img.id === selectedImage)?.title}
+          <div 
+            className="max-w-5xl w-full max-h-[85vh] rounded-[2rem] overflow-hidden bg-card border border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={selectedImageData.image} 
+              alt={selectedImageData.title}
+              className="w-full h-full object-contain max-h-[70vh]"
+            />
+            <div className="p-6 border-t border-border">
+              <p className="text-foreground font-display font-bold text-xl mb-1">
+                {selectedImageData.title}
               </p>
-              <p className="text-muted-foreground">
-                Remplacez par vos photos réelles
+              <p className="text-primary">
+                {selectedImageData.category}
               </p>
             </div>
           </div>
