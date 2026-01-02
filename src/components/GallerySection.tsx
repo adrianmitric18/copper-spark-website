@@ -335,7 +335,60 @@ const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
       
-      {/* Shimmer effect - Orange glow */}
+      {/* PERMANENT PULSING ANIMATION - Like WhatsApp button */}
+      {/* Outer pulse ring */}
+      <motion.div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-primary/40"
+        animate={{ 
+          scale: [1, 2, 1],
+          opacity: [0.6, 0, 0.6]
+        }}
+        transition={{ 
+          duration: 2.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: index * 0.3
+        }}
+      />
+      {/* Middle pulse ring */}
+      <motion.div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full bg-primary/30"
+        animate={{ 
+          scale: [1, 1.6, 1],
+          opacity: [0.5, 0, 0.5]
+        }}
+        transition={{ 
+          duration: 2.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: index * 0.3 + 0.4
+        }}
+      />
+      
+      {/* Central glowing button */}
+      <motion.div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-primary/90 flex items-center justify-center shadow-2xl"
+        animate={{
+          boxShadow: [
+            "0 0 20px rgba(232, 121, 59, 0.5)",
+            "0 0 40px rgba(232, 121, 59, 0.8)",
+            "0 0 20px rgba(232, 121, 59, 0.5)"
+          ]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        whileHover={{
+          scale: 1.1,
+          boxShadow: "0 0 50px rgba(232, 121, 59, 1)"
+        }}
+      >
+        <Images className="w-8 h-8 text-white" />
+      </motion.div>
+      
+      {/* Shimmer effect on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
         {/* Animated border glow */}
         <div className="absolute inset-0 rounded-[2rem] border-2 border-primary/50" />
@@ -344,41 +397,7 @@ const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
         <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
         </div>
-        
-        {/* Corner sparkles */}
-        <motion.div 
-          className="absolute top-4 right-4 w-2 h-2 bg-primary rounded-full"
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.5, 1, 0.5]
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-        <motion.div 
-          className="absolute top-8 right-8 w-1.5 h-1.5 bg-primary/70 rounded-full"
-          animate={{ 
-            scale: [1, 1.8, 1],
-            opacity: [0.3, 0.8, 0.3]
-          }}
-          transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-        />
-        <motion.div 
-          className="absolute top-6 right-12 w-1 h-1 bg-primary/50 rounded-full"
-          animate={{ 
-            scale: [1, 2, 1],
-            opacity: [0.2, 0.6, 0.2]
-          }}
-          transition={{ duration: 1.8, repeat: Infinity, delay: 0.6 }}
-        />
       </div>
-      
-      {/* Pulsing glow effect on hover */}
-      <motion.div 
-        className="absolute inset-0 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          boxShadow: "inset 0 0 60px rgba(232, 121, 59, 0.3), 0 0 40px rgba(232, 121, 59, 0.2)"
-        }}
-      />
       
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
