@@ -1,4 +1,4 @@
-import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, type LucideIcon } from "lucide-react";
+import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, Sun, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
@@ -128,6 +128,13 @@ const services = [
     title: "Bornes de Recharge",
     description: "Installation de bornes pour véhicules électriques. Passez à la mobilité verte en toute sérénité.",
     features: ["Toutes marques", "Installation rapide", "Conseil personnalisé"],
+    accent: false,
+  },
+  {
+    icon: Sun,
+    title: "Panneaux Photovoltaïques",
+    description: "Produisez votre propre électricité grâce à l'énergie solaire. Économies garanties sur le long terme.",
+    features: ["Étude de rentabilité", "Installation certifiée", "Suivi de production"],
     accent: false,
   },
 ];
