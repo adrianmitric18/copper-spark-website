@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Images } from "lucide-react";
 import { motion, useInView } from "framer-motion";
@@ -79,6 +79,17 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
   const cardRef = useRef(null);
   const isInView = useInView(cardRef, { once: true, margin: "-50px" });
 
+  // Generate random positions for lightning arcs
+  const lightningArcs = useMemo(() => {
+    return [...Array(4)].map((_, i) => ({
+      id: i,
+      startAngle: Math.random() * 360,
+      length: 40 + Math.random() * 30,
+      duration: 0.3 + Math.random() * 0.2,
+      delay: Math.random() * 2,
+    }));
+  }, []);
+
   return (
     <motion.div
       ref={cardRef}
@@ -100,7 +111,7 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-500" />
         </div>
         
-        {/* Animated electric vortex background - simplified */}
+        {/* Animated electric vortex background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           {/* Central glow */}
           <motion.div
@@ -119,8 +130,23 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
             }}
           />
           
+          {/* Secondary pulsing ring */}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-primary/30"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.2, 0.5, 0.2],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+          />
+          
           {/* Orbiting particles */}
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
               className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-primary"
@@ -129,14 +155,14 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
               }}
               animate={{
                 x: [
-                  Math.cos((i * Math.PI * 2) / 6) * 60,
-                  Math.cos((i * Math.PI * 2) / 6 + Math.PI) * 80,
-                  Math.cos((i * Math.PI * 2) / 6) * 60,
+                  Math.cos((i * Math.PI * 2) / 8) * 60,
+                  Math.cos((i * Math.PI * 2) / 8 + Math.PI) * 80,
+                  Math.cos((i * Math.PI * 2) / 8) * 60,
                 ],
                 y: [
-                  Math.sin((i * Math.PI * 2) / 6) * 60,
-                  Math.sin((i * Math.PI * 2) / 6 + Math.PI) * 80,
-                  Math.sin((i * Math.PI * 2) / 6) * 60,
+                  Math.sin((i * Math.PI * 2) / 8) * 60,
+                  Math.sin((i * Math.PI * 2) / 8 + Math.PI) * 80,
+                  Math.sin((i * Math.PI * 2) / 8) * 60,
                 ],
                 opacity: [0.5, 1, 0.5],
               }}
@@ -148,6 +174,48 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
               }}
             />
           ))}
+
+          {/* Lightning arcs */}
+          {lightningArcs.map((arc) => (
+            <motion.div
+              key={arc.id}
+              className="absolute top-1/2 left-1/2 h-0.5 bg-gradient-to-r from-primary via-primary to-transparent origin-left"
+              style={{
+                width: arc.length,
+                rotate: `${arc.startAngle}deg`,
+                boxShadow: '0 0 8px hsl(var(--primary)), 0 0 16px hsl(var(--primary) / 0.5)',
+              }}
+              animate={{
+                opacity: [0, 1, 0],
+                scaleX: [0.3, 1, 0.3],
+              }}
+              transition={{
+                duration: arc.duration,
+                repeat: Infinity,
+                repeatDelay: 1 + arc.delay,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+          
+          {/* Rotating ring of dots */}
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          >
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full bg-primary/60"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: `rotate(${i * 30}deg) translateX(70px)`,
+                }}
+              />
+            ))}
+          </motion.div>
         </div>
 
         {/* Content */}
