@@ -245,56 +245,133 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Confirmation email to the client
+    // Calculate dynamic response delay
+    const currentHour = now.getHours();
+    const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+    const isOutsideBusinessHours = currentHour < 8 || currentHour >= 18;
+    const isLongMessage = message && message.trim().length > 500;
+    
+    // Dynamic delay: 24h for standard requests, 24-48h for complex/off-hours
+    const responseDelay = (isWeekend || isOutsideBusinessHours || isLongMessage) ? "24 à 48h" : "24h";
+    
+    // Logo URL (hosted externally for email compatibility)
+    const logoUrl = "https://tuemfswhxxtdygjvvdxm.supabase.co/storage/v1/object/public/assets/logo-cuivre-electrique.png";
+
+    // Confirmation email to the client with professional HTML
     const clientEmailResponse = await resend.emails.send({
-      from: "Le Cuivre Électrique <onboarding@resend.dev>",
+      from: "Le Cuivre Électrique <contact@cuivre-electrique.com>",
       to: [email.trim()],
-      subject: "✅ Votre demande a bien été reçue - Le Cuivre Électrique",
+      subject: "Nous avons bien reçu votre demande – Le Cuivre Électrique",
       html: `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <div style="background: linear-gradient(135deg, #B87333 0%, #8B5A2B 100%); padding: 30px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Merci pour votre demande !</h1>
-          </div>
-          
-          <div style="padding: 30px;">
-            <p style="font-size: 18px; color: #333; line-height: 1.6; margin-top: 0;">
-              Bonjour <strong>${escapeHtml(name.trim())}</strong>,
-            </p>
-            
-            <p style="font-size: 16px; color: #555; line-height: 1.6;">
-              Nous avons bien reçu votre demande${projectType ? ` concernant <strong>${escapeHtml(projectType)}</strong>` : ''}.
-            </p>
-            
-            <div style="background: #f8f9fa; border-radius: 10px; padding: 25px; margin: 25px 0; text-align: center;">
-              <p style="font-size: 18px; color: #333; margin: 0;">
-                📞 Nous vous recontacterons dans les <strong style="color: #B87333;">24 à 48 heures</strong>.
-              </p>
-            </div>
-            
-            ${wantsCallback ? `
-              <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                Comme demandé, nous vous rappellerons au <strong>${escapeHtml(phone?.trim()) || "numéro fourni"}</strong>.
-              </p>
-            ` : ''}
-            
-            <div style="background: linear-gradient(135deg, #B87333 0%, #8B5A2B 100%); color: white; padding: 25px; border-radius: 10px; margin: 30px 0; text-align: center;">
-              <h2 style="margin: 0 0 10px 0; font-size: 18px;">⚡ Besoin urgent ?</h2>
-              <p style="margin: 0; font-size: 20px;"><strong>Appelez-nous au 0485 75 52 27</strong></p>
-            </div>
-            
-            <p style="color: #666; font-size: 16px; line-height: 1.6;">
-              À très bientôt,<br>
-              <strong style="color: #B87333;">Adrian Mitric</strong><br>
-              <em>Le Cuivre Électrique</em>
-            </p>
-          </div>
-          
-          <div style="background: #333; padding: 20px; text-align: center;">
-            <p style="color: #aaa; font-size: 12px; margin: 0;">
-              Cet email est une confirmation automatique. Pour toute question, contactez-nous directement.
-            </p>
-          </div>
-        </div>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Confirmation de votre demande</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+            <tr>
+              <td style="padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                  
+                  <!-- Header with Logo -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #B87333 0%, #8B5A2B 100%); padding: 30px 40px; text-align: center;">
+                      <img src="${logoUrl}" alt="Le Cuivre Électrique" style="max-width: 180px; height: auto; margin-bottom: 15px;" onerror="this.style.display='none'">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
+                        Merci pour votre confiance !
+                      </h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Main Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="font-size: 18px; color: #333333; line-height: 1.6; margin: 0 0 20px 0;">
+                        Bonjour,
+                      </p>
+                      
+                      <p style="font-size: 16px; color: #555555; line-height: 1.7; margin: 0 0 25px 0;">
+                        Nous avons bien reçu votre demande via notre site.<br>
+                        Notre équipe vous recontactera dans les plus brefs délais.
+                      </p>
+                      
+                      <!-- Response Delay Box -->
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="background: linear-gradient(135deg, #f8f4f0 0%, #f0ebe5 100%); border-radius: 10px; padding: 25px; text-align: center; border-left: 4px solid #B87333;">
+                            <p style="font-size: 16px; color: #666666; margin: 0 0 8px 0;">
+                              ⏱ Délai habituel de réponse :
+                            </p>
+                            <p style="font-size: 28px; color: #B87333; margin: 0; font-weight: 700;">
+                              ${responseDelay}
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p style="font-size: 16px; color: #555555; line-height: 1.7; margin: 30px 0 25px 0;">
+                        Merci pour votre confiance.
+                      </p>
+                      
+                      <p style="font-size: 16px; color: #555555; line-height: 1.7; margin: 0;">
+                        Cordialement,<br>
+                        <strong style="color: #B87333;">Le Cuivre Électrique</strong>
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Urgent Contact Box -->
+                  <tr>
+                    <td style="padding: 0 40px 30px 40px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="background: linear-gradient(135deg, #B87333 0%, #8B5A2B 100%); border-radius: 10px; padding: 25px; text-align: center;">
+                            <p style="color: #ffffff; font-size: 16px; margin: 0 0 10px 0;">
+                              ⚡ Besoin urgent ? Appelez-nous !
+                            </p>
+                            <p style="color: #ffffff; font-size: 24px; margin: 0; font-weight: 700;">
+                              <a href="tel:0485755227" style="color: #ffffff; text-decoration: none;">0485 75 52 27</a>
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer / Signature -->
+                  <tr>
+                    <td style="background-color: #2d2d2d; padding: 30px 40px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="text-align: center;">
+                            <img src="${logoUrl}" alt="Le Cuivre Électrique" style="max-width: 120px; height: auto; margin-bottom: 15px; opacity: 0.9;" onerror="this.style.display='none'">
+                            <p style="color: #B87333; font-size: 16px; font-weight: 600; margin: 0 0 10px 0;">
+                              Le Cuivre Électrique
+                            </p>
+                            <p style="color: #aaaaaa; font-size: 14px; margin: 0 0 5px 0;">
+                              📞 <a href="tel:0485755227" style="color: #aaaaaa; text-decoration: none;">0485 75 52 27</a>
+                            </p>
+                            <p style="color: #aaaaaa; font-size: 14px; margin: 0 0 15px 0;">
+                              🌐 <a href="https://cuivre-electrique.com" style="color: #B87333; text-decoration: none;">cuivre-electrique.com</a>
+                            </p>
+                            <p style="color: #777777; font-size: 11px; margin: 15px 0 0 0; border-top: 1px solid #444; padding-top: 15px;">
+                              Cet email est une confirmation automatique. Pour toute question, contactez-nous directement.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `,
     });
 
