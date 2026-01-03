@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Send, Phone, Mail, CheckCircle } from "lucide-react";
+import { Send, Phone, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
 const projectTypes = [
@@ -24,9 +24,19 @@ const projectTypes = [
   "Autre",
 ];
 
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  projectType?: string;
+  message?: string;
+}
+
 const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -34,6 +44,7 @@ const ContactSection = () => {
     projectType: "",
     message: "",
     wantsCallback: false,
+    honeypot: "", // Hidden anti-spam field
   });
 
   const leftRef = useRef(null);
@@ -41,8 +52,58 @@ const ContactSection = () => {
   const isLeftInView = useInView(leftRef, { once: true, margin: "-100px" });
   const isRightInView = useInView(rightRef, { once: true, margin: "-100px" });
 
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Le nom est requis";
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = "Le nom doit contenir au moins 2 caractères";
+    } else if (formData.name.length > 100) {
+      newErrors.name = "Le nom est trop long (max 100 caractères)";
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "L'email est requis";
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = "L'adresse email n'est pas valide";
+    } else if (formData.email.length > 255) {
+      newErrors.email = "L'email est trop long";
+    }
+
+    // Phone validation (optional but if provided, should be reasonable)
+    if (formData.phone && formData.phone.length > 30) {
+      newErrors.phone = "Le numéro de téléphone est trop long";
+    }
+
+    // Message validation
+    if (formData.message && formData.message.length > 5000) {
+      newErrors.message = "Le message est trop long (max 5000 caractères)";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Reset status
+    setSubmitStatus('idle');
+    
+    // Validate form
+    if (!validateForm()) {
+      toast({
+        title: "Formulaire incomplet",
+        description: "Veuillez corriger les erreurs dans le formulaire.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -54,16 +115,26 @@ const ContactSection = () => {
           projectType: formData.projectType,
           message: formData.message.trim(),
           wantsCallback: formData.wantsCallback,
+          honeypot: formData.honeypot, // Pass honeypot field
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw new Error(error.message || "Erreur lors de l'envoi");
+      }
 
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      setSubmitStatus('success');
       toast({
-        title: "Demande envoyée !",
-        description: "Vous recevrez une confirmation par email. Nous vous recontacterons sous 48h.",
+        title: "✅ Demande envoyée !",
+        description: "Vous recevrez une confirmation par email. Nous vous recontacterons sous 24-48h.",
       });
 
+      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -71,17 +142,36 @@ const ContactSection = () => {
         projectType: "",
         message: "",
         wantsCallback: false,
+        honeypot: "",
       });
+      setErrors({});
+
     } catch (error: any) {
       console.error("Error sending contact form:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer ou nous appeler directement.",
-        variant: "destructive",
-      });
+      setSubmitStatus('error');
+      
+      // Check for rate limit error
+      if (error.message?.includes("Trop de demandes")) {
+        toast({
+          title: "⏳ Trop de demandes",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "❌ Erreur d'envoi",
+          description: "Veuillez réessayer ou appelez-nous directement au 0485 75 52 27.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const resetForm = () => {
+    setSubmitStatus('idle');
+    setErrors({});
   };
 
   return (
@@ -194,7 +284,7 @@ const ContactSection = () => {
                   <div>
                     <p className="font-medium text-card-foreground mb-1">Réponse rapide garantie</p>
                     <p className="text-sm text-muted-foreground">
-                      Nous répondons à toutes les demandes sous 24h ouvrées.
+                      Nous répondons à toutes les demandes sous 24-48h ouvrées.
                     </p>
                   </div>
                 </div>
@@ -210,154 +300,260 @@ const ContactSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl shadow-black/10"
           >
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-card-foreground mb-2"
+            <AnimatePresence mode="wait">
+              {submitStatus === 'success' ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", delay: 0.2 }}
+                    className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6"
                   >
-                    Nom complet *
-                  </label>
-                  <Input
-                    id="name"
+                    <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-foreground mb-3">Merci pour votre demande !</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm">
+                    Votre message a bien été envoyé. Nous vous recontacterons dans les <strong>24 à 48 heures</strong>.
+                  </p>
+                  <Button onClick={resetForm} variant="outline">
+                    Envoyer une autre demande
+                  </Button>
+                </motion.div>
+              ) : submitStatus === 'error' ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", delay: 0.2 }}
+                    className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6"
+                  >
+                    <AlertCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-foreground mb-3">Erreur d'envoi</h3>
+                  <p className="text-muted-foreground mb-4 max-w-sm">
+                    Une erreur est survenue lors de l'envoi de votre message.
+                  </p>
+                  <p className="text-foreground font-medium mb-6">
+                    Appelez-nous directement au <a href="tel:+32485755227" className="text-primary hover:underline">0485 75 52 27</a>
+                  </p>
+                  <Button onClick={resetForm} variant="outline">
+                    Réessayer
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-5"
+                >
+                  {/* Honeypot field - hidden from users, visible to bots */}
+                  <input
                     type="text"
-                    placeholder="Jean Dupont"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
+                    name="website"
+                    value={formData.honeypot}
+                    onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    style={{ 
+                      position: 'absolute', 
+                      left: '-9999px', 
+                      opacity: 0, 
+                      pointerEvents: 'none' 
+                    }}
+                    aria-hidden="true"
                   />
-                </div>
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-card-foreground mb-2"
-                  >
-                    Email *
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="jean@exemple.be"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    required
-                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-card-foreground mb-2"
-                  >
-                    Téléphone *
-                  </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+32 XXX XX XX XX"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    required
-                    className="h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="projectType"
-                    className="block text-sm font-medium text-card-foreground mb-2"
-                  >
-                    Type de travaux *
-                  </label>
-                  <Select
-                    value={formData.projectType}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, projectType: value })
-                    }
-                    required
-                  >
-                    <SelectTrigger className="h-12 bg-background border-border rounded-xl text-foreground">
-                      <SelectValue placeholder="Sélectionnez..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border border-border rounded-xl">
-                      {projectTypes.map((type) => (
-                        <SelectItem key={type} value={type} className="text-card-foreground">
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-card-foreground mb-2"
+                      >
+                        Nom complet *
+                      </label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Jean Dupont"
+                        value={formData.name}
+                        onChange={(e) => {
+                          setFormData({ ...formData, name: e.target.value });
+                          if (errors.name) setErrors({ ...errors, name: undefined });
+                        }}
+                        required
+                        maxLength={100}
+                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.name ? 'border-red-500' : ''}`}
+                      />
+                      {errors.name && (
+                        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-card-foreground mb-2"
+                      >
+                        Email *
+                      </label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="jean@exemple.be"
+                        value={formData.email}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (errors.email) setErrors({ ...errors, email: undefined });
+                        }}
+                        required
+                        maxLength={255}
+                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.email ? 'border-red-500' : ''}`}
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                      )}
+                    </div>
+                  </div>
 
-              <div>
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium text-card-foreground mb-2"
-                >
-                  Message
-                </label>
-                <Textarea
-                  id="message"
-                  placeholder="Décrivez votre projet..."
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  className="bg-background border-border rounded-xl resize-none focus:border-primary text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-sm font-medium text-card-foreground mb-2"
+                      >
+                        Téléphone
+                      </label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+32 XXX XX XX XX"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phone: e.target.value });
+                          if (errors.phone) setErrors({ ...errors, phone: undefined });
+                        }}
+                        maxLength={30}
+                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.phone ? 'border-red-500' : ''}`}
+                      />
+                      {errors.phone && (
+                        <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="projectType"
+                        className="block text-sm font-medium text-card-foreground mb-2"
+                      >
+                        Type de travaux
+                      </label>
+                      <Select
+                        value={formData.projectType}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, projectType: value })
+                        }
+                      >
+                        <SelectTrigger className="h-12 bg-background border-border rounded-xl text-foreground">
+                          <SelectValue placeholder="Sélectionnez..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border border-border rounded-xl">
+                          {projectTypes.map((type) => (
+                            <SelectItem key={type} value={type} className="text-card-foreground">
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="callback"
-                  checked={formData.wantsCallback}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, wantsCallback: checked as boolean })
-                  }
-                  className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <label
-                  htmlFor="callback"
-                  className="text-sm text-muted-foreground cursor-pointer"
-                >
-                  Je souhaite être rappelé(e)
-                </label>
-              </div>
+                  <div>
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-medium text-card-foreground mb-2"
+                    >
+                      Message
+                    </label>
+                    <Textarea
+                      id="message"
+                      placeholder="Décrivez votre projet..."
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) => {
+                        setFormData({ ...formData, message: e.target.value });
+                        if (errors.message) setErrors({ ...errors, message: undefined });
+                      }}
+                      maxLength={5000}
+                      className={`bg-background border-border rounded-xl resize-none focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.message ? 'border-red-500' : ''}`}
+                    />
+                    {errors.message && (
+                      <p className="text-red-500 text-xs mt-1">{errors.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1 text-right">
+                      {formData.message.length}/5000
+                    </p>
+                  </div>
 
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  type="submit"
-                  variant="copper"
-                  size="xl"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    "Envoi en cours..."
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      Envoyer ma demande
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-            </form>
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="callback"
+                      checked={formData.wantsCallback}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, wantsCallback: checked as boolean })
+                      }
+                      className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <label
+                      htmlFor="callback"
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
+                      Je souhaite être rappelé(e)
+                    </label>
+                  </div>
+
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      type="submit"
+                      variant="copper"
+                      size="xl"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
+                          />
+                          Envoi en cours...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5" />
+                          Envoyer ma demande
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </div>
