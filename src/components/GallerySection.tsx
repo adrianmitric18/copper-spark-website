@@ -29,6 +29,9 @@ import ledAmbiance1 from "@/assets/gallery/eclairage-led/led-ambiance-1.jpg";
 import ledSpot1 from "@/assets/gallery/eclairage-led/led-spot-1.jpg";
 import ledCuisine1 from "@/assets/gallery/eclairage-led/led-cuisine-1.jpg";
 import ledPlafond1 from "@/assets/gallery/eclairage-led/led-plafond-1.jpg";
+import comptoirLedTurquoise from "@/assets/gallery/eclairage-led/comptoir-led-turquoise.jpg";
+import plafondCathedrale from "@/assets/gallery/eclairage-led/plafond-cathedrale.jpg";
+import etagereCuisineLed from "@/assets/gallery/eclairage-led/etagere-cuisine-led.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -92,14 +95,17 @@ const categories = [
     images: [
       { id: 1, title: "Façade illuminée de nuit", image: facadeNuit },
       { id: 2, title: "Bar LED design", image: barLedVert },
-      { id: 3, title: "Luminaire suspendu moderne", image: luminaireDesign },
-      { id: 4, title: "Garage LED professionnel", image: garageLed1 },
-      { id: 5, title: "Atelier LED complet", image: garageLed2 },
-      { id: 6, title: "Plafond indirect LED", image: plafondIndirect },
-      { id: 7, title: "Ambiance LED moderne", image: ledAmbiance1 },
-      { id: 8, title: "Spots LED encastrés", image: ledSpot1 },
-      { id: 9, title: "Cuisine LED moderne", image: ledCuisine1 },
-      { id: 10, title: "Faux-plafond LED", image: ledPlafond1 },
+      { id: 3, title: "Comptoir LED turquoise", image: comptoirLedTurquoise },
+      { id: 4, title: "Luminaire suspendu moderne", image: luminaireDesign },
+      { id: 5, title: "Garage LED professionnel", image: garageLed1 },
+      { id: 6, title: "Atelier LED complet", image: garageLed2 },
+      { id: 7, title: "Plafond cathédrale LED", image: plafondCathedrale },
+      { id: 8, title: "Plafond indirect LED", image: plafondIndirect },
+      { id: 9, title: "Étagère cuisine LED", image: etagereCuisineLed },
+      { id: 10, title: "Ambiance LED moderne", image: ledAmbiance1 },
+      { id: 11, title: "Spots LED encastrés", image: ledSpot1 },
+      { id: 12, title: "Cuisine LED moderne", image: ledCuisine1 },
+      { id: 13, title: "Faux-plafond LED", image: ledPlafond1 },
     ],
   },
   {
