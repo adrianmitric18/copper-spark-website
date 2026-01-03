@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Images, Zap } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import LogoIcon from "@/components/LogoIcon";
 
 // Import gallery images - Tableaux électriques
 import tableauRgie from "@/assets/gallery/tableau-rgie.jpg";
@@ -376,7 +377,7 @@ const GallerySection = () => {
                     {/* Zoom icon */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-white" />
+                        <LogoIcon className="w-5 h-5 text-white" />
                       </div>
                     </div>
                   </motion.div>
@@ -699,7 +700,7 @@ const CategoryCard = ({ category, index, onClick }: CategoryCardProps) => {
             boxShadow: "0 0 50px rgba(255, 200, 100, 1), 0 0 80px rgba(232, 121, 59, 0.8)",
           }}
         >
-          <Zap className="w-7 h-7 text-white" fill="currentColor" />
+          <LogoIcon className="w-7 h-7 text-white" />
           
           {/* Sparkle effects on the icon */}
           <motion.div
