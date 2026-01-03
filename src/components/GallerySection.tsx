@@ -19,14 +19,12 @@ import priseSolDesign from "@/assets/gallery/prise-sol-design.jpg";
 import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
 
 // Import gallery images - Ambiances Lumineuses (LED)
-import ledAmbiance1 from "@/assets/gallery/eclairage-led/led-ambiance-1.jpg";
-import ledAmbiance2 from "@/assets/gallery/eclairage-led/led-ambiance-2.jpg";
-import ledSpot1 from "@/assets/gallery/eclairage-led/led-spot-1.jpg";
-import ledSpot2 from "@/assets/gallery/eclairage-led/led-spot-2.jpg";
-import ledCuisine1 from "@/assets/gallery/eclairage-led/led-cuisine-1.jpg";
-import ledCuisine2 from "@/assets/gallery/eclairage-led/led-cuisine-2.jpg";
-import ledPlafond1 from "@/assets/gallery/eclairage-led/led-plafond-1.jpg";
-import ledPlafond2 from "@/assets/gallery/eclairage-led/led-plafond-2.jpg";
+import luminaireDesign from "@/assets/gallery/eclairage-led/luminaire-design.jpg";
+import garageLed1 from "@/assets/gallery/eclairage-led/garage-led-1.jpg";
+import garageLed2 from "@/assets/gallery/eclairage-led/garage-led-2.jpg";
+import facadeNuit from "@/assets/gallery/eclairage-led/facade-nuit.jpg";
+import barLedVert from "@/assets/gallery/eclairage-led/bar-led-vert.jpg";
+import plafondIndirect from "@/assets/gallery/eclairage-led/plafond-indirect.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -86,16 +84,14 @@ const categories = [
     id: "eclairage",
     label: "Ambiances Lumineuses",
     description: "Éclairage LED sur mesure",
-    coverImage: ledAmbiance1,
+    coverImage: facadeNuit,
     images: [
-      { id: 1, title: "Ambiance LED salon", image: ledAmbiance1 },
-      { id: 2, title: "Éclairage indirect moderne", image: ledAmbiance2 },
-      { id: 3, title: "Spots encastrés", image: ledSpot1 },
-      { id: 4, title: "Spots design", image: ledSpot2 },
-      { id: 5, title: "Éclairage cuisine moderne", image: ledCuisine1 },
-      { id: 6, title: "LED sous meubles", image: ledCuisine2 },
-      { id: 7, title: "Faux-plafond LED", image: ledPlafond1 },
-      { id: 8, title: "Plafond lumineux", image: ledPlafond2 },
+      { id: 1, title: "Façade illuminée de nuit", image: facadeNuit },
+      { id: 2, title: "Bar LED design", image: barLedVert },
+      { id: 3, title: "Luminaire suspendu moderne", image: luminaireDesign },
+      { id: 4, title: "Garage LED professionnel", image: garageLed1 },
+      { id: 5, title: "Atelier LED complet", image: garageLed2 },
+      { id: 6, title: "Plafond indirect LED", image: plafondIndirect },
     ],
   },
   {
