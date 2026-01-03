@@ -239,8 +239,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to send owner email:", ownerEmailResponse.error);
       return new Response(
         JSON.stringify({ 
-          error: "Erreur lors de l'envoi du message. Veuillez réessayer ou appelez-nous au 0485 75 52 27.",
-          details: ownerEmailResponse.error.message 
+          error: "Erreur lors de l'envoi du message. Veuillez réessayer ou appelez-nous au 0485 75 52 27."
         }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
@@ -317,11 +316,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-contact-email function:", error);
+    console.error("Error in send-contact-email function:", {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
     return new Response(
       JSON.stringify({ 
-        error: "Une erreur est survenue. Veuillez réessayer ou appelez-nous au 0485 75 52 27.",
-        details: error.message 
+        error: "Une erreur est survenue. Veuillez réessayer ou appelez-nous au 0485 75 52 27."
       }),
       {
         status: 500,
