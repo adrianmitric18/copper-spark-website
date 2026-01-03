@@ -28,6 +28,17 @@ import plafondIndirect from "@/assets/gallery/eclairage-led/plafond-indirect.jpg
 import railLed from "@/assets/gallery/eclairage-led/rail-led.jpg";
 import seuilLed from "@/assets/gallery/eclairage-led/seuil-led.jpg";
 import salonIndirect from "@/assets/gallery/eclairage-led/salon-indirect.jpg";
+import ledAmbiance1 from "@/assets/gallery/eclairage-led/led-ambiance-1.jpg";
+import ledAmbiance2 from "@/assets/gallery/eclairage-led/led-ambiance-2.jpg";
+import ledSpot1 from "@/assets/gallery/eclairage-led/led-spot-1.jpg";
+import ledSpot2 from "@/assets/gallery/eclairage-led/led-spot-2.jpg";
+import ledCuisine1 from "@/assets/gallery/eclairage-led/led-cuisine-1.jpg";
+import ledCuisine2 from "@/assets/gallery/eclairage-led/led-cuisine-2.jpg";
+import ledPlafond1 from "@/assets/gallery/eclairage-led/led-plafond-1.jpg";
+import ledPlafond2 from "@/assets/gallery/eclairage-led/led-plafond-2.jpg";
+import ledPlafond3 from "@/assets/gallery/eclairage-led/led-plafond-3.jpg";
+import ledPlafond4 from "@/assets/gallery/eclairage-led/led-plafond-4.jpg";
+import salonVueLarge from "@/assets/gallery/eclairage-led/salon-vue-large.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -98,6 +109,17 @@ const categories = [
       { id: 7, title: "Rail LED encastré", image: railLed },
       { id: 8, title: "LED seuil de porte", image: seuilLed },
       { id: 9, title: "Salon éclairage indirect", image: salonIndirect },
+      { id: 10, title: "Ambiance LED moderne", image: ledAmbiance1 },
+      { id: 11, title: "Éclairage d'ambiance", image: ledAmbiance2 },
+      { id: 12, title: "Spots LED encastrés", image: ledSpot1 },
+      { id: 13, title: "Spots design", image: ledSpot2 },
+      { id: 14, title: "Cuisine LED moderne", image: ledCuisine1 },
+      { id: 15, title: "LED sous meubles", image: ledCuisine2 },
+      { id: 16, title: "Faux-plafond LED 1", image: ledPlafond1 },
+      { id: 17, title: "Faux-plafond LED 2", image: ledPlafond2 },
+      { id: 18, title: "Faux-plafond LED 3", image: ledPlafond3 },
+      { id: 19, title: "Faux-plafond LED 4", image: ledPlafond4 },
+      { id: 20, title: "Salon vue panoramique", image: salonVueLarge },
     ],
   },
   {
