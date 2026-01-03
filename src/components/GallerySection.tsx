@@ -12,11 +12,21 @@ import tableauCompact from "@/assets/gallery/tableaux/tableau-compact.jpg";
 import tableauSchneider from "@/assets/gallery/tableaux/tableau-schneider.jpg";
 import tableauVitre400v from "@/assets/gallery/tableaux/tableau-vitre-400v.jpg";
 import tableauSchneiderOuvert from "@/assets/gallery/tableaux/tableau-schneider-ouvert.jpg";
+import installationIndustrielle from "@/assets/gallery/tableaux/installation-industrielle.jpg";
+import tableauSchneiderCablage from "@/assets/gallery/tableaux/tableau-schneider-cablage.jpg";
+import tableauAbbGrand from "@/assets/gallery/tableaux/tableau-abb-grand.jpg";
+import tableauNeufInstallation from "@/assets/gallery/tableaux/tableau-neuf-installation.jpg";
+import installationDomotique from "@/assets/gallery/tableaux/installation-domotique.jpg";
+import couloirTechnique from "@/assets/gallery/tableaux/couloir-technique.jpg";
 
 // Import gallery images - Prises
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
 import priseSolDesign from "@/assets/gallery/prise-sol-design.jpg";
 import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
+import prisesDesignUsb from "@/assets/gallery/prises-design-usb.jpg";
+import prisesMeubleBois from "@/assets/gallery/prises-meuble-bois.jpg";
+import prisesMarbreCuisine from "@/assets/gallery/prises-marbre-cuisine.jpg";
+import priseMeubleArrondi from "@/assets/gallery/prise-meuble-arrondi.jpg";
 
 // Import gallery images - Ambiances Lumineuses (LED) - Toutes les photos
 import luminaireDesign from "@/assets/gallery/eclairage-led/luminaire-design.jpg";
@@ -94,9 +104,19 @@ const categories = [
       { id: 7, title: "Tableau Schneider", image: tableauSchneider },
       { id: 8, title: "Tableau vitré 3x400V+N", image: tableauVitre400v },
       { id: 9, title: "Tableau Schneider ouvert", image: tableauSchneiderOuvert },
-      { id: 10, title: "Installation complète", image: installationComplete },
-      { id: 11, title: "Prise de sol design", image: priseSolDesign },
-      { id: 12, title: "Prise étanche intégrée", image: priseEtancheBriques },
+      { id: 10, title: "Installation industrielle", image: installationIndustrielle },
+      { id: 11, title: "Tableau Schneider câblage", image: tableauSchneiderCablage },
+      { id: 12, title: "Grand tableau ABB complet", image: tableauAbbGrand },
+      { id: 13, title: "Tableau neuf en installation", image: tableauNeufInstallation },
+      { id: 14, title: "Installation domotique LED", image: installationDomotique },
+      { id: 15, title: "Couloir technique câblage", image: couloirTechnique },
+      { id: 16, title: "Installation complète", image: installationComplete },
+      { id: 17, title: "Prise de sol design", image: priseSolDesign },
+      { id: 18, title: "Prise étanche intégrée", image: priseEtancheBriques },
+      { id: 19, title: "Prises design avec USB", image: prisesDesignUsb },
+      { id: 20, title: "Prises intégrées meuble bois", image: prisesMeubleBois },
+      { id: 21, title: "Prises marbre cuisine", image: prisesMarbreCuisine },
+      { id: 22, title: "Prise meuble arrondi", image: priseMeubleArrondi },
     ],
   },
   {
