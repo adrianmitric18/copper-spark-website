@@ -9,6 +9,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// HTML escape function to prevent XSS in emails
+const escapeHtml = (text: string): string => {
+  if (!text) return "";
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+};
+
 interface ContactRequest {
   name: string;
   email: string;
@@ -170,19 +183,19 @@ const handler = async (req: Request): Promise<Response> => {
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
               <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #333; width: 140px;">👤 Nom</td>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #eee; color: #555;">${name.trim()}</td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #eee; color: #555;">${escapeHtml(name.trim())}</td>
               </tr>
               <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #333;">📧 Email</td>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #eee;"><a href="mailto:${email.trim()}" style="color: #B87333;">${email.trim()}</a></td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #eee;"><a href="mailto:${escapeHtml(email.trim())}" style="color: #B87333;">${escapeHtml(email.trim())}</a></td>
               </tr>
               <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #333;">📞 Téléphone</td>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #eee;"><a href="tel:${phone?.trim() || ''}" style="color: #B87333;">${phone?.trim() || "Non fourni"}</a></td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #eee;"><a href="tel:${escapeHtml(phone?.trim() || '')}" style="color: #B87333;">${escapeHtml(phone?.trim()) || "Non fourni"}</a></td>
               </tr>
               <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #333;">🔧 Type de travaux</td>
-                <td style="padding: 12px 8px; border-bottom: 1px solid #eee; color: #555;">${projectType || "Non spécifié"}</td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid #eee; color: #555;">${escapeHtml(projectType) || "Non spécifié"}</td>
               </tr>
               <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #eee; font-weight: bold; color: #333;">📞 Rappel souhaité</td>
@@ -192,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             ${message?.trim() ? `
               <h2 style="color: #B87333; border-bottom: 2px solid #B87333; padding-bottom: 10px;">💬 Message</h2>
-              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #B87333; white-space: pre-wrap; color: #333; line-height: 1.6;">${message.trim()}</div>
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #B87333; white-space: pre-wrap; color: #333; line-height: 1.6;">${escapeHtml(message.trim())}</div>
             ` : ''}
             
             <div style="margin-top: 30px; padding: 20px; background: #f0f0f0; border-radius: 8px;">
@@ -202,10 +215,10 @@ const handler = async (req: Request): Promise<Response> => {
                   <td style="padding: 4px 0;"><strong>Date:</strong> ${formattedDate}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0;"><strong>IP:</strong> ${clientIP}</td>
+                  <td style="padding: 4px 0;"><strong>IP:</strong> ${escapeHtml(clientIP)}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; word-break: break-all;"><strong>Navigateur:</strong> ${userAgent.substring(0, 150)}</td>
+                  <td style="padding: 4px 0; word-break: break-all;"><strong>Navigateur:</strong> ${escapeHtml(userAgent.substring(0, 150))}</td>
                 </tr>
               </table>
             </div>
@@ -246,11 +259,11 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="padding: 30px;">
             <p style="font-size: 18px; color: #333; line-height: 1.6; margin-top: 0;">
-              Bonjour <strong>${name.trim()}</strong>,
+              Bonjour <strong>${escapeHtml(name.trim())}</strong>,
             </p>
             
             <p style="font-size: 16px; color: #555; line-height: 1.6;">
-              Nous avons bien reçu votre demande${projectType ? ` concernant <strong>${projectType}</strong>` : ''}.
+              Nous avons bien reçu votre demande${projectType ? ` concernant <strong>${escapeHtml(projectType)}</strong>` : ''}.
             </p>
             
             <div style="background: #f8f9fa; border-radius: 10px; padding: 25px; margin: 25px 0; text-align: center;">
@@ -261,7 +274,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             ${wantsCallback ? `
               <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                Comme demandé, nous vous rappellerons au <strong>${phone?.trim() || "numéro fourni"}</strong>.
+                Comme demandé, nous vous rappellerons au <strong>${escapeHtml(phone?.trim()) || "numéro fourni"}</strong>.
               </p>
             ` : ''}
             
