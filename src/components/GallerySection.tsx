@@ -111,17 +111,17 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-80 group-hover:opacity-70 transition-opacity duration-500" />
         </div>
         
-        {/* Animated electric vortex background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-          {/* Central glow */}
+        {/* Animated electric vortex background - ALWAYS VISIBLE */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Central glow - always visible, intensifies on hover */}
           <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-500"
             style={{
-              background: 'radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, hsl(var(--primary) / 0.5) 0%, transparent 70%)',
             }}
             animate={{
               scale: [1, 1.5, 1],
-              opacity: [0.3, 0.6, 0.3],
+              opacity: [0.4, 0.7, 0.4],
             }}
             transition={{
               duration: 2,
@@ -130,12 +130,12 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
             }}
           />
           
-          {/* Secondary pulsing ring */}
+          {/* Secondary pulsing ring - always visible */}
           <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-primary/30"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-primary/40 opacity-50 group-hover:opacity-80 transition-opacity duration-500"
             animate={{
               scale: [1, 1.3, 1],
-              opacity: [0.2, 0.5, 0.2],
+              opacity: [0.3, 0.6, 0.3],
             }}
             transition={{
               duration: 3,
@@ -145,11 +145,11 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
             }}
           />
           
-          {/* Orbiting particles */}
+          {/* Orbiting particles - always visible */}
           {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-primary"
+              className="absolute top-1/2 left-1/2 w-2 h-2 rounded-full bg-primary opacity-40 group-hover:opacity-100 transition-opacity duration-500"
               style={{
                 boxShadow: '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5)',
               }}
@@ -164,7 +164,6 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
                   Math.sin((i * Math.PI * 2) / 8 + Math.PI) * 80,
                   Math.sin((i * Math.PI * 2) / 8) * 60,
                 ],
-                opacity: [0.5, 1, 0.5],
               }}
               transition={{
                 duration: 3 + i * 0.3,
@@ -175,18 +174,18 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
             />
           ))}
 
-          {/* Lightning arcs */}
+          {/* Lightning arcs - always visible */}
           {lightningArcs.map((arc) => (
             <motion.div
               key={arc.id}
-              className="absolute top-1/2 left-1/2 h-0.5 bg-gradient-to-r from-primary via-primary to-transparent origin-left"
+              className="absolute top-1/2 left-1/2 h-0.5 bg-gradient-to-r from-primary via-primary to-transparent origin-left opacity-50 group-hover:opacity-100 transition-opacity duration-500"
               style={{
                 width: arc.length,
                 rotate: `${arc.startAngle}deg`,
                 boxShadow: '0 0 8px hsl(var(--primary)), 0 0 16px hsl(var(--primary) / 0.5)',
               }}
               animate={{
-                opacity: [0, 1, 0],
+                opacity: [0, 0.8, 0],
                 scaleX: [0.3, 1, 0.3],
               }}
               transition={{
@@ -198,9 +197,9 @@ const CategoryCard = ({ category, index }: CategoryCardProps) => {
             />
           ))}
           
-          {/* Rotating ring of dots */}
+          {/* Rotating ring of dots - always visible */}
           <motion.div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 opacity-40 group-hover:opacity-80 transition-opacity duration-500"
             animate={{ rotate: 360 }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           >
