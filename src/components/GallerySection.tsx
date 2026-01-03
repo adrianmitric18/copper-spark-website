@@ -25,6 +25,9 @@ import garageLed2 from "@/assets/gallery/eclairage-led/garage-led-2.jpg";
 import facadeNuit from "@/assets/gallery/eclairage-led/facade-nuit.jpg";
 import barLedVert from "@/assets/gallery/eclairage-led/bar-led-vert.jpg";
 import plafondIndirect from "@/assets/gallery/eclairage-led/plafond-indirect.jpg";
+import railLed from "@/assets/gallery/eclairage-led/rail-led.jpg";
+import seuilLed from "@/assets/gallery/eclairage-led/seuil-led.jpg";
+import salonIndirect from "@/assets/gallery/eclairage-led/salon-indirect.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -92,6 +95,9 @@ const categories = [
       { id: 4, title: "Garage LED professionnel", image: garageLed1 },
       { id: 5, title: "Atelier LED complet", image: garageLed2 },
       { id: 6, title: "Plafond indirect LED", image: plafondIndirect },
+      { id: 7, title: "Rail LED encastré", image: railLed },
+      { id: 8, title: "LED seuil de porte", image: seuilLed },
+      { id: 9, title: "Salon éclairage indirect", image: salonIndirect },
     ],
   },
   {
