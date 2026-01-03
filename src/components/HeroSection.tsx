@@ -1,4 +1,5 @@
-import { Zap, ArrowDown } from "lucide-react";
+import { ArrowDown } from "lucide-react";
+import LogoIcon from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -225,7 +226,7 @@ const HeroSection = () => {
             repeat: Infinity,
             ease: "linear"
           }}>
-              <Zap className="w-4 h-4" />
+              <LogoIcon className="w-4 h-4" />
             </motion.div>
             <span className="text-2xl font-serif text-center">Artisan Électricien </span>
           </motion.div>
@@ -314,7 +315,7 @@ const HeroSection = () => {
           }}>
               <Button variant="copperOutline" size="xl" asChild className="min-w-[200px]">
                 <a href="tel:+32485755227" className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
+                  <LogoIcon className="w-5 h-5" />
                   0485 75 52 27
                 </a>
               </Button>

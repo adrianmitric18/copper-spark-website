@@ -1,5 +1,6 @@
-import { Mail, Phone, MapPin, Zap } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import LogoIcon from "@/components/LogoIcon";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -12,7 +13,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl bg-gradient-copper flex items-center justify-center shadow-copper">
-                <Zap className="w-6 h-6 text-primary-foreground" strokeWidth={2.5} />
+                <LogoIcon className="w-6 h-6 text-primary-foreground" />
               </div>
               <div className="flex flex-col">
                 <span className="font-display text-lg font-bold text-foreground leading-tight">
