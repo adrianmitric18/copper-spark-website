@@ -21,6 +21,8 @@ import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
 import switchReseau from "@/assets/gallery/switch-reseau.jpg";
+import baieBrassageAvant from "@/assets/gallery/installation-reseaux/baie-brassage-avant.jpg";
+import baieBrassageFini from "@/assets/gallery/installation-reseaux/baie-brassage-fini.jpg";
 
 // Import gallery images - Décoration de Noël
 import illuminationsRue from "@/assets/gallery/noel/illuminations-rue.jpg";
@@ -74,10 +76,12 @@ const categories = [
     id: "reseaux",
     label: "Installation Réseaux",
     description: "Câblage et connectivité",
-    coverImage: switchReseau,
+    coverImage: baieBrassageFini,
     images: [
       { id: 1, title: "Visiophone extérieur", image: visiophonieExterieur },
       { id: 2, title: "Installation réseau", image: switchReseau },
+      { id: 3, title: "Baie de brassage - Avant", image: baieBrassageAvant },
+      { id: 4, title: "Baie de brassage - Terminé", image: baieBrassageFini },
     ],
   },
   {
