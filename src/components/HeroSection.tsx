@@ -331,7 +331,7 @@ const HeroSection = () => {
         duration: 0.6,
         delay: 1.5
       }} className="mt-16 text-center">
-          <a href="#services" className="inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+          <a href="/services" className="inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <span className="text-sm font-medium">Découvrir nos services</span>
             <motion.div animate={{
             y: [0, 8, 0]
