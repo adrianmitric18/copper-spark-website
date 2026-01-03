@@ -77,14 +77,7 @@ const APropos = () => {
                   Je m'appelle <strong className="text-primary">Adrian Mitric</strong>, électricien indépendant et fondateur de Le Cuivre Électrique.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  J'interviens à Bruxelles et dans toute la Wallonie francophone pour les particuliers et les professionnels.
-                </p>
-                <p className="text-muted-foreground leading-relaxed mb-6">
-                  Fort de plusieurs années d'expérience en rénovation et en neuf, je réalise des installations électriques complètes, des mises en conformité RGIE, des dépannages, ainsi que des projets en énergies vertes (photovoltaïque, bornes de recharge).
-                </p>
-                <p className="text-lg text-foreground font-medium leading-relaxed">
-                  Ma priorité : un travail sûr, propre et conforme, réalisé avec sérieux et transparence.
-                  Chaque chantier est pensé pour être clair, efficace et sans stress pour le client.
+                  Électricien de confiance, j'accompagne mes clients en rénovation et en construction neuve pour des installations électriques complètes, des mises en conformité RGIE, des dépannages soignés et des solutions en énergies vertes (photovoltaïque, bornes de recharge).
                 </p>
               </motion.div>
             </div>
