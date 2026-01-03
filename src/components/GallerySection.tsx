@@ -52,7 +52,7 @@ import renneGeant from "@/assets/gallery/noel/renne-geant.jpg";
 const categories = [
   {
     id: "tableaux",
-    label: "Tableaux électriques",
+    label: "Tableaux et prises",
     description: "Installations aux normes RGIE",
     coverImage: tableauSchneider,
     images: [
@@ -65,17 +65,9 @@ const categories = [
       { id: 7, title: "Tableau Schneider", image: tableauSchneider },
       { id: 8, title: "Tableau vitré 3x400V+N", image: tableauVitre400v },
       { id: 9, title: "Tableau Schneider ouvert", image: tableauSchneiderOuvert },
-    ],
-  },
-  {
-    id: "eclairage",
-    label: "Éclairage LED & Moderne",
-    description: "Solutions d'éclairage innovantes",
-    coverImage: priseSolDesign,
-    images: [
-      { id: 1, title: "Installation complète", image: installationComplete },
-      { id: 2, title: "Prise de sol design", image: priseSolDesign },
-      { id: 3, title: "Prise étanche intégrée", image: priseEtancheBriques },
+      { id: 10, title: "Installation complète", image: installationComplete },
+      { id: 11, title: "Prise de sol design", image: priseSolDesign },
+      { id: 12, title: "Prise étanche intégrée", image: priseEtancheBriques },
     ],
   },
   {
