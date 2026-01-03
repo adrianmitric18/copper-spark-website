@@ -14,13 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contact_rate_limits: {
+        Row: {
+          id: string
+          ip_address: string
+          submitted_at: string
+        }
+        Insert: {
+          id?: string
+          ip_address: string
+          submitted_at?: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string
+          submitted_at?: string
+        }
+        Relationships: []
+      }
+      contact_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          message: string | null
+          name: string
+          phone: string | null
+          project_type: string | null
+          user_agent: string | null
+          wants_callback: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          name: string
+          phone?: string | null
+          project_type?: string | null
+          user_agent?: string | null
+          wants_callback?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          message?: string | null
+          name?: string
+          phone?: string | null
+          project_type?: string | null
+          user_agent?: string | null
+          wants_callback?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
