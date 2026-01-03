@@ -13,10 +13,20 @@ import tableauSchneider from "@/assets/gallery/tableaux/tableau-schneider.jpg";
 import tableauVitre400v from "@/assets/gallery/tableaux/tableau-vitre-400v.jpg";
 import tableauSchneiderOuvert from "@/assets/gallery/tableaux/tableau-schneider-ouvert.jpg";
 
-// Import gallery images - Éclairage LED
+// Import gallery images - Prises
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
 import priseSolDesign from "@/assets/gallery/prise-sol-design.jpg";
 import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
+
+// Import gallery images - Ambiances Lumineuses (LED)
+import ledAmbiance1 from "@/assets/gallery/eclairage-led/led-ambiance-1.jpg";
+import ledAmbiance2 from "@/assets/gallery/eclairage-led/led-ambiance-2.jpg";
+import ledSpot1 from "@/assets/gallery/eclairage-led/led-spot-1.jpg";
+import ledSpot2 from "@/assets/gallery/eclairage-led/led-spot-2.jpg";
+import ledCuisine1 from "@/assets/gallery/eclairage-led/led-cuisine-1.jpg";
+import ledCuisine2 from "@/assets/gallery/eclairage-led/led-cuisine-2.jpg";
+import ledPlafond1 from "@/assets/gallery/eclairage-led/led-plafond-1.jpg";
+import ledPlafond2 from "@/assets/gallery/eclairage-led/led-plafond-2.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -70,6 +80,22 @@ const categories = [
       { id: 10, title: "Installation complète", image: installationComplete },
       { id: 11, title: "Prise de sol design", image: priseSolDesign },
       { id: 12, title: "Prise étanche intégrée", image: priseEtancheBriques },
+    ],
+  },
+  {
+    id: "eclairage",
+    label: "Ambiances Lumineuses",
+    description: "Éclairage LED sur mesure",
+    coverImage: ledAmbiance1,
+    images: [
+      { id: 1, title: "Ambiance LED salon", image: ledAmbiance1 },
+      { id: 2, title: "Éclairage indirect moderne", image: ledAmbiance2 },
+      { id: 3, title: "Spots encastrés", image: ledSpot1 },
+      { id: 4, title: "Spots design", image: ledSpot2 },
+      { id: 5, title: "Éclairage cuisine moderne", image: ledCuisine1 },
+      { id: 6, title: "LED sous meubles", image: ledCuisine2 },
+      { id: 7, title: "Faux-plafond LED", image: ledPlafond1 },
+      { id: 8, title: "Plafond lumineux", image: ledPlafond2 },
     ],
   },
   {
