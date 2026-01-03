@@ -18,7 +18,7 @@ import installationComplete from "@/assets/gallery/installation-complete.jpg";
 import priseSolDesign from "@/assets/gallery/prise-sol-design.jpg";
 import priseEtancheBriques from "@/assets/gallery/prise-etanche-briques.jpg";
 
-// Import gallery images - Ambiances Lumineuses (LED) - Sélection des plus belles
+// Import gallery images - Ambiances Lumineuses (LED) - Toutes les photos
 import luminaireDesign from "@/assets/gallery/eclairage-led/luminaire-design.jpg";
 import garageLed1 from "@/assets/gallery/eclairage-led/garage-led-1.jpg";
 import garageLed2 from "@/assets/gallery/eclairage-led/garage-led-2.jpg";
@@ -26,12 +26,24 @@ import facadeNuit from "@/assets/gallery/eclairage-led/facade-nuit.jpg";
 import barLedVert from "@/assets/gallery/eclairage-led/bar-led-vert.jpg";
 import plafondIndirect from "@/assets/gallery/eclairage-led/plafond-indirect.jpg";
 import ledAmbiance1 from "@/assets/gallery/eclairage-led/led-ambiance-1.jpg";
+import ledAmbiance2 from "@/assets/gallery/eclairage-led/led-ambiance-2.jpg";
 import ledSpot1 from "@/assets/gallery/eclairage-led/led-spot-1.jpg";
+import ledSpot2 from "@/assets/gallery/eclairage-led/led-spot-2.jpg";
 import ledCuisine1 from "@/assets/gallery/eclairage-led/led-cuisine-1.jpg";
+import ledCuisine2 from "@/assets/gallery/eclairage-led/led-cuisine-2.jpg";
 import ledPlafond1 from "@/assets/gallery/eclairage-led/led-plafond-1.jpg";
+import ledPlafond2 from "@/assets/gallery/eclairage-led/led-plafond-2.jpg";
+import ledPlafond3 from "@/assets/gallery/eclairage-led/led-plafond-3.jpg";
+import ledPlafond4 from "@/assets/gallery/eclairage-led/led-plafond-4.jpg";
 import comptoirLedTurquoise from "@/assets/gallery/eclairage-led/comptoir-led-turquoise.jpg";
 import plafondCathedrale from "@/assets/gallery/eclairage-led/plafond-cathedrale.jpg";
 import etagereCuisineLed from "@/assets/gallery/eclairage-led/etagere-cuisine-led.jpg";
+import railLed from "@/assets/gallery/eclairage-led/rail-led.jpg";
+import salonIndirect from "@/assets/gallery/eclairage-led/salon-indirect.jpg";
+import salonVueLarge from "@/assets/gallery/eclairage-led/salon-vue-large.jpg";
+import seuilLed from "@/assets/gallery/eclairage-led/seuil-led.jpg";
+import ledSalonDesign from "@/assets/gallery/eclairage-led/led-salon-design.jpg";
+import ledCuisinePro from "@/assets/gallery/eclairage-led/led-cuisine-pro.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -103,9 +115,21 @@ const categories = [
       { id: 8, title: "Plafond indirect LED", image: plafondIndirect },
       { id: 9, title: "Étagère cuisine LED", image: etagereCuisineLed },
       { id: 10, title: "Ambiance LED moderne", image: ledAmbiance1 },
-      { id: 11, title: "Spots LED encastrés", image: ledSpot1 },
-      { id: 12, title: "Cuisine LED moderne", image: ledCuisine1 },
-      { id: 13, title: "Faux-plafond LED", image: ledPlafond1 },
+      { id: 11, title: "Ambiance LED chaleureuse", image: ledAmbiance2 },
+      { id: 12, title: "Spots LED encastrés", image: ledSpot1 },
+      { id: 13, title: "Spots LED design", image: ledSpot2 },
+      { id: 14, title: "Cuisine LED moderne", image: ledCuisine1 },
+      { id: 15, title: "Cuisine LED élégante", image: ledCuisine2 },
+      { id: 16, title: "Faux-plafond LED", image: ledPlafond1 },
+      { id: 17, title: "Plafond LED intégré", image: ledPlafond2 },
+      { id: 18, title: "Éclairage plafond moderne", image: ledPlafond3 },
+      { id: 19, title: "LED plafond professionnel", image: ledPlafond4 },
+      { id: 20, title: "Rail LED linéaire", image: railLed },
+      { id: 21, title: "Salon éclairage indirect", image: salonIndirect },
+      { id: 22, title: "Salon vue panoramique", image: salonVueLarge },
+      { id: 23, title: "Seuil LED décoratif", image: seuilLed },
+      { id: 24, title: "Salon LED design", image: ledSalonDesign },
+      { id: 25, title: "Cuisine professionnelle LED", image: ledCuisinePro },
     ],
   },
   {
