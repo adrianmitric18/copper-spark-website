@@ -54,6 +54,7 @@ import salonVueLarge from "@/assets/gallery/eclairage-led/salon-vue-large.jpg";
 import seuilLed from "@/assets/gallery/eclairage-led/seuil-led.jpg";
 import ledSalonDesign from "@/assets/gallery/eclairage-led/led-salon-design.jpg";
 import ledCuisinePro from "@/assets/gallery/eclairage-led/led-cuisine-pro.jpg";
+import panneauLedIndirect from "@/assets/gallery/eclairage-led/panneau-led-indirect.jpg";
 
 // Import gallery images - Installation réseaux
 import visiophonieExterieur from "@/assets/gallery/visiophone-exterieur.jpg";
@@ -150,6 +151,7 @@ const categories = [
       { id: 23, title: "Seuil LED décoratif", image: seuilLed },
       { id: 24, title: "Salon LED design", image: ledSalonDesign },
       { id: 25, title: "Cuisine professionnelle LED", image: ledCuisinePro },
+      { id: 26, title: "Panneau LED indirect", image: panneauLedIndirect },
     ],
   },
   {
