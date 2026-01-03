@@ -8,6 +8,10 @@ import APropos from "./pages/APropos";
 import FAQ from "./pages/FAQ";
 import Services from "./pages/Services";
 import Realisations from "./pages/Realisations";
+import TableauxEtPrises from "./pages/realisations/TableauxEtPrises";
+import AmbiancesLumineuses from "./pages/realisations/AmbiancesLumineuses";
+import InstallationReseaux from "./pages/realisations/InstallationReseaux";
+import DecorationNoel from "./pages/realisations/DecorationNoel";
 import Avis from "./pages/Avis";
 import Contact from "./pages/Contact";
 import MentionsLegales from "./pages/MentionsLegales";
@@ -28,6 +32,10 @@ const App = () => (
           <Route path="/a-propos" element={<APropos />} />
           <Route path="/services" element={<Services />} />
           <Route path="/realisations" element={<Realisations />} />
+          <Route path="/realisations/tableaux-et-prises" element={<TableauxEtPrises />} />
+          <Route path="/realisations/ambiances-lumineuses" element={<AmbiancesLumineuses />} />
+          <Route path="/realisations/installation-reseaux" element={<InstallationReseaux />} />
+          <Route path="/realisations/decoration-de-noel" element={<DecorationNoel />} />
           <Route path="/avis" element={<Avis />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
