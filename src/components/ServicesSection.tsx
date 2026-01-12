@@ -1,7 +1,7 @@
 import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, Sun, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 
 interface BentoCardProps {
   icon: LucideIcon;
@@ -14,8 +14,36 @@ interface BentoCardProps {
 }
 
 const BentoCard = ({ icon: Icon, title, description, features, accent, className = "", index }: BentoCardProps) => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [isCentered, setIsCentered] = useState(false);
+
+  // Check if card is centered in viewport (for mobile scroll highlight effect)
+  useEffect(() => {
+    const checkIfCentered = () => {
+      if (!ref.current || window.innerWidth >= 768) {
+        setIsCentered(false);
+        return;
+      }
+      
+      const rect = ref.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const cardCenter = rect.top + rect.height / 2;
+      const viewportCenter = viewportHeight / 2;
+      
+      // Card is "centered" when its center is within 100px of viewport center
+      const isNearCenter = Math.abs(cardCenter - viewportCenter) < 120;
+      setIsCentered(isNearCenter);
+    };
+
+    window.addEventListener("scroll", checkIfCentered, { passive: true });
+    checkIfCentered();
+    
+    return () => window.removeEventListener("scroll", checkIfCentered);
+  }, []);
+
+  // Determine if this card should be highlighted (accent OR centered on mobile)
+  const isHighlighted = accent || isCentered;
 
   return (
     <motion.div
@@ -36,7 +64,9 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
       className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 ${
         accent 
           ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25' 
-          : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
+          : isCentered
+            ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/50 shadow-lg shadow-primary/20 md:bg-card md:border-border/50 md:shadow-black/5'
+            : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
       } ${className}`}
     >
       {/* Animated border glow on hover */}
@@ -49,7 +79,9 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
         className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
           accent 
             ? 'bg-white/20 group-hover:bg-white/30' 
-            : 'bg-primary/10 group-hover:bg-primary/20'
+            : isHighlighted && !accent
+              ? 'bg-primary/30 md:bg-primary/10 md:group-hover:bg-primary/20'
+              : 'bg-primary/10 group-hover:bg-primary/20'
         }`}
         whileHover={{ rotate: [0, -10, 10, -5, 0], scale: 1.15 }}
         transition={{ duration: 0.5 }}
@@ -58,7 +90,13 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
       </motion.div>
       
       {/* Content */}
-      <h3 className={`font-display text-2xl font-bold mb-3 ${accent ? 'text-white' : 'text-card-foreground'}`}>
+      <h3 className={`font-display text-2xl font-bold mb-3 transition-colors duration-300 ${
+        accent 
+          ? 'text-white' 
+          : isCentered 
+            ? 'text-primary md:text-card-foreground' 
+            : 'text-card-foreground'
+      }`}>
         {title}
       </h3>
       <p className={`mb-6 leading-relaxed ${accent ? 'text-white/90' : 'text-muted-foreground'}`}>
