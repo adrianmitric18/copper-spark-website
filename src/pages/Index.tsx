@@ -8,7 +8,7 @@ import SEO from "@/components/SEO";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Le Cuivre Électrique | Électricien à Bruxelles et Wallonie"
         description="Électricien professionnel à Bruxelles et en Wallonie. Installation, mise en conformité RGIE, dépannage 24h/24. Devis gratuit et intervention rapide."
