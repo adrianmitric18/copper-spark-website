@@ -25,7 +25,7 @@ const AmbiancesLumineuses = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Ambiances Lumineuses | Réalisations - Le Cuivre Électrique"
         description="Découvrez nos installations d'éclairage LED sur mesure : façades, intérieurs, cuisines, salons. Créez une ambiance unique avec Le Cuivre Électrique."

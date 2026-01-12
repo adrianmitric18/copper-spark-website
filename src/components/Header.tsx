@@ -106,8 +106,8 @@ const Header = () => {
           </motion.div>
         </motion.div>
 
-        {/* Mobile Menu Button */}
-        <div className="flex md:hidden items-center gap-3">
+        {/* Mobile Menu Button - Enhanced visibility */}
+        <div className="flex md:hidden items-center gap-2">
           <motion.a
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -119,9 +119,10 @@ const Header = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 text-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded-full text-foreground hover:bg-primary/20 transition-colors"
             aria-label="Toggle menu"
           >
+            <span className="text-sm font-medium">Menu</span>
             <AnimatePresence mode="wait">
               {isOpen ? (
                 <motion.div
@@ -131,7 +132,7 @@ const Header = () => {
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -141,7 +142,7 @@ const Header = () => {
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Menu className="w-6 h-6" />
+                  <Menu className="w-5 h-5" />
                 </motion.div>
               )}
             </AnimatePresence>
