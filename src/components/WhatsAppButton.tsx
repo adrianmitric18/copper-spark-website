@@ -32,8 +32,8 @@ const WhatsAppButton = () => {
         <MessageCircle className="w-7 h-7 md:w-8 md:h-8 text-white" />
       </div>
 
-      {/* Tooltip */}
-      <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-4 py-2 bg-card border border-border rounded-xl text-foreground text-sm font-medium whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Tooltip - hidden on mobile to prevent overflow */}
+      <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-4 py-2 bg-card border border-border rounded-xl text-foreground text-sm font-medium whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
         Contactez-nous sur WhatsApp
       </div>
     </motion.a>

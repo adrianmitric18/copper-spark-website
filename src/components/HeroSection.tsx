@@ -74,7 +74,7 @@ const HeroSection = () => {
       </div>
 
       {/* Simplified background glow - no mouse parallax to reduce jank */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-primary/15 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[400px] md:h-[800px] bg-primary/15 rounded-full blur-[120px] animate-pulse" />
 
       <div className="container mx-auto relative z-10">
         <motion.div className="max-w-4xl mx-auto text-center">
