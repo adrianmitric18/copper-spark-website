@@ -7,7 +7,7 @@ import SEO from "@/components/SEO";
 
 const Contact = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Contact | Le Cuivre Électrique - Devis Gratuit"
         description="Contactez Le Cuivre Électrique pour un devis gratuit. Électricien disponible à Bruxelles et en Wallonie. Appelez ou remplissez le formulaire."

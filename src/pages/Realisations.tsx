@@ -6,7 +6,7 @@ import SEO from "@/components/SEO";
 
 const Realisations = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Nos Réalisations | Le Cuivre Électrique - Galerie Photos"
         description="Découvrez nos réalisations électriques : tableaux, installations, décorations lumineuses de Noël. Portfolio de Le Cuivre Électrique à Bruxelles."

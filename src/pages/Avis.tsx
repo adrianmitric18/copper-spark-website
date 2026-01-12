@@ -6,7 +6,7 @@ import SEO from "@/components/SEO";
 
 const Avis = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Avis Clients | Le Cuivre Électrique - Témoignages"
         description="Lisez les avis et témoignages de nos clients satisfaits. Découvrez pourquoi choisir Le Cuivre Électrique pour vos travaux électriques à Bruxelles."

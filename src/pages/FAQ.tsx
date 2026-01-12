@@ -106,7 +106,7 @@ const pricingCategories = [
 
 const FAQ = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="FAQ & Tarifs | Le Cuivre Électrique - Questions Fréquentes"
         description="Retrouvez les réponses à vos questions et nos tarifs indicatifs. Dépannage, installation, mise en conformité RGIE. Devis gratuit."

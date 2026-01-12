@@ -25,7 +25,7 @@ const DecorationNoel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Décoration de Noël | Réalisations - Le Cuivre Électrique"
         description="Découvrez nos installations de décorations lumineuses de Noël : centres commerciaux, rues, façades. Illuminations féeriques à Bruxelles."

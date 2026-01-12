@@ -5,7 +5,7 @@ import SEO from "@/components/SEO";
 import { motion } from "framer-motion";
 const MentionsLegales = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
         title="Mentions Légales | Le Cuivre Électrique"
         description="Mentions légales de Le Cuivre Électrique. Informations sur l'entreprise, protection des données RGPD, cookies et conditions d'utilisation."
