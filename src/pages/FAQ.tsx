@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import {
   Accordion,
   AccordionContent,
@@ -118,12 +119,20 @@ const FAQ = () => {
         type="FAQPage" 
         questions={faqItems}
       />
+      <StructuredData 
+        type="BreadcrumbList" 
+        items={[
+          { name: "Accueil", url: "https://cuivre-electrique.com" },
+          { name: "FAQ & Tarifs", url: "https://cuivre-electrique.com/faq" }
+        ]}
+      />
       <Header />
       <WhatsAppButton />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-muted/50 to-background">
         <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "FAQ & Tarifs", href: "/faq" }]} />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

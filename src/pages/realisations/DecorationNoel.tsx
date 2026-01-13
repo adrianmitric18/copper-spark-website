@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import CategoryGallery from "@/components/CategoryGallery";
 import { Button } from "@/components/ui/button";
 import { getCategoryBySlug } from "@/data/galleryData";
@@ -31,6 +32,14 @@ const DecorationNoel = () => {
         description="Découvrez nos installations de décorations lumineuses de Noël : centres commerciaux, rues, façades. Illuminations féeriques à Bruxelles."
         keywords="décoration Noël, illuminations, guirlandes LED, sapin lumineux, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/decoration-de-noel"
+      />
+      <StructuredData 
+        type="BreadcrumbList" 
+        items={[
+          { name: "Accueil", url: "https://cuivre-electrique.com" },
+          { name: "Réalisations", url: "https://cuivre-electrique.com/realisations" },
+          { name: "Décoration de Noël", url: "https://cuivre-electrique.com/realisations/decoration-de-noel" }
+        ]}
       />
       <Header />
       <main className="pt-24 pb-16">

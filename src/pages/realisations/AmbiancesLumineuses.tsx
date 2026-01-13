@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import CategoryGallery from "@/components/CategoryGallery";
 import { Button } from "@/components/ui/button";
 import { getCategoryBySlug } from "@/data/galleryData";
@@ -31,6 +32,14 @@ const AmbiancesLumineuses = () => {
         description="Découvrez nos installations d'éclairage LED sur mesure : façades, intérieurs, cuisines, salons. Créez une ambiance unique avec Le Cuivre Électrique."
         keywords="éclairage LED, ambiance lumineuse, spots LED, plafond LED, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/ambiances-lumineuses"
+      />
+      <StructuredData 
+        type="BreadcrumbList" 
+        items={[
+          { name: "Accueil", url: "https://cuivre-electrique.com" },
+          { name: "Réalisations", url: "https://cuivre-electrique.com/realisations" },
+          { name: "Ambiances Lumineuses", url: "https://cuivre-electrique.com/realisations/ambiances-lumineuses" }
+        ]}
       />
       <Header />
       <main className="pt-24 pb-16">

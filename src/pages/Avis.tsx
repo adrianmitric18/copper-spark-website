@@ -3,6 +3,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const Avis = () => {
   return (
@@ -15,6 +16,9 @@ const Avis = () => {
       />
       <Header />
       <main className="pt-24">
+        <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "Avis", href: "/avis" }]} />
+        </div>
         <TestimonialsSection />
       </main>
       <Footer />

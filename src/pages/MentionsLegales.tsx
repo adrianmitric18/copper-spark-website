@@ -2,7 +2,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { motion } from "framer-motion";
+
 const MentionsLegales = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -16,7 +18,8 @@ const MentionsLegales = () => {
       <Header />
       <main className="pt-24">
         <section className="py-16 md:py-24">
-          <div className="container mx-auto max-w-4xl">
+          <div className="container mx-auto max-w-4xl px-4">
+            <Breadcrumbs items={[{ label: "Mentions légales", href: "/mentions-legales" }]} />
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
