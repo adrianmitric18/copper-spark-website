@@ -11,6 +11,7 @@ const Realisations = () => {
         title="Nos Réalisations | Le Cuivre Électrique - Galerie Photos"
         description="Découvrez nos réalisations électriques : tableaux, installations, décorations lumineuses de Noël. Portfolio de Le Cuivre Électrique à Bruxelles."
         keywords="réalisations électricien, portfolio électrique, galerie photos, tableaux électriques, installations électriques, Bruxelles"
+        canonical="https://cuivre-electrique.com/realisations"
       />
       <Header />
       <main className="pt-24">

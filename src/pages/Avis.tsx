@@ -11,6 +11,7 @@ const Avis = () => {
         title="Avis Clients | Le Cuivre Électrique - Témoignages"
         description="Lisez les avis et témoignages de nos clients satisfaits. Découvrez pourquoi choisir Le Cuivre Électrique pour vos travaux électriques à Bruxelles."
         keywords="avis électricien, témoignages clients, Le Cuivre Électrique, électricien recommandé, Bruxelles, Wallonie"
+        canonical="https://cuivre-electrique.com/avis"
       />
       <Header />
       <main className="pt-24">

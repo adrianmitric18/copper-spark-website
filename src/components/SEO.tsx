@@ -6,14 +6,16 @@ interface SEOProps {
   keywords?: string;
   ogImage?: string;
   canonical?: string;
+  noindex?: boolean;
 }
 
 const SEO = ({ 
   title, 
   description, 
   keywords,
-  ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
-  canonical
+  ogImage = "https://cuivre-electrique.com/og-image.jpg",
+  canonical,
+  noindex = false
 }: SEOProps) => {
   useEffect(() => {
     // Update document title
@@ -37,17 +39,29 @@ const SEO = ({
     if (keywords) {
       updateMetaTag("keywords", keywords);
     }
+    
+    // Robots meta tag
+    if (noindex) {
+      updateMetaTag("robots", "noindex, nofollow");
+    } else {
+      updateMetaTag("robots", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
+    }
 
     // Open Graph tags
     updateMetaTag("og:title", title, true);
     updateMetaTag("og:description", description, true);
     updateMetaTag("og:image", ogImage, true);
+    updateMetaTag("og:image:width", "1200", true);
+    updateMetaTag("og:image:height", "630", true);
     updateMetaTag("og:type", "website", true);
+    updateMetaTag("og:site_name", "Le Cuivre Électrique", true);
+    updateMetaTag("og:locale", "fr_BE", true);
     if (canonical) {
       updateMetaTag("og:url", canonical, true);
     }
 
     // Twitter tags
+    updateMetaTag("twitter:card", "summary_large_image");
     updateMetaTag("twitter:title", title);
     updateMetaTag("twitter:description", description);
     updateMetaTag("twitter:image", ogImage);
@@ -67,7 +81,7 @@ const SEO = ({
     return () => {
       document.title = "Le Cuivre Électrique | Électricien de confiance à Bruxelles et en Wallonie";
     };
-  }, [title, description, keywords, ogImage, canonical]);
+  }, [title, description, keywords, ogImage, canonical, noindex]);
 
   return null;
 };
