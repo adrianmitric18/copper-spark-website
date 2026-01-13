@@ -10,6 +10,8 @@ const MentionsLegales = () => {
         title="Mentions Légales | Le Cuivre Électrique"
         description="Mentions légales de Le Cuivre Électrique. Informations sur l'entreprise, protection des données RGPD, cookies et conditions d'utilisation."
         keywords="mentions légales, RGPD, conditions utilisation, Le Cuivre Électrique"
+        canonical="https://cuivre-electrique.com/mentions-legales"
+        noindex={true}
       />
       <Header />
       <main className="pt-24">

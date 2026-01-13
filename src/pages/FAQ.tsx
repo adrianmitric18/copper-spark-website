@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import {
   Accordion,
   AccordionContent,
@@ -111,6 +112,11 @@ const FAQ = () => {
         title="FAQ & Tarifs | Le Cuivre Électrique - Questions Fréquentes"
         description="Retrouvez les réponses à vos questions et nos tarifs indicatifs. Dépannage, installation, mise en conformité RGIE. Devis gratuit."
         keywords="FAQ électricien, tarifs électricien, prix électricité, questions fréquentes, devis électricité, Bruxelles, Wallonie"
+        canonical="https://cuivre-electrique.com/faq"
+      />
+      <StructuredData 
+        type="FAQPage" 
+        questions={faqItems}
       />
       <Header />
       <WhatsAppButton />
