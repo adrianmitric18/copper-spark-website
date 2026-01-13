@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import CategoryGallery from "@/components/CategoryGallery";
 import { Button } from "@/components/ui/button";
 import { getCategoryBySlug } from "@/data/galleryData";
@@ -31,6 +32,14 @@ const TableauxEtPrises = () => {
         description="Découvrez nos installations de tableaux électriques conformes RGIE et prises design. Travail soigné et professionnel à Bruxelles."
         keywords="tableau électrique, prises design, installation électrique, RGIE, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/tableaux-et-prises"
+      />
+      <StructuredData 
+        type="BreadcrumbList" 
+        items={[
+          { name: "Accueil", url: "https://cuivre-electrique.com" },
+          { name: "Réalisations", url: "https://cuivre-electrique.com/realisations" },
+          { name: "Tableaux et Prises", url: "https://cuivre-electrique.com/realisations/tableaux-et-prises" }
+        ]}
       />
       <Header />
       <main className="pt-24 pb-16">

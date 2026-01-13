@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const Services = () => {
   return (
@@ -22,6 +23,9 @@ const Services = () => {
       />
       <Header />
       <main className="pt-24">
+        <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "Services", href: "/services" }]} />
+        </div>
         <ServicesSection />
         <ZoneSection />
       </main>

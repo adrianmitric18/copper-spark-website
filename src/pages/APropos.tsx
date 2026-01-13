@@ -2,10 +2,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { motion } from "framer-motion";
 import { Shield, Sparkles, Handshake, Clock, Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+
 const values = [{
   icon: Shield,
   title: "Sécurité et normes",
@@ -27,11 +29,15 @@ const values = [{
   title: "Conseils adaptés",
   description: "Des solutions personnalisées selon vos besoins et votre budget."
 }];
+
 const APropos = () => {
   return <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO title="À propos | Le Cuivre Électrique - Adrian Mitric, Électricien" description="Découvrez Le Cuivre Électrique et Adrian Mitric, électricien indépendant à Bruxelles et en Wallonie. Valeurs, expérience et engagement qualité." keywords="électricien indépendant, Adrian Mitric, Le Cuivre Électrique, électricien Bruxelles, à propos" canonical="https://cuivre-electrique.com/a-propos" />
       <Header />
       <main className="pt-24">
+        <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "À propos", href: "/a-propos" }]} />
+        </div>
         {/* Hero section */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="absolute inset-0 opacity-[0.02]" style={{

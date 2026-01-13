@@ -3,6 +3,7 @@ import GallerySection from "@/components/GallerySection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const Realisations = () => {
   return (
@@ -15,6 +16,9 @@ const Realisations = () => {
       />
       <Header />
       <main className="pt-24">
+        <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "Réalisations", href: "/realisations" }]} />
+        </div>
         <GallerySection />
       </main>
       <Footer />

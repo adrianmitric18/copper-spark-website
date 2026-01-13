@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import CategoryGallery from "@/components/CategoryGallery";
 import { Button } from "@/components/ui/button";
 import { getCategoryBySlug } from "@/data/galleryData";
@@ -31,6 +32,14 @@ const InstallationReseaux = () => {
         description="Découvrez nos installations réseaux professionnelles : baies de brassage, câblage structuré, visiophonie. Connectivité sur mesure à Bruxelles."
         keywords="installation réseaux, baie de brassage, câblage réseau, visiophonie, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/installation-reseaux"
+      />
+      <StructuredData 
+        type="BreadcrumbList" 
+        items={[
+          { name: "Accueil", url: "https://cuivre-electrique.com" },
+          { name: "Réalisations", url: "https://cuivre-electrique.com/realisations" },
+          { name: "Installation Réseaux", url: "https://cuivre-electrique.com/realisations/installation-reseaux" }
+        ]}
       />
       <Header />
       <main className="pt-24 pb-16">

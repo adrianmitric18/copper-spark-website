@@ -4,6 +4,7 @@ import ZoneSection from "@/components/ZoneSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const Contact = () => {
   return (
@@ -16,6 +17,9 @@ const Contact = () => {
       />
       <Header />
       <main className="pt-24">
+        <div className="container mx-auto px-4">
+          <Breadcrumbs items={[{ label: "Contact", href: "/contact" }]} />
+        </div>
         <ContactSection />
         <ZoneSection />
       </main>
