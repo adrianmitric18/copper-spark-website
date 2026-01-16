@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Send, Phone, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ interface FormErrors {
 }
 
 const ContactSection = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -128,23 +130,15 @@ const ContactSection = () => {
         throw new Error(data.error);
       }
 
-      setSubmitStatus('success');
-      toast({
-        title: "✅ Demande envoyée !",
-        description: "Vous recevrez une confirmation par email. Nous vous recontacterons sous 24-48h.",
-      });
+      // Fire Google Ads conversion event before redirecting
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "conversion", {
+          send_to: "AW-CONVERSION_ID/CONVERSION_LABEL", // Replace with your actual conversion ID and label
+        });
+      }
 
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        projectType: "",
-        message: "",
-        wantsCallback: false,
-        honeypot: "",
-      });
-      setErrors({});
+      // Redirect to thank you page
+      navigate("/merci");
 
     } catch (error: any) {
       console.error("Error sending contact form:", error);
