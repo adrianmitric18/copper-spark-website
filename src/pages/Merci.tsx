@@ -33,6 +33,7 @@ const Merci = () => {
         title="Merci | Le Cuivre Électrique"
         description="Votre demande a bien été envoyée. Nous vous recontacterons dans les 24 à 48 heures."
         canonical="https://cuivre-electrique.com/merci"
+        noindex={true}
       />
       <Header />
       <main className="pt-24 pb-16">
