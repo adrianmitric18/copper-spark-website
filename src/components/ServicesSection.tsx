@@ -2,7 +2,6 @@ import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, Sun, type LucideIcon
 import { Button } from "@/components/ui/button";
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { useTilt3D } from "@/hooks/useTilt3D";
 
 interface BentoCardProps {
   icon: LucideIcon;
@@ -18,26 +17,32 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isCentered, setIsCentered] = useState(false);
-  const { ref: tiltRef, tiltProps } = useTilt3D({ maxTilt: 10, scale: 1.04 });
 
+  // Check if card is centered in viewport (for mobile scroll highlight effect)
   useEffect(() => {
     const checkIfCentered = () => {
       if (!ref.current || window.innerWidth >= 768) {
         setIsCentered(false);
         return;
       }
+      
       const rect = ref.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       const cardCenter = rect.top + rect.height / 2;
       const viewportCenter = viewportHeight / 2;
+      
+      // Card is "centered" when its center is within 100px of viewport center
       const isNearCenter = Math.abs(cardCenter - viewportCenter) < 120;
       setIsCentered(isNearCenter);
     };
+
     window.addEventListener("scroll", checkIfCentered, { passive: true });
     checkIfCentered();
+    
     return () => window.removeEventListener("scroll", checkIfCentered);
   }, []);
 
+  // Determine if this card should be highlighted (accent OR centered on mobile)
   const isHighlighted = accent || isCentered;
 
   return (
@@ -45,26 +50,29 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
       ref={ref}
       initial={{ opacity: 0, y: 60, scale: 0.9 }}
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.9 }}
-      transition={{ duration: 0.6, delay: index * 0.15, type: "spring", stiffness: 100 }}
+      transition={{ 
+        duration: 0.6, 
+        delay: index * 0.15,
+        type: "spring",
+        stiffness: 100
+      }}
+      whileHover={{ 
+        y: -12,
+        scale: 1.03,
+        transition: { duration: 0.3 }
+      }}
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 ${
+        accent 
+          ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25' 
+          : isCentered
+            ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/50 shadow-lg shadow-primary/20 md:bg-card md:border-border/50 md:shadow-black/5'
+            : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
+      } ${className}`}
     >
-      <div
-        ref={tiltRef}
-        {...tiltProps}
-        className={`group relative p-6 md:p-8 rounded-3xl border transition-shadow duration-500 overflow-hidden ${
-          accent 
-            ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25' 
-            : isCentered
-              ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/50 shadow-lg shadow-primary/20 md:bg-card md:border-border/50 md:shadow-black/5'
-              : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
-        } ${className}`}
-      >
-        {/* Glare overlay */}
-        <div data-tilt-glare className="absolute inset-0 rounded-3xl pointer-events-none opacity-0 transition-opacity duration-300 z-10" />
-        
-        {/* Animated border glow on hover */}
-        <motion.div 
-          className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"
-        />
+      {/* Animated border glow on hover */}
+      <motion.div 
+        className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"
+      />
 
       {/* Icon */}
       <motion.div 
@@ -127,7 +135,6 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
           <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
         </a>
       </Button>
-      </div>
     </motion.div>
   );
 };
