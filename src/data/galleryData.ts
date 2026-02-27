@@ -17,6 +17,14 @@ import couloirTechnique from "@/assets/gallery/tableaux/couloir-technique.jpg";
 import tableauNeufFerme from "@/assets/gallery/tableaux/tableau-neuf-ferme.jpg";
 import tableauNeufOuvert from "@/assets/gallery/tableaux/tableau-neuf-ouvert.jpg";
 import tableauChantierBase from "@/assets/gallery/tableaux/tableau-chantier-base.jpg";
+import chantierRainurageComplet from "@/assets/gallery/tableaux/chantier-rainurage-complet.jpg";
+import tableauSchneiderOuvertCablage from "@/assets/gallery/tableaux/tableau-schneider-ouvert-cablage.jpg";
+import tableauCompteurDigital from "@/assets/gallery/tableaux/tableau-compteur-digital.jpg";
+import tableauSchneiderPreparation from "@/assets/gallery/tableaux/tableau-schneider-preparation.jpg";
+import rainurageLaserVertical from "@/assets/gallery/tableaux/rainurage-laser-vertical.jpg";
+import boitiersEncastrementLaser from "@/assets/gallery/tableaux/boitiers-encastrement-laser.jpg";
+import rainuragePorteLaser from "@/assets/gallery/tableaux/rainurage-porte-laser.jpg";
+import rainurageHorizontalSalon from "@/assets/gallery/tableaux/rainurage-horizontal-salon.jpg";
 
 // Import gallery images - Prises
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
@@ -137,6 +145,14 @@ export const categories: GalleryCategory[] = [
       { id: 23, title: "Tableau neuf fermé", image: tableauNeufFerme },
       { id: 24, title: "Tableau neuf ouvert câblé", image: tableauNeufOuvert },
       { id: 25, title: "Chantier installation base", image: tableauChantierBase },
+      { id: 26, title: "Rainurage complet chantier", image: chantierRainurageComplet },
+      { id: 27, title: "Tableau Schneider câblage en cours", image: tableauSchneiderOuvertCablage },
+      { id: 28, title: "Tableau avec compteur digital", image: tableauCompteurDigital },
+      { id: 29, title: "Préparation tableau Schneider", image: tableauSchneiderPreparation },
+      { id: 30, title: "Rainurage vertical au laser", image: rainurageLaserVertical },
+      { id: 31, title: "Alignement laser boîtiers", image: boitiersEncastrementLaser },
+      { id: 32, title: "Passage câble porte laser", image: rainuragePorteLaser },
+      { id: 33, title: "Rainurage horizontal salon", image: rainurageHorizontalSalon },
     ],
   },
   {
