@@ -14,6 +14,9 @@ import tableauAbbGrand from "@/assets/gallery/tableaux/tableau-abb-grand.jpg";
 import tableauNeufInstallation from "@/assets/gallery/tableaux/tableau-neuf-installation.jpg";
 import installationDomotique from "@/assets/gallery/tableaux/installation-domotique.jpg";
 import couloirTechnique from "@/assets/gallery/tableaux/couloir-technique.jpg";
+import tableauNeufFerme from "@/assets/gallery/tableaux/tableau-neuf-ferme.jpg";
+import tableauNeufOuvert from "@/assets/gallery/tableaux/tableau-neuf-ouvert.jpg";
+import tableauChantierBase from "@/assets/gallery/tableaux/tableau-chantier-base.jpg";
 
 // Import gallery images - Prises
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
@@ -131,6 +134,9 @@ export const categories: GalleryCategory[] = [
       { id: 20, title: "Prises intégrées meuble bois", image: prisesMeubleBois },
       { id: 21, title: "Prises marbre cuisine", image: prisesMarbreCuisine },
       { id: 22, title: "Prise meuble arrondi", image: priseMeubleArrondi },
+      { id: 23, title: "Tableau neuf fermé", image: tableauNeufFerme },
+      { id: 24, title: "Tableau neuf ouvert câblé", image: tableauNeufOuvert },
+      { id: 25, title: "Chantier installation base", image: tableauChantierBase },
     ],
   },
   {
