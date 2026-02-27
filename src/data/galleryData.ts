@@ -14,6 +14,9 @@ import tableauAbbGrand from "@/assets/gallery/tableaux/tableau-abb-grand.jpg";
 import tableauNeufInstallation from "@/assets/gallery/tableaux/tableau-neuf-installation.jpg";
 import installationDomotique from "@/assets/gallery/tableaux/installation-domotique.jpg";
 import couloirTechnique from "@/assets/gallery/tableaux/couloir-technique.jpg";
+import tableauNeufFerme from "@/assets/gallery/tableaux/tableau-neuf-ferme.jpg";
+import tableauNeufOuvert from "@/assets/gallery/tableaux/tableau-neuf-ouvert.jpg";
+import tableauChantierBase from "@/assets/gallery/tableaux/tableau-chantier-base.jpg";
 
 // Import gallery images - Prises
 import installationComplete from "@/assets/gallery/installation-complete.jpg";
