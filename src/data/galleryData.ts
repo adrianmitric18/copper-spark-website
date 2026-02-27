@@ -134,6 +134,9 @@ export const categories: GalleryCategory[] = [
       { id: 20, title: "Prises intégrées meuble bois", image: prisesMeubleBois },
       { id: 21, title: "Prises marbre cuisine", image: prisesMarbreCuisine },
       { id: 22, title: "Prise meuble arrondi", image: priseMeubleArrondi },
+      { id: 23, title: "Tableau neuf fermé", image: tableauNeufFerme },
+      { id: 24, title: "Tableau neuf ouvert câblé", image: tableauNeufOuvert },
+      { id: 25, title: "Chantier installation base", image: tableauChantierBase },
     ],
   },
   {
