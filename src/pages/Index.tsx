@@ -23,6 +23,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
+        <GoogleReviewsSection />
       </main>
       <Footer />
       <WhatsAppButton />
