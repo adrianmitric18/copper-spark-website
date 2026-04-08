@@ -50,7 +50,7 @@ const testimonials = [
   },
   {
     name: "Jean-Claude Leclercq",
-    rating: 5,
+    rating: 4,
     text: "Nous avons fait appel à cet électricien pour la mise en conformité de notre tableau électrique et pour d'autres petits travaux. Le travail a été fait très proprement, avec beaucoup de soin. Il est très ponctuel, très professionnel et communique très bien sur tous les travaux qu'il réalise. Tarifs corrects.",
     date: "Il y a 11 semaines",
   },
