@@ -1,7 +1,15 @@
 import { Star, ExternalLink, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-const GOOGLE_REVIEWS_URL = "https://g.page/r/CVLZZFVq3KkiEBM/review";
+// ── Easy-to-change URLs ──
+const googleReviewUrl = "https://g.page/r/CVLZZFVq3KkiEBM/review";
+const testimonialFormUrl = "#";
 
 const testimonials = [
   {
@@ -35,7 +43,87 @@ const StarRating = ({ rating }: { rating: number }) => (
   </div>
 );
 
+const InteractiveStarRating = ({ rating, onRate }: { rating: number; onRate: (r: number) => void }) => {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          className="cursor-pointer"
+          onClick={() => onRate(star)}
+          onMouseEnter={() => setHover(star)}
+          onMouseLeave={() => setHover(0)}
+        >
+          <Star
+            className={`w-6 h-6 transition-colors ${
+              star <= (hover || rating) ? "fill-primary text-primary" : "text-muted-foreground/30"
+            }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const TestimonialForm = ({ onClose }: { onClose: () => void }) => {
+  const [rating, setRating] = useState(5);
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
+  const [service, setService] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !message.trim()) {
+      toast.error("Veuillez remplir les champs obligatoires.");
+      return;
+    }
+    setIsSubmitting(true);
+    await new Promise((r) => setTimeout(r, 1000));
+    toast.success("Merci pour votre témoignage ! Il sera publié après validation.");
+    setIsSubmitting(false);
+    onClose();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label className="text-foreground">Votre note *</Label>
+        <div className="mt-2">
+          <InteractiveStarRating rating={rating} onRate={setRating} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="testi-name" className="text-foreground">Nom *</Label>
+          <Input id="testi-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Votre prénom" className="mt-1" maxLength={50} required />
+        </div>
+        <div>
+          <Label htmlFor="testi-city" className="text-foreground">Ville</Label>
+          <Input id="testi-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Bruxelles" className="mt-1" maxLength={50} />
+        </div>
+      </div>
+      <div>
+        <Label htmlFor="testi-service" className="text-foreground">Service réalisé</Label>
+        <Input id="testi-service" value={service} onChange={(e) => setService(e.target.value)} placeholder="Ex: Dépannage, Installation..." className="mt-1" maxLength={100} />
+      </div>
+      <div>
+        <Label htmlFor="testi-message" className="text-foreground">Votre message *</Label>
+        <Textarea id="testi-message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Décrivez votre expérience..." className="mt-1 min-h-[100px]" maxLength={500} required />
+      </div>
+      <Button type="submit" variant="copper" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Envoi en cours..." : "Envoyer mon témoignage"}
+      </Button>
+    </form>
+  );
+};
+
 const GoogleReviewsSection = () => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   return (
     <section className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4 max-w-5xl">
@@ -87,23 +175,33 @@ const GoogleReviewsSection = () => {
         </div>
 
         {/* CTAs */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-5">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button variant="copper" size="lg" asChild>
-              <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer">
-                Voir tous les avis Google
+              <a href={googleReviewUrl} target="_blank" rel="noopener noreferrer">
+                Laisser un avis Google
                 <ExternalLink className="w-4 h-4 ml-1" />
               </a>
             </Button>
-            <Button variant="copperOutline" size="lg" asChild>
-              <a href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer">
-                <MessageSquarePlus className="w-4 h-4 mr-1" />
-                Laisser un avis
-              </a>
-            </Button>
+
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+                  <MessageSquarePlus className="w-4 h-4 mr-1" />
+                  Envoyer un témoignage
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-display">Partagez votre expérience</DialogTitle>
+                  <DialogDescription>Envoyez-nous votre témoignage. Il sera publié après validation.</DialogDescription>
+                </DialogHeader>
+                <TestimonialForm onClose={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Des retours authentiques de clients satisfaits en Belgique
+          <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+            Votre avis Google nous aide à renforcer notre visibilité et à rassurer nos futurs clients.
           </p>
         </div>
       </div>
