@@ -48,6 +48,12 @@ const testimonials = [
     text: "Le travail réalisé par cet électricien est d'un grand professionnalisme. Chaque intervention est effectuée avec soin, précision et dans le respect des normes en vigueur. Son sérieux et son savoir-faire apportent une entière satisfaction et permettent même d'aller plus loin dans la réalisation de vos projets.",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Jean-Claude Leclercq",
+    rating: 5,
+    text: "Nous avons fait appel à cet électricien pour la mise en conformité de notre tableau électrique et pour d'autres petits travaux. Le travail a été fait très proprement, avec beaucoup de soin. Il est très ponctuel, très professionnel et communique très bien sur tous les travaux qu'il réalise. Tarifs corrects.",
+    date: "Il y a 11 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
