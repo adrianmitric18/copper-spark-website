@@ -84,6 +84,12 @@ const testimonials = [
     text: "J'ai fait appel à Le Cuivre Électrique pour des travaux à Halle et je suis très satisfaite. Adrian est professionnel, ponctuel et travaille proprement. Il explique clairement ce qu'il fait et propose des solutions adaptées. Travail soigné, respect des délais et très bon contact. Je recommande sans hésiter.",
     date: "Il y a 7 semaines",
   },
+  {
+    name: "Victor Bachelier",
+    rating: 5,
+    text: "Adrian est réactif, professionnel et très à l'écoute de ses clients. Il est également de très bon conseil !",
+    date: "Il y a 5 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
