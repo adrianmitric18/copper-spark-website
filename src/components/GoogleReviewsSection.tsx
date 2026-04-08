@@ -24,6 +24,12 @@ const testimonials = [
     text: "J'ai fait appel au Cuivre Electrique à plusieurs reprises, que ce soit pour un chantier important (nouvelle cuisine), ou de petits dépannages. J'ai chaque fois été très satisfait. Adrian est fiable, compétent, et à l'écoute de ses clients, je recommande !",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Guillaume",
+    rating: 5,
+    text: "Service de qualité et bonne communication, à prix juste. Ne pas hésiter !",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
@@ -150,7 +156,7 @@ const GoogleReviewsSection = () => {
         </div>
 
         {/* Testimonial cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
           {testimonials.map((t, i) => (
             <div
               key={i}
