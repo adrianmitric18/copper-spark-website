@@ -1,109 +1,22 @@
-import { Star, ExternalLink, MessageSquarePlus } from "lucide-react";
+import { Star, ExternalLink, MessageSquarePlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
+import { reviews, googleReviewUrl, type Review } from "@/data/reviewsData";
 
-// ── Easy-to-change URLs ──
-const googleReviewUrl = "https://g.page/r/CVLZZFVq3KkiEBM/review";
-const testimonialFormUrl = "#";
-
-const testimonials = [
-  {
-    name: "Martial Xhignesse",
-    rating: 5,
-    text: "Service impeccable ! Respect des délais, respect du devis ! Travail très bien effectué et surtout de façon très propre !!! Je referai appel c'est certain. Merci pour le travail",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Benoit Mansion",
-    rating: 5,
-    text: "J'ai fait appel au Cuivre Electrique à plusieurs reprises, que ce soit pour un chantier important (nouvelle cuisine), ou de petits dépannages. J'ai chaque fois été très satisfait. Adrian est fiable, compétent, et à l'écoute de ses clients, je recommande !",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Guillaume",
-    rating: 5,
-    text: "Service de qualité et bonne communication, à prix juste. Ne pas hésiter !",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Nicolai Mitric",
-    rating: 5,
-    text: "Parfait travail, merci Cuivre Électrique",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Dany Smeyers",
-    rating: 5,
-    text: "Adrian est hyper compétent et rigoureux dans son travail et ses conseils sont des plus précieux ! Merci pour le travail accompli dans notre maison",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Jerome Ver Elst",
-    rating: 5,
-    text: "Le travail réalisé par cet électricien est d'un grand professionnalisme. Chaque intervention est effectuée avec soin, précision et dans le respect des normes en vigueur. Son sérieux et son savoir-faire apportent une entière satisfaction et permettent même d'aller plus loin dans la réalisation de vos projets.",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Jean-Claude Leclercq",
-    rating: 4,
-    text: "Nous avons fait appel à cet électricien pour la mise en conformité de notre tableau électrique et pour d'autres petits travaux. Le travail a été fait très proprement, avec beaucoup de soin. Il est très ponctuel, très professionnel et communique très bien sur tous les travaux qu'il réalise. Tarifs corrects.",
-    date: "Il y a 11 semaines",
-  },
-  {
-    name: "Gwenn Nicolay",
-    rating: 5,
-    text: "J'ai fait toute l'installation électrique de ma maison avec « Le cuivre électrique ». Adrian a tout fait dans les règles de l'art. Je suis ravi ! Et il vient chez moi pour du suivi si besoin.",
-    date: "Il y a 12 semaines",
-  },
-  {
-    name: "Jessica Cuvelier",
-    rating: 5,
-    text: "Hyper flexible, prix correct, sérieux et serviable. Bref nous le recommandons fortement.",
-    date: "Il y a 11 semaines",
-  },
-  {
-    name: "Charles Moreau",
-    rating: 5,
-    text: "Très satisfait du travail d'adaptation du tableau électrique avec placement de la ligne de terre, merci à Mr. Adrian, Cuivre Électrique.",
-    date: "Il y a 9 semaines",
-  },
-  {
-    name: "Annabelle",
-    rating: 5,
-    text: "J'ai eu la chance de découvrir Le Cuivre Électrique et je ne doute pas qu'Adrian fasse de son mieux pour satisfaire les attentes de ses clients. La communication est excellente, son travail est rapide et soigné, il s'adapte à la demande avec professionnalisme, sérieux et respect. Le devis est honnête. C'est la crème de l'électricien. Je le recommande à tous fortement.",
-    date: "Il y a 9 semaines",
-  },
-  {
-    name: "Valentina Rotar",
-    rating: 5,
-    text: "J'ai fait appel à Le Cuivre Électrique pour des travaux à Halle et je suis très satisfaite. Adrian est professionnel, ponctuel et travaille proprement. Il explique clairement ce qu'il fait et propose des solutions adaptées. Travail soigné, respect des délais et très bon contact. Je recommande sans hésiter.",
-    date: "Il y a 7 semaines",
-  },
-  {
-    name: "Victor Bachelier",
-    rating: 5,
-    text: "Adrian est réactif, professionnel et très à l'écoute de ses clients. Il est également de très bon conseil !",
-    date: "Il y a 5 semaines",
-  },
-  {
-    name: "Melody Mertens",
-    rating: 5,
-    text: "Adrian est un super électricien, il est très gentil et très réactif. On était dans l'urgence et il a fait tout son possible pour que le travail soit effectué dans les délais demandés. Il a fait du très bon travail, je le recommande à 100 %. Vous pouvez lui faire confiance les yeux fermés. Merci Adrian pour ta rapidité et ton travail minutieux.",
-    date: "Il y a 5 semaines",
-  },
-];
-
+// ── Star Ratings ──
 const StarRating = ({ rating }: { rating: number }) => (
   <div className="flex gap-0.5">
     {Array.from({ length: 5 }).map((_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? "fill-amber-400 text-amber-400" : "text-muted"}`}
+        className={`w-4 h-4 ${i < rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"}`}
       />
     ))}
   </div>
@@ -133,6 +46,29 @@ const InteractiveStarRating = ({ rating, onRate }: { rating: number; onRate: (r:
   );
 };
 
+// ── Review Card ──
+const ReviewCard = ({ review }: { review: Review }) => (
+  <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3 h-full">
+    <div className="flex items-center justify-between">
+      <StarRating rating={review.rating} />
+      <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+        {review.service}
+      </span>
+    </div>
+    <p className="text-foreground text-sm leading-relaxed flex-1">
+      "{review.text}"
+    </p>
+    <div className="flex items-center justify-between pt-3 border-t border-border/40">
+      <div>
+        <span className="font-semibold text-sm text-foreground">{review.name}</span>
+        <span className="text-xs text-muted-foreground ml-2">{review.city}</span>
+      </div>
+      <span className="text-xs text-muted-foreground">{review.date}</span>
+    </div>
+  </div>
+);
+
+// ── Testimonial Form ──
 const TestimonialForm = ({ onClose }: { onClose: () => void }) => {
   const [rating, setRating] = useState(5);
   const [name, setName] = useState("");
@@ -187,12 +123,50 @@ const TestimonialForm = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
+// ── Main Section ──
 const GoogleReviewsSection = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
+  const autoplayPlugin = Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true });
+
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      align: "start",
+      loop: true,
+      slidesToScroll: 1,
+      breakpoints: {
+        "(min-width: 768px)": { slidesToScroll: 2 },
+        "(min-width: 1024px)": { slidesToScroll: 1 },
+      },
+    },
+    [autoplayPlugin]
+  );
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+  const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    setScrollSnaps(emblaApi.scrollSnapList());
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi, onSelect]);
+
+  // Compute average
+  const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1).replace(".", ",");
 
   return (
     <section className="py-20 md:py-28 bg-background">
-      <div className="container mx-auto px-4 max-w-5xl">
+      <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-5">
@@ -206,38 +180,69 @@ const GoogleReviewsSection = () => {
           </p>
         </div>
 
-        {/* Average rating badge */}
+        {/* Trust badge */}
         <div className="flex justify-center mb-12">
           <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-card border border-border/60 shadow-sm">
-            <span className="text-3xl font-bold text-foreground">4,9</span>
+            <span className="text-3xl font-bold text-foreground">{avgRating}</span>
             <div className="flex flex-col items-start">
               <div className="flex gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <span className="text-xs text-muted-foreground mt-0.5">sur Google</span>
+              <span className="text-xs text-muted-foreground mt-0.5">
+                basé sur {reviews.length} avis Google
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Testimonial cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
-          {testimonials.map((t, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3"
-            >
-              <StarRating rating={t.rating} />
-              <p className="text-foreground text-sm leading-relaxed flex-1">
-                "{t.text}"
-              </p>
-              <div className="flex items-center justify-between pt-3 border-t border-border/40">
-                <span className="font-semibold text-sm text-foreground">{t.name}</span>
-                <span className="text-xs text-muted-foreground">{t.date}</span>
-              </div>
+        {/* Carousel */}
+        <div className="relative mb-14">
+          {/* Arrows */}
+          <button
+            onClick={scrollPrev}
+            className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-card border border-border/60 shadow-md flex items-center justify-center text-foreground hover:bg-accent transition-colors"
+            aria-label="Avis précédent"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={scrollNext}
+            className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-card border border-border/60 shadow-md flex items-center justify-center text-foreground hover:bg-accent transition-colors"
+            aria-label="Avis suivant"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div className="overflow-hidden mx-4 md:mx-8" ref={emblaRef}>
+            <div className="flex -ml-4">
+              {reviews.map((review, i) => (
+                <div
+                  key={i}
+                  className="flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_25%] pl-4 min-w-0"
+                >
+                  <ReviewCard review={review} />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-6">
+            {scrollSnaps.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollTo(i)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i === selectedIndex
+                    ? "bg-primary w-6"
+                    : "bg-border hover:bg-muted-foreground/40"
+                }`}
+                aria-label={`Aller à l'avis ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* CTAs */}
