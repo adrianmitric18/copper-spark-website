@@ -30,6 +30,7 @@ const Index = () => {
       </main>
       <Footer />
       <WhatsAppButton />
+      <MobileStickyBar />
     </div>
   );
 };
