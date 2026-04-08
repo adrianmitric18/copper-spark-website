@@ -30,6 +30,12 @@ const testimonials = [
     text: "Service de qualité et bonne communication, à prix juste. Ne pas hésiter !",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Nicolai Mitric",
+    rating: 5,
+    text: "Parfait travail, merci Cuivre Électrique",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
