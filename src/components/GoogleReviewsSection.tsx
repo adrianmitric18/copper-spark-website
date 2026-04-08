@@ -156,7 +156,7 @@ const GoogleReviewsSection = () => {
         </div>
 
         {/* Testimonial cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
           {testimonials.map((t, i) => (
             <div
               key={i}
