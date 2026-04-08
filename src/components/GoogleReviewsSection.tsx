@@ -60,6 +60,12 @@ const testimonials = [
     text: "J'ai fait toute l'installation électrique de ma maison avec « Le cuivre électrique ». Adrian a tout fait dans les règles de l'art. Je suis ravi ! Et il vient chez moi pour du suivi si besoin.",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Jessica Cuvelier",
+    rating: 5,
+    text: "Hyper flexible, prix correct, sérieux et serviable. Bref nous le recommandons fortement.",
+    date: "Il y a 11 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
