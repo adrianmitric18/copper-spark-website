@@ -13,22 +13,10 @@ const testimonialFormUrl = "#";
 
 const testimonials = [
   {
-    name: "Marc D.",
+    name: "Martial Xhignesse",
     rating: 5,
-    text: "Travail impeccable et soigné. L'équipe est ponctuelle et très professionnelle. Je recommande vivement pour toute installation électrique.",
-    date: "Il y a 2 semaines",
-  },
-  {
-    name: "Sophie L.",
-    rating: 5,
-    text: "Excellent service ! Mise en conformité RGIE réalisée rapidement. Très bon rapport qualité-prix et conseils pertinents.",
-    date: "Il y a 1 mois",
-  },
-  {
-    name: "Philippe V.",
-    rating: 5,
-    text: "Dépannage rapide un dimanche soir. Très réactif et prix honnête. Un électricien de confiance que je garde précieusement.",
-    date: "Il y a 3 semaines",
+    text: "Service impeccable ! Respect des délais, respect du devis ! Travail très bien effectué et surtout de façon très propre !!! Je referai appel c'est certain. Merci pour le travail",
+    date: "Il y a 12 semaines",
   },
 ];
 
@@ -156,11 +144,11 @@ const GoogleReviewsSection = () => {
         </div>
 
         {/* Testimonial cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
+        <div className="flex justify-center mb-14">
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3"
+              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3 max-w-md w-full"
             >
               <StarRating rating={t.rating} />
               <p className="text-foreground text-sm leading-relaxed flex-1">
