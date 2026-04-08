@@ -85,7 +85,21 @@ const TestimonialForm = ({ onClose }: { onClose: () => void }) => {
       return;
     }
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    
+    const { error } = await supabase.from("testimonials").insert({
+      name: name.trim(),
+      city: city.trim() || null,
+      service: service.trim() || null,
+      rating,
+      message: message.trim(),
+    });
+
+    if (error) {
+      toast.error("Une erreur est survenue. Veuillez réessayer.");
+      setIsSubmitting(false);
+      return;
+    }
+
     toast.success("Merci pour votre témoignage ! Il sera publié après validation.");
     setIsSubmitting(false);
     onClose();
