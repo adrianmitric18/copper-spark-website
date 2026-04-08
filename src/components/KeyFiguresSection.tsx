@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Zap, Star, Clock, Users } from "lucide-react";
 
 const figures = [
-  { icon: Zap, value: 500, suffix: "+", label: "Interventions réalisées" },
+  { icon: Zap, value: 200, suffix: "+", label: "Interventions réalisées" },
   { icon: Star, value: 17, suffix: "", label: "Avis 5 étoiles" },
-  { icon: Clock, value: 10, suffix: "+", label: "Ans d'expérience" },
-  { icon: Users, value: 100, suffix: "%", label: "Clients satisfaits" },
+  { icon: Clock, value: 4, suffix: "", label: "Ans d'expérience" },
+  { icon: Users, value: 98, suffix: "%", label: "Clients satisfaits" },
 ];
 
 const useCountUp = (target: number, isVisible: boolean, duration = 2000) => {
