@@ -72,6 +72,12 @@ const testimonials = [
     text: "Très satisfait du travail d'adaptation du tableau électrique avec placement de la ligne de terre, merci à Mr. Adrian, Cuivre Électrique.",
     date: "Il y a 9 semaines",
   },
+  {
+    name: "Annabelle",
+    rating: 5,
+    text: "J'ai eu la chance de découvrir Le Cuivre Électrique et je ne doute pas qu'Adrian fasse de son mieux pour satisfaire les attentes de ses clients. La communication est excellente, son travail est rapide et soigné, il s'adapte à la demande avec professionnalisme, sérieux et respect. Le devis est honnête. C'est la crème de l'électricien. Je le recommande à tous fortement.",
+    date: "Il y a 9 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
