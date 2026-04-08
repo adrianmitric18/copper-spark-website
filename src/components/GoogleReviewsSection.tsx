@@ -18,6 +18,12 @@ const testimonials = [
     text: "Service impeccable ! Respect des délais, respect du devis ! Travail très bien effectué et surtout de façon très propre !!! Je referai appel c'est certain. Merci pour le travail",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Benoit Mansion",
+    rating: 5,
+    text: "J'ai fait appel au Cuivre Electrique à plusieurs reprises, que ce soit pour un chantier important (nouvelle cuisine), ou de petits dépannages. J'ai chaque fois été très satisfait. Adrian est fiable, compétent, et à l'écoute de ses clients, je recommande !",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
