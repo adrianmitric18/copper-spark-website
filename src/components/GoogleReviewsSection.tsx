@@ -78,6 +78,12 @@ const testimonials = [
     text: "J'ai eu la chance de découvrir Le Cuivre Électrique et je ne doute pas qu'Adrian fasse de son mieux pour satisfaire les attentes de ses clients. La communication est excellente, son travail est rapide et soigné, il s'adapte à la demande avec professionnalisme, sérieux et respect. Le devis est honnête. C'est la crème de l'électricien. Je le recommande à tous fortement.",
     date: "Il y a 9 semaines",
   },
+  {
+    name: "Valentina Rotar",
+    rating: 5,
+    text: "J'ai fait appel à Le Cuivre Électrique pour des travaux à Halle et je suis très satisfaite. Adrian est professionnel, ponctuel et travaille proprement. Il explique clairement ce qu'il fait et propose des solutions adaptées. Travail soigné, respect des délais et très bon contact. Je recommande sans hésiter.",
+    date: "Il y a 7 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
