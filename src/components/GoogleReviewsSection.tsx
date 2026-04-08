@@ -36,6 +36,12 @@ const testimonials = [
     text: "Parfait travail, merci Cuivre Électrique",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Dany Smeyers",
+    rating: 5,
+    text: "Adrian est hyper compétent et rigoureux dans son travail et ses conseils sont des plus précieux ! Merci pour le travail accompli dans notre maison",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
