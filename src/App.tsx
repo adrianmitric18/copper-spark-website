@@ -18,6 +18,7 @@ import Merci from "./pages/Merci";
 import MentionsLegales from "./pages/MentionsLegales";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
+import MobileStickyBar from "./components/MobileStickyBar";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <MobileStickyBar />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
