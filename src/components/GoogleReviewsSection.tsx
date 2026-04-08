@@ -18,6 +18,12 @@ const testimonials = [
     text: "Service impeccable ! Respect des délais, respect du devis ! Travail très bien effectué et surtout de façon très propre !!! Je referai appel c'est certain. Merci pour le travail",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Benoit Mansion",
+    rating: 5,
+    text: "J'ai fait appel au Cuivre Electrique à plusieurs reprises, que ce soit pour un chantier important (nouvelle cuisine), ou de petits dépannages. J'ai chaque fois été très satisfait. Adrian est fiable, compétent, et à l'écoute de ses clients, je recommande !",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
@@ -144,11 +150,11 @@ const GoogleReviewsSection = () => {
         </div>
 
         {/* Testimonial cards */}
-        <div className="flex justify-center mb-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-14">
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3 max-w-md w-full"
+              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3"
             >
               <StarRating rating={t.rating} />
               <p className="text-foreground text-sm leading-relaxed flex-1">
