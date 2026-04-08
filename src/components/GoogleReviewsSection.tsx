@@ -66,6 +66,12 @@ const testimonials = [
     text: "Hyper flexible, prix correct, sérieux et serviable. Bref nous le recommandons fortement.",
     date: "Il y a 11 semaines",
   },
+  {
+    name: "Charles Moreau",
+    rating: 5,
+    text: "Très satisfait du travail d'adaptation du tableau électrique avec placement de la ligne de terre, merci à Mr. Adrian, Cuivre Électrique.",
+    date: "Il y a 9 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
