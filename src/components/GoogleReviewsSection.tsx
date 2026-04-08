@@ -154,7 +154,7 @@ const GoogleReviewsSection = () => {
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3 max-w-md w-full"
+              className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col gap-3"
             >
               <StarRating rating={t.rating} />
               <p className="text-foreground text-sm leading-relaxed flex-1">
