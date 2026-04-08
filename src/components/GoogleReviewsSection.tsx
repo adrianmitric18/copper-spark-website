@@ -54,6 +54,12 @@ const testimonials = [
     text: "Nous avons fait appel à cet électricien pour la mise en conformité de notre tableau électrique et pour d'autres petits travaux. Le travail a été fait très proprement, avec beaucoup de soin. Il est très ponctuel, très professionnel et communique très bien sur tous les travaux qu'il réalise. Tarifs corrects.",
     date: "Il y a 11 semaines",
   },
+  {
+    name: "Gwenn Nicolay",
+    rating: 5,
+    text: "J'ai fait toute l'installation électrique de ma maison avec « Le cuivre électrique ». Adrian a tout fait dans les règles de l'art. Je suis ravi ! Et il vient chez moi pour du suivi si besoin.",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
