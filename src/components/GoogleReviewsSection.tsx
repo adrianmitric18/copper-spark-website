@@ -1,4 +1,5 @@
 import { Star, ExternalLink, MessageSquarePlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
