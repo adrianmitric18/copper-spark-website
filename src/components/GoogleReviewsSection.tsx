@@ -42,6 +42,12 @@ const testimonials = [
     text: "Adrian est hyper compétent et rigoureux dans son travail et ses conseils sont des plus précieux ! Merci pour le travail accompli dans notre maison",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Jerome Ver Elst",
+    rating: 5,
+    text: "Le travail réalisé par cet électricien est d'un grand professionnalisme. Chaque intervention est effectuée avec soin, précision et dans le respect des normes en vigueur. Son sérieux et son savoir-faire apportent une entière satisfaction et permettent même d'aller plus loin dans la réalisation de vos projets.",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
