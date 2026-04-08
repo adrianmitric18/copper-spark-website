@@ -1,0 +1,27 @@
+import { Phone, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const MobileStickyBar = () => {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-md border-t border-border/60 px-4 py-3 safe-area-bottom">
+      <div className="flex gap-3">
+        <a
+          href="tel:+32485755227"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-md active:scale-95 transition-transform"
+        >
+          <Phone className="w-4 h-4" />
+          Appeler
+        </a>
+        <Link
+          to="/contact"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-primary text-primary font-semibold text-sm active:scale-95 transition-transform"
+        >
+          <FileText className="w-4 h-4" />
+          Devis gratuit
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default MobileStickyBar;
