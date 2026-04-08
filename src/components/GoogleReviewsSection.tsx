@@ -24,6 +24,12 @@ const testimonials = [
     text: "J'ai fait appel au Cuivre Electrique à plusieurs reprises, que ce soit pour un chantier important (nouvelle cuisine), ou de petits dépannages. J'ai chaque fois été très satisfait. Adrian est fiable, compétent, et à l'écoute de ses clients, je recommande !",
     date: "Il y a 12 semaines",
   },
+  {
+    name: "Guillaume",
+    rating: 5,
+    text: "Service de qualité et bonne communication, à prix juste. Ne pas hésiter !",
+    date: "Il y a 12 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
