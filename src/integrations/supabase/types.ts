@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          approved: boolean
+          city: string | null
+          created_at: string
+          id: string
+          message: string
+          name: string
+          rating: number
+          service: string | null
+        }
+        Insert: {
+          approved?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          name: string
+          rating?: number
+          service?: string | null
+        }
+        Update: {
+          approved?: boolean
+          city?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          name?: string
+          rating?: number
+          service?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
