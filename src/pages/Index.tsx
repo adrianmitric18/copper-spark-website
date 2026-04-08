@@ -6,6 +6,7 @@ import GoogleReviewsSection from "@/components/GoogleReviewsSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import MouseEffects from "@/components/MouseEffects";
+import MobileStickyBar from "@/components/MobileStickyBar";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 
