@@ -24,6 +24,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
+        <KeyFiguresSection />
         <GoogleReviewsSection />
       </main>
       <Footer />
