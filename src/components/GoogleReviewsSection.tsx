@@ -90,6 +90,12 @@ const testimonials = [
     text: "Adrian est réactif, professionnel et très à l'écoute de ses clients. Il est également de très bon conseil !",
     date: "Il y a 5 semaines",
   },
+  {
+    name: "Melody Mertens",
+    rating: 5,
+    text: "Adrian est un super électricien, il est très gentil et très réactif. On était dans l'urgence et il a fait tout son possible pour que le travail soit effectué dans les délais demandés. Il a fait du très bon travail, je le recommande à 100 %. Vous pouvez lui faire confiance les yeux fermés. Merci Adrian pour ta rapidité et ton travail minutieux.",
+    date: "Il y a 5 semaines",
+  },
 ];
 
 const StarRating = ({ rating }: { rating: number }) => (
