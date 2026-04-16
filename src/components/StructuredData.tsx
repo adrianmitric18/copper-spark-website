@@ -36,7 +36,6 @@ const StructuredData = (props: StructuredDataProps) => {
   useEffect(() => {
     const scriptId = `structured-data-${props.type}`;
     
-    // Remove existing script if present
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
       existingScript.remove();
@@ -56,7 +55,8 @@ const StructuredData = (props: StructuredDataProps) => {
           "logo": "https://cuivre-electrique.com/favicon.png",
           "image": "https://cuivre-electrique.com/og-image.jpg",
           "telephone": "+32485755227",
-          "email": "lecuivreelectrique@gmail.com",
+          "email": "cuivre.electrique@gmail.com",
+          "vatID": "BE0805376944",
           "address": {
             "@type": "PostalAddress",
             "addressLocality": "Bruxelles",
@@ -69,20 +69,19 @@ const StructuredData = (props: StructuredDataProps) => {
             "longitude": "4.3517"
           },
           "areaServed": [
-            {
-              "@type": "City",
-              "name": "Bruxelles"
-            },
-            {
-              "@type": "State",
-              "name": "Wallonie"
-            }
+            { "@type": "City", "name": "Bruxelles" },
+            { "@type": "AdministrativeArea", "name": "Wallonie" },
+            { "@type": "City", "name": "Liège" },
+            { "@type": "City", "name": "Namur" },
+            { "@type": "City", "name": "Charleroi" },
+            { "@type": "City", "name": "Mons" },
+            { "@type": "City", "name": "Wavre" }
           ],
           "priceRange": "€€",
           "openingHoursSpecification": [
             {
               "@type": "OpeningHoursSpecification",
-              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
               "opens": "08:00",
               "closes": "18:00"
             },
@@ -93,6 +92,12 @@ const StructuredData = (props: StructuredDataProps) => {
               "closes": "13:00"
             }
           ],
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "5",
+            "reviewCount": "17",
+            "bestRating": "5"
+          },
           "sameAs": [
             "https://wa.me/32485755227"
           ],
@@ -100,41 +105,11 @@ const StructuredData = (props: StructuredDataProps) => {
             "@type": "OfferCatalog",
             "name": "Services électriques",
             "itemListElement": [
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Service",
-                  "name": "Installation électrique complète"
-                }
-              },
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Service",
-                  "name": "Mise en conformité RGIE"
-                }
-              },
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Service",
-                  "name": "Dépannage électrique 24h/24"
-                }
-              },
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Service",
-                  "name": "Panneaux photovoltaïques"
-                }
-              },
-              {
-                "@type": "Offer",
-                "itemOffered": {
-                  "@type": "Service",
-                  "name": "Bornes de recharge véhicules électriques"
-                }
-              }
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Installation électrique complète Bruxelles" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mise en conformité RGIE Belgique" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Dépannage électrique urgent 24h/24" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Borne de recharge véhicule électrique" } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panneaux photovoltaïques Bruxelles Wallonie" } }
             ]
           }
         };
@@ -167,14 +142,8 @@ const StructuredData = (props: StructuredDataProps) => {
             "url": "https://cuivre-electrique.com"
           },
           "areaServed": [
-            {
-              "@type": "City",
-              "name": "Bruxelles"
-            },
-            {
-              "@type": "State",
-              "name": "Wallonie"
-            }
+            { "@type": "City", "name": "Bruxelles" },
+            { "@type": "AdministrativeArea", "name": "Wallonie" }
           ]
         };
         break;
