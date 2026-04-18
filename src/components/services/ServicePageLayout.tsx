@@ -8,7 +8,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import GoogleReviewsSection from "@/components/GoogleReviewsSection";
+import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -199,8 +199,8 @@ const ServicePageLayout = ({
           </section>
         )}
 
-        {/* Avis Google */}
-        <GoogleReviewsSection />
+        {/* Bandeau avis Google compact */}
+        <HomeReviewsBanner />
 
         {/* CTA final */}
         <section className="py-16 md:py-20">
