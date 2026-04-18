@@ -6,8 +6,8 @@ import { useEffect } from "react";
 import heroImage from "@/assets/hero-lighting-design.jpg";
 
 const HeroSection = () => {
-  const titleWords = ["L'excellence", "électrique"];
-  const subtitleWords = ["à", "Bruxelles", "&", "Wallonie"];
+  const titleWords = ["Électricien", "agréé"];
+  const subtitleWords = ["Brabant", "wallon,", "Wallonie", "&", "Bruxelles"];
 
   // Mouse parallax effect only (no scroll parallax to avoid jank)
   const mouseX = useMotionValue(0);
@@ -151,11 +151,8 @@ const HeroSection = () => {
         }} transition={{
           duration: 0.6,
           delay: 1
-        }} className="text-lg md:text-xl max-w-xl mx-auto mb-10 leading-relaxed text-background">
-            On alimente vos idées,{" "}
-            <span className="text-foreground font-medium">
-              sans court-circuiter votre journée !
-            </span>
+          }} className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-background">
+            <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span> — Installation, dépannage 24h/24, conformité RGIE, bornes de recharge et photovoltaïque.
           </motion.p>
 
           {/* CTA Buttons */}
