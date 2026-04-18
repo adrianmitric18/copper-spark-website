@@ -19,6 +19,7 @@ import MentionsLegales from "./pages/MentionsLegales";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileStickyBar from "./components/MobileStickyBar";
+import AnalyticsPageTracker from "./components/AnalyticsPageTracker";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
+        <AnalyticsPageTracker />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/a-propos" element={<APropos />} />
