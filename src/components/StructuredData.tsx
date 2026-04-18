@@ -50,7 +50,7 @@ const StructuredData = (props: StructuredDataProps) => {
           "@type": "Electrician",
           "name": "Le Cuivre Électrique",
           "alternateName": "Le Cuivre Electrique",
-          "description": "Électricien professionnel à Bruxelles et en Wallonie. Installation électrique, mise en conformité RGIE, dépannage 24h/24, panneaux photovoltaïques et bornes de recharge.",
+          "description": "Électricien artisan agréé basé à Court-Saint-Étienne. Installation électrique, mise en conformité RGIE, dépannage urgent 24h/24, panneaux photovoltaïques et bornes de recharge. Brabant wallon, Wallonie et Bruxelles.",
           "url": "https://cuivre-electrique.com",
           "logo": "https://cuivre-electrique.com/favicon.png",
           "image": "https://cuivre-electrique.com/og-image.jpg",
@@ -59,23 +59,31 @@ const StructuredData = (props: StructuredDataProps) => {
           "vatID": "BE0805376944",
           "address": {
             "@type": "PostalAddress",
-            "addressLocality": "Bruxelles",
-            "addressRegion": "Bruxelles-Capitale",
+            "addressLocality": "Court-Saint-Étienne",
+            "addressRegion": "Brabant wallon",
             "addressCountry": "BE"
           },
           "geo": {
             "@type": "GeoCoordinates",
-            "latitude": "50.8503",
-            "longitude": "4.3517"
+            "latitude": "50.6420",
+            "longitude": "4.5710"
           },
           "areaServed": [
-            { "@type": "City", "name": "Bruxelles" },
+            { "@type": "AdministrativeArea", "name": "Brabant wallon" },
             { "@type": "AdministrativeArea", "name": "Wallonie" },
-            { "@type": "City", "name": "Liège" },
+            { "@type": "City", "name": "Court-Saint-Étienne" },
+            { "@type": "City", "name": "Ottignies-Louvain-la-Neuve" },
+            { "@type": "City", "name": "Wavre" },
+            { "@type": "City", "name": "Nivelles" },
+            { "@type": "City", "name": "Waterloo" },
+            { "@type": "City", "name": "Genappe" },
+            { "@type": "City", "name": "Rixensart" },
+            { "@type": "City", "name": "Lasne" },
+            { "@type": "City", "name": "Braine-l'Alleud" },
+            { "@type": "City", "name": "Jodoigne" },
+            { "@type": "City", "name": "Gembloux" },
             { "@type": "City", "name": "Namur" },
-            { "@type": "City", "name": "Charleroi" },
-            { "@type": "City", "name": "Mons" },
-            { "@type": "City", "name": "Wavre" }
+            { "@type": "City", "name": "Bruxelles" }
           ],
           "priceRange": "€€",
           "openingHoursSpecification": [
@@ -142,8 +150,10 @@ const StructuredData = (props: StructuredDataProps) => {
             "url": "https://cuivre-electrique.com"
           },
           "areaServed": [
-            { "@type": "City", "name": "Bruxelles" },
-            { "@type": "AdministrativeArea", "name": "Wallonie" }
+            { "@type": "AdministrativeArea", "name": "Brabant wallon" },
+            { "@type": "AdministrativeArea", "name": "Wallonie" },
+            { "@type": "City", "name": "Court-Saint-Étienne" },
+            { "@type": "City", "name": "Bruxelles" }
           ]
         };
         break;

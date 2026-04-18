@@ -79,7 +79,7 @@ const SEO = ({
 
     // Cleanup function to reset to defaults when component unmounts
     return () => {
-      document.title = "Le Cuivre Électrique | Électricien de confiance à Bruxelles et en Wallonie";
+      document.title = "Le Cuivre Électrique | Électricien agréé en Brabant wallon & Wallonie";
     };
   }, [title, description, keywords, ogImage, canonical, noindex]);
 

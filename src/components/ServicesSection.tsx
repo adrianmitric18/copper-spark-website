@@ -1,139 +1,96 @@
+import { Link } from "react-router-dom";
 import { Zap, Shield, Lightbulb, AlertTriangle, ArrowRight, Sun, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, useInView } from "framer-motion";
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 
-interface BentoCardProps {
+interface ServiceCardProps {
   icon: LucideIcon;
   title: string;
   description: string;
   features: string[];
+  href: string;
   accent?: boolean;
-  className?: string;
   index: number;
 }
 
-const BentoCard = ({ icon: Icon, title, description, features, accent, className = "", index }: BentoCardProps) => {
+const ServiceCard = ({
+  icon: Icon,
+  title,
+  description,
+  features,
+  href,
+  accent,
+  index,
+}: ServiceCardProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [isCentered, setIsCentered] = useState(false);
-
-  // Check if card is centered in viewport (for mobile scroll highlight effect)
-  useEffect(() => {
-    const checkIfCentered = () => {
-      if (!ref.current || window.innerWidth >= 768) {
-        setIsCentered(false);
-        return;
-      }
-      
-      const rect = ref.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const cardCenter = rect.top + rect.height / 2;
-      const viewportCenter = viewportHeight / 2;
-      
-      // Card is "centered" when its center is within 100px of viewport center
-      const isNearCenter = Math.abs(cardCenter - viewportCenter) < 120;
-      setIsCentered(isNearCenter);
-    };
-
-    window.addEventListener("scroll", checkIfCentered, { passive: true });
-    checkIfCentered();
-    
-    return () => window.removeEventListener("scroll", checkIfCentered);
-  }, []);
-
-  // Determine if this card should be highlighted (accent OR centered on mobile)
-  const isHighlighted = accent || isCentered;
 
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 60, scale: 0.9 }}
       animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.9 }}
-      transition={{ 
-        duration: 0.6, 
-        delay: index * 0.15,
+      transition={{
+        duration: 0.6,
+        delay: index * 0.12,
         type: "spring",
-        stiffness: 100
+        stiffness: 100,
       }}
-      whileHover={{ 
-        y: -12,
-        scale: 1.03,
-        transition: { duration: 0.3 }
-      }}
-      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 ${
-        accent 
-          ? 'bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25' 
-          : isCentered
-            ? 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/50 shadow-lg shadow-primary/20 md:bg-card md:border-border/50 md:shadow-black/5'
-            : 'bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'
-      } ${className}`}
+      whileHover={{ y: -10, scale: 1.02, transition: { duration: 0.3 } }}
+      className={`group relative p-6 md:p-8 rounded-3xl border transition-all duration-500 flex flex-col ${
+        accent
+          ? "bg-gradient-to-br from-primary to-primary/80 border-primary/50 shadow-lg shadow-primary/25"
+          : "bg-card border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/40"
+      }`}
     >
-      {/* Animated border glow on hover */}
-      <motion.div 
-        className="absolute inset-0 rounded-3xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl"
-      />
-
-      {/* Icon */}
-      <motion.div 
+      <div
         className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 ${
-          accent 
-            ? 'bg-white/20 group-hover:bg-white/30' 
-            : isHighlighted && !accent
-              ? 'bg-primary/30 md:bg-primary/10 md:group-hover:bg-primary/20'
-              : 'bg-primary/10 group-hover:bg-primary/20'
+          accent ? "bg-white/20 group-hover:bg-white/30" : "bg-primary/10 group-hover:bg-primary/20"
         }`}
-        whileHover={{ rotate: [0, -10, 10, -5, 0], scale: 1.15 }}
-        transition={{ duration: 0.5 }}
       >
-        <Icon className={`w-7 h-7 ${accent ? 'text-white' : 'text-primary'}`} />
-      </motion.div>
-      
-      {/* Content */}
-      <h3 className={`font-display text-2xl font-bold mb-3 transition-colors duration-300 ${
-        accent 
-          ? 'text-white' 
-          : isCentered 
-            ? 'text-primary md:text-card-foreground' 
-            : 'text-card-foreground'
-      }`}>
+        <Icon className={`w-7 h-7 ${accent ? "text-white" : "text-primary"}`} />
+      </div>
+
+      <h3
+        className={`font-display text-2xl font-bold mb-3 ${
+          accent ? "text-white" : "text-card-foreground"
+        }`}
+      >
         {title}
       </h3>
-      <p className={`mb-6 leading-relaxed ${accent ? 'text-white/90' : 'text-muted-foreground'}`}>
+      <p className={`mb-6 leading-relaxed ${accent ? "text-white/90" : "text-muted-foreground"}`}>
         {description}
       </p>
-      
-      {/* Features list */}
-      <ul className="space-y-2 mb-6">
+
+      <ul className="space-y-2 mb-6 flex-1">
         {features.map((feature, i) => (
-          <motion.li 
-            key={i} 
-            initial={{ opacity: 0, x: -20 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, delay: 0.4 + i * 0.1 }}
-            className={`flex items-center gap-2 text-sm ${accent ? 'text-white/80' : 'text-muted-foreground'}`}
+          <li
+            key={i}
+            className={`flex items-center gap-2 text-sm ${
+              accent ? "text-white/85" : "text-muted-foreground"
+            }`}
           >
-            <motion.div 
-              className={`w-1.5 h-1.5 rounded-full ${accent ? 'bg-white' : 'bg-primary'}`}
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+            <span
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                accent ? "bg-white" : "bg-primary"
+              }`}
             />
             {feature}
-          </motion.li>
+          </li>
         ))}
       </ul>
 
-      {/* CTA */}
-      <Button 
-        variant={accent ? "secondary" : "copperOutline"} 
-        size="sm" 
+      <Button
+        variant={accent ? "secondary" : "copperOutline"}
+        size="sm"
         className="group/btn"
         asChild
       >
-        <a href="#contact">
-          En savoir plus
+        <Link to={href}>
+          Découvrir
           <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
-        </a>
+        </Link>
       </Button>
     </motion.div>
   );
@@ -142,38 +99,44 @@ const BentoCard = ({ icon: Icon, title, description, features, accent, className
 const services = [
   {
     icon: AlertTriangle,
-    title: "Dépannage Urgent",
-    description: "Intervention rapide 24h/24 pour tous vos problèmes électriques. Précision technique et réactivité garanties.",
-    features: ["Disponible 7j/7", "Délai d'intervention < 2h", "Diagnostic complet"],
+    title: "Dépannage Urgent 24h/24",
+    description:
+      "Intervention rapide 7j/7 pour panne, court-circuit, disjoncteur. Court-Saint-Étienne et Brabant wallon.",
+    features: ["Disponible 24h/24, 7j/7", "Délai d'intervention rapide", "Diagnostic complet"],
+    href: "/services/depannage-urgent",
     accent: true,
+  },
+  {
+    icon: Zap,
+    title: "Installation & Rénovation",
+    description:
+      "Installation électrique complète neuve ou rénovation. Tableau Schneider, appareillage Niko.",
+    features: ["Schneider & Niko", "Visite technique gratuite", "Pose par Adrian en personne"],
+    href: "/services/installation-electrique-renovation",
   },
   {
     icon: Shield,
     title: "Mise en Conformité RGIE",
-    description: "Expertise complète pour mettre votre installation aux normes belges. Tableau fini et étiqueté avec soin.",
-    features: ["Audit complet", "Rapport détaillé", "Attestation officielle"],
-    accent: false,
+    description:
+      "Diagnostic, travaux et accompagnement jusqu'au certificat de conformité par organisme agréé.",
+    features: ["Audit complet", "Coordination Vinçotte / BTV", "Certificat officiel"],
+    href: "/services/mise-en-conformite-rgie",
   },
   {
     icon: Lightbulb,
-    title: "Rénovation & LED",
-    description: "Design d'éclairage moderne et installation électrique complète. Sublimez votre intérieur.",
-    features: ["Éclairage LED design", "Domotique intégrée", "Solutions sur mesure"],
-    accent: false,
-  },
-  {
-    icon: Zap,
     title: "Bornes de Recharge",
-    description: "Installation de bornes pour véhicules électriques. Passez à la mobilité verte en toute sérénité.",
-    features: ["Toutes marques", "Installation rapide", "Conseil personnalisé"],
-    accent: false,
+    description:
+      "Installation de bornes Alfen et Hager pour particuliers, entreprises et copropriétés.",
+    features: ["Alfen & Hager", "7,4 / 11 / 22 kW", "Pilotage app + délestage"],
+    href: "/services/bornes-de-recharge",
   },
   {
     icon: Sun,
     title: "Panneaux Photovoltaïques",
-    description: "Produisez votre propre électricité grâce à l'énergie solaire. Économies garanties sur le long terme.",
-    features: ["Étude de rentabilité", "Installation certifiée", "Suivi de production"],
-    accent: false,
+    description:
+      "Étude personnalisée et installation avec onduleurs Huawei ou SolarEdge. Production optimisée.",
+    features: ["Huawei & SolarEdge", "Étude sur mesure", "Suivi de production"],
+    href: "/services/panneaux-photovoltaiques",
   },
 ];
 
@@ -183,24 +146,11 @@ const ServicesSection = () => {
 
   return (
     <section id="services" className="py-24 md:py-32 bg-background relative overflow-hidden">
-      {/* Background accent */}
-      <motion.div 
-        className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2"
-        animate={{ 
-          x: [-50, 50, -50],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ 
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      
+      <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
+
       <div className="container mx-auto relative z-10">
-        {/* Section header */}
         <div ref={headerRef} className="text-center mb-16 md:mb-20">
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0, y: 20 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5 }}
@@ -208,34 +158,35 @@ const ServicesSection = () => {
           >
             Nos Services
           </motion.span>
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 30 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
           >
             Expertise électrique{" "}
-            <span className="text-gradient-copper">haut de gamme</span>
+            <span className="text-gradient-copper">en Brabant wallon & Wallonie</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-muted-foreground max-w-2xl mx-auto text-lg"
           >
-            Des solutions professionnelles pour particuliers et entreprises, avec un souci constant de la qualité et de la propreté.
+            Basé à Court-Saint-Étienne, j'interviens dans tout le Brabant wallon, en Wallonie et à
+            Bruxelles pour les particuliers et professionnels.
           </motion.p>
         </div>
 
-        {/* Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service, index) => (
-            <BentoCard
+            <ServiceCard
               key={service.title}
               icon={service.icon}
               title={service.title}
               description={service.description}
               features={service.features}
+              href={service.href}
               accent={service.accent}
               index={index}
             />

@@ -80,10 +80,13 @@ const APropos = () => {
               delay: 0.2
             }} className="bg-card border border-border/50 rounded-2xl p-8 md:p-10 mb-12">
                 <p className="text-lg md:text-xl text-foreground leading-relaxed mb-6">
-                  Je m'appelle <strong className="text-primary">Adrian Mitric</strong>, électricien indépendant et fondateur de Le Cuivre Électrique.
+                  Je m'appelle <strong className="text-primary">Adrian Mitric</strong>, électricien indépendant et fondateur de Le Cuivre Électrique, <strong>basé à Court-Saint-Étienne</strong> en Brabant wallon.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  Électricien de confiance, j'accompagne mes clients en rénovation et en construction neuve pour des installations électriques complètes, des mises en conformité RGIE, des dépannages soignés et des solutions en énergies vertes (photovoltaïque, bornes de recharge).
+                  J'accompagne mes clients en rénovation et en construction neuve pour des installations électriques complètes, des mises en conformité RGIE, des dépannages soignés et des solutions en énergies vertes (photovoltaïque, bornes de recharge).
+                </p>
+                <p className="text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">Zone d'intervention :</strong> Brabant wallon en priorité, Wallonie et Bruxelles sur demande.
                 </p>
               </motion.div>
             </div>

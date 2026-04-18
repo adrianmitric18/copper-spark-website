@@ -7,6 +7,11 @@ import Index from "./pages/Index";
 import APropos from "./pages/APropos";
 import FAQ from "./pages/FAQ";
 import Services from "./pages/Services";
+import InstallationRenovation from "./pages/services/InstallationRenovation";
+import DepannageUrgent from "./pages/services/DepannageUrgent";
+import MiseEnConformiteRgie from "./pages/services/MiseEnConformiteRgie";
+import BornesDeRecharge from "./pages/services/BornesDeRecharge";
+import PanneauxPhotovoltaiques from "./pages/services/PanneauxPhotovoltaiques";
 import Realisations from "./pages/Realisations";
 import TableauxEtPrises from "./pages/realisations/TableauxEtPrises";
 import AmbiancesLumineuses from "./pages/realisations/AmbiancesLumineuses";
@@ -37,6 +42,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/a-propos" element={<APropos />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/installation-electrique-renovation" element={<InstallationRenovation />} />
+          <Route path="/services/depannage-urgent" element={<DepannageUrgent />} />
+          <Route path="/services/mise-en-conformite-rgie" element={<MiseEnConformiteRgie />} />
+          <Route path="/services/bornes-de-recharge" element={<BornesDeRecharge />} />
+          <Route path="/services/panneaux-photovoltaiques" element={<PanneauxPhotovoltaiques />} />
           <Route path="/realisations" element={<Realisations />} />
           <Route path="/realisations/tableaux-et-prises" element={<TableauxEtPrises />} />
           <Route path="/realisations/ambiances-lumineuses" element={<AmbiancesLumineuses />} />

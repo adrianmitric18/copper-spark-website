@@ -25,8 +25,8 @@ const Footer = () => {
                 </span>
               </div>
             </Link>
-            <p className="text-muted-foreground mb-6 max-w-md leading-relaxed">
-              Électricien artisan de confiance à Bruxelles et en Wallonie. Installation, mise en conformité RGIE et dépannage 24h/24.
+            <p className="text-muted-foreground mb-3 max-w-md leading-relaxed">
+              Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation, conformité RGIE et dépannage 24h/24.
             </p>
             <p className="text-primary font-medium text-lg italic">
               "On alimente vos idées, sans court-circuiter votre journée !"
@@ -56,10 +56,24 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <span className="flex items-center gap-3 text-muted-foreground">
-                  <MapPin className="w-5 h-5 text-primary" />
-                  Bruxelles & Wallonie
+                <span className="flex items-start gap-3 text-muted-foreground">
+                  <MapPin className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                  <span>
+                    Court-Saint-Étienne<br />
+                    <span className="text-xs">Brabant wallon, Wallonie & Bruxelles</span>
+                  </span>
                 </span>
+              </li>
+              <li>
+                <a
+                  href="https://g.page/r/CVLZZFVq3KkiEBM/review"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-analytics="review_click"
+                  className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                >
+                  ⭐ Nous évaluer sur Google
+                </a>
               </li>
             </ul>
           </div>
@@ -138,7 +152,7 @@ const Footer = () => {
             </div>
             <div>
               <span className="text-muted-foreground">Zone :</span>
-              <span className="ml-2 text-foreground font-medium">Bruxelles & Wallonie</span>
+              <span className="ml-2 text-foreground font-medium">Brabant wallon, Wallonie & Bruxelles</span>
             </div>
           </div>
         </div>
