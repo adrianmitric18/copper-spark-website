@@ -20,7 +20,7 @@ import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileStickyBar from "./components/MobileStickyBar";
 import AnalyticsPageTracker from "./components/AnalyticsPageTracker";
-import CookieConsent from "./components/CookieConsent";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +29,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <CookieConsentBanner />
       <BrowserRouter>
         <ScrollToTop />
         <AnalyticsPageTracker />
@@ -50,7 +51,6 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         <MobileStickyBar />
-        <CookieConsent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

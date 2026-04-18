@@ -1,6 +1,7 @@
 import { Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import LogoIcon from "@/components/LogoIcon";
+import { openCookiePreferences } from "@/hooks/useCookieConsent";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -106,6 +107,15 @@ const Footer = () => {
                 >
                   Mentions légales
                 </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openCookiePreferences}
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
+                >
+                  Gérer mes cookies
+                </button>
               </li>
             </ul>
           </div>
