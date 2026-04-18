@@ -32,7 +32,7 @@ const values = [{
 
 const APropos = () => {
   return <div className="min-h-screen bg-background overflow-x-hidden">
-      <SEO title="À propos | Le Cuivre Électrique - Adrian Mitric, Électricien" description="Découvrez Le Cuivre Électrique et Adrian Mitric, électricien indépendant à Bruxelles et en Wallonie. Valeurs, expérience et engagement qualité." keywords="électricien indépendant, Adrian Mitric, Le Cuivre Électrique, électricien Bruxelles, à propos" canonical="https://cuivre-electrique.com/a-propos" />
+      <SEO title="À propos | Le Cuivre Électrique - Électricien en Brabant wallon" description="Découvrez Le Cuivre Électrique, électricien indépendant en Brabant wallon et à Bruxelles. Valeurs, expérience et engagement qualité." keywords="électricien indépendant, Le Cuivre Électrique, Brabant wallon, électricien Bruxelles, à propos" canonical="https://cuivre-electrique.com/a-propos" />
       <Header />
       <main className="pt-24">
         <div className="container mx-auto px-4">

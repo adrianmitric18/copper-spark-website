@@ -28,7 +28,7 @@ const TableauxEtPrises = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Tableaux et Prises | Réalisations - Le Cuivre Électrique"
+        title="Tableaux électriques et prises | Réalisations Le Cuivre Électrique"
         description="Découvrez nos installations de tableaux électriques conformes RGIE et prises design. Travail soigné et professionnel à Bruxelles."
         keywords="tableau électrique, prises design, installation électrique, RGIE, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/tableaux-et-prises"

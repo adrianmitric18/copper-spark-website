@@ -28,7 +28,7 @@ const InstallationReseaux = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Installation Réseaux | Réalisations - Le Cuivre Électrique"
+        title="Installations réseaux & câblage | Réalisations Le Cuivre Électrique"
         description="Découvrez nos installations réseaux professionnelles : baies de brassage, câblage structuré, visiophonie. Connectivité sur mesure à Bruxelles."
         keywords="installation réseaux, baie de brassage, câblage réseau, visiophonie, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/installation-reseaux"

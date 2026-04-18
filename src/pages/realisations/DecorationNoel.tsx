@@ -28,7 +28,7 @@ const DecorationNoel = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Décoration de Noël | Réalisations - Le Cuivre Électrique"
+        title="Décorations de Noël & illuminations | Réalisations Le Cuivre Électrique"
         description="Découvrez nos installations de décorations lumineuses de Noël : centres commerciaux, rues, façades. Illuminations féeriques à Bruxelles."
         keywords="décoration Noël, illuminations, guirlandes LED, sapin lumineux, Bruxelles, électricien"
         canonical="https://cuivre-electrique.com/realisations/decoration-de-noel"

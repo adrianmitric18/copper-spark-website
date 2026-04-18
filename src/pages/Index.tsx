@@ -13,9 +13,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Le Cuivre Électrique | Électricien à Bruxelles et Wallonie"
-        description="Électricien professionnel à Bruxelles et en Wallonie. Installation, mise en conformité RGIE, dépannage 24h/24. Devis gratuit et intervention rapide."
-        keywords="électricien Bruxelles, électricien Wallonie, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
+        title="Le Cuivre Électrique | Électricien agréé Bruxelles & Brabant wallon"
+        description="Électricien agréé à Bruxelles et en Brabant wallon. Installation, mise en conformité RGIE, dépannage urgent 7j/7 24h/24. Devis gratuit : 0485 75 52 27."
+        keywords="électricien Bruxelles, électricien Brabant wallon, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
         canonical="https://cuivre-electrique.com"
       />
       <StructuredData type="LocalBusiness" />
