@@ -112,6 +112,9 @@ const Avis = () => {
                 — Note moyenne{" "}
                 <span className="text-foreground font-bold">{AVERAGE_RATING.toString().replace(".", ",")}/5</span>
               </p>
+              <p className="text-sm text-muted-foreground opacity-70">
+                14 commentaires détaillés ci-dessous
+              </p>
             </div>
           </div>
         </section>
