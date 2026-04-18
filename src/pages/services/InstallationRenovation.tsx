@@ -117,8 +117,9 @@ const InstallationRenovation = () => {
         </li>
       </ul>
       <p className="text-muted-foreground leading-relaxed">
-        Nous restons ouverts aux autres marques selon les préférences du client
-        (Legrand, Bticino, etc.), tant qu'elles respectent les normes de qualité.
+        Nous restons ouverts aux autres marques sur demande (Legrand, Bticino,
+        ABB, etc.), sous réserve qu'elles respectent les normes et la qualité
+        professionnelle.
       </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
