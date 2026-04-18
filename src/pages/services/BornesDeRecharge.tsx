@@ -42,7 +42,7 @@ const BornesDeRecharge = () => {
         eyebrow: "Bornes de recharge",
         h1: "Installation de bornes de recharge — Alfen & Hager",
         intro:
-          "Avec la montée en puissance des voitures électriques, disposer d'une borne fiable à domicile ou au travail devient incontournable. Nous installons exclusivement des bornes Alfen et Hager, gages de fiabilité et de durabilité.",
+          "Avec la montée en puissance des voitures électriques, disposer d'une borne fiable à domicile ou au travail devient incontournable. Nos marques de référence sont Alfen et Hager, mais nous restons ouverts à d'autres marques selon vos préférences et la compatibilité de votre installation.",
       }}
       faqs={faqs}
     >
@@ -74,9 +74,12 @@ const BornesDeRecharge = () => {
         Nos marques : Alfen et Hager
       </h2>
       <p className="text-muted-foreground leading-relaxed mb-4">
-        Nous travaillons exclusivement avec <strong>Alfen</strong> et{" "}
-        <strong>Hager</strong> car ces marques garantissent fiabilité, durabilité
-        et un excellent service après-vente.
+        Nos marques de référence sont <strong>Alfen</strong> et{" "}
+        <strong>Hager</strong> pour leur fiabilité éprouvée et leur durabilité
+        reconnue. Nous restons ouverts à installer d'autres marques si vous en
+        avez déjà une ou si vous en préférez une en particulier, sous réserve
+        qu'elle soit compatible avec votre installation et respecte les normes
+        en vigueur.
       </p>
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div className="bg-card border border-border/60 rounded-2xl p-6">

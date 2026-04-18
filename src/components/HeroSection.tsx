@@ -152,7 +152,7 @@ const HeroSection = () => {
           duration: 0.6,
           delay: 1
           }} className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-background">
-            <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span> — Installation, dépannage 24h/24, conformité RGIE, bornes de recharge et photovoltaïque.
+            <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span>
           </motion.p>
 
           {/* CTA Buttons */}
@@ -198,10 +198,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 1.2 }}
             className="text-sm text-muted-foreground mt-6 max-w-2xl mx-auto text-center"
           >
-            Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent disponible 7j/7 24h/24 au{" "}
-            <a href="tel:+32485755227" className="text-primary font-semibold hover:underline">
-              0485 75 52 27
-            </a>
+            Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent disponible 7j/7 24h/24
           </motion.p>
         </motion.div>
 

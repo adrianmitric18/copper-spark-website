@@ -95,8 +95,15 @@ const PanneauxPhotovoltaiques = () => {
       </ol>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
-        Onduleurs : Huawei vs SolarEdge
+        Onduleurs : Huawei & SolarEdge
       </h2>
+      <p className="text-muted-foreground leading-relaxed mb-6">
+        Nous privilégions les onduleurs <strong>Huawei</strong> (excellent
+        rapport qualité-prix, fiabilité reconnue) et <strong>SolarEdge</strong>{" "}
+        (optimisation panneau par panneau, idéale pour toitures complexes ou
+        partiellement ombragées). D'autres marques peuvent être proposées sur
+        demande selon les spécificités de votre projet.
+      </p>
       <div className="grid md:grid-cols-2 gap-4 mb-10">
         <div className="bg-card border border-border/60 rounded-2xl p-6">
           <h3 className="font-display text-xl font-bold text-foreground mb-3">
