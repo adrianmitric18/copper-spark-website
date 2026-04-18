@@ -152,7 +152,7 @@ const HeroSection = () => {
           duration: 0.6,
           delay: 1
           }} className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-background">
-            <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span> — Installation, dépannage 24h/24, conformité RGIE, bornes de recharge et photovoltaïque.
+            <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span>
           </motion.p>
 
           {/* CTA Buttons */}
