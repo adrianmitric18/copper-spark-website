@@ -9,7 +9,7 @@ const MentionsLegales = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Mentions Légales | Le Cuivre Électrique"
+        title="Mentions légales | Le Cuivre Électrique"
         description="Mentions légales de Le Cuivre Électrique. Informations sur l'entreprise, protection des données RGPD, cookies et conditions d'utilisation."
         keywords="mentions légales, RGPD, conditions utilisation, Le Cuivre Électrique"
         canonical="https://cuivre-electrique.com/mentions-legales"

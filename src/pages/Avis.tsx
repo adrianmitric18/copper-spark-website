@@ -9,8 +9,8 @@ const Avis = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Avis Clients | Le Cuivre Électrique - Témoignages"
-        description="Lisez les avis et témoignages de nos clients satisfaits. Découvrez pourquoi choisir Le Cuivre Électrique pour vos travaux électriques à Bruxelles."
+        title="Avis clients 5 étoiles | Le Cuivre Électrique"
+        description="Lisez les avis 5 étoiles de nos clients satisfaits. Découvrez pourquoi choisir Le Cuivre Électrique en Brabant wallon et à Bruxelles."
         keywords="avis électricien, témoignages clients, Le Cuivre Électrique, électricien recommandé, Bruxelles, Wallonie"
         canonical="https://cuivre-electrique.com/avis"
       />

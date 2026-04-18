@@ -236,6 +236,9 @@ const ContactSection = () => {
                   <p className="font-display text-xl font-bold text-card-foreground">
                     0485 75 52 27
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent 7j/7 24h/24
+                  </p>
                 </div>
               </motion.a>
 

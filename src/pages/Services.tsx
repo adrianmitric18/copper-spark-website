@@ -11,8 +11,8 @@ const Services = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Services Électriques | Le Cuivre Électrique - Bruxelles & Wallonie"
-        description="Installation électrique, mise en conformité RGIE, dépannage, panneaux photovoltaïques et bornes de recharge. Tous nos services électriques à Bruxelles et en Wallonie."
+        title="Nos services électriques | Installation, dépannage, bornes, panneaux solaires"
+        description="Installation électrique, mise en conformité RGIE, dépannage 7j/7, panneaux photovoltaïques et bornes de recharge à Bruxelles et en Brabant wallon."
         keywords="services électricien, installation électrique, mise en conformité RGIE, dépannage électrique, panneaux solaires, borne recharge, Bruxelles, Wallonie"
         canonical="https://cuivre-electrique.com/services"
       />

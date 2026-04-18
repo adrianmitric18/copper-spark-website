@@ -193,6 +193,19 @@ const HeroSection = () => {
               </Button>
             </motion.div>
           </motion.div>
+
+          {/* Horaires */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+            className="text-sm text-muted-foreground mt-6 max-w-2xl mx-auto text-center"
+          >
+            Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent disponible 7j/7 24h/24 au{" "}
+            <a href="tel:+32485755227" className="text-primary font-semibold hover:underline">
+              0485 75 52 27
+            </a>
+          </motion.p>
         </motion.div>
 
         {/* Scroll indicator */}

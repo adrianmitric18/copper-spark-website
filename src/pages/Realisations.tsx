@@ -9,9 +9,9 @@ const Realisations = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
-        title="Nos Réalisations | Le Cuivre Électrique - Galerie Photos"
-        description="Découvrez nos réalisations électriques : tableaux, installations, décorations lumineuses de Noël. Portfolio de Le Cuivre Électrique à Bruxelles."
-        keywords="réalisations électricien, portfolio électrique, galerie photos, tableaux électriques, installations électriques, Bruxelles"
+        title="Nos réalisations | Chantiers électriques Brabant wallon & Bruxelles"
+        description="Découvrez nos chantiers : tableaux, installations, ambiances lumineuses, décorations de Noël. Portfolio Le Cuivre Électrique à Bruxelles et en Brabant wallon."
+        keywords="réalisations électricien, chantiers électriques, tableaux, ambiances lumineuses, Brabant wallon, Bruxelles"
         canonical="https://cuivre-electrique.com/realisations"
       />
       <Header />
