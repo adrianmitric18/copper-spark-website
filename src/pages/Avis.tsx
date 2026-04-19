@@ -7,6 +7,7 @@ import SEO from "@/components/SEO";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 interface Testimonial {
   id: string;
