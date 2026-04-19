@@ -154,6 +154,8 @@ const StructuredData = (props: StructuredDataProps) => {
           }
         };
         break;
+
+      case "FAQPage":
         jsonLd = {
           "@context": "https://schema.org",
           "@type": "FAQPage",
