@@ -255,8 +255,27 @@ const ContactSection = () => {
 
       // 3. Send emails via EmailJS
       const servicesStr = form.services.join(", ");
-      const photosStr = photoUrls.length > 0 ? photoUrls.join("\n") : "Aucune photo";
       const dateStr = new Date().toLocaleString("fr-BE");
+
+      // Generate signed URLs (7 days) for clickable photo links in Adrian's email
+      let photosStr = "Aucune photo jointe";
+      if (photoUrls.length > 0) {
+        try {
+          const signedLinks = await Promise.all(
+            photoUrls.map(async (path, idx) => {
+              const { data, error } = await supabase.storage
+                .from("lead-photos")
+                .createSignedUrl(path, 604800);
+              if (error || !data?.signedUrl) return `📎 Photo ${idx + 1} (lien indisponible)`;
+              return `<a href='${data.signedUrl}' target='_blank'>📎 Photo ${idx + 1}</a>`;
+            })
+          );
+          photosStr = signedLinks.join("<br>");
+        } catch (err) {
+          console.error("Signed URL generation failed:", err);
+          photosStr = photoUrls.map((_, i) => `📎 Photo ${i + 1} (lien indisponible)`).join("<br>");
+        }
+      }
 
       const adrianParams = {
         from_name: form.name.trim(),
