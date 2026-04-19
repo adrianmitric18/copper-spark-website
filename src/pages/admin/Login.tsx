@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Logo } from "@/components/Logo";
+import Logo from "@/components/Logo";
 import { Loader2, Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
