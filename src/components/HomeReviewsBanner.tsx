@@ -1,8 +1,10 @@
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const HomeReviewsBanner = () => {
+  const { trackEvent } = useAnalyticsEvents();
   return (
     <section className="py-12 md:py-16 bg-muted/30">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -35,6 +37,7 @@ const HomeReviewsBanner = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-analytics="review_click"
+                onClick={() => trackEvent("review_click", { source_section: "home_reviews_banner" })}
               >
                 Laisser un avis
               </a>
