@@ -10,8 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { buttonVariants } from "@/components/ui/button";
 
 const STATUSES = ["nouveau", "traité", "devis envoyé", "converti", "perdu"];
 
@@ -40,6 +45,7 @@ const LeadDetail = () => {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
   useEffect(() => {
@@ -102,6 +108,24 @@ const LeadDetail = () => {
     const text = `${lead.name}\n${lead.phone}\n${lead.email}\n${lead.address}`;
     navigator.clipboard.writeText(text);
     toast.success("Coordonnées copiées");
+  };
+
+  const deleteLead = async () => {
+    if (!lead) return;
+    setDeleting(true);
+    try {
+      if (lead.photo_urls?.length) {
+        const { error: storageErr } = await supabase.storage.from("lead-photos").remove(lead.photo_urls);
+        if (storageErr) console.warn("Photos non supprimées:", storageErr.message);
+      }
+      const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+      if (error) throw error;
+      toast.success("Lead supprimé");
+      navigate("/admin");
+    } catch (e: any) {
+      toast.error("Erreur : " + (e?.message || "suppression impossible"));
+      setDeleting(false);
+    }
   };
 
   const copyReviewSms = () => {
@@ -230,6 +254,36 @@ const LeadDetail = () => {
                 <Star className="w-4 h-4" /> Envoyer le lien avis Google
               </Button>
             </div>
+          </Card>
+
+          {/* Zone dangereuse */}
+          <Card className="p-6 mt-8 border-destructive/40 bg-destructive/5 space-y-3">
+            <h2 className="font-semibold text-lg text-destructive">Zone dangereuse</h2>
+            <p className="text-sm text-muted-foreground">
+              La suppression est définitive : le lead et ses photos seront effacés.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={deleting} className="w-full sm:w-auto">
+                  {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  Supprimer ce lead
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est irréversible. Le lead <strong>{lead.name}</strong> et toutes ses données (photos incluses) seront définitivement supprimés.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={deleteLead} className={buttonVariants({ variant: "destructive" })}>
+                    Oui, supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </Card>
         </main>
       </div>
