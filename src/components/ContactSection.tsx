@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, Phone, Mail, CheckCircle, AlertCircle } from "lucide-react";
+import { Phone, Mail, CheckCircle, Upload, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,283 +12,384 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import emailjs from "@emailjs/browser";
+import imageCompression from "browser-image-compression";
 
-const projectTypes = [
-  "Dépannage urgent",
-  "Mise en conformité RGIE",
-  "Rénovation électrique",
-  "Installation neuve",
-  "Borne de recharge",
+// EmailJS configuration (Public Key is safe to expose client-side)
+const EMAILJS_SERVICE_ID = "service_ybjga5v";
+const EMAILJS_TEMPLATE_ID_ADRIAN = "template_8khdj35";
+const EMAILJS_TEMPLATE_ID_PROSPECT = "template_ej9kepa";
+const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
+
+const CLIENT_TYPES = [
+  "Particulier",
+  "Entreprise / Professionnel",
+  "Syndic de copropriété",
+  "Agence immobilière",
+  "Architecte / Bureau d'étude",
   "Autre",
 ];
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  phone?: string;
-  projectType?: string;
-  message?: string;
+const SERVICES = [
+  "Installation électrique / Rénovation",
+  "Dépannage urgent",
+  "Mise en conformité RGIE",
+  "Borne de recharge voiture électrique",
+  "Panneaux photovoltaïques",
+  "Éclairage intérieur / extérieur",
+  "Autre (préciser dans le message)",
+];
+
+const TIMINGS = [
+  "Urgent — dans les 24h",
+  "Dans la semaine",
+  "Dans le mois",
+  "Pas de pression, je prépare mon projet",
+];
+
+const SOURCES = [
+  "Recherche Google",
+  "Bouche-à-oreille / Recommandation",
+  "Google Maps",
+  "Réseaux sociaux",
+  "Publicité en ligne",
+  "Plateforme (TrustUp, Bobex, Solvari...)",
+  "Autre",
+];
+
+const MAX_PHOTOS = 3;
+const MAX_PHOTO_SIZE_MB = 5;
+const COMPRESS_THRESHOLD_MB = 2;
+
+interface PhotoFile {
+  file: File;
+  previewUrl: string;
 }
+
+interface FormState {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  clientType: string;
+  services: string[];
+  message: string;
+  timing: string;
+  source: string;
+  gdprConsent: boolean;
+}
+
+const initialState: FormState = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  clientType: "",
+  services: [],
+  message: "",
+  timing: "",
+  source: "",
+  gdprConsent: false,
+};
+
+const phoneRegex = /^(?:\+32|0032|0)[1-9](?:[\s./-]?\d){7,8}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ContactSection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { trackEvent } = useAnalyticsEvents();
+
+  const [form, setForm] = useState<FormState>(initialState);
+  const [photos, setPhotos] = useState<PhotoFile[]>([]);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState | "photos", string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    projectType: "",
-    message: "",
-    wantsCallback: false,
-    honeypot: "", // Hidden anti-spam field
-  });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const leftRef = useRef(null);
-  const rightRef = useRef(null);
-  const isLeftInView = useInView(leftRef, { once: true, margin: "-100px" });
-  const isRightInView = useInView(rightRef, { once: true, margin: "-100px" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  };
 
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = "Le nom est requis";
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Le nom doit contenir au moins 2 caractères";
-    } else if (formData.name.length > 100) {
-      newErrors.name = "Le nom est trop long (max 100 caractères)";
+  const toggleService = (service: string) => {
+    setForm((prev) => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter((s) => s !== service)
+        : [...prev.services, service],
+    }));
+    if (errors.services) setErrors((prev) => ({ ...prev, services: undefined }));
+  };
+
+  const handleFiles = async (fileList: FileList | null) => {
+    if (!fileList) return;
+    const remaining = MAX_PHOTOS - photos.length;
+    const incoming = Array.from(fileList).slice(0, remaining);
+    const newPhotos: PhotoFile[] = [];
+
+    for (const file of incoming) {
+      if (file.size > MAX_PHOTO_SIZE_MB * 1024 * 1024) {
+        toast({
+          title: "Photo trop lourde",
+          description: `${file.name} dépasse ${MAX_PHOTO_SIZE_MB} Mo et a été ignorée.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+      newPhotos.push({ file, previewUrl: URL.createObjectURL(file) });
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
-    } else if (!emailRegex.test(formData.email.trim())) {
-      newErrors.email = "L'adresse email n'est pas valide";
-    } else if (formData.email.length > 255) {
-      newErrors.email = "L'email est trop long";
-    }
+    setPhotos((prev) => [...prev, ...newPhotos]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-    // Phone validation (optional but if provided, should be reasonable)
-    if (formData.phone && formData.phone.length > 30) {
-      newErrors.phone = "Le numéro de téléphone est trop long";
-    }
+  const removePhoto = (idx: number) => {
+    setPhotos((prev) => {
+      URL.revokeObjectURL(prev[idx].previewUrl);
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
 
-    // Message validation
-    if (formData.message && formData.message.length > 5000) {
-      newErrors.message = "Le message est trop long (max 5000 caractères)";
-    }
+  const validate = (): boolean => {
+    const e: Partial<Record<keyof FormState, string>> = {};
+    if (!form.name.trim() || form.name.trim().length < 2) e.name = "Nom et prénom requis";
+    if (!emailRegex.test(form.email.trim())) e.email = "Email invalide";
+    if (!phoneRegex.test(form.phone.trim().replace(/\s/g, ""))) e.phone = "Numéro belge invalide (ex : 0485 75 52 27)";
+    if (form.address.trim().length < 5) e.address = "Adresse complète requise";
+    if (!form.clientType) e.clientType = "Veuillez sélectionner";
+    if (form.services.length === 0) e.services = "Cochez au moins un service";
+    if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
+    if (!form.gdprConsent) e.gdprConsent = "Consentement requis";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const uploadPhotos = async (): Promise<string[]> => {
+    if (photos.length === 0) return [];
+    const urls: string[] = [];
+    for (let i = 0; i < photos.length; i++) {
+      let file = photos[i].file;
+      if (file.size > COMPRESS_THRESHOLD_MB * 1024 * 1024) {
+        try {
+          file = await imageCompression(file, {
+            maxSizeMB: COMPRESS_THRESHOLD_MB,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          });
+        } catch (err) {
+          console.warn("Compression failed, uploading original", err);
+        }
+      }
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+      const { error } = await supabase.storage.from("lead-photos").upload(path, file, {
+        contentType: file.type || "image/jpeg",
+        upsert: false,
+      });
+      if (error) throw new Error(`Upload photo ${i + 1} : ${error.message}`);
+      urls.push(path);
+      setUploadProgress(Math.round(((i + 1) / photos.length) * 100));
+    }
+    return urls;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Reset status
-    setSubmitStatus('idle');
-    
-    // Validate form
-    if (!validateForm()) {
-      toast({
-        title: "Formulaire incomplet",
-        description: "Veuillez corriger les erreurs dans le formulaire.",
-        variant: "destructive",
-      });
+    setSubmitError(null);
+    if (!validate()) {
+      toast({ title: "Formulaire incomplet", description: "Corrigez les erreurs.", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
+
+    let photoUrls: string[] = [];
+    let dbOk = false;
+    let emailOk = false;
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-contact-email', {
-        body: {
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          projectType: formData.projectType,
-          message: formData.message.trim(),
-          wantsCallback: formData.wantsCallback,
-          honeypot: formData.honeypot, // Pass honeypot field
-        },
-      });
-
-      if (error) {
-        console.error("Supabase function error:", error);
-        throw new Error(error.message || "Erreur lors de l'envoi");
+      // 1. Upload photos
+      try {
+        photoUrls = await uploadPhotos();
+      } catch (err) {
+        console.error("Photo upload failed:", err);
+        toast({
+          title: "Photos non envoyées",
+          description: "Nous traitons votre demande sans les photos.",
+          variant: "destructive",
+        });
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      // 2. Insert lead in DB
+      try {
+        const { error } = await supabase.from("leads").insert({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          address: form.address.trim(),
+          client_type: form.clientType,
+          services: form.services,
+          message: form.message.trim(),
+          timing: form.timing || null,
+          source: form.source || null,
+          photo_urls: photoUrls.length > 0 ? photoUrls : null,
+          gdpr_consent: form.gdprConsent,
+          status: "nouveau",
+        });
+        if (error) throw error;
+        dbOk = true;
+      } catch (err) {
+        console.error("DB insert failed:", err);
       }
 
-      // Track form submission success (GA4 + Consent Mode + bot filter)
+      // 3. Send emails via EmailJS
+      const servicesStr = form.services.join(", ");
+      const photosStr = photoUrls.length > 0 ? photoUrls.join("\n") : "Aucune photo";
+      const dateStr = new Date().toLocaleString("fr-BE");
+
+      const adrianParams = {
+        from_name: form.name.trim(),
+        from_email: form.email.trim(),
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+        client_type: form.clientType,
+        services: servicesStr,
+        message: form.message.trim(),
+        timing: form.timing || "Non précisé",
+        source: form.source || "Non précisé",
+        photos: photosStr,
+        date: dateStr,
+      };
+
+      const prospectParams = {
+        from_name: form.name.trim(),
+        from_email: form.email.trim(),
+        to_email: form.email.trim(),
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+        services: servicesStr,
+        timing: form.timing || "Non précisé",
+        message: form.message.trim(),
+      };
+
+      try {
+        await Promise.all([
+          emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_ADRIAN, adrianParams, { publicKey: EMAILJS_PUBLIC_KEY }),
+          emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID_PROSPECT, prospectParams, { publicKey: EMAILJS_PUBLIC_KEY }),
+        ]);
+        emailOk = true;
+      } catch (err) {
+        console.error("EmailJS send failed:", err);
+      }
+
+      if (!dbOk && !emailOk) {
+        setSubmitError(
+          "Votre demande n'a pas pu être envoyée. Veuillez réessayer ou nous appeler au 0485 75 52 27."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 4. Track GA4
       trackEvent("form_submit", {
         form_name: "contact",
         source_section: "contact_page",
-        project_type: formData.projectType || undefined,
+        services: form.services,
+        client_type: form.clientType,
+        has_photos: photoUrls.length > 0,
+        source: form.source || undefined,
       });
 
-      // Fire Google Ads conversion event before redirecting
-      if (typeof window.gtag === "function") {
-        window.gtag("event", "conversion", {
-          send_to: "AW-CONVERSION_ID/CONVERSION_LABEL", // Replace with your actual conversion ID and label
-        });
-      }
-
-      // Redirect to thank you page
+      // 5. Redirect
       navigate("/merci");
-
-    } catch (error: any) {
-      console.error("Error sending contact form:", error);
-      setSubmitStatus('error');
-      
-      // Check for rate limit error
-      if (error.message?.includes("Trop de demandes")) {
-        toast({
-          title: "⏳ Trop de demandes",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "❌ Erreur d'envoi",
-          description: "Veuillez réessayer ou appelez-nous directement au 0485 75 52 27.",
-          variant: "destructive",
-        });
-      }
-    } finally {
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      setSubmitError("Une erreur inattendue est survenue. Réessayez ou appelez le 0485 75 52 27.");
       setIsSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    setSubmitStatus('idle');
-    setErrors({});
-  };
+  const requiredMark = <span className="text-destructive ml-0.5">*</span>;
 
   return (
-    <section id="contact" className="py-24 md:py-32 bg-background relative overflow-hidden">
-      {/* Background accents */}
-      <motion.div 
-        className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px]"
-        animate={{ 
-          scale: [1, 1.2, 1],
-          x: [-50, 50, -50]
-        }}
-        transition={{ 
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-      
-      <div className="container mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+    <section id="contact" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
           {/* Left column - Info */}
-          <div ref={leftRef}>
-            <motion.span 
+          <div className="lg:col-span-2">
+            <motion.span
               initial={{ opacity: 0, y: 20 }}
-              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5 }}
               className="inline-block px-4 py-2 bg-primary/10 border border-primary/30 text-primary text-sm font-medium rounded-full mb-6"
             >
-              Contact
+              Devis gratuit
             </motion.span>
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 30 }}
-              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6"
+              className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6"
             >
-              Demandez votre{" "}
-              <span className="text-gradient-copper">devis gratuit</span>
+              Demandez votre <span className="text-gradient-copper">devis gratuit</span>
             </motion.h2>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 30 }}
-              animate={isLeftInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-muted-foreground mb-10 text-lg leading-relaxed"
+              className="text-muted-foreground mb-8 text-lg leading-relaxed"
             >
-              Décrivez-nous votre projet et recevez un devis détaillé sous 48h. Sans engagement.
+              Décrivez-nous votre projet et recevez une réponse personnalisée sous 24-48h ouvrables.
             </motion.p>
 
-            {/* Contact cards */}
             <div className="space-y-4">
-              <motion.a
-                initial={{ opacity: 0, x: -30 }}
-                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                whileHover={{ x: 5, scale: 1.02 }}
+              <a
                 href="tel:+32485755227"
                 data-analytics="call_click"
                 onClick={() => trackEvent("call_click", { source_section: "contact_page_card" })}
-                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
+                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300 group"
               >
-                <motion.div 
-                  className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow"
-                  whileHover={{ rotate: [0, -10, 10, 0] }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <Phone className="w-6 h-6 text-white" />
-                </motion.div>
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <Phone className="w-6 h-6 text-primary-foreground" />
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Appelez-nous</p>
-                  <p className="font-display text-xl font-bold text-card-foreground">
-                    0485 75 52 27
-                  </p>
+                  <p className="font-display text-xl font-bold text-card-foreground">0485 75 52 27</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent 7j/7 24h/24
+                    Lun-Ven 8h-18h, Sam 9h-13h — Urgences 7j/7 24h/24
                   </p>
                 </div>
-              </motion.a>
+              </a>
 
-              <motion.a
-                initial={{ opacity: 0, x: -30 }}
-                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                whileHover={{ x: 5, scale: 1.02 }}
+              <a
                 href="mailto:cuivre.electrique@gmail.com"
-                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
+                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
               >
-                <motion.div 
-                  className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
-                  whileHover={{ rotate: [0, -10, 10, 0] }}
-                  transition={{ duration: 0.4 }}
-                >
+                <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
                   <Mail className="w-6 h-6 text-primary" />
-                </motion.div>
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Écrivez-nous</p>
-                  <p className="font-display text-lg font-bold text-card-foreground">
+                  <p className="font-display text-base md:text-lg font-bold text-card-foreground break-all">
                     cuivre.electrique@gmail.com
                   </p>
                 </div>
-              </motion.a>
+              </a>
 
-              <motion.div 
-                initial={{ opacity: 0, x: -30 }}
-                animate={isLeftInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                className="p-5 rounded-2xl bg-card border border-primary/20 shadow-lg shadow-black/5"
-              >
+              <div className="p-5 rounded-2xl bg-card border border-primary/20 shadow-lg">
                 <div className="flex items-start gap-3">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                  </motion.div>
+                  <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium text-card-foreground mb-1">Réponse rapide garantie</p>
                     <p className="text-sm text-muted-foreground">
@@ -296,273 +397,303 @@ const ContactSection = () => {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
 
           {/* Right column - Form */}
-          <motion.div 
-            ref={rightRef}
-            initial={{ opacity: 0, x: 50 }}
-            animate={isRightInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
+          <motion.form
+            initial={{ opacity: 0, x: 30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl shadow-black/10"
+            onSubmit={handleSubmit}
+            className="lg:col-span-3 p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl space-y-8"
+            noValidate
           >
-            <AnimatePresence mode="wait">
-              {submitStatus === 'success' ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="flex flex-col items-center justify-center py-12 text-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.2 }}
-                    className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6"
-                  >
-                    <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-foreground mb-3">Merci pour votre demande !</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm">
-                    Votre message a bien été envoyé. Nous vous recontacterons dans les <strong>24 à 48 heures</strong>.
-                  </p>
-                  <Button onClick={resetForm} variant="outline">
-                    Envoyer une autre demande
-                  </Button>
-                </motion.div>
-              ) : submitStatus === 'error' ? (
-                <motion.div
-                  key="error"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="flex flex-col items-center justify-center py-12 text-center"
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.2 }}
-                    className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6"
-                  >
-                    <AlertCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-foreground mb-3">Erreur d'envoi</h3>
-                  <p className="text-muted-foreground mb-4 max-w-sm">
-                    Une erreur est survenue lors de l'envoi de votre message.
-                  </p>
-                  <p className="text-foreground font-medium mb-6">
-                    Appelez-nous directement au <a href="tel:+32485755227" className="text-primary hover:underline">0485 75 52 27</a>
-                  </p>
-                  <Button onClick={resetForm} variant="outline">
-                    Réessayer
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onSubmit={handleSubmit}
-                  className="space-y-5"
-                >
-                  {/* Honeypot field - hidden from users, visible to bots */}
-                  <input
-                    type="text"
-                    name="website"
-                    value={formData.honeypot}
-                    onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    style={{ 
-                      position: 'absolute', 
-                      left: '-9999px', 
-                      opacity: 0, 
-                      pointerEvents: 'none' 
-                    }}
-                    aria-hidden="true"
+            {/* SECTION 1 - Coordonnées */}
+            <div className="space-y-5">
+              <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
+                Vos coordonnées
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-card-foreground mb-2">
+                    Nom et prénom{requiredMark}
+                  </label>
+                  <Input
+                    id="name"
+                    value={form.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    placeholder="Jean Dupont"
+                    maxLength={100}
+                    className={`h-11 ${errors.name ? "border-destructive" : ""}`}
                   />
+                  {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-card-foreground mb-2">
+                    Email{requiredMark}
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => update("email", e.target.value)}
+                    placeholder="jean@exemple.be"
+                    maxLength={255}
+                    className={`h-11 ${errors.email ? "border-destructive" : ""}`}
+                  />
+                  {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-2">
+                    Téléphone{requiredMark}
+                  </label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => update("phone", e.target.value)}
+                    placeholder="0485 75 52 27"
+                    maxLength={30}
+                    className={`h-11 ${errors.phone ? "border-destructive" : ""}`}
+                  />
+                  {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
+                </div>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-card-foreground mb-2">
+                    Adresse du chantier{requiredMark}
+                  </label>
+                  <Input
+                    id="address"
+                    value={form.address}
+                    onChange={(e) => update("address", e.target.value)}
+                    placeholder="Rue, n°, code postal, commune"
+                    maxLength={300}
+                    className={`h-11 ${errors.address ? "border-destructive" : ""}`}
+                  />
+                  {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2 - Projet */}
+            <div className="space-y-5">
+              <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
+                Votre projet
+              </h3>
+
+              <div>
+                <label htmlFor="clientType" className="block text-sm font-medium text-card-foreground mb-2">
+                  Vous êtes{requiredMark}
+                </label>
+                <Select value={form.clientType} onValueChange={(v) => update("clientType", v)}>
+                  <SelectTrigger className={`h-11 ${errors.clientType ? "border-destructive" : ""}`}>
+                    <SelectValue placeholder="Sélectionnez..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CLIENT_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.clientType && <p className="text-destructive text-xs mt-1">{errors.clientType}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-card-foreground mb-3">
+                  Quel(s) service(s) vous intéresse(nt) ?{requiredMark}
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {SERVICES.map((service) => {
+                    const checked = form.services.includes(service);
+                    return (
                       <label
-                        htmlFor="name"
-                        className="block text-sm font-medium text-card-foreground mb-2"
+                        key={service}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40 bg-background"
+                        }`}
                       >
-                        Nom complet *
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleService(service)}
+                          className="mt-0.5"
+                        />
+                        <span className="text-sm text-card-foreground leading-tight">{service}</span>
                       </label>
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="Jean Dupont"
-                        value={formData.name}
-                        onChange={(e) => {
-                          setFormData({ ...formData, name: e.target.value });
-                          if (errors.name) setErrors({ ...errors, name: undefined });
-                        }}
-                        required
-                        maxLength={100}
-                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.name ? 'border-red-500' : ''}`}
-                      />
-                      {errors.name && (
-                        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-medium text-card-foreground mb-2"
-                      >
-                        Email *
-                      </label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="jean@exemple.be"
-                        value={formData.email}
-                        onChange={(e) => {
-                          setFormData({ ...formData, email: e.target.value });
-                          if (errors.email) setErrors({ ...errors, email: undefined });
-                        }}
-                        required
-                        maxLength={255}
-                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.email ? 'border-red-500' : ''}`}
-                      />
-                      {errors.email && (
-                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                      )}
-                    </div>
-                  </div>
+                    );
+                  })}
+                </div>
+                {errors.services && <p className="text-destructive text-xs mt-2">{errors.services}</p>}
+              </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-card-foreground mb-2"
-                      >
-                        Téléphone
-                      </label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+32 XXX XX XX XX"
-                        value={formData.phone}
-                        onChange={(e) => {
-                          setFormData({ ...formData, phone: e.target.value });
-                          if (errors.phone) setErrors({ ...errors, phone: undefined });
-                        }}
-                        maxLength={30}
-                        className={`h-12 bg-background border-border rounded-xl focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.phone ? 'border-red-500' : ''}`}
-                      />
-                      {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="projectType"
-                        className="block text-sm font-medium text-card-foreground mb-2"
-                      >
-                        Type de travaux
-                      </label>
-                      <Select
-                        value={formData.projectType}
-                        onValueChange={(value) =>
-                          setFormData({ ...formData, projectType: value })
-                        }
-                      >
-                        <SelectTrigger className="h-12 bg-background border-border rounded-xl text-foreground">
-                          <SelectValue placeholder="Sélectionnez..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border border-border rounded-xl">
-                          {projectTypes.map((type) => (
-                            <SelectItem key={type} value={type} className="text-card-foreground">
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-card-foreground mb-2">
+                  Décrivez votre projet ou votre problème{requiredMark}
+                </label>
+                <Textarea
+                  id="message"
+                  value={form.message}
+                  onChange={(e) => update("message", e.target.value)}
+                  placeholder="Plus vous nous donnez de détails, plus notre devis sera précis…"
+                  rows={5}
+                  maxLength={5000}
+                  className={errors.message ? "border-destructive" : ""}
+                />
+                {errors.message && <p className="text-destructive text-xs mt-1">{errors.message}</p>}
+              </div>
 
-                  <div>
-                    <label
-                      htmlFor="message"
-                      className="block text-sm font-medium text-card-foreground mb-2"
-                    >
-                      Message
-                    </label>
-                    <Textarea
-                      id="message"
-                      placeholder="Décrivez votre projet..."
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) => {
-                        setFormData({ ...formData, message: e.target.value });
-                        if (errors.message) setErrors({ ...errors, message: undefined });
-                      }}
-                      maxLength={5000}
-                      className={`bg-background border-border rounded-xl resize-none focus:border-primary text-foreground placeholder:text-muted-foreground ${errors.message ? 'border-red-500' : ''}`}
-                    />
-                    {errors.message && (
-                      <p className="text-red-500 text-xs mt-1">{errors.message}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1 text-right">
-                      {formData.message.length}/5000
-                    </p>
-                  </div>
+              {/* Photos */}
+              <div>
+                <label className="block text-sm font-medium text-card-foreground mb-2">
+                  Photos du chantier ou du problème (optionnel)
+                </label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Les photos nous aident à préparer un devis plus précis. Max {MAX_PHOTOS} photos, {MAX_PHOTO_SIZE_MB} Mo
+                  chacune.
+                </p>
 
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      id="callback"
-                      checked={formData.wantsCallback}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, wantsCallback: checked as boolean })
-                      }
-                      className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
-                    <label
-                      htmlFor="callback"
-                      className="text-sm text-muted-foreground cursor-pointer"
-                    >
-                      Je souhaite être rappelé(e)
-                    </label>
-                  </div>
-
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                {photos.length < MAX_PHOTOS && (
+                  <label
+                    htmlFor="photos"
+                    className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
                   >
-                    <Button
-                      type="submit"
-                      variant="copper"
-                      size="xl"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
-                          />
-                          Envoi en cours...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-5 h-5" />
-                          Envoyer ma demande
-                        </>
-                      )}
-                    </Button>
-                  </motion.div>
-                </motion.form>
+                    <Upload className="w-6 h-6 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Cliquez pour ajouter {photos.length > 0 ? `(${photos.length}/${MAX_PHOTOS})` : "des photos"}
+                    </span>
+                    <input
+                      ref={fileInputRef}
+                      id="photos"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                      multiple
+                      onChange={(e) => handleFiles(e.target.files)}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+
+                {photos.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mt-3">
+                    {photos.map((p, i) => (
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                        <img src={p.previewUrl} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/90 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
+                          aria-label="Retirer la photo"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* SECTION 3 - Détails */}
+            <div className="space-y-5">
+              <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
+                Quelques détails (optionnel)
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="timing" className="block text-sm font-medium text-card-foreground mb-2">
+                    Quand souhaitez-vous intervenir ?
+                  </label>
+                  <Select value={form.timing} onValueChange={(v) => update("timing", v)}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Sélectionnez..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIMINGS.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label htmlFor="source" className="block text-sm font-medium text-card-foreground mb-2">
+                    Comment nous avez-vous connus ?
+                  </label>
+                  <Select value={form.source} onValueChange={(v) => update("source", v)}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Sélectionnez..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOURCES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 4 - Consentement */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <Checkbox
+                  checked={form.gdprConsent}
+                  onCheckedChange={(c) => update("gdprConsent", c === true)}
+                  className="mt-0.5"
+                />
+                <span className="text-sm text-card-foreground leading-snug">
+                  J'accepte que mes données soient utilisées pour me recontacter au sujet de ma demande.
+                  {requiredMark}
+                </span>
+              </label>
+              {errors.gdprConsent && <p className="text-destructive text-xs mt-1">{errors.gdprConsent}</p>}
+            </div>
+
+            {/* Upload progress */}
+            {isSubmitting && photos.length > 0 && uploadProgress > 0 && uploadProgress < 100 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Envoi des photos… {uploadProgress}%</p>
+                <Progress value={uploadProgress} />
+              </div>
+            )}
+
+            {submitError && (
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                {submitError}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              size="lg"
+              variant="copper"
+              disabled={isSubmitting}
+              data-analytics="form_submit"
+              className="w-full"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Envoi en cours…
+                </>
+              ) : (
+                "Envoyer ma demande"
               )}
-            </AnimatePresence>
-          </motion.div>
+            </Button>
+          </motion.form>
         </div>
       </div>
     </section>
