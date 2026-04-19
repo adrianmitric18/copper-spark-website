@@ -49,6 +49,10 @@ const LeadDetail = () => {
     if (id) fetchLead(id);
   }, [id, user, authLoading, isAdmin, navigate]);
 
+  useEffect(() => {
+    if (lead) document.title = `${lead.name} – Admin`;
+  }, [lead]);
+
   const fetchLead = async (leadId: string) => {
     setLoading(true);
     const { data, error } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  useEffect(() => { document.title = "Connexion Admin – Le Cuivre Électrique"; }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

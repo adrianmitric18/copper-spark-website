@@ -69,6 +69,8 @@ const AdminDashboard = () => {
   const [sort, setSort] = useState<"desc" | "asc">("desc");
   const [page, setPage] = useState(1);
 
+  useEffect(() => { document.title = "Dashboard Admin – Le Cuivre Électrique"; }, []);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
