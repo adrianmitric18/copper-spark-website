@@ -33,10 +33,6 @@ const AdminLogin = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Connexion Admin – Le Cuivre Électrique</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center space-y-4">

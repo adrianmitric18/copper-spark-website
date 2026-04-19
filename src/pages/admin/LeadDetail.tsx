@@ -117,10 +117,6 @@ const LeadDetail = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{lead.name} – Admin</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
       <div className="min-h-screen bg-background">
         <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
           <div className="container mx-auto px-4 py-4 flex items-center gap-4">
