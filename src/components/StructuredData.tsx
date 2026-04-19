@@ -4,6 +4,12 @@ interface LocalBusinessProps {
   type: "LocalBusiness";
 }
 
+interface LocalBusinessZoneProps {
+  type: "LocalBusinessZone";
+  areaServed: string;
+  pageUrl: string;
+}
+
 interface FAQItem {
   question: string;
   answer: string;
@@ -30,11 +36,13 @@ interface BreadcrumbProps {
   items: BreadcrumbItem[];
 }
 
-type StructuredDataProps = LocalBusinessProps | FAQPageProps | ServiceProps | BreadcrumbProps;
+type StructuredDataProps = LocalBusinessProps | LocalBusinessZoneProps | FAQPageProps | ServiceProps | BreadcrumbProps;
 
 const StructuredData = (props: StructuredDataProps) => {
   useEffect(() => {
-    const scriptId = `structured-data-${props.type}`;
+    const scriptId = `structured-data-${props.type}${
+      props.type === "LocalBusinessZone" ? `-${props.areaServed}` : ""
+    }`;
     
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
