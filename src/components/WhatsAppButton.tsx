@@ -1,16 +1,20 @@
 import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const WhatsAppButton = () => {
   const phoneNumber = "32485755227";
   const message = encodeURIComponent("Bonjour, je souhaite obtenir un devis pour mes travaux électriques.");
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+  const { trackEvent } = useAnalyticsEvents();
 
   return (
     <motion.a
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
+      data-analytics="whatsapp_click"
+      onClick={() => trackEvent("whatsapp_click", { source_section: "floating_button" })}
       className="fixed bottom-20 right-6 md:bottom-6 z-40 group"
       aria-label="Contacter via WhatsApp"
       initial={{ scale: 0, opacity: 0 }}
