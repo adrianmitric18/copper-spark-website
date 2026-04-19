@@ -19,7 +19,7 @@ const navItems = [
   // "Services" handled separately as dropdown
   { label: "Réalisations", href: "/realisations" },
   { label: "Avis", href: "/avis" },
-  { label: "FAQ & Tarifs", href: "/faq" },
+  { label: "FAQ", href: "/faq" },
   { label: "Contact", href: "/contact" },
 ];
 
