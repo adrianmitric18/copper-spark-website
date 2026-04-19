@@ -4,6 +4,12 @@ interface LocalBusinessProps {
   type: "LocalBusiness";
 }
 
+interface LocalBusinessZoneProps {
+  type: "LocalBusinessZone";
+  areaServed: string;
+  pageUrl: string;
+}
+
 interface FAQItem {
   question: string;
   answer: string;
@@ -30,11 +36,13 @@ interface BreadcrumbProps {
   items: BreadcrumbItem[];
 }
 
-type StructuredDataProps = LocalBusinessProps | FAQPageProps | ServiceProps | BreadcrumbProps;
+type StructuredDataProps = LocalBusinessProps | LocalBusinessZoneProps | FAQPageProps | ServiceProps | BreadcrumbProps;
 
 const StructuredData = (props: StructuredDataProps) => {
   useEffect(() => {
-    const scriptId = `structured-data-${props.type}`;
+    const scriptId = `structured-data-${props.type}${
+      props.type === "LocalBusinessZone" ? `-${props.areaServed}` : ""
+    }`;
     
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
@@ -119,6 +127,30 @@ const StructuredData = (props: StructuredDataProps) => {
               { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Borne de recharge véhicule électrique" } },
               { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panneaux photovoltaïques Bruxelles Wallonie" } }
             ]
+          }
+        };
+        break;
+
+      case "LocalBusinessZone":
+        jsonLd = {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "Le Cuivre Électrique",
+          "description": `Électricien agréé intervenant à ${props.areaServed} et dans tout le Brabant wallon.`,
+          "url": props.pageUrl,
+          "telephone": "+32485755227",
+          "email": "cuivre.electrique@gmail.com",
+          "image": "https://cuivre-electrique.com/og-image.jpg",
+          "priceRange": "€€",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Court-Saint-Étienne",
+            "addressRegion": "Brabant wallon",
+            "addressCountry": "BE"
+          },
+          "areaServed": {
+            "@type": "City",
+            "name": props.areaServed
           }
         };
         break;

@@ -26,6 +26,11 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLeadDetail from "./pages/admin/LeadDetail";
 import AdminAvisManager from "./pages/admin/AvisManager";
+import ElectricienCourtSaintEtienne from "./pages/zones/ElectricienCourtSaintEtienne";
+import ElectricienWavre from "./pages/zones/ElectricienWavre";
+import ElectricienOttigniesLLN from "./pages/zones/ElectricienOttigniesLLN";
+import ElectricienNivelles from "./pages/zones/ElectricienNivelles";
+import ElectricienGenappe from "./pages/zones/ElectricienGenappe";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileStickyBar from "./components/MobileStickyBar";
 import AnalyticsPageTracker from "./components/AnalyticsPageTracker";
@@ -65,6 +70,12 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           <Route path="/admin/avis" element={<AdminAvisManager />} />
+          {/* Pages SEO zones géographiques (non listées dans le menu) */}
+          <Route path="/electricien-court-saint-etienne" element={<ElectricienCourtSaintEtienne />} />
+          <Route path="/electricien-wavre" element={<ElectricienWavre />} />
+          <Route path="/electricien-ottignies-louvain-la-neuve" element={<ElectricienOttigniesLLN />} />
+          <Route path="/electricien-nivelles" element={<ElectricienNivelles />} />
+          <Route path="/electricien-genappe" element={<ElectricienGenappe />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
