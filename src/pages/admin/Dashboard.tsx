@@ -14,8 +14,13 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Loader2, LogOut, Eye, Phone } from "lucide-react";
+import { Loader2, LogOut, Eye, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { buttonVariants } from "@/components/ui/button";
 
 type Lead = {
   id: string;
@@ -103,6 +108,41 @@ const AdminDashboard = () => {
     await supabase.auth.signOut();
     navigate("/admin/login");
   };
+
+  const deleteLead = async (lead: Lead) => {
+    try {
+      if (lead.photo_urls?.length) {
+        const { error: storageErr } = await supabase.storage.from("lead-photos").remove(lead.photo_urls);
+        if (storageErr) console.warn("Photos non supprimées:", storageErr.message);
+      }
+      const { error } = await supabase.from("leads").delete().eq("id", lead.id);
+      if (error) throw error;
+      setLeads(prev => prev.filter(l => l.id !== lead.id));
+      toast.success("Lead supprimé");
+    } catch (e: any) {
+      toast.error("Erreur : " + (e?.message || "suppression impossible"));
+    }
+  };
+
+  const DeleteDialog = ({ lead, trigger }: { lead: Lead; trigger: React.ReactNode }) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cette action est irréversible. Le lead <strong>{lead.name}</strong> et toutes ses données (photos incluses) seront définitivement supprimés.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction onClick={() => deleteLead(lead)} className={buttonVariants({ variant: "destructive" })}>
+            Oui, supprimer
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   const filtered = useMemo(() => {
     let list = [...leads];
@@ -247,9 +287,19 @@ const AdminDashboard = () => {
                           <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm" variant="outline">
-                            <Link to={`/admin/lead/${lead.id}`}><Eye className="w-4 h-4" /> Détails</Link>
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button asChild size="sm" variant="outline">
+                              <Link to={`/admin/lead/${lead.id}`}><Eye className="w-4 h-4" /> Détails</Link>
+                            </Button>
+                            <DeleteDialog
+                              lead={lead}
+                              trigger={
+                                <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" aria-label="Supprimer">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              }
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -280,6 +330,14 @@ const AdminDashboard = () => {
                       <Button asChild size="sm" variant="copper" className="flex-1">
                         <Link to={`/admin/lead/${lead.id}`}>Détails</Link>
                       </Button>
+                      <DeleteDialog
+                        lead={lead}
+                        trigger={
+                          <Button size="icon" variant="outline" className="text-destructive hover:bg-destructive/10" aria-label="Supprimer">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        }
+                      />
                     </div>
                   </Card>
                 ))}
