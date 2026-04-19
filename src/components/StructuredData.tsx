@@ -131,7 +131,29 @@ const StructuredData = (props: StructuredDataProps) => {
         };
         break;
 
-      case "FAQPage":
+      case "LocalBusinessZone":
+        jsonLd = {
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": "Le Cuivre Électrique",
+          "description": `Électricien agréé intervenant à ${props.areaServed} et dans tout le Brabant wallon.`,
+          "url": props.pageUrl,
+          "telephone": "+32485755227",
+          "email": "cuivre.electrique@gmail.com",
+          "image": "https://cuivre-electrique.com/og-image.jpg",
+          "priceRange": "€€",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Court-Saint-Étienne",
+            "addressRegion": "Brabant wallon",
+            "addressCountry": "BE"
+          },
+          "areaServed": {
+            "@type": "City",
+            "name": props.areaServed
+          }
+        };
+        break;
         jsonLd = {
           "@context": "https://schema.org",
           "@type": "FAQPage",
