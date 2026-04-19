@@ -14,7 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Loader2, LogOut, Eye, Phone, Trash2 } from "lucide-react";
+import { Loader2, LogOut, Eye, Phone, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -199,9 +199,14 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" /> Déconnexion
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin/avis"><Star className="w-4 h-4" /> <span className="hidden sm:inline">Gérer les avis</span></Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Déconnexion</span>
+              </Button>
+            </div>
           </div>
         </header>
 
