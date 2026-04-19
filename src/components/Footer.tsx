@@ -2,9 +2,11 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import LogoIcon from "@/components/LogoIcon";
 import { openCookiePreferences } from "@/hooks/useCookieConsent";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { trackEvent } = useAnalyticsEvents();
 
   return (
     <footer className="bg-card border-t border-border pb-20 md:pb-0">
@@ -40,6 +42,8 @@ const Footer = () => {
               <li>
                 <a
                   href="tel:+32485755227"
+                  data-analytics="call_click"
+                  onClick={() => trackEvent("call_click", { source_section: "footer" })}
                   className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Phone className="w-5 h-5 text-primary" />
@@ -70,6 +74,7 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-analytics="review_click"
+                  onClick={() => trackEvent("review_click", { source_section: "footer" })}
                   className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
                   ⭐ Nous évaluer sur Google

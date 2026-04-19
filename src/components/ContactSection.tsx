@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const projectTypes = [
   "Dépannage urgent",
@@ -36,6 +37,7 @@ interface FormErrors {
 const ContactSection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { trackEvent } = useAnalyticsEvents();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -130,6 +132,13 @@ const ContactSection = () => {
         throw new Error(data.error);
       }
 
+      // Track form submission success (GA4 + Consent Mode + bot filter)
+      trackEvent("form_submit", {
+        form_name: "contact",
+        source_section: "contact_page",
+        project_type: formData.projectType || undefined,
+      });
+
       // Fire Google Ads conversion event before redirecting
       if (typeof window.gtag === "function") {
         window.gtag("event", "conversion", {
@@ -222,6 +231,8 @@ const ContactSection = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 whileHover={{ x: 5, scale: 1.02 }}
                 href="tel:+32485755227"
+                data-analytics="call_click"
+                onClick={() => trackEvent("call_click", { source_section: "contact_page_card" })}
                 className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
               >
                 <motion.div 

@@ -16,6 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 export interface ServiceFAQ {
   question: string;
@@ -59,6 +60,7 @@ const ServicePageLayout = ({
   const whatsappUrl =
     "https://wa.me/32485755227?text=" +
     encodeURIComponent("Bonjour, je souhaite un devis pour : " + schemaServiceName);
+  const { trackEvent } = useAnalyticsEvents();
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -119,6 +121,7 @@ const ServicePageLayout = ({
                   <a
                     href="tel:+32485755227"
                     data-analytics="call_click"
+                    onClick={() => trackEvent("call_click", { source_section: "service_page_hero", service: slug })}
                     className="flex items-center gap-2"
                   >
                     <Phone className="w-5 h-5" />
@@ -126,7 +129,11 @@ const ServicePageLayout = ({
                   </a>
                 </Button>
                 <Button variant="copperOutline" size="lg" asChild>
-                  <Link to="/contact" data-analytics="quote_request">
+                  <Link
+                    to="/contact"
+                    data-analytics="quote_request"
+                    onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
+                  >
                     Demander un devis
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>
@@ -137,6 +144,7 @@ const ServicePageLayout = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     data-analytics="whatsapp_click"
+                    onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
                     className="flex items-center gap-2"
                   >
                     <MessageCircle className="w-5 h-5" />
@@ -218,6 +226,7 @@ const ServicePageLayout = ({
                   <a
                     href="tel:+32485755227"
                     data-analytics="call_click"
+                    onClick={() => trackEvent("call_click", { source_section: "service_page_cta", service: slug })}
                     className="flex items-center gap-2"
                   >
                     <Phone className="w-5 h-5" />
@@ -225,7 +234,11 @@ const ServicePageLayout = ({
                   </a>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-                  <Link to="/contact" data-analytics="quote_request">
+                  <Link
+                    to="/contact"
+                    data-analytics="quote_request"
+                    onClick={() => trackEvent("quote_request", { source_section: "service_page_cta", service: slug })}
+                  >
                     Formulaire de devis
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Link>

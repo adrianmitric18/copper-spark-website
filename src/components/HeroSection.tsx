@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useEffect } from "react";
 import heroImage from "@/assets/hero-lighting-design.jpg";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const HeroSection = () => {
+  const { trackEvent } = useAnalyticsEvents();
   const titleWords = ["Électricien", "agréé"];
   const subtitleWords = ["Brabant", "wallon,", "Wallonie", "&", "Bruxelles"];
 
@@ -172,7 +174,12 @@ const HeroSection = () => {
             scale: 0.98
           }}>
               <Button variant="copper" size="xl" asChild className="min-w-[200px]">
-                <a href="/contact" className="flex items-center gap-2">
+                <a
+                  href="/contact"
+                  data-analytics="quote_request"
+                  onClick={() => trackEvent("quote_request", { source_section: "hero" })}
+                  className="flex items-center gap-2"
+                >
                   Demander un devis gratuit
                 </a>
               </Button>
@@ -183,7 +190,12 @@ const HeroSection = () => {
             scale: 0.98
           }}>
               <Button variant="copperOutline" size="xl" asChild className="min-w-[200px]">
-                <a href="tel:+32485755227" className="flex items-center gap-2">
+                <a
+                  href="tel:+32485755227"
+                  data-analytics="call_click"
+                  onClick={() => trackEvent("call_click", { source_section: "hero" })}
+                  className="flex items-center gap-2"
+                >
                   <LogoIcon className="w-5 h-5" />
                   0485 75 52 27
                 </a>

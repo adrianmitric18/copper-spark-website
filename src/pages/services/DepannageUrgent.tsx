@@ -1,5 +1,6 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
 import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const faqs = [
   {
@@ -25,6 +26,7 @@ const faqs = [
 ];
 
 const DepannageUrgent = () => {
+  const { trackEvent } = useAnalyticsEvents();
   return (
     <ServicePageLayout
       slug="depannage-urgent"
@@ -57,6 +59,7 @@ const DepannageUrgent = () => {
               <a
                 href="tel:+32485755227"
                 data-analytics="call_click"
+                onClick={() => trackEvent("call_click", { source_section: "depannage_urgence_block" })}
                 className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-copper hover:shadow-copper-lg transition-shadow"
               >
                 <Phone className="w-5 h-5" />
@@ -67,6 +70,7 @@ const DepannageUrgent = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-analytics="whatsapp_click"
+                onClick={() => trackEvent("whatsapp_click", { source_section: "depannage_urgence_block" })}
                 className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <MessageCircle className="w-5 h-5" />

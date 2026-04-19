@@ -11,6 +11,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const navItems = [
   { label: "Accueil", href: "/" },
@@ -35,6 +36,7 @@ const Header = () => {
   const [servicesOpenMobile, setServicesOpenMobile] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { trackEvent } = useAnalyticsEvents();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -154,13 +156,18 @@ const Header = () => {
           <a
             href="tel:+32485755227"
             data-analytics="call_click"
+            onClick={() => trackEvent("call_click", { source_section: "header_desktop" })}
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
           >
             <Phone className="w-4 h-4 group-hover:animate-pulse" />
             <span className="font-bold">0485 75 52 27</span>
           </a>
           <Button variant="copper" size="default" asChild>
-            <Link to="/contact" data-analytics="quote_request">
+            <Link
+              to="/contact"
+              data-analytics="quote_request"
+              onClick={() => trackEvent("quote_request", { source_section: "header_desktop" })}
+            >
               Devis gratuit
             </Link>
           </Button>
@@ -171,6 +178,7 @@ const Header = () => {
           <a
             href="tel:+32485755227"
             data-analytics="call_click"
+            onClick={() => trackEvent("call_click", { source_section: "header_mobile" })}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground"
           >
             <Phone className="w-5 h-5" />
@@ -277,13 +285,24 @@ const Header = () => {
                 <a
                   href="tel:+32485755227"
                   data-analytics="call_click"
+                  onClick={() => {
+                    trackEvent("call_click", { source_section: "header_mobile_menu" });
+                    handleNavClick();
+                  }}
                   className="flex items-center gap-3 text-primary font-bold py-2"
                 >
                   <Phone className="w-5 h-5" />
                   0485 75 52 27
                 </a>
                 <Button variant="copper" size="lg" className="w-full" asChild>
-                  <Link to="/contact" onClick={handleNavClick} data-analytics="quote_request">
+                  <Link
+                    to="/contact"
+                    onClick={() => {
+                      trackEvent("quote_request", { source_section: "header_mobile_menu" });
+                      handleNavClick();
+                    }}
+                    data-analytics="quote_request"
+                  >
                     Demander un devis
                   </Link>
                 </Button>
