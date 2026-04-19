@@ -22,6 +22,9 @@ import Contact from "./pages/Contact";
 import Merci from "./pages/Merci";
 import MentionsLegales from "./pages/MentionsLegales";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/admin/Login";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminLeadDetail from "./pages/admin/LeadDetail";
 import ScrollToTop from "./components/ScrollToTop";
 import MobileStickyBar from "./components/MobileStickyBar";
 import AnalyticsPageTracker from "./components/AnalyticsPageTracker";
@@ -57,6 +60,9 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/merci" element={<Merci />} />
           <Route path="/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

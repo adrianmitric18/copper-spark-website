@@ -18,6 +18,8 @@ Allow: /
 User-agent: *
 Allow: /
 Disallow: /merci
+Disallow: /admin
+Disallow: /admin/
 Disallow: /src/
 Disallow: /*.json$
 Disallow: /supabase/
