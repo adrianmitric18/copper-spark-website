@@ -52,7 +52,7 @@ const StructuredData = (props: StructuredDataProps) => {
           "alternateName": "Le Cuivre Electrique",
           "description": "Électricien artisan agréé basé à Court-Saint-Étienne. Installation électrique, mise en conformité RGIE, dépannage urgent 24h/24, panneaux photovoltaïques et bornes de recharge. Brabant wallon, Wallonie et Bruxelles.",
           "url": "https://cuivre-electrique.com",
-          "logo": "https://cuivre-electrique.com/favicon.png",
+          "logo": "https://cuivre-electrique.com/android-chrome-512x512.png",
           "image": "https://cuivre-electrique.com/og-image.jpg",
           "telephone": "+32485755227",
           "email": "cuivre.electrique@gmail.com",
