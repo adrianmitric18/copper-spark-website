@@ -14,60 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      contact_rate_limits: {
+      leads: {
         Row: {
-          id: string
-          ip_address: string
-          submitted_at: string
-        }
-        Insert: {
-          id?: string
-          ip_address: string
-          submitted_at?: string
-        }
-        Update: {
-          id?: string
-          ip_address?: string
-          submitted_at?: string
-        }
-        Relationships: []
-      }
-      contact_requests: {
-        Row: {
+          address: string
+          client_type: string
           created_at: string
           email: string
+          gdpr_consent: boolean
           id: string
-          ip_address: string | null
-          message: string | null
+          message: string
           name: string
-          phone: string | null
-          project_type: string | null
-          user_agent: string | null
-          wants_callback: boolean | null
+          notes: string | null
+          phone: string
+          photo_urls: string[] | null
+          services: string[]
+          source: string | null
+          status: string
+          timing: string | null
         }
         Insert: {
+          address: string
+          client_type: string
           created_at?: string
           email: string
+          gdpr_consent: boolean
           id?: string
-          ip_address?: string | null
-          message?: string | null
+          message: string
           name: string
-          phone?: string | null
-          project_type?: string | null
-          user_agent?: string | null
-          wants_callback?: boolean | null
+          notes?: string | null
+          phone: string
+          photo_urls?: string[] | null
+          services: string[]
+          source?: string | null
+          status?: string
+          timing?: string | null
         }
         Update: {
+          address?: string
+          client_type?: string
           created_at?: string
           email?: string
+          gdpr_consent?: boolean
           id?: string
-          ip_address?: string | null
-          message?: string | null
+          message?: string
           name?: string
-          phone?: string | null
-          project_type?: string | null
-          user_agent?: string | null
-          wants_callback?: boolean | null
+          notes?: string | null
+          phone?: string
+          photo_urls?: string[] | null
+          services?: string[]
+          source?: string | null
+          status?: string
+          timing?: string | null
         }
         Relationships: []
       }
@@ -109,7 +106,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
