@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 // Declare gtag for TypeScript
 declare global {
@@ -15,6 +16,8 @@ declare global {
 }
 
 const Merci = () => {
+  const { trackEvent } = useAnalyticsEvents();
+
   useEffect(() => {
     // Fire Google Ads conversion event
     if (typeof window.gtag === "function") {
@@ -94,6 +97,8 @@ const Merci = () => {
               </p>
               <a
                 href="tel:+32485755227"
+                data-analytics="call_click"
+                onClick={() => trackEvent("call_click", { source_section: "merci_page" })}
                 className="inline-flex items-center gap-2 text-xl font-bold text-primary hover:underline"
               >
                 <Phone className="w-5 h-5" />

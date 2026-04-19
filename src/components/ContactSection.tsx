@@ -231,6 +231,8 @@ const ContactSection = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
                 whileHover={{ x: 5, scale: 1.02 }}
                 href="tel:+32485755227"
+                data-analytics="call_click"
+                onClick={() => trackEvent("call_click", { source_section: "contact_page_card" })}
                 className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg shadow-black/5 hover:shadow-xl hover:border-primary/30 transition-all duration-300 group block"
               >
                 <motion.div 

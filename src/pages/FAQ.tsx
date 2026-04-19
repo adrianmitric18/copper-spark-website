@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const faqItems = [
   {
@@ -107,6 +108,7 @@ const pricingCategories = [
 ];
 
 const FAQ = () => {
+  const { trackEvent } = useAnalyticsEvents();
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO 
@@ -268,13 +270,21 @@ const FAQ = () => {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button asChild size="lg" className="gap-2">
-                <Link to="/contact">
+                <Link
+                  to="/contact"
+                  data-analytics="quote_request"
+                  onClick={() => trackEvent("quote_request", { source_section: "faq_bottom_cta" })}
+                >
                   <Phone className="w-4 h-4" />
                   Demander un devis gratuit
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <a href="tel:+32485755227">
+                <a
+                  href="tel:+32485755227"
+                  data-analytics="call_click"
+                  onClick={() => trackEvent("call_click", { source_section: "faq_bottom_cta" })}
+                >
                   Appeler maintenant
                 </a>
               </Button>
