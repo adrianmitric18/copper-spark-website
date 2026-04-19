@@ -64,6 +64,7 @@ const Avis = () => {
   const [reviews, setReviews] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const { trackEvent } = useAnalyticsEvents();
 
   useEffect(() => {
     let active = true;
@@ -138,6 +139,7 @@ const Avis = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-analytics="review_click"
+                  onClick={() => trackEvent("review_click", { source_section: "avis_page_hero" })}
                   className="inline-flex items-center gap-2"
                 >
                   Laisser un avis sur Google
@@ -223,6 +225,7 @@ const Avis = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   data-analytics="review_click"
+                  onClick={() => trackEvent("review_click", { source_section: "avis_page_bottom_cta" })}
                   className="inline-flex items-center gap-2"
                 >
                   Laisser un avis Google
