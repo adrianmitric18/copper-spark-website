@@ -162,6 +162,22 @@ const Footer = () => {
           </div>
         </div>
 
+        {/* Zones d'intervention SEO local */}
+        <div className="mt-8 pt-6 border-t border-border/50">
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">
+            <span className="font-semibold text-foreground">Zones d'intervention :</span>{" "}
+            <Link to="/electricien-court-saint-etienne" className="hover:text-primary transition-colors">Court-Saint-Étienne</Link>
+            {" — "}
+            <Link to="/electricien-wavre" className="hover:text-primary transition-colors">Wavre</Link>
+            {" — "}
+            <Link to="/electricien-ottignies-louvain-la-neuve" className="hover:text-primary transition-colors">Ottignies-Louvain-la-Neuve</Link>
+            {" — "}
+            <Link to="/electricien-nivelles" className="hover:text-primary transition-colors">Nivelles</Link>
+            {" — "}
+            <Link to="/electricien-genappe" className="hover:text-primary transition-colors">Genappe</Link>
+          </p>
+        </div>
+
         {/* Bottom bar */}
         <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} Le Cuivre Électrique. Tous droits réservés.</p>
