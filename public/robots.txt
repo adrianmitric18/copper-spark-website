@@ -20,6 +20,7 @@ Allow: /
 Disallow: /merci
 Disallow: /admin
 Disallow: /admin/
+Disallow: /admin/avis
 Disallow: /src/
 Disallow: /*.json$
 Disallow: /supabase/
