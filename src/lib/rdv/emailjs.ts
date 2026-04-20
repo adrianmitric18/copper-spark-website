@@ -210,14 +210,7 @@ function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string
 function getRequiredKeys(templateId: string): readonly string[] {
   switch (templateId) {
     case TPL_CLIENT_FUSION:
-      return [
-        ...REQUIRED_BASE_KEYS,
-        "is_rgie",
-        "is_pv",
-        "is_borne",
-        "is_installation",
-        "is_generique",
-      ];
+      return [...REQUIRED_BASE_KEYS, "section_preparation"];
     case TPL_MEMO_ADRIAN:
       return [
         ...REQUIRED_BASE_KEYS,
