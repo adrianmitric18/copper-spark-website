@@ -44,23 +44,26 @@ export interface RendezVous {
 }
 
 /**
- * Mappe un type de visite au template EmailJS CLIENT FUSIONNÉ
- * (détails du RDV + préparation spécifique au service).
- * Un seul email envoyé au client à la confirmation.
+ * Renvoie les 5 booléens Handlebars correspondant au type de visite,
+ * à passer au template fusionné `template_rdv_client_fusion`.
+ * Un seul booléen est `true`, les 4 autres `false`.
  */
-export function getTemplateClient(typeVisite: string): string {
+export function getServiceFlags(typeVisite: string): {
+  is_rgie: boolean;
+  is_pv: boolean;
+  is_borne: boolean;
+  is_installation: boolean;
+  is_generique: boolean;
+} {
   const t = typeVisite.toLowerCase();
-  if (t.includes("rgie") || t.includes("rénovation") || t.includes("remplacement tableau")) {
-    return "template_rdv_client_rgie";
-  }
-  if (t.includes("installation électrique complète")) {
-    return "template_rdv_client_installation";
-  }
-  if (t.includes("borne de recharge")) {
-    return "template_rdv_client_borne";
-  }
-  if (t.includes("photovoltaïque") || t.includes("panneaux")) {
-    return "template_rdv_client_pv";
-  }
-  return "template_rdv_client_generique";
+  const is_rgie =
+    t.includes("rgie") ||
+    t.includes("rénovation") ||
+    t.includes("remplacement tableau");
+  const is_pv = !is_rgie && (t.includes("photovoltaïque") || t.includes("panneaux"));
+  const is_borne = !is_rgie && !is_pv && t.includes("borne de recharge");
+  const is_installation =
+    !is_rgie && !is_pv && !is_borne && t.includes("installation électrique complète");
+  const is_generique = !is_rgie && !is_pv && !is_borne && !is_installation;
+  return { is_rgie, is_pv, is_borne, is_installation, is_generique };
 }
