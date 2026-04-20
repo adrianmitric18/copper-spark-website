@@ -6,7 +6,7 @@
 import emailjs from "@emailjs/browser";
 import { buildGoogleCalendarUrl } from "./googleCalendar";
 import { formatDateLong, formatHeure, formatDuree } from "./formatters";
-import { getTemplatePreparation, type RendezVous } from "./constants";
+import { getTemplateClient, type RendezVous } from "./constants";
 
 const EMAILJS_SERVICE_ID = "service_ybjga5v";
 const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
@@ -64,10 +64,9 @@ function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string
 }
 
 /**
- * Envoie les 3 emails immédiats à la confirmation d'un RDV :
- * 1. Confirmation client
- * 2. Mémo Adrian (avec lien Google Calendar)
- * 3. Préparation client (template selon type_visite)
+ * Envoie les 2 emails immédiats à la confirmation d'un RDV :
+ * 1. Email client FUSIONNÉ (détails RDV + préparation spécifique au service)
+ * 2. Mémo Adrian (avec lien Google Calendar + lien fiche lead)
  */
 export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   const base = buildBaseParams(lead, rdv);
@@ -86,12 +85,12 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   });
   const urlFicheLead = `${window.location.origin}/admin/lead/${lead.id}`;
 
-  const templatePrep = getTemplatePreparation(rdv.type_visite);
+  const templateClient = getTemplateClient(rdv.type_visite);
 
   // Envoi en parallèle, on log les erreurs individuellement
   const results = await Promise.allSettled([
     sendOne({
-      templateId: "template_rdv_confirmation_client",
+      templateId: templateClient,
       toEmail: lead.email,
       params: base,
     }),
@@ -105,11 +104,6 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
         url_fiche_lead: urlFicheLead,
       },
     }),
-    sendOne({
-      templateId: templatePrep,
-      toEmail: lead.email,
-      params: base,
-    }),
   ]);
 
   const failed = results.filter((r) => r.status === "rejected");
@@ -118,8 +112,29 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
       // eslint-disable-next-line no-console
       console.error("Email RDV échoué :", (f as PromiseRejectedResult).reason)
     );
-    throw new Error(`${failed.length} email(s) sur 3 n'ont pas pu être envoyés`);
+    throw new Error(`${failed.length} email(s) sur 2 n'ont pas pu être envoyés`);
   }
+}
+
+/**
+ * PHASE 3 — Envoie la notification interne à Adrian confirmant
+ * que le rappel J-1 a bien été envoyé au client.
+ * À appeler depuis le cron juste après l'envoi réussi du rappel client.
+ */
+export async function sendRappelAdrianNotification(lead: LeadInfo, rdv: RendezVous): Promise<void> {
+  await sendOne({
+    templateId: "template_rdv_rappel_adrian",
+    toEmail: ADRIAN_EMAIL,
+    params: {
+      from_name: lead.name,
+      from_email: lead.email,
+      phone: lead.phone,
+      commune: lead.commune ?? "",
+      date_rdv_formatee: formatDateLong(rdv.date_rdv),
+      heure_rdv: formatHeure(rdv.heure_rdv),
+      type_visite: rdv.type_visite,
+    },
+  });
 }
 
 /** Email envoyé au client lors d'une modification de RDV. */
