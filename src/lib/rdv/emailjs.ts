@@ -118,7 +118,7 @@ function getRequiredKeys(templateId: string): readonly string[] {
     case TPL_RAPPEL_FUSION:
       return [...REQUIRED_BASE_KEYS, "is_notification_adrian"];
     case TPL_CHANGEMENT:
-      return [...REQUIRED_BASE_KEYS, "is_annulation"];
+      return [...REQUIRED_BASE_KEYS, "statut_rdv", "message_principal", "titre_contact", "texte_contact"];
     default:
       return REQUIRED_BASE_KEYS;
   }
@@ -290,7 +290,14 @@ export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous):
   await sendOne({
     templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: { ...buildBaseParams(lead, rdv), is_annulation: "" },
+    params: {
+      ...buildBaseParams(lead, rdv),
+      statut_rdv: "Votre rendez-vous a été déplacé",
+      message_principal:
+        "Je vous informe que votre rendez-vous a été déplacé à une nouvelle date. Voici les détails mis à jour. Les autres détails restent identiques.",
+      titre_contact: "EMPÊCHEMENT ?",
+      texte_contact: "En cas de changement ou d'imprévu, prévenez-moi dès que possible :",
+    },
   });
 }
 
@@ -298,6 +305,13 @@ export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): P
   await sendOne({
     templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: { ...buildBaseParams(lead, rdv), is_annulation: "1" },
+    params: {
+      ...buildBaseParams(lead, rdv),
+      statut_rdv: "Votre rendez-vous a été annulé",
+      message_principal:
+        "Je vous informe que notre rendez-vous a été annulé. Si vous souhaitez reprogrammer notre visite à un autre moment, je reste à votre disposition.",
+      titre_contact: "REPRENDRE CONTACT",
+      texte_contact: "Pour reprogrammer un rendez-vous ou toute question :",
+    },
   });
 }
