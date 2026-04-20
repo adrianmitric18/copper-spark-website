@@ -4,7 +4,117 @@
 import emailjs from "@emailjs/browser";
 import { buildGoogleCalendarUrl } from "./googleCalendar";
 import { formatDateLong, formatHeure, formatDuree } from "./formatters";
-import { getServiceFlags, type RendezVous } from "./constants";
+import { type RendezVous } from "./constants";
+
+function getSectionPreparation(typeVisite: string): string {
+  const typeNorm = typeVisite.toLowerCase();
+
+  if (typeNorm.includes("rgie") || typeNorm.includes("conformité") || typeNorm.includes("conformite")) {
+    return `
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour optimiser notre visite et vous proposer un devis precis, voici ce que vous pouvez preparer :</p>
+<div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+<p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents utiles (si disponibles) :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Votre <strong>ancien certificat RGIE</strong> (si vous en avez deja un)</li>
+<li>Le <strong>rapport de controle</strong> precedent (si l'installation a ete controlee)</li>
+<li>Un <strong>plan de votre habitation</strong> (meme un simple croquis)</li>
+</ul>
+<p style="color: #E85D04; font-weight: bold; margin: 20px 0 10px 0;">Acces necessaire :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Le <strong>tableau electrique principal</strong></li>
+<li>Le <strong>compteur electrique</strong> (generalement a l'interieur, dans un hall, une cave ou un placard technique)</li>
+<li>Les <strong>pieces concernees</strong> par la mise en conformite</li>
+<li>La <strong>cave</strong> et les <strong>combles</strong> si pertinent</li>
+<li>L'<strong>exterieur</strong> si le projet concerne des prises, eclairages ou points electriques exterieurs</li>
+</ul>
+</div>`;
+  }
+
+  if (typeNorm.includes("photovoltaïque") || typeNorm.includes("photovoltaique") || typeNorm.includes("panneau") || typeNorm.includes("pv") || typeNorm.includes("solaire")) {
+    return `
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour dimensionner au mieux votre installation photovoltaique et optimiser votre production :</p>
+<div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+<p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents essentiels :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Vos <strong>factures d'electricite des 12 derniers mois</strong> (pour calculer votre consommation et dimensionner l'installation)</li>
+<li>Un <strong>plan de votre maison</strong> (si disponible, meme un croquis)</li>
+<li>Les informations sur votre <strong>toiture</strong> (annee de construction, etat, materiau si vous le savez)</li>
+</ul>
+<p style="color: #E85D04; font-weight: bold; margin: 20px 0 10px 0;">Acces necessaire :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Le <strong>tableau electrique principal</strong></li>
+<li>Le <strong>compteur electrique</strong> (generalement a l'interieur - pour verifier la puissance et envisager l'injection reseau)</li>
+<li>L'<strong>acces aux combles</strong> (pour verifier la charpente et le passage des cables)</li>
+<li>L'<strong>exterieur</strong> (pour evaluer l'orientation de la toiture, l'ensoleillement et les ombres eventuelles)</li>
+</ul>
+</div>`;
+  }
+
+  if (typeNorm.includes("borne") || typeNorm.includes("recharge") || typeNorm.includes("vehicule") || typeNorm.includes("véhicule")) {
+    return `
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour dimensionner au mieux votre borne de recharge et choisir le bon modele :</p>
+<div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+<p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Informations a preparer :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>La <strong>marque et le modele</strong> de votre vehicule electrique</li>
+<li>Vos <strong>habitudes de recharge</strong> (quotidien, weekend, distance parcourue)</li>
+<li>Vos <strong>preferences</strong> (puissance de charge souhaitee, fonctions connectees, badge RFID, etc.)</li>
+</ul>
+<p style="color: #E85D04; font-weight: bold; margin: 20px 0 10px 0;">Acces necessaire :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Le <strong>tableau electrique principal</strong></li>
+<li>Le <strong>compteur electrique</strong> (generalement a l'interieur - pour verifier la puissance disponible)</li>
+<li>L'<strong>emplacement prevu pour la borne</strong> (garage, carport, allee, facade)</li>
+<li>Le <strong>parcours prevu</strong> entre le tableau et l'emplacement de la borne</li>
+</ul>
+</div>`;
+  }
+
+  if (typeNorm.includes("installation") || typeNorm.includes("renovation") || typeNorm.includes("rénovation") || typeNorm.includes("neuf")) {
+    return `
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour vous proposer un devis precis et adapte a vos besoins :</p>
+<div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+<p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents et informations utiles :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Un <strong>plan de votre habitation</strong> (meme un simple croquis)</li>
+<li>Une <strong>liste des pieces</strong> concernees par les travaux</li>
+<li>Vos <strong>besoins specifiques</strong> (nombre de prises, types d'eclairage, domotique, etc.)</li>
+<li>Si renovation : des <strong>photos de l'existant</strong> peuvent aider</li>
+</ul>
+<p style="color: #E85D04; font-weight: bold; margin: 20px 0 10px 0;">Acces necessaire :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Le <strong>tableau electrique principal</strong></li>
+<li>Le <strong>compteur electrique</strong> (generalement a l'interieur, dans un hall, une cave ou un placard technique)</li>
+<li>Toutes les <strong>pieces</strong> concernees par le projet</li>
+<li>La <strong>cave</strong> et les <strong>combles</strong> (pour le passage des cables)</li>
+<li>L'<strong>exterieur</strong> si le projet concerne des prises, eclairages ou points electriques exterieurs</li>
+</ul>
+</div>`;
+  }
+
+  return `
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour optimiser notre visite et vous proposer la meilleure solution :</p>
+<div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
+<p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">A preparer si possible :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Un <strong>descriptif clair</strong> de vos besoins ou du probleme rencontre</li>
+<li>Si travaux existants : <strong>photos</strong> de l'installation actuelle</li>
+<li>Vos <strong>attentes et preferences</strong></li>
+</ul>
+<p style="color: #E85D04; font-weight: bold; margin: 20px 0 10px 0;">Acces necessaire :</p>
+<ul style="color: #555; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+<li>Le <strong>tableau electrique principal</strong></li>
+<li>Le <strong>compteur electrique</strong> (generalement a l'interieur, dans un hall, une cave ou un placard technique)</li>
+<li>La ou les <strong>zones concernees</strong> par l'intervention</li>
+<li>L'<strong>exterieur</strong> si pertinent pour votre projet</li>
+</ul>
+</div>`;
+}
 
 const EMAILJS_SERVICE_ID = "service_ybjga5v";
 const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
