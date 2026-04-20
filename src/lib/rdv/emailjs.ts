@@ -253,19 +253,6 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
     if (toEmail !== String(fullParams["from_email"] ?? "")) {
       throw new Error("template_rdv_client_fusion doit utiliser l'email du client dans to_email");
     }
-
-    const serviceFlags = [
-      fullParams["is_rgie"] === "1",
-      fullParams["is_pv"] === "1",
-      fullParams["is_borne"] === "1",
-      fullParams["is_installation"] === "1",
-      fullParams["is_generique"] === "1",
-    ];
-    const activeFlagsCount = serviceFlags.filter(Boolean).length;
-
-    if (activeFlagsCount !== 1) {
-      throw new Error(`template_rdv_client_fusion doit avoir exactement 1 booléen service à true (reçu: ${activeFlagsCount})`);
-    }
   }
 
   if (templateId === TPL_RAPPEL_FUSION) {
