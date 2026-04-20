@@ -63,6 +63,7 @@ function ensureEmailJsInitialized(): void {
   // eslint-disable-next-line no-console
   console.log("[EmailJS] init OK", {
     serviceId: EMAILJS_SERVICE_ID,
+    publicKeySource: "hardcoded",
     hasPublicKey: Boolean(EMAILJS_PUBLIC_KEY),
   });
 }
@@ -175,6 +176,8 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
   // eslint-disable-next-line no-console
   console.log("Template ID:", templateId);
   // eslint-disable-next-line no-console
+  console.log("Service ID:", EMAILJS_SERVICE_ID);
+  // eslint-disable-next-line no-console
   console.log("Params:", JSON.stringify(templateParams, null, 2));
 
   if (DRY_RUN) {
@@ -196,7 +199,7 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
     // eslint-disable-next-line no-console
     console.error("Text:", typedError?.text);
     // eslint-disable-next-line no-console
-    console.error("Error object:", error);
+    console.error("Error complet:", error);
     throw error;
   }
 }
