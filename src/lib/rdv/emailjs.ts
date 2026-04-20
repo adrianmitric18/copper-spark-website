@@ -234,11 +234,19 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   });
   const urlFicheLead = `${window.location.origin}/admin/lead/${lead.id}`;
 
+  const flagsStr = {
+    is_rgie: boolStr(flags.is_rgie),
+    is_pv: boolStr(flags.is_pv),
+    is_borne: boolStr(flags.is_borne),
+    is_installation: boolStr(flags.is_installation),
+    is_generique: boolStr(flags.is_generique),
+  };
+
   const results = await Promise.allSettled([
     sendOne({
       templateId: TPL_CLIENT_FUSION,
       toEmail: lead.email,
-      params: { ...base, ...flags },
+      params: { ...base, ...flagsStr },
     }),
     sendOne({
       templateId: TPL_MEMO_ADRIAN,
