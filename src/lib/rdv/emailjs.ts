@@ -12,10 +12,17 @@ const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
 const DRY_RUN = false;
 const ADRIAN_EMAIL = "cuivre.electrique@gmail.com";
 
-const TPL_CLIENT_FUSION = "template_rdv_client_fusion";
-const TPL_MEMO_ADRIAN = "template_rdv_memo_adrian";
-const TPL_RAPPEL_FUSION = "template_rdv_rappel_fusion";
-const TPL_CHANGEMENT = "template_rdv_changement";
+const EMAILJS_TEMPLATES = {
+  clientFusion: "template_ig2r02h",
+  memoAdrian: "template_km8rsgg",
+  changement: "template_pu7fbij",
+  rappelFusion: "template_17c69ex",
+} as const;
+
+const TPL_CLIENT_FUSION = EMAILJS_TEMPLATES.clientFusion;
+const TPL_MEMO_ADRIAN = EMAILJS_TEMPLATES.memoAdrian;
+const TPL_RAPPEL_FUSION = EMAILJS_TEMPLATES.rappelFusion;
+const TPL_CHANGEMENT = EMAILJS_TEMPLATES.changement;
 
 const REQUIRED_BASE_KEYS = [
   "from_name",
