@@ -241,12 +241,21 @@ const ContactSection = () => {
       }
 
       // 2. Insert lead in DB
+      const rue = form.rue.trim();
+      const numero = form.numero.trim();
+      const codePostal = form.codePostal.trim();
+      const commune = form.commune.trim();
+      const fullAddress = `${rue} ${numero}, ${codePostal} ${commune}`;
       try {
         const { error } = await supabase.from("leads").insert({
           name: form.name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
-          address: form.address.trim(),
+          address: fullAddress,
+          rue,
+          numero,
+          code_postal: codePostal,
+          commune,
           client_type: form.clientType,
           services: form.services,
           message: form.message.trim(),
@@ -255,7 +264,7 @@ const ContactSection = () => {
           photo_urls: photoUrls.length > 0 ? photoUrls : null,
           gdpr_consent: form.gdprConsent,
           status: "nouveau",
-        });
+        } as any);
         if (error) throw error;
         dbOk = true;
       } catch (err) {
@@ -286,11 +295,18 @@ const ContactSection = () => {
         }
       }
 
+      const addressHtml = `${rue} ${numero}<br>${codePostal} ${commune}`;
+      const addressPlain = `${rue} ${numero}\n${codePostal} ${commune}`;
+
       const adrianParams = {
         from_name: form.name.trim(),
         from_email: form.email.trim(),
         phone: form.phone.trim(),
-        address: form.address.trim(),
+        address: addressHtml,
+        rue,
+        numero,
+        code_postal: codePostal,
+        commune,
         client_type: form.clientType,
         services: servicesStr,
         message: form.message.trim(),
@@ -305,7 +321,11 @@ const ContactSection = () => {
         from_email: form.email.trim(),
         to_email: form.email.trim(),
         phone: form.phone.trim(),
-        address: form.address.trim(),
+        address: addressPlain,
+        rue,
+        numero,
+        code_postal: codePostal,
+        commune,
         services: servicesStr,
         timing: form.timing || "Non précisé",
         message: form.message.trim(),
