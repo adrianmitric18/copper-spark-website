@@ -308,7 +308,6 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
 
 export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   const base = buildBaseParams(lead, rdv);
-  const flags = getServiceFlags(rdv.type_visite);
   const lienGCal = buildGoogleCalendarUrl({
     date_rdv: rdv.date_rdv,
     heure_rdv: rdv.heure_rdv,
@@ -324,13 +323,7 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   });
   const urlFicheLead = `${window.location.origin}/admin/lead/${lead.id}`;
 
-  const flagsStr = {
-    is_rgie: boolStr(flags.is_rgie),
-    is_pv: boolStr(flags.is_pv),
-    is_borne: boolStr(flags.is_borne),
-    is_installation: boolStr(flags.is_installation),
-    is_generique: boolStr(flags.is_generique),
-  };
+  const sectionPreparation = getSectionPreparation(rdv.type_visite);
 
   const results = await Promise.allSettled([
     sendOne({
