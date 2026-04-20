@@ -80,6 +80,56 @@ export type Database = {
         }
         Relationships: []
       }
+      rendez_vous: {
+        Row: {
+          created_at: string
+          date_rdv: string
+          duree_minutes: number
+          heure_rdv: string
+          id: string
+          lead_id: string
+          notes_internes: string | null
+          rappel_envoye_at: string | null
+          statut: string
+          type_visite: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_rdv: string
+          duree_minutes?: number
+          heure_rdv: string
+          id?: string
+          lead_id: string
+          notes_internes?: string | null
+          rappel_envoye_at?: string | null
+          statut?: string
+          type_visite: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_rdv?: string
+          duree_minutes?: number
+          heure_rdv?: string
+          id?: string
+          lead_id?: string
+          notes_internes?: string | null
+          rappel_envoye_at?: string | null
+          statut?: string
+          type_visite?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendez_vous_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonials: {
         Row: {
           approved: boolean
