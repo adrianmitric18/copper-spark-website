@@ -124,11 +124,11 @@ function getRequiredKeys(templateId: string): readonly string[] {
   }
 }
 
-function validatePayload(templateId: string, toEmail: string, params: Record<string, string | boolean>): void {
-  const fullParams: Record<string, string | boolean> = { to_email: toEmail, ...params };
+function validatePayload(templateId: string, toEmail: string, params: Record<string, string>): void {
+  const fullParams: Record<string, string> = { to_email: toEmail, ...params };
   const missing = getRequiredKeys(templateId).filter((key) => {
     const value = fullParams[key];
-    return value === undefined || value === null || (typeof value === "string" && value.trim() === "");
+    return value === undefined || value === null || (typeof value === "string" && value.trim() === "" && !key.startsWith("is_"));
   });
 
   if (missing.length > 0) {
@@ -152,11 +152,11 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
     }
 
     const serviceFlags = [
-      Boolean(fullParams["is_rgie"]),
-      Boolean(fullParams["is_pv"]),
-      Boolean(fullParams["is_borne"]),
-      Boolean(fullParams["is_installation"]),
-      Boolean(fullParams["is_generique"]),
+      fullParams["is_rgie"] === "1",
+      fullParams["is_pv"] === "1",
+      fullParams["is_borne"] === "1",
+      fullParams["is_installation"] === "1",
+      fullParams["is_generique"] === "1",
     ];
     const activeFlagsCount = serviceFlags.filter(Boolean).length;
 
@@ -166,7 +166,7 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
   }
 
   if (templateId === TPL_RAPPEL_FUSION) {
-    const isNotificationAdrian = Boolean(fullParams["is_notification_adrian"]);
+    const isNotificationAdrian = fullParams["is_notification_adrian"] === "1";
 
     if (isNotificationAdrian && toEmail !== ADRIAN_EMAIL) {
       throw new Error("template_rdv_rappel_fusion (notification Adrian) doit cibler cuivre.electrique@gmail.com");
@@ -179,7 +179,7 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
 }
 
 async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void> {
-  const templateParams: Record<string, string | boolean> = { to_email: toEmail, ...params };
+  const templateParams: Record<string, string> = { to_email: toEmail, ...params };
 
   validatePayload(templateId, toEmail, params);
 
