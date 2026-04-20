@@ -54,7 +54,12 @@ export interface LeadInfo {
 interface SendArgs {
   templateId: string;
   toEmail: string;
-  params: Record<string, string | boolean>;
+  params: Record<string, string>;
+}
+
+/** EmailJS/Handlebars n'accepte pas les booléens natifs : "1" = true, "" = false. */
+function boolStr(value: boolean): string {
+  return value ? "1" : "";
 }
 
 function ensureEmailJsInitialized(): void {
