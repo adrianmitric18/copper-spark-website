@@ -29,6 +29,10 @@ type Lead = {
   email: string;
   phone: string;
   address: string;
+  rue: string | null;
+  numero: string | null;
+  code_postal: string | null;
+  commune: string | null;
   client_type: string;
   services: string[];
   message: string;
@@ -154,7 +158,9 @@ const AdminDashboard = () => {
         l.name.toLowerCase().includes(q) ||
         l.email.toLowerCase().includes(q) ||
         l.phone.toLowerCase().includes(q) ||
-        l.address.toLowerCase().includes(q)
+        (l.address || "").toLowerCase().includes(q) ||
+        (l.commune || "").toLowerCase().includes(q) ||
+        (l.code_postal || "").toLowerCase().includes(q)
       );
     }
     list.sort((a, b) => {
@@ -267,6 +273,7 @@ const AdminDashboard = () => {
                       <TableHead>Date</TableHead>
                       <TableHead>Nom</TableHead>
                       <TableHead>Téléphone</TableHead>
+                      <TableHead>Commune</TableHead>
                       <TableHead>Services</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -280,6 +287,7 @@ const AdminDashboard = () => {
                         <TableCell>
                           <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a>
                         </TableCell>
+                        <TableCell className="text-sm">{lead.commune || <span className="text-muted-foreground italic">—</span>}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {lead.services?.slice(0, 2).map(s => (
