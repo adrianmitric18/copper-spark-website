@@ -75,7 +75,10 @@ interface FormState {
   name: string;
   email: string;
   phone: string;
-  address: string;
+  rue: string;
+  numero: string;
+  codePostal: string;
+  commune: string;
   clientType: string;
   services: string[];
   message: string;
@@ -88,7 +91,10 @@ const initialState: FormState = {
   name: "",
   email: "",
   phone: "",
-  address: "",
+  rue: "",
+  numero: "",
+  codePostal: "",
+  commune: "",
   clientType: "",
   services: [],
   message: "",
@@ -165,7 +171,10 @@ const ContactSection = () => {
     if (!form.name.trim() || form.name.trim().length < 2) e.name = "Nom et prénom requis";
     if (!emailRegex.test(form.email.trim())) e.email = "Email invalide";
     if (!phoneRegex.test(form.phone.trim().replace(/\s/g, ""))) e.phone = "Numéro belge invalide (ex : 0485 75 52 27)";
-    if (form.address.trim().length < 5) e.address = "Adresse complète requise";
+    if (!form.rue.trim()) e.rue = "Rue requise";
+    if (!form.numero.trim()) e.numero = "Numéro requis";
+    if (!/^\d{4}$/.test(form.codePostal.trim())) e.codePostal = "Code postal belge (4 chiffres)";
+    if (!form.commune.trim()) e.commune = "Commune requise";
     if (!form.clientType) e.clientType = "Veuillez sélectionner";
     if (form.services.length === 0) e.services = "Cochez au moins un service";
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
