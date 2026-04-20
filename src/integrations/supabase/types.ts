@@ -18,6 +18,8 @@ export type Database = {
         Row: {
           address: string
           client_type: string
+          code_postal: string | null
+          commune: string | null
           created_at: string
           email: string
           gdpr_consent: boolean
@@ -25,8 +27,10 @@ export type Database = {
           message: string
           name: string
           notes: string | null
+          numero: string | null
           phone: string
           photo_urls: string[] | null
+          rue: string | null
           services: string[]
           source: string | null
           status: string
@@ -35,6 +39,8 @@ export type Database = {
         Insert: {
           address: string
           client_type: string
+          code_postal?: string | null
+          commune?: string | null
           created_at?: string
           email: string
           gdpr_consent: boolean
@@ -42,8 +48,10 @@ export type Database = {
           message: string
           name: string
           notes?: string | null
+          numero?: string | null
           phone: string
           photo_urls?: string[] | null
+          rue?: string | null
           services: string[]
           source?: string | null
           status?: string
@@ -52,6 +60,8 @@ export type Database = {
         Update: {
           address?: string
           client_type?: string
+          code_postal?: string | null
+          commune?: string | null
           created_at?: string
           email?: string
           gdpr_consent?: boolean
@@ -59,8 +69,10 @@ export type Database = {
           message?: string
           name?: string
           notes?: string | null
+          numero?: string | null
           phone?: string
           photo_urls?: string[] | null
+          rue?: string | null
           services?: string[]
           source?: string | null
           status?: string
