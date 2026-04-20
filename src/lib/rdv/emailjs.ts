@@ -11,7 +11,7 @@ function getSectionPreparation(typeVisite: string): string {
 
   if (typeNorm.includes("rgie") || typeNorm.includes("conformité") || typeNorm.includes("conformite")) {
     return `
-<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">🔍 POUR PRÉPARER VOTRE VISITE</h3>
 <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour optimiser notre visite et vous proposer un devis precis, voici ce que vous pouvez preparer :</p>
 <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
 <p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents utiles (si disponibles) :</p>
@@ -33,7 +33,7 @@ function getSectionPreparation(typeVisite: string): string {
 
   if (typeNorm.includes("photovoltaïque") || typeNorm.includes("photovoltaique") || typeNorm.includes("panneau") || typeNorm.includes("pv") || typeNorm.includes("solaire")) {
     return `
-<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">☀️ POUR PRÉPARER VOTRE VISITE</h3>
 <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour dimensionner au mieux votre installation photovoltaique et optimiser votre production :</p>
 <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
 <p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents essentiels :</p>
@@ -54,7 +54,7 @@ function getSectionPreparation(typeVisite: string): string {
 
   if (typeNorm.includes("borne") || typeNorm.includes("recharge") || typeNorm.includes("vehicule") || typeNorm.includes("véhicule")) {
     return `
-<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">🚗 POUR PRÉPARER VOTRE VISITE</h3>
 <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour dimensionner au mieux votre borne de recharge et choisir le bon modele :</p>
 <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
 <p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Informations a preparer :</p>
@@ -75,7 +75,7 @@ function getSectionPreparation(typeVisite: string): string {
 
   if (typeNorm.includes("installation") || typeNorm.includes("renovation") || typeNorm.includes("rénovation") || typeNorm.includes("neuf")) {
     return `
-<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">⚡ POUR PRÉPARER VOTRE VISITE</h3>
 <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour vous proposer un devis precis et adapte a vos besoins :</p>
 <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
 <p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">Documents et informations utiles :</p>
@@ -97,7 +97,7 @@ function getSectionPreparation(typeVisite: string): string {
   }
 
   return `
-<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">POUR PREPARER VOTRE VISITE</h3>
+<h3 style="color: #E85D04; font-size: 18px; margin: 35px 0 15px 0; border-bottom: 2px solid #E85D04; padding-bottom: 8px;">📋 POUR PRÉPARER VOTRE VISITE</h3>
 <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 15px 0;">Pour optimiser notre visite et vous proposer la meilleure solution :</p>
 <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px; margin: 15px 0;">
 <p style="color: #E85D04; font-weight: bold; margin: 0 0 10px 0;">A preparer si possible :</p>
