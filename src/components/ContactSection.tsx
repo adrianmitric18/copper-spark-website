@@ -496,35 +496,78 @@ const ContactSection = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-2">
-                    Téléphone{requiredMark}
-                  </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => update("phone", e.target.value)}
-                    placeholder="0485 75 52 27"
-                    maxLength={30}
-                    className={`h-11 ${errors.phone ? "border-destructive" : ""}`}
-                  />
-                  {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
-                </div>
-                <div>
-                  <label htmlFor="address" className="block text-sm font-medium text-card-foreground mb-2">
-                    Adresse du chantier{requiredMark}
-                  </label>
-                  <Input
-                    id="address"
-                    value={form.address}
-                    onChange={(e) => update("address", e.target.value)}
-                    placeholder="Rue, n°, code postal, commune"
-                    maxLength={300}
-                    className={`h-11 ${errors.address ? "border-destructive" : ""}`}
-                  />
-                  {errors.address && <p className="text-destructive text-xs mt-1">{errors.address}</p>}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-2">
+                  Téléphone{requiredMark}
+                </label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  placeholder="0485 75 52 27"
+                  maxLength={30}
+                  className={`h-11 ${errors.phone ? "border-destructive" : ""}`}
+                />
+                {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <p className="block text-sm font-medium text-card-foreground mb-3">
+                  Adresse du chantier{requiredMark}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="rue" className="block text-xs text-muted-foreground mb-1">Rue</label>
+                    <Input
+                      id="rue"
+                      value={form.rue}
+                      onChange={(e) => update("rue", e.target.value)}
+                      placeholder="Ex: Rue de la Station"
+                      maxLength={150}
+                      className={`h-11 ${errors.rue ? "border-destructive" : ""}`}
+                    />
+                    {errors.rue && <p className="text-destructive text-xs mt-1">{errors.rue}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="numero" className="block text-xs text-muted-foreground mb-1">Numéro</label>
+                    <Input
+                      id="numero"
+                      value={form.numero}
+                      onChange={(e) => update("numero", e.target.value)}
+                      placeholder="Ex: 12 ou 12A"
+                      maxLength={20}
+                      className={`h-11 ${errors.numero ? "border-destructive" : ""}`}
+                    />
+                    {errors.numero && <p className="text-destructive text-xs mt-1">{errors.numero}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="codePostal" className="block text-xs text-muted-foreground mb-1">Code postal</label>
+                    <Input
+                      id="codePostal"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{4}"
+                      value={form.codePostal}
+                      onChange={(e) => update("codePostal", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="Ex: 1490"
+                      maxLength={4}
+                      className={`h-11 ${errors.codePostal ? "border-destructive" : ""}`}
+                    />
+                    {errors.codePostal && <p className="text-destructive text-xs mt-1">{errors.codePostal}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="commune" className="block text-xs text-muted-foreground mb-1">Commune</label>
+                    <Input
+                      id="commune"
+                      value={form.commune}
+                      onChange={(e) => update("commune", e.target.value)}
+                      placeholder="Ex: Court-Saint-Étienne"
+                      maxLength={100}
+                      className={`h-11 ${errors.commune ? "border-destructive" : ""}`}
+                    />
+                    {errors.commune && <p className="text-destructive text-xs mt-1">{errors.commune}</p>}
+                  </div>
                 </div>
               </div>
             </div>
