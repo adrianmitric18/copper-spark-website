@@ -329,7 +329,7 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
     sendOne({
       templateId: TPL_CLIENT_FUSION,
       toEmail: lead.email,
-      params: { ...base, ...flagsStr },
+      params: { ...base, section_preparation: sectionPreparation },
     }),
     sendOne({
       templateId: TPL_MEMO_ADRIAN,
