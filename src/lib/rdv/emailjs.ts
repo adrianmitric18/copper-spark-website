@@ -112,7 +112,7 @@ function getRequiredKeys(templateId: string): readonly string[] {
 }
 
 function validatePayload(templateId: string, toEmail: string, params: Record<string, string | boolean>): void {
-  const fullParams = { to_email: toEmail, ...params };
+  const fullParams: Record<string, string | boolean> = { to_email: toEmail, ...params };
   const missing = getRequiredKeys(templateId).filter((key) => {
     const value = fullParams[key];
     return value === undefined || value === null || (typeof value === "string" && value.trim() === "");
@@ -134,16 +134,16 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
   }
 
   if (templateId === TPL_CLIENT_FUSION) {
-    if (toEmail !== String(fullParams.from_email ?? "")) {
+    if (toEmail !== String(fullParams["from_email"] ?? "")) {
       throw new Error("template_rdv_client_fusion doit utiliser l'email du client dans to_email");
     }
 
     const serviceFlags = [
-      Boolean(fullParams.is_rgie),
-      Boolean(fullParams.is_pv),
-      Boolean(fullParams.is_borne),
-      Boolean(fullParams.is_installation),
-      Boolean(fullParams.is_generique),
+      Boolean(fullParams["is_rgie"]),
+      Boolean(fullParams["is_pv"]),
+      Boolean(fullParams["is_borne"]),
+      Boolean(fullParams["is_installation"]),
+      Boolean(fullParams["is_generique"]),
     ];
     const activeFlagsCount = serviceFlags.filter(Boolean).length;
 
@@ -153,20 +153,20 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
   }
 
   if (templateId === TPL_RAPPEL_FUSION) {
-    const isNotificationAdrian = Boolean(fullParams.is_notification_adrian);
+    const isNotificationAdrian = Boolean(fullParams["is_notification_adrian"]);
 
     if (isNotificationAdrian && toEmail !== ADRIAN_EMAIL) {
       throw new Error("template_rdv_rappel_fusion (notification Adrian) doit cibler cuivre.electrique@gmail.com");
     }
 
-    if (!isNotificationAdrian && toEmail !== String(fullParams.from_email ?? "")) {
+    if (!isNotificationAdrian && toEmail !== String(fullParams["from_email"] ?? "")) {
       throw new Error("template_rdv_rappel_fusion (client) doit cibler l'email du client");
     }
   }
 }
 
 async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void> {
-  const templateParams = { to_email: toEmail, ...params };
+  const templateParams: Record<string, string | boolean> = { to_email: toEmail, ...params };
 
   validatePayload(templateId, toEmail, params);
 
