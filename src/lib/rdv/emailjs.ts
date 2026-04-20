@@ -1,9 +1,5 @@
 // Wrapper EmailJS pour les emails de RDV.
-// Architecture 3 templates fusionnés (plan EmailJS 9€/mois, 6 templates max) :
-// - template_rdv_client_fusion : confirmation + préparation (5 services via booléens)
-// - template_rdv_memo_adrian   : mémo interne Adrian (lien Google Calendar)
-// - template_rdv_rappel_fusion : rappel J-1 client + notif Adrian (via booléen)
-// - template_rdv_changement    : modification + annulation (via booléen)
+// Architecture fusionnée compatible avec la limite EmailJS 6 templates.
 
 import emailjs from "@emailjs/browser";
 import { buildGoogleCalendarUrl } from "./googleCalendar";
@@ -13,17 +9,29 @@ import { getServiceFlags, type RendezVous } from "./constants";
 const EMAILJS_SERVICE_ID = "service_ybjga5v";
 const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
 
-// Mode debug : tant que les templates EmailJS ne sont pas créés, on simule l'envoi.
-// Mettre à false dès que les templates sont créés dans le dashboard EmailJS.
 const DRY_RUN = false;
-
 const ADRIAN_EMAIL = "cuivre.electrique@gmail.com";
 
-// IDs des templates EmailJS
 const TPL_CLIENT_FUSION = "template_rdv_client_fusion";
 const TPL_MEMO_ADRIAN = "template_rdv_memo_adrian";
 const TPL_RAPPEL_FUSION = "template_rdv_rappel_fusion";
 const TPL_CHANGEMENT = "template_rdv_changement";
+
+const REQUIRED_BASE_KEYS = [
+  "from_name",
+  "from_email",
+  "phone",
+  "rue",
+  "numero",
+  "code_postal",
+  "commune",
+  "date_rdv_formatee",
+  "heure_rdv",
+  "duree_formatee",
+  "type_visite",
+] as const;
+
+let emailJsInitialized = false;
 
 export interface LeadInfo {
   id: string;
@@ -42,36 +50,21 @@ interface SendArgs {
   params: Record<string, string | boolean>;
 }
 
-async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void> {
-  const fullParams = { to_email: toEmail, ...params };
-  if (DRY_RUN) {
-    // eslint-disable-next-line no-console
-    console.log(`📧 [DRY_RUN] EmailJS.send → ${templateId} → ${toEmail}`, fullParams);
-    return;
+function ensureEmailJsInitialized(): void {
+  if (emailJsInitialized || DRY_RUN) return;
+
+  if (!EMAILJS_PUBLIC_KEY?.trim()) {
+    throw new Error("EmailJS PUBLIC_KEY manquante");
   }
+
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  emailJsInitialized = true;
+
   // eslint-disable-next-line no-console
-  console.log("📧 [EmailJS] Sending", {
-    service_id: EMAILJS_SERVICE_ID,
-    template_id: templateId,
-    to_email: toEmail,
-    params: fullParams,
+  console.log("[EmailJS] init OK", {
+    serviceId: EMAILJS_SERVICE_ID,
+    hasPublicKey: Boolean(EMAILJS_PUBLIC_KEY),
   });
-  try {
-    const res = await emailjs.send(EMAILJS_SERVICE_ID, templateId, fullParams, {
-      publicKey: EMAILJS_PUBLIC_KEY,
-    });
-    // eslint-disable-next-line no-console
-    console.log(`✅ [EmailJS] OK ${templateId} → ${toEmail}`, res.status, res.text);
-  } catch (err: unknown) {
-    const e = err as { status?: number; text?: string };
-    // eslint-disable-next-line no-console
-    console.error(`❌ [EmailJS] FAIL ${templateId} → ${toEmail}`, {
-      status: e?.status,
-      text: e?.text,
-      raw: err,
-    });
-    throw err;
-  }
 }
 
 function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string> {
@@ -91,11 +84,123 @@ function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string
   };
 }
 
-/**
- * Envoie les 2 emails immédiats à la confirmation d'un RDV :
- * 1. Email client FUSIONNÉ (template_rdv_client_fusion + booléens service)
- * 2. Mémo Adrian (template_rdv_memo_adrian + lien Google Calendar)
- */
+function getRequiredKeys(templateId: string): readonly string[] {
+  switch (templateId) {
+    case TPL_CLIENT_FUSION:
+      return [
+        ...REQUIRED_BASE_KEYS,
+        "is_rgie",
+        "is_pv",
+        "is_borne",
+        "is_installation",
+        "is_generique",
+      ];
+    case TPL_MEMO_ADRIAN:
+      return [
+        ...REQUIRED_BASE_KEYS,
+        "notes_internes",
+        "lien_google_calendar",
+        "url_fiche_lead",
+      ];
+    case TPL_RAPPEL_FUSION:
+      return [...REQUIRED_BASE_KEYS, "is_notification_adrian"];
+    case TPL_CHANGEMENT:
+      return [...REQUIRED_BASE_KEYS, "is_annulation"];
+    default:
+      return REQUIRED_BASE_KEYS;
+  }
+}
+
+function validatePayload(templateId: string, toEmail: string, params: Record<string, string | boolean>): void {
+  const fullParams = { to_email: toEmail, ...params };
+  const missing = getRequiredKeys(templateId).filter((key) => {
+    const value = fullParams[key];
+    return value === undefined || value === null || (typeof value === "string" && value.trim() === "");
+  });
+
+  if (missing.length > 0) {
+    // eslint-disable-next-line no-console
+    console.error("[EmailJS] paramètres manquants", {
+      templateId,
+      toEmail,
+      missing,
+      params: fullParams,
+    });
+    throw new Error(`Paramètres EmailJS manquants pour ${templateId}: ${missing.join(", ")}`);
+  }
+
+  if (templateId === TPL_MEMO_ADRIAN && toEmail !== "cuivre.electrique@gmail.com") {
+    throw new Error(`template_rdv_memo_adrian doit être envoyé à cuivre.electrique@gmail.com (reçu: ${toEmail})`);
+  }
+
+  if (templateId === TPL_CLIENT_FUSION) {
+    if (toEmail !== String(fullParams.from_email ?? "")) {
+      throw new Error("template_rdv_client_fusion doit utiliser l'email du client dans to_email");
+    }
+
+    const serviceFlags = [
+      Boolean(fullParams.is_rgie),
+      Boolean(fullParams.is_pv),
+      Boolean(fullParams.is_borne),
+      Boolean(fullParams.is_installation),
+      Boolean(fullParams.is_generique),
+    ];
+    const activeFlagsCount = serviceFlags.filter(Boolean).length;
+
+    if (activeFlagsCount !== 1) {
+      throw new Error(`template_rdv_client_fusion doit avoir exactement 1 booléen service à true (reçu: ${activeFlagsCount})`);
+    }
+  }
+
+  if (templateId === TPL_RAPPEL_FUSION) {
+    const isNotificationAdrian = Boolean(fullParams.is_notification_adrian);
+
+    if (isNotificationAdrian && toEmail !== ADRIAN_EMAIL) {
+      throw new Error("template_rdv_rappel_fusion (notification Adrian) doit cibler cuivre.electrique@gmail.com");
+    }
+
+    if (!isNotificationAdrian && toEmail !== String(fullParams.from_email ?? "")) {
+      throw new Error("template_rdv_rappel_fusion (client) doit cibler l'email du client");
+    }
+  }
+}
+
+async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void> {
+  const templateParams = { to_email: toEmail, ...params };
+
+  validatePayload(templateId, toEmail, params);
+
+  // eslint-disable-next-line no-console
+  console.log("=== EMAILJS ENVOI ===");
+  // eslint-disable-next-line no-console
+  console.log("Template ID:", templateId);
+  // eslint-disable-next-line no-console
+  console.log("Params:", JSON.stringify(templateParams, null, 2));
+
+  if (DRY_RUN) {
+    return;
+  }
+
+  ensureEmailJsInitialized();
+
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams, {
+      publicKey: EMAILJS_PUBLIC_KEY,
+    });
+  } catch (error: unknown) {
+    const typedError = error as { status?: number; text?: string };
+    // eslint-disable-next-line no-console
+    console.error("=== EMAILJS ERREUR ===");
+    // eslint-disable-next-line no-console
+    console.error("Status:", typedError?.status);
+    // eslint-disable-next-line no-console
+    console.error("Text:", typedError?.text);
+    // eslint-disable-next-line no-console
+    console.error("Error object:", error);
+    throw error;
+  }
+}
+
 export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   const base = buildBaseParams(lead, rdv);
   const flags = getServiceFlags(rdv.type_visite);
@@ -142,23 +247,15 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   }
 }
 
-/**
- * PHASE 3 — Rappel J-1.
- * Envoie le rappel au client puis, si succès, la notification à Adrian.
- * Les deux utilisent le MÊME template `template_rdv_rappel_fusion`,
- * différencié par le booléen `is_notification_adrian`.
- */
 export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   const base = buildBaseParams(lead, rdv);
 
-  // 1) Rappel au client
   await sendOne({
     templateId: TPL_RAPPEL_FUSION,
     toEmail: lead.email,
     params: { ...base, is_notification_adrian: false },
   });
 
-  // 2) Si succès → notification Adrian (même template, booléen inversé)
   await sendOne({
     templateId: TPL_RAPPEL_FUSION,
     toEmail: ADRIAN_EMAIL,
@@ -166,7 +263,6 @@ export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promi
   });
 }
 
-/** Email envoyé au client lors d'une modification de RDV (template fusionné, is_annulation=false). */
 export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   await sendOne({
     templateId: TPL_CHANGEMENT,
@@ -175,7 +271,6 @@ export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous):
   });
 }
 
-/** Email envoyé au client lors d'une annulation de RDV (template fusionné, is_annulation=true). */
 export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   await sendOne({
     templateId: TPL_CHANGEMENT,
