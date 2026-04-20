@@ -15,7 +15,7 @@ const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
 
 // Mode debug : tant que les templates EmailJS ne sont pas créés, on simule l'envoi.
 // Mettre à false dès que les templates sont créés dans le dashboard EmailJS.
-const DRY_RUN = true;
+const DRY_RUN = false;
 
 const ADRIAN_EMAIL = "cuivre.electrique@gmail.com";
 
