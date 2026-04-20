@@ -276,13 +276,13 @@ export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promi
   await sendOne({
     templateId: TPL_RAPPEL_FUSION,
     toEmail: lead.email,
-    params: { ...base, is_notification_adrian: false },
+    params: { ...base, is_notification_adrian: "" },
   });
 
   await sendOne({
     templateId: TPL_RAPPEL_FUSION,
     toEmail: ADRIAN_EMAIL,
-    params: { ...base, is_notification_adrian: true },
+    params: { ...base, is_notification_adrian: "1" },
   });
 }
 
@@ -290,7 +290,7 @@ export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous):
   await sendOne({
     templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: { ...buildBaseParams(lead, rdv), is_annulation: false },
+    params: { ...buildBaseParams(lead, rdv), is_annulation: "" },
   });
 }
 
@@ -298,6 +298,6 @@ export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): P
   await sendOne({
     templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: { ...buildBaseParams(lead, rdv), is_annulation: true },
+    params: { ...buildBaseParams(lead, rdv), is_annulation: "1" },
   });
 }
