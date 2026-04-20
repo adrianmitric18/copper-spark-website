@@ -49,9 +49,29 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
     console.log(`📧 [DRY_RUN] EmailJS.send → ${templateId} → ${toEmail}`, fullParams);
     return;
   }
-  await emailjs.send(EMAILJS_SERVICE_ID, templateId, fullParams, {
-    publicKey: EMAILJS_PUBLIC_KEY,
+  // eslint-disable-next-line no-console
+  console.log("📧 [EmailJS] Sending", {
+    service_id: EMAILJS_SERVICE_ID,
+    template_id: templateId,
+    to_email: toEmail,
+    params: fullParams,
   });
+  try {
+    const res = await emailjs.send(EMAILJS_SERVICE_ID, templateId, fullParams, {
+      publicKey: EMAILJS_PUBLIC_KEY,
+    });
+    // eslint-disable-next-line no-console
+    console.log(`✅ [EmailJS] OK ${templateId} → ${toEmail}`, res.status, res.text);
+  } catch (err: unknown) {
+    const e = err as { status?: number; text?: string };
+    // eslint-disable-next-line no-console
+    console.error(`❌ [EmailJS] FAIL ${templateId} → ${toEmail}`, {
+      status: e?.status,
+      text: e?.text,
+      raw: err,
+    });
+    throw err;
+  }
 }
 
 function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string> {
