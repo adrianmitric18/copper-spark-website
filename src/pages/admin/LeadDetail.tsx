@@ -27,6 +27,10 @@ type Lead = {
   email: string;
   phone: string;
   address: string;
+  rue: string | null;
+  numero: string | null;
+  code_postal: string | null;
+  commune: string | null;
   client_type: string;
   services: string[];
   message: string;
@@ -103,9 +107,17 @@ const LeadDetail = () => {
     toast.success("Notes enregistrées");
   };
 
+  const formattedAddress = () => {
+    if (!lead) return "";
+    const line1 = [lead.rue, lead.numero].filter(Boolean).join(" ");
+    const line2 = [lead.code_postal, lead.commune].filter(Boolean).join(" ");
+    if (line1 || line2) return [line1, line2].filter(Boolean).join("\n");
+    return lead.address || "";
+  };
+
   const copyContact = () => {
     if (!lead) return;
-    const text = `${lead.name}\n${lead.phone}\n${lead.email}\n${lead.address}`;
+    const text = `${lead.name}\n${lead.phone}\n${lead.email}\n${formattedAddress()}`;
     navigator.clipboard.writeText(text);
     toast.success("Coordonnées copiées");
   };
@@ -166,7 +178,17 @@ const LeadDetail = () => {
               <div><span className="text-muted-foreground">Nom :</span> {lead.name}</div>
               <div><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a></div>
               <div><span className="text-muted-foreground">Téléphone :</span> <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a></div>
-              <div className="sm:col-span-2"><span className="text-muted-foreground">Adresse :</span> {lead.address}</div>
+              <div className="sm:col-span-2">
+                <span className="text-muted-foreground">Adresse :</span>
+                {(lead.rue || lead.commune) ? (
+                  <div className="mt-1 leading-snug">
+                    <div>{[lead.rue, lead.numero].filter(Boolean).join(" ")}</div>
+                    <div>{[lead.code_postal, lead.commune].filter(Boolean).join(" ")}</div>
+                  </div>
+                ) : (
+                  <span> {lead.address}</span>
+                )}
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button asChild variant="copper" size="lg" className="flex-1">
