@@ -1,12 +1,14 @@
 // Wrapper EmailJS pour les emails de RDV.
-// PHASE 1 : pour l'instant on log juste les paramètres dans la console.
-// Une fois les templates créés dans le dashboard EmailJS, on remplacera
-// les console.log par de vrais emailjs.send().
+// Architecture 3 templates fusionnés (plan EmailJS 9€/mois, 6 templates max) :
+// - template_rdv_client_fusion : confirmation + préparation (5 services via booléens)
+// - template_rdv_memo_adrian   : mémo interne Adrian (lien Google Calendar)
+// - template_rdv_rappel_fusion : rappel J-1 client + notif Adrian (via booléen)
+// - template_rdv_changement    : modification + annulation (via booléen)
 
 import emailjs from "@emailjs/browser";
 import { buildGoogleCalendarUrl } from "./googleCalendar";
 import { formatDateLong, formatHeure, formatDuree } from "./formatters";
-import { getTemplateClient, type RendezVous } from "./constants";
+import { getServiceFlags, type RendezVous } from "./constants";
 
 const EMAILJS_SERVICE_ID = "service_ybjga5v";
 const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
@@ -16,6 +18,12 @@ const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
 const DRY_RUN = true;
 
 const ADRIAN_EMAIL = "cuivre.electrique@gmail.com";
+
+// IDs des templates EmailJS
+const TPL_CLIENT_FUSION = "template_rdv_client_fusion";
+const TPL_MEMO_ADRIAN = "template_rdv_memo_adrian";
+const TPL_RAPPEL_FUSION = "template_rdv_rappel_fusion";
+const TPL_CHANGEMENT = "template_rdv_changement";
 
 export interface LeadInfo {
   id: string;
@@ -31,7 +39,7 @@ export interface LeadInfo {
 interface SendArgs {
   templateId: string;
   toEmail: string;
-  params: Record<string, string>;
+  params: Record<string, string | boolean>;
 }
 
 async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void> {
@@ -65,11 +73,12 @@ function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string
 
 /**
  * Envoie les 2 emails immédiats à la confirmation d'un RDV :
- * 1. Email client FUSIONNÉ (détails RDV + préparation spécifique au service)
- * 2. Mémo Adrian (avec lien Google Calendar + lien fiche lead)
+ * 1. Email client FUSIONNÉ (template_rdv_client_fusion + booléens service)
+ * 2. Mémo Adrian (template_rdv_memo_adrian + lien Google Calendar)
  */
 export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   const base = buildBaseParams(lead, rdv);
+  const flags = getServiceFlags(rdv.type_visite);
   const lienGCal = buildGoogleCalendarUrl({
     date_rdv: rdv.date_rdv,
     heure_rdv: rdv.heure_rdv,
@@ -85,17 +94,14 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   });
   const urlFicheLead = `${window.location.origin}/admin/lead/${lead.id}`;
 
-  const templateClient = getTemplateClient(rdv.type_visite);
-
-  // Envoi en parallèle, on log les erreurs individuellement
   const results = await Promise.allSettled([
     sendOne({
-      templateId: templateClient,
+      templateId: TPL_CLIENT_FUSION,
       toEmail: lead.email,
-      params: base,
+      params: { ...base, ...flags },
     }),
     sendOne({
-      templateId: "template_rdv_memo_adrian",
+      templateId: TPL_MEMO_ADRIAN,
       toEmail: ADRIAN_EMAIL,
       params: {
         ...base,
@@ -117,40 +123,43 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
 }
 
 /**
- * PHASE 3 — Envoie la notification interne à Adrian confirmant
- * que le rappel J-1 a bien été envoyé au client.
- * À appeler depuis le cron juste après l'envoi réussi du rappel client.
+ * PHASE 3 — Rappel J-1.
+ * Envoie le rappel au client puis, si succès, la notification à Adrian.
+ * Les deux utilisent le MÊME template `template_rdv_rappel_fusion`,
+ * différencié par le booléen `is_notification_adrian`.
  */
-export async function sendRappelAdrianNotification(lead: LeadInfo, rdv: RendezVous): Promise<void> {
+export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promise<void> {
+  const base = buildBaseParams(lead, rdv);
+
+  // 1) Rappel au client
   await sendOne({
-    templateId: "template_rdv_rappel_adrian",
+    templateId: TPL_RAPPEL_FUSION,
+    toEmail: lead.email,
+    params: { ...base, is_notification_adrian: false },
+  });
+
+  // 2) Si succès → notification Adrian (même template, booléen inversé)
+  await sendOne({
+    templateId: TPL_RAPPEL_FUSION,
     toEmail: ADRIAN_EMAIL,
-    params: {
-      from_name: lead.name,
-      from_email: lead.email,
-      phone: lead.phone,
-      commune: lead.commune ?? "",
-      date_rdv_formatee: formatDateLong(rdv.date_rdv),
-      heure_rdv: formatHeure(rdv.heure_rdv),
-      type_visite: rdv.type_visite,
-    },
+    params: { ...base, is_notification_adrian: true },
   });
 }
 
-/** Email envoyé au client lors d'une modification de RDV. */
+/** Email envoyé au client lors d'une modification de RDV (template fusionné, is_annulation=false). */
 export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   await sendOne({
-    templateId: "template_rdv_modification",
+    templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: buildBaseParams(lead, rdv),
+    params: { ...buildBaseParams(lead, rdv), is_annulation: false },
   });
 }
 
-/** Email envoyé au client lors d'une annulation de RDV. */
+/** Email envoyé au client lors d'une annulation de RDV (template fusionné, is_annulation=true). */
 export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   await sendOne({
-    templateId: "template_rdv_annulation",
+    templateId: TPL_CHANGEMENT,
     toEmail: lead.email,
-    params: buildBaseParams(lead, rdv),
+    params: { ...buildBaseParams(lead, rdv), is_annulation: true },
   });
 }
