@@ -44,21 +44,23 @@ export interface RendezVous {
 }
 
 /**
- * Mappe un type de visite au template EmailJS de préparation à envoyer au client.
+ * Mappe un type de visite au template EmailJS CLIENT FUSIONNÉ
+ * (détails du RDV + préparation spécifique au service).
+ * Un seul email envoyé au client à la confirmation.
  */
-export function getTemplatePreparation(typeVisite: string): string {
+export function getTemplateClient(typeVisite: string): string {
   const t = typeVisite.toLowerCase();
   if (t.includes("rgie") || t.includes("rénovation") || t.includes("remplacement tableau")) {
-    return "template_rdv_preparation_rgie";
+    return "template_rdv_client_rgie";
   }
   if (t.includes("installation électrique complète")) {
-    return "template_rdv_preparation_installation";
+    return "template_rdv_client_installation";
   }
   if (t.includes("borne de recharge")) {
-    return "template_rdv_preparation_borne";
+    return "template_rdv_client_borne";
   }
   if (t.includes("photovoltaïque") || t.includes("panneaux")) {
-    return "template_rdv_preparation_pv";
+    return "template_rdv_client_pv";
   }
-  return "template_rdv_preparation_generique";
+  return "template_rdv_client_generique";
 }
