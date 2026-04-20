@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      checklist_items: {
+        Row: {
+          checklist_type: string
+          created_at: string
+          id: string
+          is_checked: boolean
+          item_key: string
+          item_label: string
+          item_order: number
+          lead_id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_type: string
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          item_key: string
+          item_label: string
+          item_order?: number
+          lead_id: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_type?: string
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          item_key?: string
+          item_label?: string
+          item_order?: number
+          lead_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string

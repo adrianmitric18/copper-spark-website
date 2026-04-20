@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
+import ChecklistVisite from "@/components/admin/ChecklistVisite";
 import {
   sendRdvConfirmationEmails,
   sendRdvModificationEmail,
@@ -344,6 +345,14 @@ const LeadDetail = () => {
               <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message}</div>
             </div>
           </Card>
+
+          {/* Checklist visite */}
+          <ChecklistVisite
+            leadId={lead.id}
+            leadServices={lead.services || []}
+            rdvTypeVisite={rdv?.type_visite}
+            defaultOpen={!!rdv}
+          />
 
           {/* Photos */}
           {photoUrls.length > 0 && (
