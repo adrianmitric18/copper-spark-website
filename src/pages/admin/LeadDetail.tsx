@@ -14,11 +14,20 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
+import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
+import RendezVousCard from "@/components/admin/RendezVousCard";
+import {
+  sendRdvConfirmationEmails,
+  sendRdvModificationEmail,
+  sendRdvAnnulationEmail,
+  type LeadInfo,
+} from "@/lib/rdv/emailjs";
+import type { RendezVous } from "@/lib/rdv/constants";
 
-const STATUSES = ["nouveau", "traité", "devis envoyé", "converti", "perdu"];
+const STATUSES = ["nouveau", "traité", "devis envoyé", "converti", "perdu", "RDV confirmé", "RDV annulé"];
 
 type Lead = {
   id: string;
@@ -52,28 +61,45 @@ const LeadDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
 
+  // RDV state
+  const [rdv, setRdv] = useState<RendezVous | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [submittingRdv, setSubmittingRdv] = useState(false);
+  const [cancellingRdv, setCancellingRdv] = useState(false);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { navigate("/admin/login"); return; }
     if (!isAdmin) { toast.error("Accès refusé"); navigate("/"); return; }
-    if (id) fetchLead(id);
+    if (id) fetchAll(id);
   }, [id, user, authLoading, isAdmin, navigate]);
 
   useEffect(() => {
     if (lead) document.title = `${lead.name} – Admin`;
   }, [lead]);
 
-  const fetchLead = async (leadId: string) => {
+  const fetchAll = async (leadId: string) => {
     setLoading(true);
-    const { data, error } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
-    if (error || !data) {
+    const [leadRes, rdvRes] = await Promise.all([
+      supabase.from("leads").select("*").eq("id", leadId).maybeSingle(),
+      supabase.from("rendez_vous").select("*").eq("lead_id", leadId)
+        .in("statut", ["confirme", "rappel_envoye"])
+        .order("date_rdv", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (leadRes.error || !leadRes.data) {
       toast.error("Lead introuvable");
       navigate("/admin");
       return;
     }
-    const l = data as Lead;
+    const l = leadRes.data as Lead;
     setLead(l);
     setNotes(l.notes || "");
+    setRdv((rdvRes.data as RendezVous | null) ?? null);
+
     if (l.photo_urls?.length) {
       const urls = await Promise.all(l.photo_urls.map(async (path) => {
         const { data: signed } = await supabase.storage.from("lead-photos").createSignedUrl(path, 3600);
@@ -148,12 +174,100 @@ const LeadDetail = () => {
     toast.success("SMS d'avis copié");
   };
 
+  const leadInfo = (): LeadInfo | null => lead && {
+    id: lead.id, name: lead.name, email: lead.email, phone: lead.phone,
+    rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
+  };
+
+  // ==== RDV : créer / modifier / annuler ====
+  const handleRdvSubmit = async (values: RdvFormValues) => {
+    if (!lead) return;
+    const info = leadInfo();
+    if (!info) return;
+    setSubmittingRdv(true);
+    try {
+      let saved: RendezVous;
+      if (editing && rdv) {
+        // Modification
+        const { data, error } = await supabase
+          .from("rendez_vous")
+          .update({
+            date_rdv: values.date_rdv,
+            heure_rdv: values.heure_rdv,
+            duree_minutes: values.duree_minutes,
+            type_visite: values.type_visite,
+            notes_internes: values.notes_internes || null,
+            rappel_envoye_at: null, // reset pour que le nouveau rappel parte
+            statut: "confirme",
+          })
+          .eq("id", rdv.id)
+          .select()
+          .single();
+        if (error) throw error;
+        saved = data as RendezVous;
+        await sendRdvModificationEmail(info, saved);
+        toast.success("RDV modifié, email envoyé au client");
+      } else {
+        // Création
+        const { data, error } = await supabase
+          .from("rendez_vous")
+          .insert({
+            lead_id: lead.id,
+            date_rdv: values.date_rdv,
+            heure_rdv: values.heure_rdv,
+            duree_minutes: values.duree_minutes,
+            type_visite: values.type_visite,
+            notes_internes: values.notes_internes || null,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        saved = data as RendezVous;
+        await sendRdvConfirmationEmails(info, saved);
+        await supabase.from("leads").update({ status: "RDV confirmé" }).eq("id", lead.id);
+        setLead({ ...lead, status: "RDV confirmé" });
+        toast.success("RDV confirmé, 3 emails envoyés");
+      }
+      setRdv(saved);
+      setShowForm(false);
+      setEditing(false);
+    } catch (e: any) {
+      toast.error("Erreur : " + (e?.message || "impossible d'enregistrer le RDV"));
+    } finally {
+      setSubmittingRdv(false);
+    }
+  };
+
+  const handleRdvCancel = async () => {
+    if (!lead || !rdv) return;
+    const info = leadInfo();
+    if (!info) return;
+    setCancellingRdv(true);
+    try {
+      const { error } = await supabase.from("rendez_vous")
+        .update({ statut: "annule" })
+        .eq("id", rdv.id);
+      if (error) throw error;
+      await sendRdvAnnulationEmail(info, rdv);
+      await supabase.from("leads").update({ status: "RDV annulé" }).eq("id", lead.id);
+      setLead({ ...lead, status: "RDV annulé" });
+      setRdv(null);
+      toast.success("RDV annulé, email envoyé au client");
+    } catch (e: any) {
+      toast.error("Erreur : " + (e?.message || "annulation impossible"));
+    } finally {
+      setCancellingRdv(false);
+    }
+  };
+
   if (authLoading || loading || !lead) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   }
 
   const formatDate = (s: string) =>
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
+
+  const info = leadInfo()!;
 
   return (
     <>
@@ -171,6 +285,17 @@ const LeadDetail = () => {
         </header>
 
         <main className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
+          {/* RDV planifié (en haut, encadré orange) */}
+          {rdv && !showForm && (
+            <RendezVousCard
+              rdv={rdv}
+              lead={info}
+              cancelling={cancellingRdv}
+              onEdit={() => { setEditing(true); setShowForm(true); }}
+              onCancel={handleRdvCancel}
+            />
+          )}
+
           {/* Contact */}
           <Card className="p-6 space-y-4">
             <h2 className="font-semibold text-lg">Coordonnées</h2>
@@ -234,6 +359,35 @@ const LeadDetail = () => {
             </Card>
           )}
 
+          {/* Planifier / modifier RDV */}
+          <Card className="p-6 space-y-4 border-[hsl(var(--copper))]/30">
+            <h2 className="font-semibold text-lg flex items-center gap-2">
+              <CalendarPlus className="w-5 h-5 text-[hsl(var(--copper))]" />
+              {editing ? "Modifier le rendez-vous" : rdv ? "Replanifier" : "Planifier un rendez-vous"}
+            </h2>
+            {showForm ? (
+              <RendezVousForm
+                initial={editing ? rdv : null}
+                submitting={submittingRdv}
+                submitLabel={editing ? "Enregistrer les modifications" : undefined}
+                onSubmit={handleRdvSubmit}
+                onCancel={() => { setShowForm(false); setEditing(false); }}
+              />
+            ) : !rdv ? (
+              <Button
+                onClick={() => { setEditing(false); setShowForm(true); }}
+                variant="copper"
+                size="lg"
+              >
+                <CalendarPlus className="w-4 h-4" /> Planifier un nouveau RDV
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Un RDV est déjà planifié (voir encadré en haut). Cliquez sur "Modifier" pour le changer.
+              </p>
+            )}
+          </Card>
+
           {/* Gestion */}
           <Card className="p-6 space-y-4 border-primary/30">
             <h2 className="font-semibold text-lg">Gestion du lead</h2>
@@ -242,7 +396,7 @@ const LeadDetail = () => {
               <Select value={lead.status} onValueChange={updateStatus}>
                 <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                  {STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
