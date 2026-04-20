@@ -19,9 +19,7 @@ export default defineConfig(({ mode }) => ({
     minify: "terser",
     terserOptions: {
       compress: {
-        // Garder console.log/error pour debug EmailJS Phase 1
-        // TODO: remettre drop_console: true une fois le debug terminé
-        drop_console: false,
+        drop_console: true,
         drop_debugger: true,
       },
     },
