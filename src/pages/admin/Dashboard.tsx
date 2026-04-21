@@ -236,6 +236,9 @@ const AdminDashboard = () => {
         </header>
 
         <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* Prochains RDV */}
+          <UpcomingRdvCard />
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Card className="p-4"><p className="text-xs text-muted-foreground">Nouveaux</p><p className="text-2xl font-bold text-orange-600">{stats.nouveau}</p></Card>
