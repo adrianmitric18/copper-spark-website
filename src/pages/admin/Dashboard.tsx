@@ -225,10 +225,13 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="min-h-[40px]">
+                <Link to="/admin/rdv"><Calendar className="w-4 h-4" /> <span className="hidden sm:inline">RDV</span></Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="min-h-[40px]">
                 <Link to="/admin/avis"><Star className="w-4 h-4" /> <span className="hidden sm:inline">Gérer les avis</span></Link>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="min-h-[40px]">
                 <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Déconnexion</span>
               </Button>
             </div>
@@ -359,40 +362,43 @@ const AdminDashboard = () => {
               {/* Mobile cards */}
               <div className="md:hidden space-y-3">
                 {pageLeads.map(lead => (
-                  <Card key={lead.id} className="p-4 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold flex items-center gap-1.5">
-                          {lead.name}
-                          {upcomingByLead[lead.id] && (
-                            <Calendar className="w-4 h-4 text-[hsl(var(--copper))]" aria-label="RDV planifié" />
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
-                        {upcomingByLead[lead.id] && (
-                          <p className="text-xs text-[hsl(var(--copper))] font-medium mt-0.5">
-                            📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                  <Card key={lead.id} className="p-4 space-y-3 active:bg-muted/30 transition-colors">
+                    <Link to={`/admin/lead/${lead.id}`} className="block space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-base flex items-center gap-1.5">
+                            <span className="truncate">{lead.name}</span>
+                            {upcomingByLead[lead.id] && (
+                              <Calendar className="w-4 h-4 text-[hsl(var(--copper))] shrink-0" aria-label="RDV planifié" />
+                            )}
                           </p>
-                        )}
+                          {lead.commune && <p className="text-xs text-muted-foreground">{lead.commune}</p>}
+                          <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
+                          {upcomingByLead[lead.id] && (
+                            <p className="text-xs text-[hsl(var(--copper))] font-medium mt-1">
+                              📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                            </p>
+                          )}
+                        </div>
+                        <Badge className={`capitalize ${statusColor(lead.status)} shrink-0`} variant="outline">{lead.status}</Badge>
                       </div>
-                      <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {lead.services?.map(s => (
-                        <Badge key={s} variant="secondary" className="text-xs">{s.split(" ")[0]}</Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button asChild size="sm" variant="outline" className="flex-1">
-                        <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler</a>
+                      <div className="flex flex-wrap gap-1">
+                        {lead.services?.map(s => (
+                          <Badge key={s} variant="secondary" className="text-xs">{s.split(" ")[0]}</Badge>
+                        ))}
+                      </div>
+                    </Link>
+                    <div className="flex gap-2 pt-1">
+                      <Button asChild size="default" variant="outline" className="flex-1 min-h-[44px]">
+                        <a href={`tel:${lead.phone}`} onClick={(e) => e.stopPropagation()}><Phone className="w-4 h-4" /> Appeler</a>
                       </Button>
-                      <Button asChild size="sm" variant="copper" className="flex-1">
-                        <Link to={`/admin/lead/${lead.id}`}>Détails</Link>
+                      <Button asChild size="default" variant="copper" className="flex-1 min-h-[44px]">
+                        <Link to={`/admin/lead/${lead.id}`}>Fiche</Link>
                       </Button>
                       <DeleteDialog
                         lead={lead}
                         trigger={
-                          <Button size="icon" variant="outline" className="text-destructive hover:bg-destructive/10" aria-label="Supprimer">
+                          <Button size="icon" variant="outline" className="text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]" aria-label="Supprimer">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         }

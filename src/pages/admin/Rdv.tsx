@@ -153,13 +153,14 @@ const AdminRdv = () => {
         </div>
 
         <Card className="p-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 sm:flex-wrap sm:overflow-visible">
             {FILTERS.map((f) => (
               <Button
                 key={f.key}
                 variant={filter === f.key ? "copper" : "outline"}
                 size="sm"
                 onClick={() => setFilter(f.key)}
+                className="shrink-0 min-h-[40px]"
               >
                 {f.label}
               </Button>
@@ -218,23 +219,25 @@ const AdminRdv = () => {
             {/* Mobile */}
             <div className="md:hidden space-y-3">
               {filtered.map((r) => (
-                <Card key={r.id} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-bold text-[hsl(var(--copper))]">{formatDateCourt(r.date_rdv)} · {formatHeure(r.heure_rdv)}</p>
-                      <p className="font-semibold">{r.lead_name}</p>
-                      <p className="text-xs text-muted-foreground">{r.type_visite}</p>
-                      {r.lead_commune && <p className="text-xs text-muted-foreground">{r.lead_commune}</p>}
+                <Card key={r.id} className="p-4 space-y-2 active:bg-muted/30 transition-colors">
+                  <Link to={`/admin/lead/${r.lead_id}`} className="block">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-bold text-[hsl(var(--copper))]">{formatDateCourt(r.date_rdv)} · {formatHeure(r.heure_rdv)}</p>
+                        <p className="font-semibold">{r.lead_name}</p>
+                        <p className="text-xs text-muted-foreground">{r.type_visite}</p>
+                        {r.lead_commune && <p className="text-xs text-muted-foreground">{r.lead_commune}</p>}
+                      </div>
+                      {statutBadge(r.statut)}
                     </div>
-                    {statutBadge(r.statut)}
-                  </div>
+                  </Link>
                   <div className="flex gap-2 pt-2">
                     {r.lead_phone && (
-                      <Button asChild size="sm" variant="outline" className="flex-1">
+                      <Button asChild size="default" variant="outline" className="flex-1 min-h-[44px]">
                         <a href={`tel:${r.lead_phone}`}>Appeler</a>
                       </Button>
                     )}
-                    <Button asChild size="sm" variant="copper" className="flex-1">
+                    <Button asChild size="default" variant="copper" className="flex-1 min-h-[44px]">
                       <Link to={`/admin/lead/${r.lead_id}`}>Fiche lead</Link>
                     </Button>
                   </div>

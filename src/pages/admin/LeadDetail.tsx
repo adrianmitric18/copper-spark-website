@@ -298,29 +298,41 @@ const LeadDetail = () => {
           )}
 
           {/* Contact */}
-          <Card className="p-6 space-y-4">
+          <Card className="p-4 sm:p-6 space-y-4">
             <h2 className="font-semibold text-lg">Coordonnées</h2>
             <div className="grid sm:grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground">Nom :</span> {lead.name}</div>
-              <div><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a></div>
+              <div className="break-all"><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a></div>
               <div><span className="text-muted-foreground">Téléphone :</span> <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a></div>
               <div className="sm:col-span-2">
                 <span className="text-muted-foreground">Adresse :</span>
-                {(lead.rue || lead.commune) ? (
-                  <div className="mt-1 leading-snug">
-                    <div>{[lead.rue, lead.numero].filter(Boolean).join(" ")}</div>
-                    <div>{[lead.code_postal, lead.commune].filter(Boolean).join(" ")}</div>
-                  </div>
-                ) : (
-                  <span> {lead.address}</span>
-                )}
+                {(lead.rue || lead.commune || lead.address) ? (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ") || lead.address
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 block leading-snug text-primary hover:underline"
+                  >
+                    {(lead.rue || lead.commune) ? (
+                      <>
+                        <div>{[lead.rue, lead.numero].filter(Boolean).join(" ")}</div>
+                        <div>{[lead.code_postal, lead.commune].filter(Boolean).join(" ")}</div>
+                      </>
+                    ) : (
+                      <span>{lead.address}</span>
+                    )}
+                    <span className="text-xs text-muted-foreground block mt-0.5">↗ Ouvrir dans Google Maps</span>
+                  </a>
+                ) : null}
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button asChild variant="copper" size="lg" className="flex-1">
+              <Button asChild variant="copper" size="lg" className="flex-1 min-h-[48px]">
                 <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler ce client</a>
               </Button>
-              <Button asChild variant="outline" size="lg" className="flex-1">
+              <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
                 <a href={`mailto:${lead.email}`}><Mail className="w-4 h-4" /> Envoyer un email</a>
               </Button>
             </div>
