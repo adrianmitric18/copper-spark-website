@@ -74,6 +74,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin } = useAdminAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [upcomingByLead, setUpcomingByLead] = useState<Record<string, { date_rdv: string; heure_rdv: string }>>({});
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
