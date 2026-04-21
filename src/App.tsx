@@ -71,6 +71,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           <Route path="/admin/avis" element={<AdminAvisManager />} />
+          <Route path="/admin/rdv" element={<AdminRdv />} />
           {/* Pages SEO zones géographiques (non listées dans le menu) */}
           <Route path="/electricien-court-saint-etienne" element={<ElectricienCourtSaintEtienne />} />
           <Route path="/electricien-wavre" element={<ElectricienWavre />} />
