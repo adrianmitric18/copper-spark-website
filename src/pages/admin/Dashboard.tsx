@@ -14,7 +14,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Loader2, LogOut, Eye, Phone, Trash2, Star } from "lucide-react";
+import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
+import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatHeure } from "@/lib/rdv/formatters";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
