@@ -305,7 +305,21 @@ const AdminDashboard = () => {
                     {pageLeads.map(lead => (
                       <TableRow key={lead.id}>
                         <TableCell className="text-sm">{formatDate(lead.created_at)}</TableCell>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-1.5">
+                            <span>{lead.name}</span>
+                            {upcomingByLead[lead.id] && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Calendar className="w-4 h-4 text-[hsl(var(--copper))] shrink-0" aria-label="RDV planifié" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  RDV planifié le {upcomingByLead[lead.id].date_rdv} à {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a>
                         </TableCell>
