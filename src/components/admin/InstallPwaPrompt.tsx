@@ -130,6 +130,30 @@ const InstallPwaPrompt = () => {
     );
   }
 
+  // Android Chrome fallback : pas de beforeinstallprompt disponible
+  if (showAndroidHint) {
+    return (
+      <Card className="p-3 sm:p-4 border-[hsl(var(--copper))]/40 bg-[hsl(var(--copper))]/5 flex items-start gap-3">
+        <div className="rounded-full bg-[hsl(var(--copper))] text-white p-2 shrink-0">
+          <Download className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0 text-sm">
+          <p className="font-semibold">Installer l'app sur Android</p>
+          <p className="text-muted-foreground text-xs mt-0.5 leading-relaxed">
+            Menu Chrome (3 points en haut à droite) → <span className="font-medium">« Ajouter à l'écran d'accueil »</span>
+          </p>
+        </div>
+        <button
+          onClick={dismiss}
+          aria-label="Masquer"
+          className="text-muted-foreground hover:text-foreground p-1 shrink-0"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </Card>
+    );
+  }
+
   return null;
 };
 
