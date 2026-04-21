@@ -91,11 +91,11 @@ const UpcomingRdvCard = () => {
             <li key={r.id}>
               <Link
                 to={`/admin/lead/${r.lead_id}`}
-                className="flex items-center gap-3 px-2 py-2.5 rounded-md hover:bg-muted/60 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 px-2 py-3 sm:py-2.5 rounded-md hover:bg-muted/60 active:bg-muted transition-colors min-h-[56px]"
               >
-                <div className="min-w-[110px] sm:min-w-[140px]">
+                <div className="sm:min-w-[140px]">
                   <p className="text-sm font-bold text-[hsl(var(--copper))]">
-                    {formatDateCourt(r.date_rdv)} {formatHeure(r.heure_rdv)}
+                    {formatDateCourt(r.date_rdv)} · {formatHeure(r.heure_rdv)}
                   </p>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -113,7 +113,7 @@ const UpcomingRdvCard = () => {
                     {r.lead_commune && <span className="ml-1">· {r.lead_commune}</span>}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
               </Link>
             </li>
           ))}
