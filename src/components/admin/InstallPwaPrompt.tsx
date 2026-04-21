@@ -18,6 +18,7 @@ const isStandalone = () =>
   window.navigator.standalone === true;
 
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = () => /android/i.test(navigator.userAgent);
 
 const isRecentlyDismissed = () => {
   const ts = localStorage.getItem(DISMISS_KEY);
@@ -29,6 +30,7 @@ const isRecentlyDismissed = () => {
 const InstallPwaPrompt = () => {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
+  const [showAndroidHint, setShowAndroidHint] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -44,7 +46,19 @@ const InstallPwaPrompt = () => {
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Fallback Android : si l'event ne se déclenche pas dans 3s, afficher les instructions manuelles
+    let fallbackTimer: number | undefined;
+    if (isAndroid()) {
+      fallbackTimer = window.setTimeout(() => {
+        setShowAndroidHint((prev) => prev || true);
+      }, 3000);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+    };
   }, []);
 
   const dismiss = () => {
@@ -103,6 +117,30 @@ const InstallPwaPrompt = () => {
             Touchez <Share className="inline w-3.5 h-3.5 mx-0.5 -mt-0.5" /> Partager dans Safari, puis
             <span className="font-medium"> « Sur l'écran d'accueil » </span>
             <Plus className="inline w-3.5 h-3.5 mx-0.5 -mt-0.5" />
+          </p>
+        </div>
+        <button
+          onClick={dismiss}
+          aria-label="Masquer"
+          className="text-muted-foreground hover:text-foreground p-1 shrink-0"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </Card>
+    );
+  }
+
+  // Android Chrome fallback : pas de beforeinstallprompt disponible
+  if (showAndroidHint) {
+    return (
+      <Card className="p-3 sm:p-4 border-[hsl(var(--copper))]/40 bg-[hsl(var(--copper))]/5 flex items-start gap-3">
+        <div className="rounded-full bg-[hsl(var(--copper))] text-white p-2 shrink-0">
+          <Download className="w-4 h-4" />
+        </div>
+        <div className="flex-1 min-w-0 text-sm">
+          <p className="font-semibold">Installer l'app sur Android</p>
+          <p className="text-muted-foreground text-xs mt-0.5 leading-relaxed">
+            Menu Chrome (3 points en haut à droite) → <span className="font-medium">« Ajouter à l'écran d'accueil »</span>
           </p>
         </div>
         <button

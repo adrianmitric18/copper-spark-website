@@ -198,23 +198,23 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--copper))] mt-4">
                       {group}
                     </h3>
-                    <ul className="space-y-1">
+                    <ul className="space-y-3">
                       {list.map((it) => (
                         <li key={it.id}>
                           <label
-                            className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors ${
+                            className={`flex items-start gap-4 p-4 min-h-[56px] rounded-md border cursor-pointer transition-colors ${
                               it.is_checked
                                 ? "bg-muted/40 border-muted"
-                                : "border-border hover:bg-muted/20"
+                                : "border-border hover:bg-muted/20 active:bg-muted/30"
                             }`}
                           >
                             <Checkbox
                               checked={it.is_checked}
                               onCheckedChange={(c) => toggle(it, Boolean(c))}
-                              className="h-5 w-5 mt-0.5 shrink-0"
+                              className="h-6 w-6 mt-0.5 shrink-0"
                             />
                             <span
-                              className={`text-sm leading-relaxed ${
+                              className={`text-base leading-relaxed ${
                                 it.is_checked ? "line-through text-muted-foreground" : ""
                               }`}
                             >
