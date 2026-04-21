@@ -240,6 +240,9 @@ const AdminDashboard = () => {
         </header>
 
         <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* PWA install prompt (Android natif / iOS instructions) */}
+          <InstallPwaPrompt />
+
           {/* Prochains RDV */}
           <UpcomingRdvCard />
 
