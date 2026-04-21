@@ -26,6 +26,7 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLeadDetail from "./pages/admin/LeadDetail";
 import AdminAvisManager from "./pages/admin/AvisManager";
+import AdminRdv from "./pages/admin/Rdv";
 import ElectricienCourtSaintEtienne from "./pages/zones/ElectricienCourtSaintEtienne";
 import ElectricienWavre from "./pages/zones/ElectricienWavre";
 import ElectricienOttigniesLLN from "./pages/zones/ElectricienOttigniesLLN";
