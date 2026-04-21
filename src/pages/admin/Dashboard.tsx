@@ -225,10 +225,13 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="min-h-[40px]">
+                <Link to="/admin/rdv"><Calendar className="w-4 h-4" /> <span className="hidden sm:inline">RDV</span></Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="min-h-[40px]">
                 <Link to="/admin/avis"><Star className="w-4 h-4" /> <span className="hidden sm:inline">Gérer les avis</span></Link>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="min-h-[40px]">
                 <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Déconnexion</span>
               </Button>
             </div>
