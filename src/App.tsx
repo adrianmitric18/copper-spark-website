@@ -26,6 +26,7 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLeadDetail from "./pages/admin/LeadDetail";
 import AdminAvisManager from "./pages/admin/AvisManager";
+import AdminRdv from "./pages/admin/Rdv";
 import ElectricienCourtSaintEtienne from "./pages/zones/ElectricienCourtSaintEtienne";
 import ElectricienWavre from "./pages/zones/ElectricienWavre";
 import ElectricienOttigniesLLN from "./pages/zones/ElectricienOttigniesLLN";
@@ -70,6 +71,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           <Route path="/admin/avis" element={<AdminAvisManager />} />
+          <Route path="/admin/rdv" element={<AdminRdv />} />
           {/* Pages SEO zones géographiques (non listées dans le menu) */}
           <Route path="/electricien-court-saint-etienne" element={<ElectricienCourtSaintEtienne />} />
           <Route path="/electricien-wavre" element={<ElectricienWavre />} />

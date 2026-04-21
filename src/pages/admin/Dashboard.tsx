@@ -14,7 +14,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import Logo from "@/components/Logo";
-import { Loader2, LogOut, Eye, Phone, Trash2, Star } from "lucide-react";
+import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
+import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatHeure } from "@/lib/rdv/formatters";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -71,6 +74,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin } = useAdminAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [upcomingByLead, setUpcomingByLead] = useState<Record<string, { date_rdv: string; heure_rdv: string }>>({});
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [serviceFilter, setServiceFilter] = useState("all");
@@ -96,14 +100,29 @@ const AdminDashboard = () => {
 
   const fetchLeads = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      toast.error("Erreur de chargement : " + error.message);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const [leadsRes, rdvRes] = await Promise.all([
+      supabase.from("leads").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("rendez_vous")
+        .select("lead_id, date_rdv, heure_rdv")
+        .neq("statut", "annule")
+        .gte("date_rdv", todayStr)
+        .order("date_rdv", { ascending: true })
+        .order("heure_rdv", { ascending: true }),
+    ]);
+    if (leadsRes.error) {
+      toast.error("Erreur de chargement : " + leadsRes.error.message);
     } else {
-      setLeads((data as Lead[]) || []);
+      setLeads((leadsRes.data as Lead[]) || []);
+    }
+    if (!rdvRes.error && rdvRes.data) {
+      const map: Record<string, { date_rdv: string; heure_rdv: string }> = {};
+      for (const r of rdvRes.data as any[]) {
+        if (!map[r.lead_id]) map[r.lead_id] = { date_rdv: r.date_rdv, heure_rdv: r.heure_rdv };
+      }
+      setUpcomingByLead(map);
     }
     setLoading(false);
   };
@@ -217,6 +236,9 @@ const AdminDashboard = () => {
         </header>
 
         <main className="container mx-auto px-4 py-6 space-y-6">
+          {/* Prochains RDV */}
+          <UpcomingRdvCard />
+
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Card className="p-4"><p className="text-xs text-muted-foreground">Nouveaux</p><p className="text-2xl font-bold text-orange-600">{stats.nouveau}</p></Card>
@@ -283,7 +305,21 @@ const AdminDashboard = () => {
                     {pageLeads.map(lead => (
                       <TableRow key={lead.id}>
                         <TableCell className="text-sm">{formatDate(lead.created_at)}</TableCell>
-                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-1.5">
+                            <span>{lead.name}</span>
+                            {upcomingByLead[lead.id] && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Calendar className="w-4 h-4 text-[hsl(var(--copper))] shrink-0" aria-label="RDV planifié" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  RDV planifié le {upcomingByLead[lead.id].date_rdv} à {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a>
                         </TableCell>
@@ -326,8 +362,18 @@ const AdminDashboard = () => {
                   <Card key={lead.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold">{lead.name}</p>
+                        <p className="font-semibold flex items-center gap-1.5">
+                          {lead.name}
+                          {upcomingByLead[lead.id] && (
+                            <Calendar className="w-4 h-4 text-[hsl(var(--copper))]" aria-label="RDV planifié" />
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
+                        {upcomingByLead[lead.id] && (
+                          <p className="text-xs text-[hsl(var(--copper))] font-medium mt-0.5">
+                            📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                          </p>
+                        )}
                       </div>
                       <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
                     </div>
