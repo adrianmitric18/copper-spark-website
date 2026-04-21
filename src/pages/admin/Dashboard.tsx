@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import Logo from "@/components/Logo";
 import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
+import InstallPwaPrompt from "@/components/admin/InstallPwaPrompt";
 import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatHeure } from "@/lib/rdv/formatters";
