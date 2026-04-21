@@ -1,9 +1,13 @@
 import { Phone, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
 const MobileStickyBar = () => {
   const { trackEvent } = useAnalyticsEvents();
+  const { pathname } = useLocation();
+
+  // Ne pas afficher la barre publique de conversion sur l'espace admin
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-md border-t border-border/60 px-4 py-3 safe-area-bottom">
