@@ -100,14 +100,29 @@ const AdminDashboard = () => {
 
   const fetchLeads = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      toast.error("Erreur de chargement : " + error.message);
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const [leadsRes, rdvRes] = await Promise.all([
+      supabase.from("leads").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("rendez_vous")
+        .select("lead_id, date_rdv, heure_rdv")
+        .neq("statut", "annule")
+        .gte("date_rdv", todayStr)
+        .order("date_rdv", { ascending: true })
+        .order("heure_rdv", { ascending: true }),
+    ]);
+    if (leadsRes.error) {
+      toast.error("Erreur de chargement : " + leadsRes.error.message);
     } else {
-      setLeads((data as Lead[]) || []);
+      setLeads((leadsRes.data as Lead[]) || []);
+    }
+    if (!rdvRes.error && rdvRes.data) {
+      const map: Record<string, { date_rdv: string; heure_rdv: string }> = {};
+      for (const r of rdvRes.data as any[]) {
+        if (!map[r.lead_id]) map[r.lead_id] = { date_rdv: r.date_rdv, heure_rdv: r.heure_rdv };
+      }
+      setUpcomingByLead(map);
     }
     setLoading(false);
   };
