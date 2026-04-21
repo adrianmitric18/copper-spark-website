@@ -18,6 +18,7 @@ const isStandalone = () =>
   window.navigator.standalone === true;
 
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = () => /android/i.test(navigator.userAgent);
 
 const isRecentlyDismissed = () => {
   const ts = localStorage.getItem(DISMISS_KEY);
@@ -29,6 +30,7 @@ const isRecentlyDismissed = () => {
 const InstallPwaPrompt = () => {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
+  const [showAndroidHint, setShowAndroidHint] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -44,7 +46,19 @@ const InstallPwaPrompt = () => {
       setDeferred(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Fallback Android : si l'event ne se déclenche pas dans 3s, afficher les instructions manuelles
+    let fallbackTimer: number | undefined;
+    if (isAndroid()) {
+      fallbackTimer = window.setTimeout(() => {
+        setShowAndroidHint((prev) => prev || true);
+      }, 3000);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      if (fallbackTimer) window.clearTimeout(fallbackTimer);
+    };
   }, []);
 
   const dismiss = () => {
