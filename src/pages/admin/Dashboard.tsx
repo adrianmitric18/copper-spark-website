@@ -362,8 +362,18 @@ const AdminDashboard = () => {
                   <Card key={lead.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold">{lead.name}</p>
+                        <p className="font-semibold flex items-center gap-1.5">
+                          {lead.name}
+                          {upcomingByLead[lead.id] && (
+                            <Calendar className="w-4 h-4 text-[hsl(var(--copper))]" aria-label="RDV planifié" />
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
+                        {upcomingByLead[lead.id] && (
+                          <p className="text-xs text-[hsl(var(--copper))] font-medium mt-0.5">
+                            📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
+                          </p>
+                        )}
                       </div>
                       <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
                     </div>
