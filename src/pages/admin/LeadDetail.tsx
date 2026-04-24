@@ -200,6 +200,36 @@ const LeadDetail = () => {
     toast.success("SMS d'avis copié");
   };
 
+  const communicationMessage = () => {
+    if (!lead) return { subject: "", body: "" };
+    const firstName = firstNameOf(lead.name);
+    const services = lead.services?.join(", ") || "votre demande";
+    if (!rdv) {
+      return {
+        subject: "Votre demande - Le Cuivre Électrique",
+        body: `Bonjour ${firstName}, Adrian du Cuivre Électrique. Je reviens vers vous concernant votre demande pour ${services}. Quand seriez-vous disponible pour qu'on organise une visite ?`,
+      };
+    }
+    const diff = daysUntilRdv(rdv.date_rdv);
+    const heure = rdv.heure_rdv.slice(0, 5).replace(":", "h");
+    if (diff === 0) {
+      return {
+        subject: "Confirmation de ma visite aujourd'hui",
+        body: `Bonjour ${firstName}, je confirme ma visite aujourd'hui à ${heure}. À tout à l'heure !`,
+      };
+    }
+    if (diff === 1) {
+      return {
+        subject: "Rappel de notre rendez-vous demain",
+        body: `Bonjour ${firstName}, petit rappel pour notre rendez-vous demain ${formatRdvDateShort(rdv.date_rdv)} à ${heure}. À très bientôt, Adrian`,
+      };
+    }
+    return {
+      subject: "Confirmation de notre rendez-vous",
+      body: `Bonjour ${firstName}, je vous confirme notre rendez-vous du ${formatRdvDateShort(rdv.date_rdv)} à ${heure}. À très bientôt, Adrian`,
+    };
+  };
+
   const leadInfo = (): LeadInfo | null => lead && {
     id: lead.id, name: lead.name, email: lead.email, phone: lead.phone,
     rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
@@ -294,6 +324,11 @@ const LeadDetail = () => {
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
 
   const info = leadInfo()!;
+  const quickMessage = communicationMessage();
+  const encodedBody = encodeURIComponent(quickMessage.body);
+  const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
+  const smsHref = `sms:${lead.phone}?body=${encodedBody}`;
+  const emailHref = `mailto:${lead.email}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
 
   return (
     <>
