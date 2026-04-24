@@ -16,6 +16,7 @@ import {
 import Logo from "@/components/Logo";
 import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
 import InstallPwaPrompt from "@/components/admin/InstallPwaPrompt";
+import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatHeure } from "@/lib/rdv/formatters";
@@ -45,6 +46,7 @@ type Lead = {
   photo_urls: string[] | null;
   status: string;
   notes: string | null;
+  notes_internes?: string | null;
 };
 
 const STATUSES = ["nouveau", "traité", "devis envoyé", "converti", "perdu"];
@@ -70,6 +72,18 @@ const statusColor = (s: string) => {
 };
 
 const PAGE_SIZE = 20;
+
+const SOURCE_LABELS: Record<string, string> = {
+  formulaire_site: "Site web",
+  telephone: "Téléphone",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  recommandation: "Recommandation",
+  chantier: "Chantier",
+  autre: "Autre",
+};
+
+const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Site web";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -194,12 +208,22 @@ const AdminDashboard = () => {
   const stats = useMemo(() => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthLeads = leads.filter(l => new Date(l.created_at) >= monthStart);
+    const sourceCounts = monthLeads.reduce<Record<string, number>>((acc, lead) => {
+      const key = lead.source || "formulaire_site";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
     return {
       nouveau: leads.filter(l => l.status === "nouveau").length,
       enCours: leads.filter(l => l.status === "traité" || l.status === "devis envoyé").length,
       converti: leads.filter(l => l.status === "converti").length,
       perdu: leads.filter(l => l.status === "perdu").length,
-      mois: leads.filter(l => new Date(l.created_at) >= monthStart).length,
+      mois: monthLeads.length,
+      sources: Object.entries(sourceCounts)
+        .map(([source, count]) => ({ source, count, percent: monthLeads.length ? Math.round((count / monthLeads.length) * 100) : 0 }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4),
     };
   }, [leads]);
 
@@ -253,6 +277,28 @@ const AdminDashboard = () => {
             <Card className="p-4"><p className="text-xs text-muted-foreground">Convertis</p><p className="text-2xl font-bold text-green-600">{stats.converti}</p></Card>
             <Card className="p-4"><p className="text-xs text-muted-foreground">Perdus</p><p className="text-2xl font-bold text-muted-foreground">{stats.perdu}</p></Card>
             <Card className="p-4 col-span-2 md:col-span-1"><p className="text-xs text-muted-foreground">Total ce mois</p><p className="text-2xl font-bold text-primary">{stats.mois}</p></Card>
+          </div>
+
+          {stats.sources.length > 0 && (
+            <Card className="p-4 space-y-3">
+              <p className="text-sm font-semibold">Sources des leads ce mois</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {stats.sources.map((item) => (
+                  <div key={item.source} className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">{sourceLabel(item.source)}</p>
+                    <p className="text-lg font-bold text-primary">{item.percent}%</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-semibold">Leads</h1>
+              <p className="text-sm text-muted-foreground">Demandes du site et leads ajoutés manuellement.</p>
+            </div>
+            <ManualLeadDialog />
           </div>
 
           {/* Filters */}
@@ -340,7 +386,10 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
+                            <Badge variant="secondary" className="w-fit text-xs">{sourceLabel(lead.source)}</Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
@@ -376,8 +425,9 @@ const AdminDashboard = () => {
                               <Calendar className="w-4 h-4 text-[hsl(var(--copper))] shrink-0" aria-label="RDV planifié" />
                             )}
                           </p>
-                          {lead.commune && <p className="text-xs text-muted-foreground">{lead.commune}</p>}
+                          {lead.commune && <p className="text-sm text-muted-foreground">{lead.commune}</p>}
                           <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
+                          <Badge variant="secondary" className="mt-1 w-fit text-xs">{sourceLabel(lead.source)}</Badge>
                           {upcomingByLead[lead.id] && (
                             <p className="text-xs text-[hsl(var(--copper))] font-medium mt-1">
                               📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
