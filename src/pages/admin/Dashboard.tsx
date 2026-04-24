@@ -354,6 +354,16 @@ const AdminDashboard = () => {
           {/* Leads */}
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>
+          ) : loadError ? (
+            <Card className="p-6 text-center space-y-4">
+              <div className="space-y-1">
+                <p className="font-semibold">Impossible de charger les leads.</p>
+                <p className="text-sm text-muted-foreground">Erreur : {loadError}</p>
+              </div>
+              <Button type="button" variant="copper" onClick={fetchLeads} className="min-h-[44px]">
+                <RefreshCw className="w-4 h-4" /> Réessayer
+              </Button>
+            </Card>
           ) : pageLeads.length === 0 ? (
             <Card className="p-12 text-center text-muted-foreground">Aucun lead trouvé.</Card>
           ) : (
