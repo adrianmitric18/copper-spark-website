@@ -16,6 +16,7 @@ import {
 import Logo from "@/components/Logo";
 import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
 import InstallPwaPrompt from "@/components/admin/InstallPwaPrompt";
+import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatHeure } from "@/lib/rdv/formatters";
@@ -45,6 +46,7 @@ type Lead = {
   photo_urls: string[] | null;
   status: string;
   notes: string | null;
+  notes_internes?: string | null;
 };
 
 const STATUSES = ["nouveau", "traité", "devis envoyé", "converti", "perdu"];
@@ -70,6 +72,18 @@ const statusColor = (s: string) => {
 };
 
 const PAGE_SIZE = 20;
+
+const SOURCE_LABELS: Record<string, string> = {
+  formulaire_site: "Site web",
+  telephone: "Téléphone",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  recommandation: "Recommandation",
+  chantier: "Chantier",
+  autre: "Autre",
+};
+
+const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Site web";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
