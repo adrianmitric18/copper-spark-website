@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus } from "lucide-react";
+import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
@@ -63,6 +63,18 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Non précisé";
+
+const cleanPhoneForWhatsapp = (phone: string) => phone.replace(/[^\d]/g, "").replace(/^0/, "32").replace(/^0032/, "32");
+const firstNameOf = (name: string) => name.trim().split(/\s+/)[0] || name;
+const formatRdvDateShort = (dateStr: string) =>
+  new Date(`${dateStr}T12:00:00`).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
+const daysUntilRdv = (dateStr: string) => {
+  const today = new Date();
+  const todayMidday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const rdvDay = new Date(year, month - 1, day, 12);
+  return Math.round((rdvDay.getTime() - todayMidday.getTime()) / 86400000);
+};
 
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -188,6 +200,36 @@ const LeadDetail = () => {
     toast.success("SMS d'avis copié");
   };
 
+  const communicationMessage = () => {
+    if (!lead) return { subject: "", body: "" };
+    const firstName = firstNameOf(lead.name);
+    const services = lead.services?.join(", ") || "votre demande";
+    if (!rdv) {
+      return {
+        subject: "Votre demande - Le Cuivre Électrique",
+        body: `Bonjour ${firstName}, Adrian du Cuivre Électrique. Je reviens vers vous concernant votre demande pour ${services}. Quand seriez-vous disponible pour qu'on organise une visite ?`,
+      };
+    }
+    const diff = daysUntilRdv(rdv.date_rdv);
+    const heure = rdv.heure_rdv.slice(0, 5).replace(":", "h");
+    if (diff === 0) {
+      return {
+        subject: "Confirmation de ma visite aujourd'hui",
+        body: `Bonjour ${firstName}, je confirme ma visite aujourd'hui à ${heure}. À tout à l'heure !`,
+      };
+    }
+    if (diff === 1) {
+      return {
+        subject: "Rappel de notre rendez-vous demain",
+        body: `Bonjour ${firstName}, petit rappel pour notre rendez-vous demain ${formatRdvDateShort(rdv.date_rdv)} à ${heure}. À très bientôt, Adrian`,
+      };
+    }
+    return {
+      subject: "Confirmation de notre rendez-vous",
+      body: `Bonjour ${firstName}, je vous confirme notre rendez-vous du ${formatRdvDateShort(rdv.date_rdv)} à ${heure}. À très bientôt, Adrian`,
+    };
+  };
+
   const leadInfo = (): LeadInfo | null => lead && {
     id: lead.id, name: lead.name, email: lead.email, phone: lead.phone,
     rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
@@ -282,6 +324,11 @@ const LeadDetail = () => {
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
 
   const info = leadInfo()!;
+  const quickMessage = communicationMessage();
+  const encodedBody = encodeURIComponent(quickMessage.body);
+  const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
+  const smsHref = `sms:${lead.phone}?body=${encodedBody}`;
+  const emailHref = `mailto:${lead.email}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
 
   return (
     <>
@@ -459,7 +506,24 @@ const LeadDetail = () => {
           {/* Actions */}
           <Card className="p-6 space-y-3">
             <h2 className="font-semibold text-lg">Actions rapides</h2>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="grid sm:grid-cols-3 gap-2">
+              <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
+                <a href={whatsappHref} target="_blank" rel="noreferrer">
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
+                <a href={smsHref}>
+                  <Smartphone className="w-4 h-4" /> SMS
+                </a>
+              </Button>
+              <Button asChild variant="copper" size="lg" className="min-h-[48px]">
+                <a href={emailHref}>
+                  <Mail className="w-4 h-4" /> Email rapide
+                </a>
+              </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button variant="outline" onClick={copyContact} className="flex-1">
                 <Copy className="w-4 h-4" /> Copier les coordonnées
               </Button>

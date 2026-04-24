@@ -46,6 +46,10 @@
     --copper-light: 18 75% 65%;
     --copper-dark: 18 85% 45%;
     --copper-glow: 18 100% 60%;
+    --whatsapp: 142 70% 40%;
+    --whatsapp-foreground: 0 0% 100%;
+    --sms: 217 91% 55%;
+    --sms-foreground: 0 0% 100%;
     --anthracite: 0 0% 12%;
     --anthracite-light: 0 0% 18%;
     --cream: 40 10% 92%;
@@ -117,6 +121,10 @@
     --chart-3: 48 96% 76%;
     --chart-4: 27 95% 60%;
     --chart-5: 0 0% 45%;
+    --whatsapp: 142 70% 40%;
+    --whatsapp-foreground: 0 0% 100%;
+    --sms: 217 91% 55%;
+    --sms-foreground: 0 0% 100%;
     --sidebar: 0 0% 98%;
     --sidebar-foreground: 0 0% 9%;
     --sidebar-primary: 27 95% 55%;

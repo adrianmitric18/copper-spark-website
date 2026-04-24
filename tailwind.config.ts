@@ -91,6 +91,14 @@ export default {
   				light: 'hsl(var(--copper-light))',
   				dark: 'hsl(var(--copper-dark))'
   			},
+			whatsapp: {
+				DEFAULT: 'hsl(var(--whatsapp))',
+				foreground: 'hsl(var(--whatsapp-foreground))'
+			},
+			sms: {
+				DEFAULT: 'hsl(var(--sms))',
+				foreground: 'hsl(var(--sms-foreground))'
+			},
   			anthracite: {
   				DEFAULT: 'hsl(var(--anthracite))',
   				light: 'hsl(var(--anthracite-light))'
