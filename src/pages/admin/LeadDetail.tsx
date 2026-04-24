@@ -49,7 +49,20 @@ type Lead = {
   photo_urls: string[] | null;
   status: string;
   notes: string | null;
+  notes_internes?: string | null;
 };
+
+const SOURCE_LABELS: Record<string, string> = {
+  formulaire_site: "Site web",
+  telephone: "Téléphone",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  recommandation: "Recommandation",
+  chantier: "Chantier",
+  autre: "Autre",
+};
+
+const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Non précisé";
 
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -98,7 +111,7 @@ const LeadDetail = () => {
     }
     const l = leadRes.data as Lead;
     setLead(l);
-    setNotes(l.notes || "");
+    setNotes(l.notes_internes || l.notes || "");
     setRdv((rdvRes.data as RendezVous | null) ?? null);
 
     if (l.photo_urls?.length) {
@@ -125,7 +138,7 @@ const LeadDetail = () => {
   const saveNotes = async () => {
     if (!lead) return;
     setSaving(true);
-    const { error } = await supabase.from("leads").update({ notes }).eq("id", lead.id);
+    const { error } = await supabase.from("leads").update({ notes_internes: notes }).eq("id", lead.id);
     setSaving(false);
     if (error) {
       toast.error("Erreur : " + error.message);
