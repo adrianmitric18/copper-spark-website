@@ -17,9 +17,17 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=2" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-admin.png" />
-    <link rel="manifest" href="/site.webmanifest?v=2" />
+    <link id="apple-touch-icon" rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <link id="pwa-manifest" rel="manifest" href="/site.webmanifest?v=2" />
+    <script>
+      (function () {
+        var isAdmin = window.location.pathname.indexOf('/admin') === 0;
+        var manifest = document.getElementById('pwa-manifest');
+        var appleIcon = document.getElementById('apple-touch-icon');
+        if (manifest) manifest.setAttribute('href', isAdmin ? '/admin-manifest.webmanifest' : '/site.webmanifest?v=2');
+        if (appleIcon) appleIcon.setAttribute('href', isAdmin ? '/apple-touch-icon-admin.png' : '/apple-touch-icon.png?v=2');
+      })();
+    </script>
     <meta name="theme-color" content="#E85D04" />
 
     <!-- iOS PWA (Add to Home Screen → /admin) -->
