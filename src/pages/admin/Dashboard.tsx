@@ -17,7 +17,7 @@ import Logo from "@/components/Logo";
 import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
 import InstallPwaPrompt from "@/components/admin/InstallPwaPrompt";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
-import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar } from "lucide-react";
+import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar, RefreshCw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { toast } from "sonner";
@@ -72,6 +72,8 @@ const statusColor = (s: string) => {
 };
 
 const PAGE_SIZE = 20;
+const MAX_FETCH_RETRIES = 2;
+const RETRY_DELAY_MS = 900;
 
 const SOURCE_LABELS: Record<string, string> = {
   formulaire_site: "Site web",
@@ -85,6 +87,8 @@ const SOURCE_LABELS: Record<string, string> = {
 
 const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Site web";
 
+const retryDelay = () => new Promise((resolve) => window.setTimeout(resolve, RETRY_DELAY_MS));
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin } = useAdminAuth();
@@ -96,6 +100,7 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"desc" | "asc">("desc");
   const [page, setPage] = useState(1);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => { document.title = "Dashboard Admin – Le Cuivre Électrique"; }, []);
 
@@ -115,30 +120,43 @@ const AdminDashboard = () => {
 
   const fetchLeads = async () => {
     setLoading(true);
+    setLoadError(null);
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const [leadsRes, rdvRes] = await Promise.all([
-      supabase.from("leads").select("*").order("created_at", { ascending: false }),
-      supabase
-        .from("rendez_vous")
-        .select("lead_id, date_rdv, heure_rdv")
-        .neq("statut", "annule")
-        .gte("date_rdv", todayStr)
-        .order("date_rdv", { ascending: true })
-        .order("heure_rdv", { ascending: true }),
-    ]);
-    if (leadsRes.error) {
-      toast.error("Erreur de chargement : " + leadsRes.error.message);
-    } else {
-      setLeads((leadsRes.data as Lead[]) || []);
-    }
-    if (!rdvRes.error && rdvRes.data) {
-      const map: Record<string, { date_rdv: string; heure_rdv: string }> = {};
-      for (const r of rdvRes.data as any[]) {
-        if (!map[r.lead_id]) map[r.lead_id] = { date_rdv: r.date_rdv, heure_rdv: r.heure_rdv };
+    let lastError = "chargement impossible";
+
+    for (let attempt = 0; attempt <= MAX_FETCH_RETRIES; attempt += 1) {
+      try {
+        const [leadsRes, rdvRes] = await Promise.all([
+          supabase.from("leads").select("*").order("created_at", { ascending: false }),
+          supabase
+            .from("rendez_vous")
+            .select("lead_id, date_rdv, heure_rdv")
+            .neq("statut", "annule")
+            .gte("date_rdv", todayStr)
+            .order("date_rdv", { ascending: true })
+            .order("heure_rdv", { ascending: true }),
+        ]);
+
+        if (leadsRes.error) throw leadsRes.error;
+        if (rdvRes.error) throw rdvRes.error;
+
+        setLeads((leadsRes.data as Lead[]) || []);
+        const map: Record<string, { date_rdv: string; heure_rdv: string }> = {};
+        for (const r of (rdvRes.data || []) as any[]) {
+          if (!map[r.lead_id]) map[r.lead_id] = { date_rdv: r.date_rdv, heure_rdv: r.heure_rdv };
+        }
+        setUpcomingByLead(map);
+        setLoading(false);
+        return;
+      } catch (e: any) {
+        lastError = e?.message || "connexion impossible";
+        if (attempt < MAX_FETCH_RETRIES) await retryDelay();
       }
-      setUpcomingByLead(map);
     }
+
+    setLoadError(lastError);
+    toast.error("Erreur de chargement : " + lastError);
     setLoading(false);
   };
 
