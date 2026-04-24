@@ -208,12 +208,22 @@ const AdminDashboard = () => {
   const stats = useMemo(() => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthLeads = leads.filter(l => new Date(l.created_at) >= monthStart);
+    const sourceCounts = monthLeads.reduce<Record<string, number>>((acc, lead) => {
+      const key = lead.source || "formulaire_site";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
     return {
       nouveau: leads.filter(l => l.status === "nouveau").length,
       enCours: leads.filter(l => l.status === "traité" || l.status === "devis envoyé").length,
       converti: leads.filter(l => l.status === "converti").length,
       perdu: leads.filter(l => l.status === "perdu").length,
-      mois: leads.filter(l => new Date(l.created_at) >= monthStart).length,
+      mois: monthLeads.length,
+      sources: Object.entries(sourceCounts)
+        .map(([source, count]) => ({ source, count, percent: monthLeads.length ? Math.round((count / monthLeads.length) * 100) : 0 }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4),
     };
   }, [leads]);
 
@@ -268,6 +278,20 @@ const AdminDashboard = () => {
             <Card className="p-4"><p className="text-xs text-muted-foreground">Perdus</p><p className="text-2xl font-bold text-muted-foreground">{stats.perdu}</p></Card>
             <Card className="p-4 col-span-2 md:col-span-1"><p className="text-xs text-muted-foreground">Total ce mois</p><p className="text-2xl font-bold text-primary">{stats.mois}</p></Card>
           </div>
+
+          {stats.sources.length > 0 && (
+            <Card className="p-4 space-y-3">
+              <p className="text-sm font-semibold">Sources des leads ce mois</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {stats.sources.map((item) => (
+                  <div key={item.source} className="rounded-md border p-3">
+                    <p className="text-xs text-muted-foreground">{sourceLabel(item.source)}</p>
+                    <p className="text-lg font-bold text-primary">{item.percent}%</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
