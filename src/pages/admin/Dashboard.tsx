@@ -269,6 +269,14 @@ const AdminDashboard = () => {
             <Card className="p-4 col-span-2 md:col-span-1"><p className="text-xs text-muted-foreground">Total ce mois</p><p className="text-2xl font-bold text-primary">{stats.mois}</p></Card>
           </div>
 
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-semibold">Leads</h1>
+              <p className="text-sm text-muted-foreground">Demandes du site et leads ajoutés manuellement.</p>
+            </div>
+            <ManualLeadDialog />
+          </div>
+
           {/* Filters */}
           <Card className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -354,7 +362,10 @@ const AdminDashboard = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge className={`capitalize ${statusColor(lead.status)}`} variant="outline">{lead.status}</Badge>
+                            <Badge variant="secondary" className="w-fit text-xs">{sourceLabel(lead.source)}</Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
@@ -390,8 +401,9 @@ const AdminDashboard = () => {
                               <Calendar className="w-4 h-4 text-[hsl(var(--copper))] shrink-0" aria-label="RDV planifié" />
                             )}
                           </p>
-                          {lead.commune && <p className="text-xs text-muted-foreground">{lead.commune}</p>}
+                          {lead.commune && <p className="text-sm text-muted-foreground">{lead.commune}</p>}
                           <p className="text-xs text-muted-foreground">{formatDate(lead.created_at)}</p>
+                          <Badge variant="secondary" className="mt-1 w-fit text-xs">{sourceLabel(lead.source)}</Badge>
                           {upcomingByLead[lead.id] && (
                             <p className="text-xs text-[hsl(var(--copper))] font-medium mt-1">
                               📅 RDV {upcomingByLead[lead.id].date_rdv} · {formatHeure(upcomingByLead[lead.id].heure_rdv)}
