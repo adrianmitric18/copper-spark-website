@@ -506,7 +506,24 @@ const LeadDetail = () => {
           {/* Actions */}
           <Card className="p-6 space-y-3">
             <h2 className="font-semibold text-lg">Actions rapides</h2>
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="grid sm:grid-cols-3 gap-2">
+              <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
+                <a href={whatsappHref} target="_blank" rel="noreferrer">
+                  <MessageCircle className="w-4 h-4" /> WhatsApp
+                </a>
+              </Button>
+              <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
+                <a href={smsHref}>
+                  <Smartphone className="w-4 h-4" /> SMS
+                </a>
+              </Button>
+              <Button asChild variant="copper" size="lg" className="min-h-[48px]">
+                <a href={emailHref}>
+                  <Mail className="w-4 h-4" /> Email rapide
+                </a>
+              </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button variant="outline" onClick={copyContact} className="flex-1">
                 <Copy className="w-4 h-4" /> Copier les coordonnées
               </Button>
