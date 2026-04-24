@@ -357,7 +357,10 @@ const LeadDetail = () => {
             <div className="grid sm:grid-cols-2 gap-3 text-sm">
               <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type}</div>
               <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
-              <div className="sm:col-span-2"><span className="text-muted-foreground">Source :</span> {lead.source || "Non précisé"}</div>
+              <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Source :</span>
+                <Badge variant="secondary">{sourceLabel(lead.source)}</Badge>
+              </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-2">Services demandés :</p>
@@ -435,16 +438,16 @@ const LeadDetail = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Notes personnelles</label>
+              <label className="text-sm text-muted-foreground mb-2 block">Notes internes</label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                maxLength={500}
+                maxLength={2000}
                 rows={4}
                 placeholder="Vos notes sur ce lead..."
               />
               <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-muted-foreground">{notes.length}/500</span>
+                <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
                 <Button onClick={saveNotes} disabled={saving} variant="copper" size="sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Enregistrer les notes
