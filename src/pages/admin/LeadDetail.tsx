@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus } from "lucide-react";
+import { ArrowLeft, Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { buttonVariants } from "@/components/ui/button";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
@@ -63,6 +63,18 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || source || "Non précisé";
+
+const cleanPhoneForWhatsapp = (phone: string) => phone.replace(/[^\d]/g, "").replace(/^0/, "32").replace(/^0032/, "32");
+const firstNameOf = (name: string) => name.trim().split(/\s+/)[0] || name;
+const formatRdvDateShort = (dateStr: string) =>
+  new Date(`${dateStr}T12:00:00`).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
+const daysUntilRdv = (dateStr: string) => {
+  const today = new Date();
+  const todayMidday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const rdvDay = new Date(year, month - 1, day, 12);
+  return Math.round((rdvDay.getTime() - todayMidday.getTime()) / 86400000);
+};
 
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
