@@ -27,8 +27,8 @@ export default defineConfig(({ mode }) => ({
         "apple-touch-icon-admin.png",
       ],
       manifest: {
-        name: "Le Cuivre Électrique - Admin",
-        short_name: "CE Admin",
+        name: "Cuivre Admin",
+        short_name: "Admin",
         description: "CRM Le Cuivre Électrique — gestion des leads, RDV et checklists de visite",
         start_url: "/admin",
         scope: "/admin",
