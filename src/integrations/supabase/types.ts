@@ -71,6 +71,7 @@ export type Database = {
           message: string
           name: string
           notes: string | null
+          notes_internes: string | null
           numero: string | null
           phone: string
           photo_urls: string[] | null
@@ -92,6 +93,7 @@ export type Database = {
           message: string
           name: string
           notes?: string | null
+          notes_internes?: string | null
           numero?: string | null
           phone: string
           photo_urls?: string[] | null
@@ -113,6 +115,7 @@ export type Database = {
           message?: string
           name?: string
           notes?: string | null
+          notes_internes?: string | null
           numero?: string | null
           phone?: string
           photo_urls?: string[] | null
