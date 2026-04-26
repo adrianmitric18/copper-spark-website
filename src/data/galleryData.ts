@@ -95,6 +95,16 @@ import guirlandesCentreCommercial from "@/assets/gallery/noel/guirlandes-centre-
 import sapinLumineuxNuit from "@/assets/gallery/noel/sapin-lumineux-nuit.jpg";
 import renneGeant from "@/assets/gallery/noel/renne-geant.jpg";
 
+// Import gallery images - Bornes de recharge
+import bornesRecharge01 from "@/assets/gallery/bornes-de-recharge/01-borne-hager-witty-pro-voiture-charge.jpg";
+import bornesRecharge02 from "@/assets/gallery/bornes-de-recharge/02-lotissement-4-maisons-mitoyennes.jpg";
+import bornesRecharge03 from "@/assets/gallery/bornes-de-recharge/03-tranchee-50m-pre-cablage-bornes.jpg";
+import bornesRecharge04 from "@/assets/gallery/bornes-de-recharge/04-carottage-facade-passage-cable.jpg";
+import bornesRecharge05 from "@/assets/gallery/bornes-de-recharge/05-sous-tableau-hager-borne-recharge.jpg";
+import bornesRecharge06 from "@/assets/gallery/bornes-de-recharge/06-sous-tableau-schneider-resi9-borne.jpg";
+import bornesRecharge07 from "@/assets/gallery/bornes-de-recharge/07-passage-mur-soutenement-sable.jpg";
+import bornesRecharge08 from "@/assets/gallery/bornes-de-recharge/08-borne-recharge-type2-vehicule-electrique.jpg";
+
 export interface GalleryImage {
   id: number;
   title: string;
@@ -203,6 +213,24 @@ export const categories: GalleryCategory[] = [
       { id: 2, title: "Installation réseau", image: switchReseau },
       { id: 3, title: "Baie de brassage - Avant", image: baieBrassageAvant },
       { id: 4, title: "Baie de brassage - Terminé", image: baieBrassageFini },
+    ],
+  },
+  {
+    id: "bornes-de-recharge",
+    slug: "bornes-de-recharge",
+    label: "Bornes de recharge",
+    description: "Mobilité électrique",
+    longDescription: "Installation et mise en service de bornes de recharge pour véhicules électriques et hybrides rechargeables. Du diagnostic technique à la programmation finale, en passant par le pré-câblage et les sous-tableaux dédiés conformes RGIE, nous accompagnons particuliers et copropriétés dans le Brabant wallon. Spécialistes de la marque Hager (gamme Witty Pro) et compatibles avec toutes les installations existantes : monophasé, triphasé, compteurs analogiques ou numériques Fluvius.",
+    coverImage: bornesRecharge01,
+    images: [
+      { id: 1, title: "Borne Hager Witty Pro avec véhicule en charge", image: bornesRecharge01 },
+      { id: 2, title: "Lotissement de 4 maisons mitoyennes équipées", image: bornesRecharge02 },
+      { id: 3, title: "Tranchée de 50 mètres pour pré-câblage", image: bornesRecharge03 },
+      { id: 4, title: "Carottage de façade pour passage de câble", image: bornesRecharge04 },
+      { id: 5, title: "Sous-tableau Hager dédié borne de recharge", image: bornesRecharge05 },
+      { id: 6, title: "Sous-tableau Schneider Electric Resi9", image: bornesRecharge06 },
+      { id: 7, title: "Passage de gaine sous mur de soutènement", image: bornesRecharge07 },
+      { id: 8, title: "Connecteur Type 2 sur véhicule électrique", image: bornesRecharge08 },
     ],
   },
   {
