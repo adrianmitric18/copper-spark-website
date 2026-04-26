@@ -17,6 +17,7 @@ import TableauxEtPrises from "./pages/realisations/TableauxEtPrises";
 import AmbiancesLumineuses from "./pages/realisations/AmbiancesLumineuses";
 import InstallationReseaux from "./pages/realisations/InstallationReseaux";
 import DecorationNoel from "./pages/realisations/DecorationNoel";
+import BornesDeRechargeRealisations from "./pages/realisations/BornesDeRecharge";
 import Avis from "./pages/Avis";
 import Contact from "./pages/Contact";
 import Merci from "./pages/Merci";
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/realisations/ambiances-lumineuses" element={<AmbiancesLumineuses />} />
           <Route path="/realisations/installation-reseaux" element={<InstallationReseaux />} />
           <Route path="/realisations/decoration-de-noel" element={<DecorationNoel />} />
+          <Route path="/realisations/bornes-de-recharge" element={<BornesDeRechargeRealisations />} />
           <Route path="/avis" element={<Avis />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
