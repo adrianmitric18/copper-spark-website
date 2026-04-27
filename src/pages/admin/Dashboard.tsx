@@ -82,6 +82,7 @@ const AdminDashboard = () => {
   const [sort, setSort] = useState<"desc" | "asc">("desc");
   const [page, setPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
 
   useEffect(() => { document.title = "Dashboard Admin – Le Cuivre Électrique"; }, []);
 
@@ -92,6 +93,7 @@ const AdminDashboard = () => {
       const { leads, upcomingByLead } = await fetchLeadsWithUpcomingRdvs();
       setLeads(leads);
       setUpcomingByLead(upcomingByLead);
+      setLastFetchedAt(new Date());
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "connexion impossible";
       setLoadError(msg);
@@ -173,6 +175,16 @@ const AdminDashboard = () => {
   const formatDate = (s: string) =>
     new Date(s).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" });
 
+  const formatLastFetched = (date: Date | null): string => {
+    if (!date) return "";
+    const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+    if (minutes < 1) return "à l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `il y a ${hours}h`;
+    return date.toLocaleDateString("fr-BE");
+  };
+
   if (authLoading || !user) return <AdminLoading />;
 
   return (
@@ -228,9 +240,29 @@ const AdminDashboard = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Leads</h1>
-          <p className="text-sm text-muted-foreground">Demandes du site et leads ajoutés manuellement.</p>
+          <p className="text-sm text-muted-foreground">
+            Demandes du site et leads ajoutés manuellement.
+            {lastFetchedAt && (
+              <>
+                {" · "}
+                <span className="text-xs">Mis à jour {formatLastFetched(lastFetchedAt)}</span>
+              </>
+            )}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={reloadLeads}
+            disabled={loading}
+            className="min-h-[40px]"
+            aria-label="Actualiser la liste"
+            title="Actualiser"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">Actualiser</span>
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -352,7 +384,10 @@ const AdminDashboard = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button asChild size="icon" variant="ghost" className="text-primary hover:bg-primary/10" aria-label={`Appeler ${lead.name}`}>
+                          <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /></a>
+                        </Button>
                         <Button asChild size="sm" variant="outline">
                           <Link to={`/admin/lead/${lead.id}`}><Eye className="w-4 h-4" /> Détails</Link>
                         </Button>
