@@ -99,7 +99,8 @@ const LeadDetail = () => {
     if (!user) { navigate("/admin/login"); return; }
     if (!isAdmin) { toast.error("Accès refusé"); navigate("/"); return; }
     if (id) fetchAll(id);
-  }, [id, user, authLoading, isAdmin, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.id, authLoading, isAdmin, navigate]);
 
   useEffect(() => {
     if (lead) document.title = `${lead.name} – Admin`;

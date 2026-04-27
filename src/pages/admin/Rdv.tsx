@@ -76,7 +76,8 @@ const AdminRdv = () => {
     if (!user) { navigate("/admin/login"); return; }
     if (!isAdmin) { toast.error("Accès refusé"); navigate("/"); return; }
     fetchAll();
-  }, [user, authLoading, isAdmin, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading, isAdmin, navigate]);
 
   const fetchAll = async () => {
     setLoading(true);

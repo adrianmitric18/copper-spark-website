@@ -144,7 +144,8 @@ const AdminDashboard = () => {
       return;
     }
     fetchLeads();
-  }, [user, authLoading, isAdmin, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading, isAdmin, navigate]);
 
   const fetchLeads = async () => {
     setLoading(true);
