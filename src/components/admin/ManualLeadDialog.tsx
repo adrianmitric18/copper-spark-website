@@ -175,9 +175,10 @@ const ManualLeadDialog = () => {
       }
 
       toast.success("Lead créé");
-      setOpen(false);
       setForm(initialForm);
-      navigate(`/admin/lead/${data.id}`);
+      setOpen(false);
+      const newLeadId = data.id;
+      setTimeout(() => navigate(`/admin/lead/${newLeadId}`), 0);
     } catch (error: any) {
       toast.error("Erreur : " + (error?.message || "création impossible"));
     } finally {
