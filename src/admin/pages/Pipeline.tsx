@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Phone,
   Search,
   Calendar,
   Plus,
-  Loader2,
   Download,
   RefreshCw,
 } from "lucide-react";
@@ -17,13 +17,11 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { fetchLeadsWithUpcomingRdvs, updateLeadStatus } from "@/lib/admin/queries";
 import {
   type Lead,
-  type UpcomingByLead,
   leadSourceLabel,
 } from "@/lib/admin/types";
 import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
-import AdminLoading from "@/components/admin/AdminLoading";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import { toast } from "sonner";
 
@@ -131,35 +129,66 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
   );
 };
 
+/** Squelette du kanban pendant le chargement initial. */
+const KanbanSkeleton = () => (
+  <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-2">
+    <div className="flex gap-3 min-w-max md:min-w-0">
+      {COLUMNS.map((col) => (
+        <div
+          key={col.key}
+          className={`flex-1 min-w-[280px] md:min-w-0 rounded-xl border ${col.tint} p-3 space-y-2`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-20 rounded bg-muted/60 animate-pulse" />
+            <div className="h-4 w-6 rounded bg-muted/60 animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-20 rounded-lg bg-muted/40 animate-pulse"
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const Pipeline = () => {
-  const { user, ready, loading: authLoading } = useAdminGuard();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [upcomingByLead, setUpcomingByLead] = useState<UpcomingByLead>({});
-  const [loading, setLoading] = useState(true);
+  const { user, ready } = useAdminGuard();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     document.title = "Pipeline – Le Cuivre Admin";
   }, []);
 
-  const reload = async () => {
-    setLoading(true);
-    try {
-      const { leads, upcomingByLead } = await fetchLeadsWithUpcomingRdvs();
-      setLeads(leads);
-      setUpcomingByLead(upcomingByLead);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "chargement impossible";
-      toast.error("Erreur : " + msg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Cache partagé avec Aujourd'hui : nav instantanée entre les 2 pages.
+  const leadsQuery = useQuery({
+    queryKey: ["admin-leads-overview"],
+    queryFn: fetchLeadsWithUpcomingRdvs,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
-    if (!ready) return;
-    void reload();
-  }, [ready, user?.id]);
+    if (leadsQuery.error) {
+      const msg = leadsQuery.error instanceof Error ? leadsQuery.error.message : "chargement impossible";
+      toast.error("Erreur : " + msg);
+    }
+  }, [leadsQuery.error]);
+
+  const leads = leadsQuery.data?.leads ?? [];
+  const upcomingByLead = leadsQuery.data?.upcomingByLead ?? {};
+  const loading = leadsQuery.isLoading;
+
+  const reload = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin-leads-overview"] });
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return leads;
@@ -198,27 +227,33 @@ const Pipeline = () => {
 
   const handleStatusChange = async (lead: Lead, newStatus: string) => {
     if (newStatus === lead.status) return;
-    // Optimistic update
-    setLeads((prev) =>
-      prev.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)),
+    // Optimistic update direct dans le cache React Query
+    queryClient.setQueryData<Awaited<ReturnType<typeof fetchLeadsWithUpcomingRdvs>>>(
+      ["admin-leads-overview"],
+      (prev) => prev && {
+        ...prev,
+        leads: prev.leads.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)),
+      },
     );
     try {
       await updateLeadStatus(lead.id, newStatus);
       toast.success(`${lead.name} → ${newStatus}`);
     } catch (e: unknown) {
-      // Rollback
-      setLeads((prev) =>
-        prev.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l)),
+      // Rollback : revert au statut d'avant
+      queryClient.setQueryData<Awaited<ReturnType<typeof fetchLeadsWithUpcomingRdvs>>>(
+        ["admin-leads-overview"],
+        (prev) => prev && {
+          ...prev,
+          leads: prev.leads.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l)),
+        },
       );
       const msg = e instanceof Error ? e.message : "mise à jour impossible";
       toast.error("Erreur : " + msg);
     }
   };
 
-  if (authLoading || !user) return <AdminLoading />;
-
   return (
-    <AdminShell email={user.email} mobileTitle="Pipeline">
+    <AdminShell email={user?.email} mobileTitle="Pipeline">
       <div className="p-4 md:p-6 space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -271,9 +306,7 @@ const Pipeline = () => {
 
         {/* Kanban board */}
         {loading ? (
-          <Card className="p-12 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </Card>
+          <KanbanSkeleton />
         ) : (
           <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-2">
             <div className="flex gap-3 min-w-max md:min-w-0">

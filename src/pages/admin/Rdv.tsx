@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Eye, Calendar } from "lucide-react";
+import { Eye, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchAllRdvs, type RdvWithLead } from "@/lib/admin/queries";
+import { fetchAllRdvs } from "@/lib/admin/queries";
 import AdminShell from "@/admin/layout/AdminShell";
-import AdminLoading from "@/components/admin/AdminLoading";
 
 type FilterKey = "a_venir" | "aujourdhui" | "semaine" | "mois" | "passes" | "annules";
 
@@ -52,34 +52,30 @@ const statutBadge = (s: string) => {
 };
 
 const AdminRdv = () => {
-  const { user, ready, loading: authLoading } = useAdminGuard();
-  const [rdvs, setRdvs] = useState<RdvWithLead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, ready } = useAdminGuard();
   const [filter, setFilter] = useState<FilterKey>("a_venir");
 
   useEffect(() => {
     document.title = "Tous les RDV – Admin";
   }, []);
 
+  const rdvsQuery = useQuery({
+    queryKey: ["admin-rdvs-all"],
+    queryFn: fetchAllRdvs,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
-    if (!ready) return;
-    let cancelled = false;
-    setLoading(true);
-    fetchAllRdvs()
-      .then((data) => {
-        if (!cancelled) setRdvs(data);
-      })
-      .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : "chargement impossible";
-        toast.error("Erreur de chargement : " + msg);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, user?.id]);
+    if (rdvsQuery.error) {
+      const msg = rdvsQuery.error instanceof Error ? rdvsQuery.error.message : "chargement impossible";
+      toast.error("Erreur de chargement : " + msg);
+    }
+  }, [rdvsQuery.error]);
+
+  const rdvs = rdvsQuery.data ?? [];
+  const loading = rdvsQuery.isLoading;
 
   const filtered = useMemo(() => {
     const today = todayStr();
@@ -105,10 +101,8 @@ const AdminRdv = () => {
     });
   }, [rdvs, filter]);
 
-  if (authLoading || !user) return <AdminLoading />;
-
   return (
-    <AdminShell email={user.email} mobileTitle="Calendrier">
+    <AdminShell email={user?.email} mobileTitle="Calendrier">
       <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center gap-2">
         <Calendar className="w-6 h-6 text-[hsl(var(--copper))]" />
@@ -134,8 +128,14 @@ const AdminRdv = () => {
       <p className="text-sm text-muted-foreground">{filtered.length} rendez-vous affichés</p>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="animate-spin" />
+        <div className="space-y-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-14 rounded-lg bg-muted/40 animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }}
+            />
+          ))}
         </div>
       ) : filtered.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground">Aucun RDV pour ce filtre.</Card>

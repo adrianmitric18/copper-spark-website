@@ -1,5 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Phone,
   Calendar,
@@ -8,7 +9,6 @@ import {
   Users,
   Sparkles,
   ChevronRight,
-  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +17,10 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import {
   fetchLeadsWithUpcomingRdvs,
   fetchAllRdvs,
-  type RdvWithLead,
 } from "@/lib/admin/queries";
-import { type Lead, type UpcomingByLead, leadSourceLabel } from "@/lib/admin/types";
+import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
-import AdminLoading from "@/components/admin/AdminLoading";
 import { toast } from "sonner";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -51,40 +49,48 @@ const formatLongDate = (d: Date): string =>
   });
 
 const Aujourdhui = () => {
-  const { user, ready, loading: authLoading } = useAdminGuard();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [upcomingByLead, setUpcomingByLead] = useState<UpcomingByLead>({});
-  const [rdvs, setRdvs] = useState<RdvWithLead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, ready } = useAdminGuard();
 
   useEffect(() => {
     document.title = "Aujourd'hui – Le Cuivre Admin";
   }, []);
 
+  // Cache 60s en mémoire — instant entre Aujourd'hui ↔ Pipeline.
+  const leadsQuery = useQuery({
+    queryKey: ["admin-leads-overview"],
+    queryFn: fetchLeadsWithUpcomingRdvs,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const rdvsQuery = useQuery({
+    queryKey: ["admin-rdvs-all"],
+    queryFn: fetchAllRdvs,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Toast d'erreur si une requête plante (retry géré par React Query)
   useEffect(() => {
-    if (!ready) return;
-    let cancelled = false;
-    setLoading(true);
+    if (leadsQuery.error) {
+      const msg = leadsQuery.error instanceof Error ? leadsQuery.error.message : "chargement leads impossible";
+      toast.error("Erreur : " + msg);
+    }
+  }, [leadsQuery.error]);
 
-    Promise.all([fetchLeadsWithUpcomingRdvs(), fetchAllRdvs()])
-      .then(([leadsRes, allRdvs]) => {
-        if (cancelled) return;
-        setLeads(leadsRes.leads);
-        setUpcomingByLead(leadsRes.upcomingByLead);
-        setRdvs(allRdvs);
-      })
-      .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : "chargement impossible";
-        toast.error("Erreur de chargement : " + msg);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  useEffect(() => {
+    if (rdvsQuery.error) {
+      const msg = rdvsQuery.error instanceof Error ? rdvsQuery.error.message : "chargement RDV impossible";
+      toast.error("Erreur : " + msg);
+    }
+  }, [rdvsQuery.error]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [ready, user?.id]);
+  const leads = leadsQuery.data?.leads ?? [];
+  const upcomingByLead = leadsQuery.data?.upcomingByLead ?? {};
+  const rdvs = rdvsQuery.data ?? [];
+  const loading = leadsQuery.isLoading || rdvsQuery.isLoading;
 
   // ===== Données dérivées =====
   const today = todayDateStr();
@@ -158,8 +164,6 @@ const Aujourdhui = () => {
     };
   }, [leads, weekRdvs.length, todayRdvs.length]);
 
-  if (authLoading || !user) return <AdminLoading />;
-
   const ageInHours = (createdAt: string): number =>
     Math.floor((Date.now() - new Date(createdAt).getTime()) / HOUR_MS);
 
@@ -170,7 +174,7 @@ const Aujourdhui = () => {
   };
 
   return (
-    <AdminShell email={user.email} mobileTitle="Aujourd'hui">
+    <AdminShell email={user?.email} mobileTitle="Aujourd'hui">
       <div className="p-4 md:p-8 space-y-6 max-w-6xl mx-auto">
         {/* Greeting */}
         <div className="space-y-1">
@@ -186,9 +190,7 @@ const Aujourdhui = () => {
         </div>
 
         {loading ? (
-          <Card className="p-12 flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </Card>
+          <SkeletonContent />
         ) : (
           <>
             {/* KPIs row */}
@@ -421,6 +423,56 @@ const Aujourdhui = () => {
     </AdminShell>
   );
 };
+
+/**
+ * Squelettes affichés pendant le chargement initial.
+ * Mime la structure de la page chargée pour que le layout ne saute pas.
+ */
+const SkeletonBlock = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse rounded bg-muted/60 ${className}`} />
+);
+
+const SkeletonContent = () => (
+  <>
+    {/* 4 KPI */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {[0, 1, 2, 3].map((i) => (
+        <Card key={i} className="p-4 space-y-2">
+          <SkeletonBlock className="h-3 w-24" />
+          <SkeletonBlock className="h-8 w-16" />
+          <SkeletonBlock className="h-3 w-20" />
+        </Card>
+      ))}
+    </div>
+
+    {/* Aujourd'hui card */}
+    <Card className="p-5 md:p-6 space-y-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+      <SkeletonBlock className="h-6 w-40" />
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <SkeletonBlock className="h-4 w-32" />
+          {[0, 1].map((i) => (
+            <SkeletonBlock key={i} className="h-14 w-full" />
+          ))}
+        </div>
+        <div className="space-y-2">
+          <SkeletonBlock className="h-4 w-32" />
+          {[0, 1].map((i) => (
+            <SkeletonBlock key={i} className="h-14 w-full" />
+          ))}
+        </div>
+      </div>
+    </Card>
+
+    {/* Cette semaine */}
+    <Card className="p-5 md:p-6 space-y-3">
+      <SkeletonBlock className="h-6 w-48" />
+      {[0, 1, 2].map((i) => (
+        <SkeletonBlock key={i} className="h-12 w-full" />
+      ))}
+    </Card>
+  </>
+);
 
 const SourcesBreakdown = ({ leads }: { leads: Lead[] }) => {
   const data = useMemo(() => {
