@@ -12,9 +12,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import UpcomingRdvCard from "@/components/admin/UpcomingRdvCard";
+import StaleLeadsCard from "@/components/admin/StaleLeadsCard";
 import InstallPwaPrompt from "@/components/admin/InstallPwaPrompt";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
-import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar, RefreshCw } from "lucide-react";
+import { Loader2, LogOut, Eye, Phone, Trash2, Star, Calendar, RefreshCw, Download } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ import {
   leadStatusColor,
   leadSourceLabel,
 } from "@/lib/admin/types";
+import { downloadLeadsCsv } from "@/lib/admin/csv";
 import AdminShell from "@/components/admin/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 
@@ -197,6 +199,9 @@ const AdminDashboard = () => {
       {/* Prochains RDV */}
       <UpcomingRdvCard />
 
+      {/* Leads à relancer (auto-masqué si aucun) */}
+      <StaleLeadsCard leads={leads} upcomingByLead={upcomingByLead} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="p-4"><p className="text-xs text-muted-foreground">Nouveaux</p><p className="text-2xl font-bold text-orange-600">{stats.nouveau}</p></Card>
@@ -225,7 +230,25 @@ const AdminDashboard = () => {
           <h1 className="text-xl font-semibold">Leads</h1>
           <p className="text-sm text-muted-foreground">Demandes du site et leads ajoutés manuellement.</p>
         </div>
-        <ManualLeadDialog />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => downloadLeadsCsv(filtered)}
+            disabled={filtered.length === 0}
+            className="min-h-[40px]"
+            aria-label="Exporter les leads filtrés en CSV"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+            {filtered.length > 0 && filtered.length !== leads.length && (
+              <span className="text-xs text-muted-foreground ml-1">
+                ({filtered.length})
+              </span>
+            )}
+          </Button>
+          <ManualLeadDialog />
+        </div>
       </div>
 
       {/* Filters */}
