@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -9,11 +9,13 @@ const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000;
 export const useAdminAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const userRef = useRef<User | null>(null);
 
   useEffect(() => {
     const handleSession = async (sessionUser: User | null) => {
       if (!sessionUser) {
         localStorage.removeItem(LAST_ACTIVITY_KEY);
+        userRef.current = null;
         setUser(null);
         setLoading(false);
         return;
@@ -23,12 +25,14 @@ export const useAdminAuth = () => {
       if (Date.now() - lastActivity > INACTIVITY_LIMIT_MS) {
         localStorage.removeItem(LAST_ACTIVITY_KEY);
         await supabase.auth.signOut();
+        userRef.current = null;
         setUser(null);
         setLoading(false);
         return;
       }
 
       localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      userRef.current = sessionUser;
       setUser(sessionUser);
       setLoading(false);
     };
@@ -42,7 +46,7 @@ export const useAdminAuth = () => {
     });
 
     const refreshActivity = () => {
-      if (user) localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+      if (userRef.current) localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
     };
     window.addEventListener("pointerdown", refreshActivity, { passive: true });
     window.addEventListener("keydown", refreshActivity);
@@ -52,7 +56,7 @@ export const useAdminAuth = () => {
       window.removeEventListener("pointerdown", refreshActivity);
       window.removeEventListener("keydown", refreshActivity);
     };
-  }, [user]);
+  }, []);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 

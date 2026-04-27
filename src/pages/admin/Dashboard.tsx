@@ -89,6 +89,34 @@ const sourceLabel = (source?: string | null) => SOURCE_LABELS[source || ""] || s
 
 const retryDelay = () => new Promise((resolve) => window.setTimeout(resolve, RETRY_DELAY_MS));
 
+const DeleteDialog = ({
+  lead,
+  trigger,
+  onConfirm,
+}: {
+  lead: Lead;
+  trigger: React.ReactNode;
+  onConfirm: (lead: Lead) => void;
+}) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+        <AlertDialogDescription>
+          Cette action est irréversible. Le lead <strong>{lead.name}</strong> et toutes ses données (photos incluses) seront définitivement supprimés.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Annuler</AlertDialogCancel>
+        <AlertDialogAction onClick={() => onConfirm(lead)} className={buttonVariants({ variant: "destructive" })}>
+          Oui, supprimer
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin } = useAdminAuth();
@@ -179,26 +207,6 @@ const AdminDashboard = () => {
       toast.error("Erreur : " + (e?.message || "suppression impossible"));
     }
   };
-
-  const DeleteDialog = ({ lead, trigger }: { lead: Lead; trigger: React.ReactNode }) => (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Cette action est irréversible. Le lead <strong>{lead.name}</strong> et toutes ses données (photos incluses) seront définitivement supprimés.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={() => deleteLead(lead)} className={buttonVariants({ variant: "destructive" })}>
-            Oui, supprimer
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
 
   const filtered = useMemo(() => {
     let list = [...leads];
@@ -426,6 +434,7 @@ const AdminDashboard = () => {
                             </Button>
                             <DeleteDialog
                               lead={lead}
+                              onConfirm={deleteLead}
                               trigger={
                                 <Button size="icon" variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" aria-label="Supprimer">
                                   <Trash2 className="w-4 h-4" />
@@ -479,6 +488,7 @@ const AdminDashboard = () => {
                       </Button>
                       <DeleteDialog
                         lead={lead}
+                        onConfirm={deleteLead}
                         trigger={
                           <Button size="icon" variant="outline" className="text-destructive hover:bg-destructive/10 min-h-[44px] min-w-[44px]" aria-label="Supprimer">
                             <Trash2 className="w-4 h-4" />
