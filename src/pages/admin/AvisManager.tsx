@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,20 +18,13 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import Logo from "@/components/Logo";
 import { Loader2, Plus, Star, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-
-type Testimonial = {
-  id: string;
-  name: string;
-  city: string | null;
-  service: string | null;
-  rating: number;
-  message: string;
-  approved: boolean;
-  created_at: string;
-};
+import { useAdminGuard } from "@/hooks/useAdminGuard";
+import { fetchTestimonials, deleteTestimonial } from "@/lib/admin/queries";
+import type { Testimonial } from "@/lib/admin/types";
+import AdminShell from "@/components/admin/AdminShell";
+import AdminLoading from "@/components/admin/AdminLoading";
 
 type FormState = {
   id?: string;
@@ -89,8 +81,7 @@ const StarRow = ({ rating }: { rating: number }) => (
 );
 
 const AvisManager = () => {
-  const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin } = useAdminAuth();
+  const { user, ready, loading: authLoading } = useAdminGuard();
   const [items, setItems] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,24 +91,23 @@ const AvisManager = () => {
 
   useEffect(() => { document.title = "Gestion des avis – Admin"; }, []);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) { navigate("/admin/login"); return; }
-    if (!isAdmin) { toast.error("Accès refusé"); navigate("/"); return; }
-    fetchItems();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, authLoading, isAdmin, navigate]);
-
-  const fetchItems = async () => {
+  const reload = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("testimonials")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) toast.error("Erreur de chargement : " + error.message);
-    else setItems((data as Testimonial[]) || []);
-    setLoading(false);
+    try {
+      const data = await fetchTestimonials();
+      setItems(data);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "chargement impossible";
+      toast.error("Erreur de chargement : " + msg);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (!ready) return;
+    void reload();
+  }, [ready, user?.id]);
 
   const openAdd = () => {
     setForm(emptyForm());
@@ -174,9 +164,10 @@ const AvisManager = () => {
         toast.success("Avis ajouté avec succès");
       }
       setDialogOpen(false);
-      fetchItems();
-    } catch (e: any) {
-      toast.error("Erreur : " + (e?.message || "enregistrement impossible"));
+      void reload();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "enregistrement impossible";
+      toast.error("Erreur : " + msg);
     } finally {
       setSaving(false);
     }
@@ -185,12 +176,12 @@ const AvisManager = () => {
   const handleDelete = async () => {
     if (!toDelete) return;
     try {
-      const { error } = await supabase.from("testimonials").delete().eq("id", toDelete.id);
-      if (error) throw error;
+      await deleteTestimonial(toDelete.id);
       toast.success("Avis supprimé");
-      setItems(prev => prev.filter(i => i.id !== toDelete.id));
-    } catch (e: any) {
-      toast.error("Erreur : " + (e?.message || "suppression impossible"));
+      setItems((prev) => prev.filter((i) => i.id !== toDelete.id));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "suppression impossible";
+      toast.error("Erreur : " + msg);
     } finally {
       setToDelete(null);
     }
@@ -200,123 +191,112 @@ const AvisManager = () => {
   const formatDate = (s: string) => new Date(s).toLocaleDateString("fr-BE");
   const truncate = (s: string, n = 100) => (s.length > n ? s.slice(0, n) + "…" : s);
 
-  if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-  }
+  if (authLoading || !user) return <AdminLoading />;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <div className="hidden sm:block">
-              <p className="text-sm font-semibold">Gestion des avis</p>
-              <p className="text-xs text-muted-foreground">{approvedCount} avis publiés</p>
-            </div>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin"><ArrowLeft className="w-4 h-4" /> Dashboard</Link>
-          </Button>
+    <AdminShell
+      title="Gestion des avis"
+      subtitle={`${approvedCount} avis publiés`}
+      actions={
+        <Button asChild variant="outline" size="sm">
+          <Link to="/admin"><ArrowLeft className="w-4 h-4" /> Dashboard</Link>
+        </Button>
+      }
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Gestion des avis</h1>
+          <p className="text-sm text-muted-foreground">
+            {approvedCount} avis publiés sur {items.length} au total
+          </p>
         </div>
-      </header>
+        <Button variant="copper" onClick={openAdd}>
+          <Plus className="w-4 h-4" /> Ajouter un avis
+        </Button>
+      </div>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Gestion des avis</h1>
-            <p className="text-sm text-muted-foreground">
-              {approvedCount} avis publiés sur {items.length} au total
-            </p>
-          </div>
-          <Button variant="copper" onClick={openAdd}>
-            <Plus className="w-4 h-4" /> Ajouter un avis
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>
-        ) : items.length === 0 ? (
-          <Card className="p-12 text-center text-muted-foreground">Aucun avis pour le moment.</Card>
-        ) : (
-          <>
-            {/* Desktop table */}
-            <Card className="hidden md:block overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Note</TableHead>
-                    <TableHead>Texte</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>
+      ) : items.length === 0 ? (
+        <Card className="p-12 text-center text-muted-foreground">Aucun avis pour le moment.</Card>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <Card className="hidden md:block overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Note</TableHead>
+                  <TableHead>Texte</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell><StarRow rating={t.rating} /></TableCell>
+                    <TableCell className="max-w-md text-sm text-muted-foreground">{truncate(t.message)}</TableCell>
+                    <TableCell className="text-sm">{formatDate(t.created_at)}</TableCell>
+                    <TableCell>
+                      {t.approved ? (
+                        <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(t)} aria-label="Modifier">
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => setToDelete(t)}
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          aria-label="Supprimer">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell className="font-medium">{t.name}</TableCell>
-                      <TableCell><StarRow rating={t.rating} /></TableCell>
-                      <TableCell className="max-w-md text-sm text-muted-foreground">{truncate(t.message)}</TableCell>
-                      <TableCell className="text-sm">{formatDate(t.created_at)}</TableCell>
-                      <TableCell>
-                        {t.approved ? (
-                          <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(t)} aria-label="Modifier">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setToDelete(t)}
-                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            aria-label="Supprimer">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
 
-            {/* Mobile cards */}
-            <div className="md:hidden space-y-3">
-              {items.map(t => (
-                <Card key={t.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(t.created_at)}</p>
-                    </div>
-                    {t.approved ? (
-                      <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
-                    )}
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {items.map(t => (
+              <Card key={t.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(t.created_at)}</p>
                   </div>
-                  <StarRow rating={t.rating} />
-                  <p className="text-sm text-muted-foreground">{truncate(t.message, 140)}</p>
-                  <div className="flex gap-2 pt-1">
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(t)}>
-                      <Pencil className="w-4 h-4" /> Modifier
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setToDelete(t)}
-                      className="text-destructive hover:bg-destructive/10" aria-label="Supprimer">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
-      </main>
+                  {t.approved ? (
+                    <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
+                  )}
+                </div>
+                <StarRow rating={t.rating} />
+                <p className="text-sm text-muted-foreground">{truncate(t.message, 140)}</p>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(t)}>
+                    <Pencil className="w-4 h-4" /> Modifier
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setToDelete(t)}
+                    className="text-destructive hover:bg-destructive/10" aria-label="Supprimer">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Add/Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -436,7 +416,7 @@ const AvisManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminShell>
   );
 };
 
