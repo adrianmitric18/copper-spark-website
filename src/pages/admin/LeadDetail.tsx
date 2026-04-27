@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -39,7 +39,7 @@ import {
   LEAD_STATUSES,
   leadSourceLabel,
 } from "@/lib/admin/types";
-import AdminShell from "@/components/admin/AdminShell";
+import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 
 const cleanPhoneForWhatsapp = (phone: string) => phone.replace(/[^\d]/g, "").replace(/^0/, "32").replace(/^0032/, "32");
@@ -315,11 +315,21 @@ const LeadDetail = () => {
   const emailHref = `mailto:${lead.email}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
 
   return (
-    <AdminShell
-      title={lead.name}
-      subtitle={`Reçu le ${formatDate(lead.created_at)}`}
-      back={{ to: "/admin", label: "Retour" }}
-    >
+    <AdminShell email={user.email} mobileTitle={lead.name}>
+      <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
+      {/* Back + Title */}
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/admin">
+            <ArrowLeft className="w-4 h-4" /> Retour
+          </Link>
+        </Button>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl md:text-2xl font-display font-bold truncate">{lead.name}</h1>
+          <p className="text-xs text-muted-foreground">Reçu le {formatDate(lead.created_at)}</p>
+        </div>
+      </div>
+
       {/* RDV planifié (en haut, encadré orange) */}
       {rdv && !showForm && (
         <RendezVousCard
@@ -536,6 +546,7 @@ const LeadDetail = () => {
           </AlertDialogContent>
         </AlertDialog>
       </Card>
+      </div>
     </AdminShell>
   );
 };

@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, ArrowLeft, Eye, Calendar } from "lucide-react";
+import { Loader2, Eye, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { fetchAllRdvs, type RdvWithLead } from "@/lib/admin/queries";
-import AdminShell from "@/components/admin/AdminShell";
+import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 
 type FilterKey = "a_venir" | "aujourdhui" | "semaine" | "mois" | "passes" | "annules";
@@ -108,20 +108,11 @@ const AdminRdv = () => {
   if (authLoading || !user) return <AdminLoading />;
 
   return (
-    <AdminShell
-      title="Tous les rendez-vous"
-      subtitle={user.email}
-      actions={
-        <Button asChild variant="outline" size="sm">
-          <Link to="/admin">
-            <ArrowLeft className="w-4 h-4" /> Retour
-          </Link>
-        </Button>
-      }
-    >
+    <AdminShell email={user.email} mobileTitle="Calendrier">
+      <div className="p-4 md:p-6 space-y-5">
       <div className="flex items-center gap-2">
         <Calendar className="w-6 h-6 text-[hsl(var(--copper))]" />
-        <h1 className="text-2xl font-bold">Tous les rendez-vous</h1>
+        <h1 className="text-2xl md:text-3xl font-display font-bold">Calendrier</h1>
       </div>
 
       <Card className="p-3">
@@ -234,6 +225,7 @@ const AdminRdv = () => {
           </div>
         </>
       )}
+      </div>
     </AdminShell>
   );
 };

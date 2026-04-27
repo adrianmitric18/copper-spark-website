@@ -24,7 +24,8 @@ import Merci from "./pages/Merci";
 import MentionsLegales from "./pages/MentionsLegales";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/Login";
-import AdminDashboard from "./pages/admin/Dashboard";
+import AdminAujourdhui from "./admin/pages/Aujourdhui";
+import AdminPipeline from "./admin/pages/Pipeline";
 import AdminLeadDetail from "./pages/admin/LeadDetail";
 import AdminAvisManager from "./pages/admin/AvisManager";
 import AdminRdv from "./pages/admin/Rdv";
@@ -70,7 +71,8 @@ const App = () => (
           <Route path="/merci" element={<Merci />} />
           <Route path="/mentions-legales" element={<MentionsLegales />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminAujourdhui />} />
+          <Route path="/admin/pipeline" element={<AdminPipeline />} />
           <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           <Route path="/admin/avis" element={<AdminAvisManager />} />
           <Route path="/admin/rdv" element={<AdminRdv />} />

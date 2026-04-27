@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +17,12 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Star, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Star, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { fetchTestimonials, deleteTestimonial } from "@/lib/admin/queries";
 import type { Testimonial } from "@/lib/admin/types";
-import AdminShell from "@/components/admin/AdminShell";
+import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 
 type FormState = {
@@ -194,18 +193,11 @@ const AvisManager = () => {
   if (authLoading || !user) return <AdminLoading />;
 
   return (
-    <AdminShell
-      title="Gestion des avis"
-      subtitle={`${approvedCount} avis publiés`}
-      actions={
-        <Button asChild variant="outline" size="sm">
-          <Link to="/admin"><ArrowLeft className="w-4 h-4" /> Dashboard</Link>
-        </Button>
-      }
-    >
+    <AdminShell email={user.email} mobileTitle="Avis clients">
+      <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Gestion des avis</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold">Avis clients</h1>
           <p className="text-sm text-muted-foreground">
             {approvedCount} avis publiés sur {items.length} au total
           </p>
@@ -416,6 +408,7 @@ const AvisManager = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </AdminShell>
   );
 };
