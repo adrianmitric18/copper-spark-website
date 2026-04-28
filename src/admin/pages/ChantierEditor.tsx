@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminGuard } from "@/hooks/useAdminGuard";
+import AdminLoading from "@/components/admin/AdminLoading";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -90,20 +92,28 @@ const projectSchema = z.object({
 type FormValues = z.infer<typeof projectSchema>;
 
 const ChantierEditor = () => {
+  const { user, ready } = useAdminGuard();
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  useEffect(() => {
+    document.title = isNew
+      ? "Nouveau chantier – Le Cuivre Admin"
+      : "Modifier chantier – Le Cuivre Admin";
+  }, [isNew]);
+
   const { data: existing, isLoading } = useQuery({
     queryKey: ["chantier", id],
     queryFn: () => (id ? fetchProjectByIdAdmin(id) : Promise.resolve(null)),
-    enabled: !isNew,
+    enabled: !isNew && ready,
   });
 
   const { data: takenSlugs } = useQuery({
     queryKey: ["chantiers", "slugs"],
     queryFn: fetchTakenSlugs,
+    enabled: ready,
   });
 
   const form = useForm<FormValues>({
@@ -276,6 +286,8 @@ const ChantierEditor = () => {
   const onSaveAndPublish = form.handleSubmit((values) =>
     saveMut.mutate({ values, publish: true }),
   );
+
+  if (!ready || !user) return <AdminLoading />;
 
   if (isLoading && !isNew) {
     return (

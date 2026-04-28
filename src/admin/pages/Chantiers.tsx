@@ -1,6 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAdminGuard } from "@/hooks/useAdminGuard";
+import AdminLoading from "@/components/admin/AdminLoading";
 import {
   Plus,
   Edit,
@@ -38,11 +40,16 @@ import { getChantierImageUrl } from "@/lib/chantiers/upload";
 type StatusFilter = "all" | "published" | "draft" | "trash";
 
 const Chantiers = () => {
+  const { user, ready } = useAdminGuard();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [zoneFilter, setZoneFilter] = useState<string[]>([]);
+
+  useEffect(() => {
+    document.title = "Réalisations – Le Cuivre Admin";
+  }, []);
 
   const {
     data: projects = [],
@@ -51,6 +58,7 @@ const Chantiers = () => {
   } = useQuery({
     queryKey: ["chantiers"],
     queryFn: fetchAllProjectsWithMetaAdmin,
+    enabled: ready,
   });
 
   const counts = useMemo(() => {
@@ -135,6 +143,8 @@ const Chantiers = () => {
     onError: (e: Error) =>
       toast.error("Échec restauration", { description: e.message }),
   });
+
+  if (!ready || !user) return <AdminLoading />;
 
   const toggleTag = (tag: string) => {
     setTagFilter((prev) =>
