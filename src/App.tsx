@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import APropos from "./pages/APropos";
 import FAQ from "./pages/FAQ";
@@ -13,11 +13,7 @@ import MiseEnConformiteRgie from "./pages/services/MiseEnConformiteRgie";
 import BornesDeRecharge from "./pages/services/BornesDeRecharge";
 import PanneauxPhotovoltaiques from "./pages/services/PanneauxPhotovoltaiques";
 import Realisations from "./pages/Realisations";
-import TableauxEtPrises from "./pages/realisations/TableauxEtPrises";
-import AmbiancesLumineuses from "./pages/realisations/AmbiancesLumineuses";
-import InstallationReseaux from "./pages/realisations/InstallationReseaux";
-import DecorationNoel from "./pages/realisations/DecorationNoel";
-import BornesDeRechargeRealisations from "./pages/realisations/BornesDeRecharge";
+import ChantierDetail from "./pages/realisations/ChantierDetail";
 import Avis from "./pages/Avis";
 import Contact from "./pages/Contact";
 import Merci from "./pages/Merci";
@@ -62,11 +58,30 @@ const App = () => (
           <Route path="/services/bornes-de-recharge" element={<BornesDeRecharge />} />
           <Route path="/services/panneaux-photovoltaiques" element={<PanneauxPhotovoltaiques />} />
           <Route path="/realisations" element={<Realisations />} />
-          <Route path="/realisations/tableaux-et-prises" element={<TableauxEtPrises />} />
-          <Route path="/realisations/ambiances-lumineuses" element={<AmbiancesLumineuses />} />
-          <Route path="/realisations/installation-reseaux" element={<InstallationReseaux />} />
-          <Route path="/realisations/decoration-de-noel" element={<DecorationNoel />} />
-          <Route path="/realisations/bornes-de-recharge" element={<BornesDeRechargeRealisations />} />
+          {/* Redirections 301 (client-side) des anciennes pages catégories
+              vers la grille filtrée par tag. Place ces routes AVANT le
+              path:slug catch-all pour qu'elles matchent en priorité. */}
+          <Route
+            path="/realisations/tableaux-et-prises"
+            element={<Navigate to="/realisations?tag=R%C3%A9novation+tableau+%C3%A9lectrique" replace />}
+          />
+          <Route
+            path="/realisations/ambiances-lumineuses"
+            element={<Navigate to="/realisations?tag=%C3%89clairage+LED" replace />}
+          />
+          <Route
+            path="/realisations/installation-reseaux"
+            element={<Navigate to="/realisations?tag=R%C3%A9seau+%2F+VDI" replace />}
+          />
+          <Route
+            path="/realisations/decoration-de-noel"
+            element={<Navigate to="/realisations?tag=D%C3%A9coration+de+No%C3%ABl" replace />}
+          />
+          <Route
+            path="/realisations/bornes-de-recharge"
+            element={<Navigate to="/realisations?tag=Bornes+de+recharge+VE" replace />}
+          />
+          <Route path="/realisations/:slug" element={<ChantierDetail />} />
           <Route path="/avis" element={<Avis />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />
