@@ -13,6 +13,9 @@ import {
   ArrowLeft,
   User,
   MapPin,
+  Mail,
+  Send,
+  Copy,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -38,9 +41,15 @@ import {
 } from "@/lib/admin/rdv-rapide";
 import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
-  smsTemplateConfirmationRdv,
+  smsTemplateConfirmation,
+  whatsappTemplateConfirmation,
+  emailPlaintextConfirmation,
+  emailHtmlConfirmation,
+  emailSubjectConfirmation,
   buildSmsHref,
-} from "@/lib/admin/sms-templates";
+  buildWhatsappHref,
+  buildMailtoHref,
+} from "@/lib/admin/message-templates";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nom requis").max(100, "Nom trop long"),
@@ -52,6 +61,12 @@ const formSchema = z.object({
       /^[\d\s+().\-/]+$/,
       "Format invalide (chiffres, espaces, +, -, ., (, ) autorisés)",
     ),
+  email: z
+    .string()
+    .email("Email invalide")
+    .max(255)
+    .optional()
+    .or(z.literal("")),
   dateRdv: z.string().min(1, "Date requise"),
   heureRdv: z.string().min(1, "Heure requise"),
   typeVisite: z.enum(TYPE_VISITES),
@@ -65,6 +80,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface RdvSummary {
   name: string;
   phone: string;
+  email?: string;
   dateRdv: string;
   heureRdv: string;
   typeVisite: TypeVisite;
@@ -88,6 +104,7 @@ const RdvRapide = () => {
     defaultValues: {
       name: "",
       phone: "",
+      email: "",
       dateRdv: todayIso,
       heureRdv: "10:00",
       typeVisite: "Devis",
@@ -113,6 +130,7 @@ const RdvRapide = () => {
       setSuccess({
         name: vars.name,
         phone: vars.phone,
+        email: vars.email,
         dateRdv: vars.dateRdv,
         heureRdv: vars.heureRdv,
         typeVisite: vars.typeVisite,
@@ -133,6 +151,7 @@ const RdvRapide = () => {
     createMut.mutate({
       name: values.name,
       phone: values.phone,
+      email: values.email || undefined,
       dateRdv: values.dateRdv,
       heureRdv: values.heureRdv,
       typeVisite: values.typeVisite,
@@ -147,6 +166,7 @@ const RdvRapide = () => {
     form.reset({
       name: "",
       phone: "",
+      email: "",
       dateRdv: todayIso,
       heureRdv: "10:00",
       typeVisite: "Devis",
@@ -202,6 +222,22 @@ const RdvRapide = () => {
               placeholder="Ex: 0485 12 34 56"
               autoComplete="tel"
               inputMode="tel"
+              className="h-12 text-base"
+            />
+          </Field>
+
+          <Field
+            label="Email"
+            hint="Optionnel — débloque le bouton Email sur l'écran de confirmation"
+            error={form.formState.errors.email?.message}
+            icon={<Mail className="w-4 h-4" />}
+          >
+            <Input
+              {...form.register("email")}
+              type="email"
+              placeholder="jean.dupont@example.com"
+              autoComplete="email"
+              inputMode="email"
               className="h-12 text-base"
             />
           </Field>
@@ -366,14 +402,54 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
     location: summary.address,
   });
 
-  const smsMessage = smsTemplateConfirmationRdv({
+  const messagePayload = {
     clientName: summary.name,
     dateIso: summary.dateRdv,
     heure: summary.heureRdv,
     typeVisite: summary.typeVisite,
+    dureeMinutes: summary.dureeMinutes,
     address: summary.address,
-  });
-  const smsHref = buildSmsHref(summary.phone, smsMessage);
+  };
+
+  const smsHref = buildSmsHref(
+    summary.phone,
+    smsTemplateConfirmation(messagePayload),
+  );
+  const whatsappHref = buildWhatsappHref(
+    summary.phone,
+    whatsappTemplateConfirmation(messagePayload),
+  );
+  const mailtoHref = buildMailtoHref(
+    summary.email,
+    emailSubjectConfirmation(messagePayload),
+    emailPlaintextConfirmation(messagePayload),
+  );
+
+  const copyEmailHtml = async () => {
+    const html = emailHtmlConfirmation(messagePayload);
+    try {
+      // ClipboardItem permet de copier du HTML "vrai" dans le presse-papier
+      // (Gmail/Outlook le collent stylé). Fallback texte si l'API n'existe pas.
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        const blob = new Blob([html], { type: "text/html" });
+        const text = new Blob([emailPlaintextConfirmation(messagePayload)], {
+          type: "text/plain",
+        });
+        await navigator.clipboard.write([
+          new ClipboardItem({ "text/html": blob, "text/plain": text }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(html);
+      }
+      toast.success("Email HTML copié", {
+        description: "Colle-le dans Gmail/Outlook (Ctrl+V) — il se collera stylé.",
+      });
+    } catch {
+      toast.error("Copie impossible", {
+        description: "Ton navigateur ne supporte pas la copie automatique.",
+      });
+    }
+  };
 
   return (
     <AdminShell mobileTitle="RDV créé">
@@ -423,6 +499,19 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
               {summary.typeVisite} ({summary.dureeMinutes} min)
             </span>
           </div>
+          {summary.email && (
+            <div className="flex justify-between items-baseline gap-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">
+                Email
+              </span>
+              <a
+                href={`mailto:${summary.email}`}
+                className="text-right text-sm text-primary hover:underline truncate"
+              >
+                {summary.email}
+              </a>
+            </div>
+          )}
           {summary.address && (
             <div className="flex justify-between items-baseline gap-3">
               <span className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">
@@ -439,27 +528,68 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
             size="lg"
             className="w-full h-14 text-base font-semibold"
           >
-            <a
-              href={calendarUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={calendarUrl} target="_blank" rel="noopener noreferrer">
               <CalendarIcon className="w-5 h-5" />
               Ajouter à Google Calendar
             </a>
           </Button>
 
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="w-full h-14 text-base font-semibold border-primary/40 text-primary hover:bg-primary/10"
-          >
-            <a href={smsHref}>
-              <MessageSquare className="w-5 h-5" />
-              Envoyer SMS au client
-            </a>
-          </Button>
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <a href={smsHref}>
+                <MessageSquare className="w-5 h-5" />
+                SMS
+              </a>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                <Send className="w-5 h-5" />
+                WhatsApp
+              </a>
+            </Button>
+          </div>
+
+          {summary.email ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <a href={mailtoHref}>
+                  <Mail className="w-5 h-5" />
+                  Email
+                </a>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={copyEmailHtml}
+                className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+              >
+                <Copy className="w-5 h-5" />
+                Copier HTML
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-center text-muted-foreground italic">
+              Saisis l'email du client pour activer les boutons "Email" et
+              "Copier HTML" lors du prochain RDV.
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-6">
