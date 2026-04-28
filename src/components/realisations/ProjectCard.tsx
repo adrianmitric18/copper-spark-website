@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, ArrowUpRight } from "lucide-react";
 import { getChantierImageUrl } from "@/lib/chantiers/upload";
 import type { ProjectImage } from "@/lib/chantiers/types";
 
@@ -35,60 +34,69 @@ const ProjectCard = ({
   return (
     <Link
       to={`/realisations/${slug}`}
-      className="group block rounded-xl overflow-hidden border border-border bg-card hover:shadow-lg transition-all hover:-translate-y-0.5"
+      className="group relative block rounded-2xl overflow-hidden bg-anthracite border border-anthracite-light hover:border-copper/60 hover:shadow-copper transition-all duration-500 hover:-translate-y-1"
     >
-      <div className="aspect-video bg-muted relative overflow-hidden">
+      {/* Image en valeur, ratio 4:3 */}
+      <div className="aspect-[4/3] bg-anthracite-light relative overflow-hidden">
         {image ? (
           <img
             src={getChantierImageUrl(image.storage_path)}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+          <div className="w-full h-full flex items-center justify-center text-cream-dark/50 text-sm">
             Aucune photo
           </div>
         )}
-      </div>
+        {/* Gradient sombre pour lisibilité des tags overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-anthracite via-anthracite/30 to-transparent opacity-90 pointer-events-none" />
 
-      <div className="p-5 space-y-3">
-        <div>
-          <h3 className="font-display font-bold text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-            {title}
-          </h3>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {location}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {dateStr}
-            </span>
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground line-clamp-2">{summary}</p>
-
+        {/* Tags overlay bas-gauche */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {tags.slice(0, 3).map((tag) => (
-              <Badge
+          <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
+            {tags.slice(0, 2).map((tag) => (
+              <span
                 key={tag}
-                variant="secondary"
-                className="text-[10px] font-normal"
+                className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full bg-copper/90 text-primary-foreground backdrop-blur-sm"
               >
                 {tag}
-              </Badge>
+              </span>
             ))}
-            {tags.length > 3 && (
-              <Badge variant="secondary" className="text-[10px] font-normal">
-                +{tags.length - 3}
-              </Badge>
+            {tags.length > 2 && (
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full bg-anthracite/80 text-cream backdrop-blur-sm border border-cream/20">
+                +{tags.length - 2}
+              </span>
             )}
           </div>
         )}
+
+        {/* Flèche d'indication clic en haut-droite */}
+        <div className="absolute top-3 right-3 w-9 h-9 rounded-full bg-copper text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:translate-x-0 translate-x-2 transition-all duration-300 shadow-copper">
+          <ArrowUpRight className="w-4 h-4" strokeWidth={2.5} />
+        </div>
+      </div>
+
+      {/* Texte */}
+      <div className="p-5 md:p-6 space-y-3">
+        <div>
+          <h3 className="font-display font-bold text-xl leading-tight line-clamp-2 text-cream group-hover:text-copper-light transition-colors">
+            {title}
+          </h3>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs text-cream-dark/70">
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-copper" />
+              {location}
+            </span>
+            <span className="text-cream-dark/40">·</span>
+            <span className="capitalize">{dateStr}</span>
+          </div>
+        </div>
+
+        <p className="text-sm text-cream-dark/80 line-clamp-2 leading-relaxed">
+          {summary}
+        </p>
       </div>
     </Link>
   );
