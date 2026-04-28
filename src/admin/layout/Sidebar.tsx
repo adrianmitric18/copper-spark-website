@@ -5,6 +5,7 @@ import {
   Calendar,
   Star,
   Hammer,
+  Phone,
   Sun,
   Moon,
   LogOut,
@@ -16,6 +17,7 @@ import { useDarkMode } from "@/admin/hooks/useDarkMode";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS_PRIMARY = [
+  { to: "/admin/rdv-rapide", label: "RDV rapide", icon: Phone, end: false, highlight: true },
   { to: "/admin", label: "Aujourd'hui", icon: Home, end: true },
   { to: "/admin/pipeline", label: "Pipeline", icon: Kanban, end: false },
   { to: "/admin/rdv", label: "Calendrier", icon: Calendar, end: false },
@@ -65,6 +67,7 @@ const Sidebar = ({ email, onNavigate }: SidebarProps) => {
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {NAV_ITEMS_PRIMARY.map((item) => {
           const Icon = item.icon;
+          const highlight = "highlight" in item && item.highlight;
           return (
             <NavLink
               key={item.to}
@@ -76,7 +79,9 @@ const Sidebar = ({ email, onNavigate }: SidebarProps) => {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
                   isActive
                     ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    : highlight
+                      ? "bg-primary/10 text-primary hover:bg-primary/15"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )
               }
             >
