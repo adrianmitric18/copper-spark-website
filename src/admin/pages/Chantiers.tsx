@@ -11,6 +11,8 @@ import {
   Trash2,
   RotateCcw,
   Search,
+  Package,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -175,6 +177,30 @@ const Chantiers = () => {
             </Link>
           </Button>
         </div>
+
+        {/* Banner d'aide quand le portfolio est vide */}
+        {!isLoading && !error && projects.length === 0 && (
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <p className="font-semibold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                Pas encore de chantier publié
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Importe en 1 clic les 98 photos historiques en 5 chantiers
+                archives. 2 sont automatiquement publiés en vitrine, les
+                autres restent en brouillon pour que tu les retraites à ton
+                rythme.
+              </p>
+            </div>
+            <Button asChild size="lg" className="shrink-0">
+              <Link to="/admin/chantiers/import-archives">
+                <Package className="w-4 h-4" />
+                Importer les archives
+              </Link>
+            </Button>
+          </div>
+        )}
 
         {/* Filtres */}
         <div className="space-y-3">
