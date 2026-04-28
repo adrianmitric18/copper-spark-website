@@ -36,13 +36,29 @@ interface BreadcrumbProps {
   items: BreadcrumbItem[];
 }
 
-type StructuredDataProps = LocalBusinessProps | LocalBusinessZoneProps | FAQPageProps | ServiceProps | BreadcrumbProps;
+interface ProjectArticleProps {
+  type: "ProjectArticle";
+  /** URL canonique du chantier. */
+  url: string;
+  headline: string;
+  description: string;
+  /** URL absolue de l'image principale. */
+  image: string;
+  /** Date du chantier (format ISO YYYY-MM-DD). */
+  datePublished: string;
+  /** Lieu du chantier (ville). */
+  locationName: string;
+  /** Tags utilisés comme keywords. */
+  tags: string[];
+}
+
+type StructuredDataProps = LocalBusinessProps | LocalBusinessZoneProps | FAQPageProps | ServiceProps | BreadcrumbProps | ProjectArticleProps;
 
 const StructuredData = (props: StructuredDataProps) => {
   useEffect(() => {
     const scriptId = `structured-data-${props.type}${
       props.type === "LocalBusinessZone" ? `-${props.areaServed}` : ""
-    }`;
+    }${props.type === "ProjectArticle" ? `-${encodeURIComponent(props.url)}` : ""}`;
     
     const existingScript = document.getElementById(scriptId);
     if (existingScript) {
@@ -200,6 +216,40 @@ const StructuredData = (props: StructuredDataProps) => {
             "name": item.name,
             "item": item.url
           }))
+        };
+        break;
+
+      case "ProjectArticle":
+        jsonLd = {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          "headline": props.headline,
+          "description": props.description,
+          "image": props.image,
+          "datePublished": props.datePublished,
+          "url": props.url,
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": props.url
+          },
+          "author": {
+            "@type": "Organization",
+            "name": "Le Cuivre Électrique",
+            "url": "https://cuivre-electrique.com"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Le Cuivre Électrique",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://cuivre-electrique.com/android-chrome-512x512.png"
+            }
+          },
+          "contentLocation": {
+            "@type": "Place",
+            "name": props.locationName
+          },
+          "keywords": props.tags.join(", ")
         };
         break;
 

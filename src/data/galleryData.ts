@@ -1,3 +1,14 @@
+/**
+ * @deprecated Depuis la Phase 2 du CMS Chantiers (2026-04-28), les
+ * réalisations sont stockées en base via la table `projects` et gérées
+ * depuis `/admin/chantiers`. Ce fichier n'est plus importé par
+ * l'application (les pages catégories `/realisations/*` redirigent
+ * désormais 301 vers `/realisations?tag=…`).
+ *
+ * Conservé volontairement comme backup le temps de la Phase 3 (migration
+ * des 98 photos vers Supabase Storage). Sera supprimé après migration.
+ */
+
 // Import gallery images - Tableaux électriques
 import tableauRgie from "@/assets/gallery/tableau-rgie.jpg";
 import tableauAbbOuvert from "@/assets/gallery/tableaux/tableau-abb-ouvert.jpg";

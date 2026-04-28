@@ -40,6 +40,14 @@ export type ProjectWithMeta = Project & {
   cover: ProjectImage | null;
 };
 
+export type PublishedProjectWithMeta = Project & {
+  tags: string[];
+  /** Image marquée is_cover par l'admin. */
+  cover: ProjectImage | null;
+  /** 1re image (sort_order le plus bas), utilisée si pas de cover. */
+  fallbackImage: ProjectImage | null;
+};
+
 // ---------------------------------------------------------------------------
 // Lecture publique (filtrée par RLS)
 // ---------------------------------------------------------------------------
@@ -53,6 +61,54 @@ export async function fetchPublishedProjects(): Promise<Project[]> {
     .order("completed_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as Project[];
+}
+
+/**
+ * Variante avec tags + cover + fallback (1re image) pour la grille publique.
+ * 3 round-trips total grâce au IN(...).
+ */
+export async function fetchPublishedProjectsWithMeta(): Promise<
+  PublishedProjectWithMeta[]
+> {
+  const projects = await fetchPublishedProjects();
+  if (projects.length === 0) return [];
+
+  const projectIds = projects.map((p) => p.id);
+
+  const [tagsRes, imagesRes] = await Promise.all([
+    supabase.from("project_tags").select("*").in("project_id", projectIds),
+    supabase
+      .from("project_images")
+      .select("*")
+      .in("project_id", projectIds)
+      .order("sort_order", { ascending: true }),
+  ]);
+  if (tagsRes.error) throw tagsRes.error;
+  if (imagesRes.error) throw imagesRes.error;
+
+  const tagsByProject = new Map<string, string[]>();
+  for (const row of tagsRes.data ?? []) {
+    const arr = tagsByProject.get(row.project_id) ?? [];
+    arr.push(row.tag);
+    tagsByProject.set(row.project_id, arr);
+  }
+
+  const coverByProject = new Map<string, ProjectImage>();
+  const firstByProject = new Map<string, ProjectImage>();
+  for (const row of imagesRes.data ?? []) {
+    const img = row as ProjectImage;
+    if (img.is_cover) coverByProject.set(img.project_id, img);
+    if (!firstByProject.has(img.project_id)) {
+      firstByProject.set(img.project_id, img);
+    }
+  }
+
+  return projects.map((p) => ({
+    ...p,
+    tags: tagsByProject.get(p.id) ?? [],
+    cover: coverByProject.get(p.id) ?? null,
+    fallbackImage: firstByProject.get(p.id) ?? null,
+  }));
 }
 
 export async function fetchProjectBySlug(slug: string): Promise<{

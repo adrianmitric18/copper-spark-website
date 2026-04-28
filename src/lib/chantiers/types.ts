@@ -67,6 +67,7 @@ export const CHANTIER_TAGS = [
   "Éclairage LED",
   "Domotique",
   "Réseau / VDI",
+  "Décoration de Noël",
 ] as const;
 
 export type ChantierTag = (typeof CHANTIER_TAGS)[number];
