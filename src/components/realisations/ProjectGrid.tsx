@@ -103,24 +103,35 @@ const ProjectGrid = () => {
         onToggleZone={onToggleZone}
         onClearAll={onClearAll}
         resultsCount={filtered.length}
+        totalCount={projects.length}
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-10 h-10 animate-spin text-copper" />
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="text-center py-20 px-6 bg-cream/40 border border-dashed border-cream-dark/50 rounded-2xl max-w-2xl mx-auto">
+          <p className="font-display text-2xl font-bold mb-2">
+            Bientôt nos premiers chantiers
+          </p>
+          <p className="text-muted-foreground">
+            Le portfolio est en cours de constitution. Vous pouvez nous
+            contacter dès maintenant pour parler de votre projet.
+          </p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-border rounded-xl">
-          <p className="text-muted-foreground">
+        <div className="text-center py-16 px-6 border border-dashed border-cream-dark/50 rounded-2xl">
+          <p className="font-medium text-lg">
             Aucun chantier ne correspond à ces critères.
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Essaie de retirer un filtre, ou contacte-nous pour discuter d'un
-            projet similaire.
+          <p className="text-sm text-muted-foreground mt-1">
+            Retire un filtre ou contacte-nous pour discuter d'un projet
+            similaire.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
           {filtered.map((p) => (
             <ProjectCard
               key={p.id}

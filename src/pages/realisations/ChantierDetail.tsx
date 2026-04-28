@@ -8,15 +8,14 @@ import {
   Clock,
   Wallet,
   ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
-import Breadcrumbs from "@/components/Breadcrumbs";
 import StructuredData from "@/components/StructuredData";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import ProjectStory from "@/components/realisations/ProjectStory";
 import BeforeAfterSlider from "@/components/realisations/BeforeAfterSlider";
 import ProjectFAQ from "@/components/realisations/ProjectFAQ";
@@ -34,7 +33,6 @@ const ChantierDetail = () => {
     staleTime: 60_000,
   });
 
-  // Scroll en haut au changement de slug
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [slug]);
@@ -44,7 +42,7 @@ const ChantierDetail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="pt-32 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Loader2 className="w-8 h-8 animate-spin text-copper" />
         </main>
       </div>
     );
@@ -80,7 +78,6 @@ const ChantierDetail = () => {
 
   const { project, images, tags } = data;
 
-  // Construction des paires avant/après par ordre d'arrivée
   const befores = images.filter((i) => i.kind === "before");
   const afters = images.filter((i) => i.kind === "after");
   const pairs = befores.slice(0, afters.length).map((b, i) => ({
@@ -89,7 +86,10 @@ const ChantierDetail = () => {
   }));
 
   const cover =
-    images.find((i) => i.is_cover) ?? images.find((i) => i.kind === "photo") ?? images[0] ?? null;
+    images.find((i) => i.is_cover) ??
+    images.find((i) => i.kind === "photo") ??
+    images[0] ??
+    null;
 
   const dateStr = new Date(project.completed_at).toLocaleDateString("fr-BE", {
     day: "numeric",
@@ -138,142 +138,185 @@ const ChantierDetail = () => {
 
       <Header />
 
-      <main className="pt-24 pb-16">
-        <div className="container mx-auto px-4">
-          <Breadcrumbs
-            items={[
-              { label: "Réalisations", href: "/realisations" },
-              { label: project.title, href: `/realisations/${project.slug}` },
-            ]}
-          />
+      {/* HERO éditorial sombre */}
+      <section className="relative bg-anthracite pt-32 pb-16 md:pt-40 md:pb-20 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] h-[400px] bg-primary/15 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-copper/10 rounded-full blur-[100px] pointer-events-none" />
 
-          <article className="max-w-4xl mx-auto">
-            {/* Hero */}
-            <header className="mb-8">
-              <div className="flex flex-wrap gap-2 mb-3">
-                {tags.map((tag) => (
-                  <Link
-                    key={tag}
-                    to={`/realisations?tag=${encodeURIComponent(tag)}`}
-                  >
-                    <Badge variant="secondary" className="hover:bg-primary/20 cursor-pointer">
-                      {tag}
-                    </Badge>
-                  </Link>
-                ))}
-              </div>
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Lien retour subtil */}
+          <Link
+            to="/realisations"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.2em] text-copper-light hover:text-copper transition-colors mb-6 font-semibold"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Toutes les réalisations
+          </Link>
 
-              <h1 className="font-display text-3xl md:text-5xl font-bold mb-4">
-                {project.title}
-              </h1>
+          {/* Tags pills cliquables */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {tags.map((tag) => (
+                <Link
+                  key={tag}
+                  to={`/realisations?tag=${encodeURIComponent(tag)}`}
+                  className="text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full bg-copper/15 text-copper-light border border-copper/30 hover:bg-copper hover:text-primary-foreground transition-all"
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          )}
 
-              <p className="text-lg text-muted-foreground mb-5">
-                {project.summary}
-              </p>
+          {/* Titre */}
+          <h1 className="font-display font-black text-4xl md:text-5xl lg:text-6xl leading-[1.05] text-cream max-w-4xl mb-5">
+            {project.title}
+          </h1>
 
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground border-t border-b border-border py-3">
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  {project.location} <span className="text-muted-foreground/60">·</span> {project.zone}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  {dateStr}
-                </span>
-                {project.duration_days && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-primary" />
-                    {project.duration_days} jour{project.duration_days > 1 ? "s" : ""}
-                  </span>
-                )}
-                {project.budget_range && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Wallet className="w-4 h-4 text-primary" />
-                    {project.budget_range}
-                  </span>
-                )}
-              </div>
-            </header>
+          {/* Lead */}
+          <p className="text-lg md:text-xl text-cream-dark/85 max-w-3xl leading-relaxed mb-8">
+            {project.summary}
+          </p>
 
-            {/* Cover */}
-            {cover && (
-              <div className="rounded-xl overflow-hidden mb-10 bg-muted">
-                <img
-                  src={getChantierImageUrl(cover.storage_path)}
-                  alt={cover.caption ?? project.title}
-                  className="w-full h-auto"
-                />
-              </div>
+          {/* Méta */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-cream-dark/70 pt-5 border-t border-cream-dark/10">
+            <span className="inline-flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-copper" />
+              <span className="text-cream">{project.location}</span>
+              <span className="text-cream-dark/40">·</span>
+              <span>{project.zone}</span>
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-copper" />
+              {dateStr}
+            </span>
+            {project.duration_days && (
+              <span className="inline-flex items-center gap-2">
+                <Clock className="w-4 h-4 text-copper" />
+                {project.duration_days} jour
+                {project.duration_days > 1 ? "s" : ""}
+              </span>
             )}
-
-            {/* Récit */}
-            {project.story && (
-              <section className="mb-10">
-                <ProjectStory markdown={project.story} />
-              </section>
+            {project.budget_range && (
+              <span className="inline-flex items-center gap-2">
+                <Wallet className="w-4 h-4 text-copper" />
+                {project.budget_range}
+              </span>
             )}
+          </div>
+        </div>
+      </section>
 
-            {/* Avant/après */}
-            {pairs.length > 0 && (
-              <section className="mb-10">
-                <h2 className="font-display text-2xl font-bold mb-4">
+      {/* COVER en pleine largeur, fait la transition entre hero sombre et body clair */}
+      {cover && (
+        <div className="bg-anthracite">
+          <div className="container mx-auto px-4 pb-12 md:pb-16">
+            <div className="rounded-2xl overflow-hidden bg-anthracite-light shadow-2xl">
+              <img
+                src={getChantierImageUrl(cover.storage_path)}
+                alt={cover.caption ?? project.title}
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BODY en fond clair pour la lecture */}
+      <main className="py-16 md:py-20">
+        <article className="container mx-auto px-4 max-w-4xl">
+          {/* Récit */}
+          {project.story && (
+            <section className="mb-14 md:mb-16">
+              <h2 className="font-display text-3xl md:text-4xl font-bold mb-6 text-foreground">
+                Le chantier en détail
+              </h2>
+              <ProjectStory markdown={project.story} />
+            </section>
+          )}
+
+          {/* Avant/Après */}
+          {pairs.length > 0 && (
+            <section className="mb-14 md:mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px flex-1 bg-gradient-to-r from-copper to-transparent" />
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
                   Avant / Après
                 </h2>
-                <div className="space-y-6">
-                  {pairs.map((pair, idx) => (
-                    <BeforeAfterSlider
-                      key={`${pair.before.id}-${pair.after.id}`}
-                      before={pair.before}
-                      after={pair.after}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Galerie */}
-            {images.filter((i) => i.kind === "photo").length > 0 && (
-              <section className="mb-10">
-                <h2 className="font-display text-2xl font-bold mb-4">
-                  Galerie photos
-                </h2>
-                <ProjectGallery images={images} />
-              </section>
-            )}
-
-            {/* FAQ */}
-            {project.faq && project.faq.length > 0 && (
-              <section className="mb-10">
-                <h2 className="font-display text-2xl font-bold mb-4">
-                  Questions fréquentes
-                </h2>
-                <ProjectFAQ items={project.faq} />
-              </section>
-            )}
-
-            {/* CTA */}
-            <div className="border-t border-border pt-8 mt-12">
-              <h3 className="font-display text-xl font-bold mb-2">
-                Vous avez un projet similaire ?
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Contactez-nous pour un devis gratuit et personnalisé.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild>
-                  <Link to="/contact">Demander un devis</Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link to="/realisations">
-                    <ArrowLeft className="w-4 h-4" />
-                    Toutes les réalisations
-                  </Link>
-                </Button>
+                <div className="h-px flex-1 bg-gradient-to-l from-copper to-transparent" />
               </div>
-            </div>
-          </article>
-        </div>
+              <div className="space-y-6">
+                {pairs.map((pair) => (
+                  <BeforeAfterSlider
+                    key={`${pair.before.id}-${pair.after.id}`}
+                    before={pair.before}
+                    after={pair.after}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Galerie */}
+          {images.filter((i) => i.kind === "photo").length > 0 && (
+            <section className="mb-14 md:mb-16">
+              <h2 className="font-display text-2xl md:text-3xl font-bold mb-6 text-foreground">
+                Galerie photos
+              </h2>
+              <ProjectGallery images={images} />
+            </section>
+          )}
+
+          {/* FAQ */}
+          {project.faq && project.faq.length > 0 && (
+            <section className="mb-14 md:mb-16">
+              <h2 className="font-display text-2xl md:text-3xl font-bold mb-6 text-foreground">
+                Questions fréquentes
+              </h2>
+              <ProjectFAQ items={project.faq} />
+            </section>
+          )}
+        </article>
       </main>
+
+      {/* CTA final sombre, rappel du Hero */}
+      <section className="relative bg-anthracite py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[300px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="container mx-auto px-4 relative z-10 text-center max-w-2xl">
+          <p className="text-xs uppercase tracking-[0.25em] text-copper-light font-semibold mb-4">
+            On parle de votre projet ?
+          </p>
+          <h3 className="font-display font-black text-3xl md:text-4xl text-cream mb-4">
+            Vous avez un projet{" "}
+            <span className="text-gradient-copper">similaire</span> ?
+          </h3>
+          <p className="text-cream-dark/80 text-lg mb-8">
+            Devis gratuit, déplacement offert dans le Brabant wallon. Réponse
+            en 24h ouvrées.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="copper" size="lg" asChild>
+              <Link to="/contact">
+                Demander un devis gratuit
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
+            <Button
+              variant="copperOutline"
+              size="lg"
+              asChild
+              className="text-cream border-cream/30 hover:border-copper hover:text-copper"
+            >
+              <Link to="/realisations">
+                <ArrowLeft className="w-4 h-4" />
+                Toutes les réalisations
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
 
       <Footer />
       <WhatsAppButton />
