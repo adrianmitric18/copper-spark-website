@@ -127,6 +127,139 @@ export type Database = {
         }
         Relationships: []
       }
+      project_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          height: number | null
+          id: string
+          is_cover: boolean
+          kind: string
+          project_id: string
+          sort_order: number
+          storage_path: string
+          width: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_cover?: boolean
+          kind?: string
+          project_id: string
+          sort_order?: number
+          storage_path: string
+          width?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_cover?: boolean
+          kind?: string
+          project_id?: string
+          sort_order?: number
+          storage_path?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tags: {
+        Row: {
+          project_id: string
+          tag: string
+        }
+        Insert: {
+          project_id: string
+          tag: string
+        }
+        Update: {
+          project_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tags_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          budget_range: string | null
+          completed_at: string
+          created_at: string
+          deleted_at: string | null
+          duration_days: number | null
+          faq: Json | null
+          featured: boolean
+          id: string
+          location: string
+          meta_description: string | null
+          meta_title: string | null
+          slug: string
+          status: string
+          story: string | null
+          summary: string
+          title: string
+          updated_at: string
+          zone: string
+        }
+        Insert: {
+          budget_range?: string | null
+          completed_at: string
+          created_at?: string
+          deleted_at?: string | null
+          duration_days?: number | null
+          faq?: Json | null
+          featured?: boolean
+          id?: string
+          location: string
+          meta_description?: string | null
+          meta_title?: string | null
+          slug: string
+          status?: string
+          story?: string | null
+          summary: string
+          title: string
+          updated_at?: string
+          zone: string
+        }
+        Update: {
+          budget_range?: string | null
+          completed_at?: string
+          created_at?: string
+          deleted_at?: string | null
+          duration_days?: number | null
+          faq?: Json | null
+          featured?: boolean
+          id?: string
+          location?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          slug?: string
+          status?: string
+          story?: string | null
+          summary?: string
+          title?: string
+          updated_at?: string
+          zone?: string
+        }
+        Relationships: []
+      }
       rendez_vous: {
         Row: {
           created_at: string
