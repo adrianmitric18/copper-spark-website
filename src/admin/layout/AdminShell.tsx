@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/admin/layout/Sidebar";
 import CommandPalette from "@/admin/components/CommandPalette";
+import RdvRapideFab from "@/admin/components/RdvRapideFab";
 
 interface AdminShellProps {
   email?: string | null;
@@ -64,6 +65,9 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
 
         <main className="flex-1 overflow-x-hidden">{children}</main>
       </div>
+
+      {/* FAB mobile-only : créer un RDV rapide depuis n'importe où */}
+      <RdvRapideFab />
     </div>
   );
 };

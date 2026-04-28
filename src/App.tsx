@@ -28,6 +28,7 @@ import AdminRdv from "./pages/admin/Rdv";
 import AdminChantiers from "./admin/pages/Chantiers";
 import AdminChantierEditor from "./admin/pages/ChantierEditor";
 import AdminImportArchives from "./admin/pages/ImportArchives";
+import AdminRdvRapide from "./admin/pages/RdvRapide";
 import ElectricienCourtSaintEtienne from "./pages/zones/ElectricienCourtSaintEtienne";
 import ElectricienWavre from "./pages/zones/ElectricienWavre";
 import ElectricienOttigniesLLN from "./pages/zones/ElectricienOttigniesLLN";
@@ -94,6 +95,7 @@ const App = () => (
           <Route path="/admin/lead/:id" element={<AdminLeadDetail />} />
           <Route path="/admin/avis" element={<AdminAvisManager />} />
           <Route path="/admin/rdv" element={<AdminRdv />} />
+          <Route path="/admin/rdv-rapide" element={<AdminRdvRapide />} />
           <Route path="/admin/chantiers" element={<AdminChantiers />} />
           <Route path="/admin/chantiers/nouveau" element={<AdminChantierEditor />} />
           <Route path="/admin/chantiers/import-archives" element={<AdminImportArchives />} />
