@@ -17,7 +17,8 @@ export const TYPE_VISITES = [
   "Visite technique",
   "Dépannage",
   "Inspection RGIE",
-  "Pose borne VE",
+  "Installation borne de recharge",
+  "Installation panneaux photovoltaïques",
   "Autre",
 ] as const;
 
@@ -25,20 +26,29 @@ export type TypeVisite = (typeof TYPE_VISITES)[number];
 
 /**
  * Durées par défaut selon le type de visite (en minutes).
- * Validé avec l'utilisateur le 2026-04-29.
+ * Réaligné avec les services du site le 2026-04-30.
+ *   - Devis / Visite                    : 60 min
+ *   - Dépannage                         : 90 min
+ *   - Inspection RGIE                   : 120 min
+ *   - Borne de recharge (sous-tableau + pose + mise en service) : 180 min
+ *   - Panneaux PV (étude faisabilité + repérage)                : 240 min
+ *   - Autre                             : 60 min (à ajuster)
  */
 export const DUREE_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
   Devis: 60,
   "Visite technique": 60,
   Dépannage: 90,
   "Inspection RGIE": 120,
-  "Pose borne VE": 180,
+  "Installation borne de recharge": 180,
+  "Installation panneaux photovoltaïques": 240,
   Autre: 60,
 };
 
 export interface RdvRapideInput {
   name: string;
   phone: string;
+  /** Email du client, optionnel. Si vide, on stocke un placeholder local. */
+  email?: string;
   /** YYYY-MM-DD */
   dateRdv: string;
   /** HH:MM */
@@ -61,8 +71,12 @@ export interface RdvRapideResult {
  * échoue, on supprime le lead créé pour ne pas laisser de fantôme.
  */
 export async function createRdvRapide(input: RdvRapideInput): Promise<RdvRapideResult> {
-  // 1. INSERT lead minimal — placeholders pour les NOT NULL non saisis
+  // 1. INSERT lead minimal — placeholders pour les NOT NULL non saisis.
+  // Si Adrian a saisi le vrai email du client, on l'utilise (utile pour
+  // l'envoi futur de confirmation par email). Sinon on génère un placeholder
+  // local unique pour respecter la contrainte NOT NULL du schema leads.
   const placeholderEmail = `rdv-${Date.now()}@local.cuivre-electrique.com`;
+  const emailFinal = input.email?.trim() || placeholderEmail;
   const adresseFinale = input.address?.trim() || "À préciser";
   const messageFinal =
     input.notes?.trim() ||
@@ -73,7 +87,7 @@ export async function createRdvRapide(input: RdvRapideInput): Promise<RdvRapideR
     .insert({
       name: input.name.trim(),
       phone: input.phone.trim(),
-      email: placeholderEmail,
+      email: emailFinal,
       address: adresseFinale,
       client_type: "Particulier",
       services: ["rdv_rapide"],
