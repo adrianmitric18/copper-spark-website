@@ -244,28 +244,31 @@ function formatHeureFr(heure: string): string {
 }
 
 /**
- * Phrase "Je vous appelle X min avant" si délai défini, sinon chaîne vide.
+ * Formate une durée en minutes en français naturel.
+ *   15  → "15 minutes"
+ *   60  → "1 heure"
+ *   90  → "1 h 30"
+ *   120 → "2 heures"
+ *   150 → "2 h 30"
+ *   240 → "4 heures"
+ * Format français avec espaces ("1 h 30", pas "1h30") pour cohérence.
+ */
+function formatDuree(minutes: number): string {
+  if (minutes < 60) return `${minutes} minutes`;
+  if (minutes === 60) return "1 heure";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h} heures`;
+  return `${h} h ${m}`;
+}
+
+/**
+ * Phrase "Je vous appelle X avant mon arrivée" si délai défini, sinon "".
  * Le caller décide d'inclure ou non la ligne dans son template.
  */
 function phraseAppelDelai(delaiMinutes: number | null | undefined): string {
   if (!delaiMinutes || delaiMinutes <= 0) return "";
-  return `Je vous appelle ${delaiMinutes} min avant mon arrivée.`;
-}
-
-function formatDureeShort(minutes: number): string {
-  if (minutes < 60) return `~${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (m === 0) return h === 1 ? "~1 h" : `~${h} h`;
-  return `~${h}h${String(m).padStart(2, "0")}`;
-}
-
-function formatDureeLong(minutes: number): string {
-  if (minutes < 60) return `${minutes} minutes`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (m === 0) return h === 1 ? "1 heure" : `${h} heures`;
-  return `${h}h${String(m).padStart(2, "0")}`;
+  return `Je vous appelle ${formatDuree(delaiMinutes)} avant mon arrivée.`;
 }
 
 /** Tronque une adresse longue pour SMS en retirant le code postal. */
@@ -281,8 +284,8 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
   const config = TYPE_CONFIGS[payload.typeVisite];
   const dureeAvecAppel =
     payload.delaiAppelMinutes && payload.delaiAppelMinutes > 0
-      ? `⏱️ ${formatDureeShort(payload.dureeMinutes)} | J'appelle ${payload.delaiAppelMinutes} min avant`
-      : `⏱️ ${formatDureeShort(payload.dureeMinutes)}`;
+      ? `⏱️ ~${formatDuree(payload.dureeMinutes)} | J'appelle ${formatDuree(payload.delaiAppelMinutes)} avant`
+      : `⏱️ ~${formatDuree(payload.dureeMinutes)}`;
 
   const lines = [
     `🔌 ${COMPANY.name}`,
@@ -321,7 +324,7 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
     "",
     `📅 *${dateFr}*`,
     `🕐 *${formatHeureFr(payload.heure)}*${adresseBlock}`,
-    `⏱️ *Durée estimée : ${formatDureeLong(payload.dureeMinutes)}*`,
+    `⏱️ *Durée estimée : ~${formatDuree(payload.dureeMinutes)}*`,
     "",
     `🔧 *Au programme :*`,
     programme,
@@ -360,7 +363,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
     `Heure   : ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) lines.push(`Lieu    : ${payload.address}`);
-  lines.push(`Durée   : environ ${formatDureeLong(payload.dureeMinutes)}`);
+  lines.push(`Durée   : environ ${formatDuree(payload.dureeMinutes)}`);
   lines.push("");
   lines.push("AU PROGRAMME");
   config.programme.forEach((p) => lines.push(`- ${p}`));
@@ -431,7 +434,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 90px;">📅 Date</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateFr)}</td></tr>
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Heure</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(formatHeureFr(payload.heure))}</td></tr>
         ${adresseRow}
-        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">⏱️ Durée</td><td style="padding: 6px 0; font-weight: 600;">environ ${escapeHtml(formatDureeLong(payload.dureeMinutes))}</td></tr>
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">⏱️ Durée</td><td style="padding: 6px 0; font-weight: 600;">environ ${escapeHtml(formatDuree(payload.dureeMinutes))}</td></tr>
       </table>
 
       <h3 style="margin: 32px 0 12px; color: ${COMPANY.brandColor}; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Au programme</h3>
