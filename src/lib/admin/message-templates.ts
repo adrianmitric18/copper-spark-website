@@ -379,11 +379,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
   lines.push(`${COMPANY.siteUrl}${config.servicePath}`);
   lines.push("");
   lines.push("Bien cordialement,");
-  lines.push(`${COMPANY.owner}`);
-  lines.push(`${COMPANY.name}`);
-  lines.push(`${COMPANY.tel} · ${COMPANY.email}`);
-  lines.push(`${COMPANY.siteUrl}`);
-  lines.push(`${COMPANY.vat} · Électricien agréé`);
+  lines.push(COMPANY.ownerFirstName);
   return lines.join("\n");
 }
 
@@ -449,18 +445,10 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 
       ${phraseAppelHtml}
 
-      <p style="margin: 24px 0 0; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
-    </div>
+      <p style="margin: 24px 0 24px; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
 
-    <div style="background: ${COMPANY.creamColor}; padding: 24px; border-top: 1px solid #e5e5e5;">
-      <p style="margin: 0 0 8px; font-size: 14px;"><strong style="color: ${COMPANY.darkColor};">${escapeHtml(COMPANY.owner)}</strong></p>
-      <p style="margin: 0 0 12px; font-size: 13px; color: #555;">${escapeHtml(COMPANY.name)} – Électricien agréé</p>
-      <p style="margin: 0; font-size: 13px; color: #555; line-height: 1.8;">
-        📱 <a href="tel:${COMPANY.telE164}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.tel}</a><br>
-        ✉️ <a href="mailto:${COMPANY.email}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.email}</a><br>
-        🌐 <a href="${COMPANY.siteUrl}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.site}</a>
-      </p>
-      <p style="margin: 12px 0 0; font-size: 11px; color: #888;">${escapeHtml(COMPANY.vat)} · Court-Saint-Étienne, Belgique</p>
+      <p style="margin: 32px 0 4px; font-size: 15px;">Bien cordialement,</p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600;">${escapeHtml(COMPANY.ownerFirstName)}</p>
     </div>
   </div>
 </body>
