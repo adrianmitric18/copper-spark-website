@@ -1026,6 +1026,132 @@ export function emailSubjectChantierRectification(payload: ChantierProgrammePayl
   return `Mise à jour planning ${config.shortLabel.toLowerCase()} — ${range}`;
 }
 
+// ===========================================================================
+// CHANTIERS — Annulations
+// ===========================================================================
+// Le payload conserve les anciennes dates pour permettre au client de retrouver
+// le chantier dont on parle. La phrase explique simplement l'annulation, sans
+// présumer de la raison ni proposer de date alternative (libre à Adrian de
+// recontacter en personne pour reprogrammer).
+
+export interface ChantierAnnulationPayload {
+  clientName: string;
+  typeIntervention: TypeVisite;
+  /** Anciennes dates avant annulation, YYYY-MM-DD */
+  dateDebut: string;
+  dateFin: string;
+  /** Raison optionnelle exposable au client (ex: "imprévu personnel"). */
+  raison?: string;
+}
+
+export function smsTemplateChantierAnnulation(payload: ChantierAnnulationPayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const lines = [
+    `🔌 ${COMPANY.name}`,
+    `Bonjour ${payload.clientName}, je dois annuler le chantier ${config.shortLabel.toLowerCase()} prévu ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}.`,
+  ];
+  if (payload.raison) lines.push(`Raison : ${payload.raison.trim()}`);
+  lines.push("Je vous recontacte rapidement pour reprogrammer.");
+  lines.push(`Désolé pour la gêne,`);
+  lines.push(`${COMPANY.owner} - ${COMPANY.tel}`);
+  return lines.join("\n");
+}
+
+export function whatsappTemplateChantierAnnulation(payload: ChantierAnnulationPayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const raisonBlock = payload.raison ? `\n_Raison : ${payload.raison.trim()}_\n` : "";
+
+  return [
+    `⚡ *${COMPANY.name}*`,
+    "",
+    `Bonjour ${payload.clientName},`,
+    "",
+    `Je dois malheureusement *annuler* le chantier *${config.shortLabel.toLowerCase()}* prévu :`,
+    "",
+    `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
+    raisonBlock,
+    "Je vous recontacte rapidement pour reprogrammer dès que possible.",
+    "",
+    "Désolé pour la gêne occasionnée,",
+    `${COMPANY.owner}`,
+    `📱 ${COMPANY.tel}`,
+  ].join("\n");
+}
+
+export function emailPlaintextChantierAnnulation(payload: ChantierAnnulationPayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+
+  const lines = [
+    `Bonjour ${payload.clientName},`,
+    "",
+    `Je dois malheureusement annuler le chantier ${config.shortLabel.toLowerCase()} qui était prévu :`,
+    "",
+    `Dates : ${dateRange}`,
+  ];
+  if (payload.raison) {
+    lines.push("");
+    lines.push(`Raison : ${payload.raison.trim()}`);
+  }
+  lines.push("");
+  lines.push("Je vous recontacte rapidement pour reprogrammer dès que mon planning le permet.");
+  lines.push("");
+  lines.push("Désolé pour la gêne occasionnée.");
+  lines.push("");
+  lines.push("Bien cordialement,");
+  lines.push(COMPANY.ownerFirstName);
+  return lines.join("\n");
+}
+
+export function emailHtmlChantierAnnulation(payload: ChantierAnnulationPayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+
+  const raisonBlock = payload.raison
+    ? `<p style="margin: 16px 0; font-size: 14px; color: #555;"><strong>Raison :</strong> ${escapeHtml(payload.raison.trim())}</p>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Annulation chantier ${escapeHtml(config.shortLabel)}</title>
+</head>
+<body style="margin: 0; padding: 0; background: #f4f4f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; background: #fff;">
+
+    <div style="background: ${COMPANY.darkColor}; padding: 32px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px; color: ${COMPANY.brandColor}; letter-spacing: -0.5px;">⚡ ${escapeHtml(COMPANY.name)}</h1>
+      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Annulation de chantier</p>
+    </div>
+
+    <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
+      <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
+
+      <p style="margin: 0 0 16px; font-size: 15px;">Je dois malheureusement <strong>annuler</strong> le chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong> qui était prévu :</p>
+
+      <p style="margin: 16px 0; padding: 12px 16px; background: ${COMPANY.creamColor}; border-left: 3px solid ${COMPANY.brandColor}; font-size: 15px; font-weight: 600;">📅 ${escapeHtml(dateRange)}</p>
+
+      ${raisonBlock}
+
+      <p style="margin: 16px 0; font-size: 14px; color: #555;">Je vous recontacte rapidement pour reprogrammer dès que mon planning le permet.</p>
+
+      <p style="margin: 16px 0 24px; font-size: 14px; color: #555;">Désolé pour la gêne occasionnée.</p>
+
+      <p style="margin: 32px 0 4px; font-size: 15px;">Bien cordialement,</p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600;">${escapeHtml(COMPANY.ownerFirstName)}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export function emailSubjectChantierAnnulation(payload: ChantierAnnulationPayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const range = formatPlageShort(payload.dateDebut, payload.dateFin);
+  return `Annulation chantier ${config.shortLabel.toLowerCase()} — ${range}`;
+}
+
 // ---------------------------------------------------------------------------
 // Liens deep links (sms: / wa.me / mailto:)
 // ---------------------------------------------------------------------------
