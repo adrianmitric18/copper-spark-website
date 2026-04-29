@@ -12,6 +12,7 @@
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { TYPE_VISITES, type TypeVisite } from "./rdv-rapide";
+import { slugify } from "@/lib/chantiers/slug";
 
 /** Réutilise les 7 valeurs de TYPE_VISITES (alignées avec rendez_vous). */
 export const TYPE_INTERVENTIONS = TYPE_VISITES;
@@ -222,4 +223,94 @@ export const HORAIRES_DEFAUT_PAR_TYPE: Record<
  */
 function normalizeTime(t: string): string {
   return t.length === 5 ? `${t}:00` : t;
+}
+
+// ---------------------------------------------------------------------------
+// Transformation intervention → projet vitrine (CMS chantiers /realisations)
+// ---------------------------------------------------------------------------
+
+export interface TransformToProjectInput {
+  intervention: Intervention;
+  /** Pour générer le titre + slug + location. */
+  leadCommune?: string;
+  leadName?: string;
+}
+
+export interface TransformToProjectResult {
+  projectId: string;
+  /** Slug uniquifié au besoin pour éviter les collisions avec un projet existant. */
+  slug: string;
+}
+
+/**
+ * Crée un brouillon de chantier vitrine pré-rempli depuis une intervention,
+ * puis lie l'intervention au project via project_id. L'admin édite ensuite
+ * le brouillon dans /admin/chantiers/:id (titre, photos, récit, tags…).
+ *
+ * Retourne le projectId pour permettre la navigation. En cas de collision
+ * de slug parmi les projets actifs, ajoute un suffixe -2, -3, etc.
+ */
+export async function transformInterventionToProject(
+  input: TransformToProjectInput,
+): Promise<TransformToProjectResult> {
+  const { intervention, leadCommune, leadName } = input;
+
+  // 1. Construit un titre + slug initial. Le user éditera tout ensuite.
+  const datePart = intervention.date_fin.slice(0, 7); // "2026-05"
+  const baseTitle = `${intervention.type_intervention} – ${leadCommune || leadName || "client"}`;
+  const baseSlug = slugify(`${baseTitle} ${datePart}`);
+
+  // 2. Vérifie l'unicité du slug parmi les projets actifs (deleted_at IS NULL)
+  const { data: existing } = await supabase
+    .from("projects")
+    .select("slug")
+    .like("slug", `${baseSlug}%`)
+    .is("deleted_at", null);
+  const taken = new Set((existing ?? []).map((p) => p.slug));
+  let slug = baseSlug;
+  let i = 2;
+  while (taken.has(slug)) {
+    slug = `${baseSlug}-${i++}`;
+  }
+
+  // 3. Calcule la durée en jours (inclusif)
+  const [yd, md, dd] = intervention.date_debut.split("-").map(Number);
+  const [yf, mf, df] = intervention.date_fin.split("-").map(Number);
+  const start = new Date(yd, md - 1, dd);
+  const end = new Date(yf, mf - 1, df);
+  const durationDays = Math.max(
+    1,
+    Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1,
+  );
+
+  // 4. Insère le brouillon project
+  const { data: project, error: projErr } = await supabase
+    .from("projects")
+    .insert({
+      slug,
+      title: baseTitle,
+      location: leadCommune || "À préciser",
+      zone: "Brabant wallon",
+      completed_at: intervention.date_fin,
+      summary: `Chantier ${intervention.type_intervention.toLowerCase()} réalisé en ${durationDays} jour${durationDays > 1 ? "s" : ""}. À détailler.`,
+      duration_days: durationDays,
+      status: "draft",
+      featured: false,
+    })
+    .select("id, slug")
+    .single();
+  if (projErr) throw projErr;
+
+  // 5. Lie l'intervention au project
+  const { error: linkErr } = await supabase
+    .from("interventions")
+    .update({ project_id: project.id })
+    .eq("id", intervention.id);
+  if (linkErr) {
+    // Rollback : supprime le project orphelin pour ne pas laisser de fantôme
+    await supabase.from("projects").delete().eq("id", project.id);
+    throw linkErr;
+  }
+
+  return { projectId: project.id, slug: project.slug };
 }

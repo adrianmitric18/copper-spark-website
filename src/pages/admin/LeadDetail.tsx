@@ -27,6 +27,7 @@ import {
   updateIntervention,
   updateInterventionStatut,
   fetchInterventionsForLead,
+  transformInterventionToProject,
   type Intervention,
   type InterventionFormValues,
   type TypeIntervention,
@@ -358,6 +359,28 @@ const LeadDetail = () => {
     setCancellingIntervention(intervention);
   };
 
+  const handleTransformToProject = async (intervention: Intervention) => {
+    if (!lead) return;
+    try {
+      const { projectId } = await transformInterventionToProject({
+        intervention,
+        leadCommune: lead.commune ?? undefined,
+        leadName: lead.name,
+      });
+      // Met à jour localement l'intervention pour faire disparaître le bouton
+      setInterventions((prev) =>
+        prev.map((i) => (i.id === intervention.id ? { ...i, project_id: projectId } : i)),
+      );
+      toast.success("Brouillon de chantier vitrine créé", {
+        description: "Édite le titre, ajoute des photos puis publie quand prêt.",
+      });
+      navigate(`/admin/chantiers/${projectId}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "transformation impossible";
+      toast.error("Erreur : " + msg);
+    }
+  };
+
   const handleConfirmAnnulation = async (raison: string | null) => {
     if (!cancellingIntervention) return;
     setSubmittingAnnulation(true);
@@ -565,6 +588,7 @@ const LeadDetail = () => {
                 }
                 onEdit={() => handleEditIntervention(it)}
                 onCancel={() => handleAskCancelIntervention(it)}
+                onTransformToProject={() => handleTransformToProject(it)}
               />
             ))}
           </div>
