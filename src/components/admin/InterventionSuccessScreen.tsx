@@ -35,6 +35,11 @@ import {
   emailPlaintextChantier,
   emailHtmlChantier,
   emailSubjectChantier,
+  smsTemplateChantierRectification,
+  whatsappTemplateChantierRectification,
+  emailPlaintextChantierRectification,
+  emailHtmlChantierRectification,
+  emailSubjectChantierRectification,
   buildSmsHref,
   buildWhatsappHref,
   buildMailtoHref,
@@ -42,10 +47,14 @@ import {
 } from "@/lib/admin/message-templates";
 import type { Intervention } from "@/lib/admin/interventions";
 
+export type SuccessMode = "confirmation" | "rectification";
+
 interface InterventionSuccessScreenProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   intervention: Intervention;
+  /** Confirmation initiale (par défaut) ou rectification après modif. */
+  mode?: SuccessMode;
   /** Infos client pour les liens deep / Calendar. */
   clientName: string;
   clientPhone: string;
@@ -57,11 +66,14 @@ const InterventionSuccessScreen = ({
   open,
   onOpenChange,
   intervention,
+  mode = "confirmation",
   clientName,
   clientPhone,
   clientEmail,
   clientAddress,
 }: InterventionSuccessScreenProps) => {
+  const isRectif = mode === "rectification";
+
   const payload: ChantierProgrammePayload = {
     clientName,
     typeIntervention: intervention.type_intervention,
@@ -91,16 +103,28 @@ const InterventionSuccessScreen = ({
     location: clientAddress,
   });
 
-  const smsHref = buildSmsHref(clientPhone, smsTemplateChantier(payload));
-  const whatsappHref = buildWhatsappHref(clientPhone, whatsappTemplateChantier(payload));
+  const smsTemplate = isRectif ? smsTemplateChantierRectification : smsTemplateChantier;
+  const whatsappTemplate = isRectif
+    ? whatsappTemplateChantierRectification
+    : whatsappTemplateChantier;
+  const emailPlaintextTemplate = isRectif
+    ? emailPlaintextChantierRectification
+    : emailPlaintextChantier;
+  const emailHtmlTemplate = isRectif ? emailHtmlChantierRectification : emailHtmlChantier;
+  const emailSubjectTemplate = isRectif
+    ? emailSubjectChantierRectification
+    : emailSubjectChantier;
+
+  const smsHref = buildSmsHref(clientPhone, smsTemplate(payload));
+  const whatsappHref = buildWhatsappHref(clientPhone, whatsappTemplate(payload));
   const mailtoHref = buildMailtoHref(
     clientEmail,
-    emailSubjectChantier(payload),
-    emailPlaintextChantier(payload),
+    emailSubjectTemplate(payload),
+    emailPlaintextTemplate(payload),
   );
 
   const copyEmailHtml = async () => {
-    const html = emailHtmlChantier(payload);
+    const html = emailHtmlTemplate(payload);
     try {
       if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
         const blobHtml = new Blob([html], { type: "text/html" });
@@ -139,7 +163,9 @@ const InterventionSuccessScreen = ({
               <CheckCircle2 className="w-7 h-7 text-primary" />
             </div>
           </div>
-          <DialogTitle className="text-center">Chantier programmé</DialogTitle>
+          <DialogTitle className="text-center">
+            {isRectif ? "Planning mis à jour" : "Chantier programmé"}
+          </DialogTitle>
           <DialogDescription className="text-center">
             <span className="font-medium text-foreground capitalize">{dateRange}</span>
             <br />

@@ -162,6 +162,7 @@ const InterventionCard = ({
         open={resendOpen}
         onOpenChange={setResendOpen}
         intervention={intervention}
+        mode="confirmation"
         clientName={clientName}
         clientPhone={clientPhone}
         clientEmail={clientEmail}

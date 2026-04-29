@@ -21,8 +21,11 @@ import ChecklistVisite from "@/components/admin/ChecklistVisite";
 import InterventionDialog from "@/components/admin/InterventionDialog";
 import InterventionCard from "@/components/admin/InterventionCard";
 import InterventionSuccessScreen from "@/components/admin/InterventionSuccessScreen";
+import InterventionAnnulationDialog from "@/components/admin/InterventionAnnulationDialog";
 import {
   createIntervention,
+  updateIntervention,
+  updateInterventionStatut,
   fetchInterventionsForLead,
   type Intervention,
   type InterventionFormValues,
@@ -85,8 +88,12 @@ const LeadDetail = () => {
   // Interventions (chantiers programmés) — distinct des RDV exploratoires
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [interventionDialogOpen, setInterventionDialogOpen] = useState(false);
+  const [editingIntervention, setEditingIntervention] = useState<Intervention | null>(null);
+  const [cancellingIntervention, setCancellingIntervention] = useState<Intervention | null>(null);
   const [submittingIntervention, setSubmittingIntervention] = useState(false);
+  const [submittingAnnulation, setSubmittingAnnulation] = useState(false);
   const [lastCreatedIntervention, setLastCreatedIntervention] = useState<Intervention | null>(null);
+  const [lastUpdatedIntervention, setLastUpdatedIntervention] = useState<Intervention | null>(null);
 
   useEffect(() => {
     if (!ready || !id) return;
@@ -314,18 +321,76 @@ const LeadDetail = () => {
     if (!lead) return;
     setSubmittingIntervention(true);
     try {
-      const created = await createIntervention({ leadId: lead.id, ...values });
-      setInterventions((prev) => [created, ...prev]);
-      setLastCreatedIntervention(created);
-      setInterventionDialogOpen(false);
-      toast.success("Chantier programmé", {
-        description: `${created.type_intervention} — ${created.date_debut}${created.date_fin !== created.date_debut ? ` → ${created.date_fin}` : ""}`,
-      });
+      if (editingIntervention) {
+        // Mode édition → met à jour + bascule sur écran rectification
+        const updated = await updateIntervention({ id: editingIntervention.id, ...values });
+        setInterventions((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+        setLastUpdatedIntervention(updated);
+        setEditingIntervention(null);
+        setInterventionDialogOpen(false);
+        toast.success("Planning mis à jour", {
+          description: "Préviens le client avec le message de rectification.",
+        });
+      } else {
+        // Mode création → écran de confirmation initial
+        const created = await createIntervention({ leadId: lead.id, ...values });
+        setInterventions((prev) => [created, ...prev]);
+        setLastCreatedIntervention(created);
+        setInterventionDialogOpen(false);
+        toast.success("Chantier programmé", {
+          description: `${created.type_intervention} — ${created.date_debut}${created.date_fin !== created.date_debut ? ` → ${created.date_fin}` : ""}`,
+        });
+      }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "création impossible";
+      const msg = e instanceof Error ? e.message : "enregistrement impossible";
       toast.error("Erreur : " + msg);
     } finally {
       setSubmittingIntervention(false);
+    }
+  };
+
+  const handleEditIntervention = (intervention: Intervention) => {
+    setEditingIntervention(intervention);
+    setInterventionDialogOpen(true);
+  };
+
+  const handleAskCancelIntervention = (intervention: Intervention) => {
+    setCancellingIntervention(intervention);
+  };
+
+  const handleConfirmAnnulation = async (raison: string | null) => {
+    if (!cancellingIntervention) return;
+    setSubmittingAnnulation(true);
+    try {
+      const updated = await updateInterventionStatut(cancellingIntervention.id, "annule");
+      // On met aussi à jour notes_internes pour tracer la raison côté admin
+      if (raison) {
+        const newNotes = [updated.notes_internes, `[Annulation] ${raison}`]
+          .filter(Boolean)
+          .join("\n\n");
+        await updateIntervention({
+          id: updated.id,
+          typeIntervention: updated.type_intervention as TypeIntervention,
+          dateDebut: updated.date_debut,
+          dateFin: updated.date_fin,
+          heureDebut: updated.heure_debut.slice(0, 5),
+          heureFin: updated.heure_fin.slice(0, 5),
+          notesClient: updated.notes_client ?? "",
+          notesInternes: newNotes,
+        });
+        updated.notes_internes = newNotes;
+      }
+      setInterventions((prev) =>
+        prev.map((i) => (i.id === updated.id ? { ...updated, statut: "annule" } : i)),
+      );
+      // ⚠ on garde cancellingIntervention pour afficher l'écran de notification
+      // (le dialog passe en step "confirmed"). Reset au close.
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "annulation impossible";
+      toast.error("Erreur : " + msg);
+      throw e;
+    } finally {
+      setSubmittingAnnulation(false);
     }
   };
 
@@ -498,6 +563,8 @@ const LeadDetail = () => {
                     .filter(Boolean)
                     .join(" ") || lead.address
                 }
+                onEdit={() => handleEditIntervention(it)}
+                onCancel={() => handleAskCancelIntervention(it)}
               />
             ))}
           </div>
@@ -524,13 +591,17 @@ const LeadDetail = () => {
       {/* Dialog de création/édition d'intervention */}
       <InterventionDialog
         open={interventionDialogOpen}
-        onOpenChange={setInterventionDialogOpen}
+        onOpenChange={(o) => {
+          setInterventionDialogOpen(o);
+          if (!o) setEditingIntervention(null);
+        }}
+        intervention={editingIntervention}
         defaultType={guessTypeIntervention()}
         onSubmit={handleInterventionSubmit}
         submitting={submittingIntervention}
       />
 
-      {/* Écran de succès post-création (4 boutons) */}
+      {/* Écran de succès post-création (mode confirmation) */}
       {lastCreatedIntervention && (
         <InterventionSuccessScreen
           open={!!lastCreatedIntervention}
@@ -538,6 +609,7 @@ const LeadDetail = () => {
             if (!o) setLastCreatedIntervention(null);
           }}
           intervention={lastCreatedIntervention}
+          mode="confirmation"
           clientName={lead.name}
           clientPhone={lead.phone}
           clientEmail={lead.email}
@@ -546,6 +618,42 @@ const LeadDetail = () => {
               .filter(Boolean)
               .join(" ") || lead.address
           }
+        />
+      )}
+
+      {/* Écran de rectification post-modification */}
+      {lastUpdatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastUpdatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastUpdatedIntervention(null);
+          }}
+          intervention={lastUpdatedIntervention}
+          mode="rectification"
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
+
+      {/* Dialog d'annulation d'intervention */}
+      {cancellingIntervention && (
+        <InterventionAnnulationDialog
+          open={!!cancellingIntervention}
+          onOpenChange={(o) => {
+            if (!o) setCancellingIntervention(null);
+          }}
+          intervention={cancellingIntervention}
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          onConfirm={handleConfirmAnnulation}
+          submitting={submittingAnnulation}
         />
       )}
 
