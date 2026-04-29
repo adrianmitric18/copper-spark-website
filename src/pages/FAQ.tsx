@@ -198,7 +198,7 @@ const faqData: FaqItem[] = [
     category: "intervention",
     question: "Le chantier est-il laissé propre après intervention ?",
     answer:
-      "Oui. Nous travaillons avec soin, protégeons systématiquement les zones sensibles (meubles, sols, revêtements) avec des bâches et cartons, et laissons le chantier propre en fin d'intervention. Les gravats et déchets de chantier sont évacués par nos soins. C'est un point sur lequel nos clients nous font régulièrement des retours positifs, et c'est l'une des raisons pour lesquelles nous avons une note de 4,94/5 sur Google.",
+      "Oui. Nous travaillons avec soin, protégeons systématiquement les zones sensibles (meubles, sols, revêtements) avec des bâches et cartons, et laissons le chantier propre en fin d'intervention. Les gravats et déchets de chantier sont évacués par nos soins. C'est un point sur lequel nos clients nous font régulièrement des retours positifs, et c'est l'une des raisons de notre excellente note sur Google.",
     answerNode: (
       <>
         <p>
@@ -208,8 +208,7 @@ const faqData: FaqItem[] = [
         </p>
         <p>
           C'est un point sur lequel nos clients nous font régulièrement des retours positifs, et
-          c'est l'une des raisons pour lesquelles nous avons une note de{" "}
-          <strong className="text-foreground">4,94/5 sur Google</strong>.
+          c'est l'une des raisons de notre <strong className="text-foreground">excellente note sur Google</strong>.
         </p>
       </>
     ),

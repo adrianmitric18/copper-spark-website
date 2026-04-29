@@ -2,6 +2,15 @@ import { useEffect } from "react";
 
 interface LocalBusinessProps {
   type: "LocalBusiness";
+  /**
+   * Aggregate rating dynamique calculé depuis Supabase.
+   * Si non fourni, le bloc aggregateRating n'est PAS émis dans le JSON-LD
+   * (évite les valeurs hardcodées désynchronisées de la BDD).
+   */
+  aggregateRating?: {
+    ratingValue: number | string;
+    reviewCount: number;
+  };
 }
 
 interface LocalBusinessZoneProps {
@@ -68,8 +77,8 @@ const StructuredData = (props: StructuredDataProps) => {
     let jsonLd: object;
 
     switch (props.type) {
-      case "LocalBusiness":
-        jsonLd = {
+      case "LocalBusiness": {
+        const localBusiness: Record<string, unknown> = {
           "@context": "https://schema.org",
           "@type": "Electrician",
           "name": "Le Cuivre Électrique",
@@ -124,12 +133,6 @@ const StructuredData = (props: StructuredDataProps) => {
               "closes": "13:00"
             }
           ],
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "5",
-            "reviewCount": "17",
-            "bestRating": "5"
-          },
           "sameAs": [
             "https://wa.me/32485755227"
           ],
@@ -145,7 +148,20 @@ const StructuredData = (props: StructuredDataProps) => {
             ]
           }
         };
+
+        if (props.aggregateRating && props.aggregateRating.reviewCount > 0) {
+          localBusiness["aggregateRating"] = {
+            "@type": "AggregateRating",
+            "ratingValue": String(props.aggregateRating.ratingValue),
+            "reviewCount": String(props.aggregateRating.reviewCount),
+            "bestRating": "5",
+            "worstRating": "1"
+          };
+        }
+
+        jsonLd = localBusiness;
         break;
+      }
 
       case "LocalBusinessZone":
         jsonLd = {

@@ -8,6 +8,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { useAggregateRating } from "@/hooks/useAggregateRating";
 
 interface Testimonial {
   id: string;
@@ -20,8 +21,6 @@ interface Testimonial {
 }
 
 const GOOGLE_REVIEW_URL = "https://g.page/r/CVLZZFVq3KkiEBM/review";
-const AVERAGE_RATING = 4.94;
-const TOTAL_REVIEWS = 17;
 const PAGE_SIZE = 12;
 
 const StarRow = ({ rating, size = "w-4 h-4" }: { rating: number; size?: string }) => (
@@ -37,19 +36,29 @@ const StarRow = ({ rating, size = "w-4 h-4" }: { rating: number; size?: string }
   </div>
 );
 
-const AverageStars = () => {
-  // 4.94 -> 4 full + 1 ~94% filled
+const AverageStars = ({ value }: { value: number }) => {
+  const fullStars = Math.floor(value);
+  const partial = Math.max(0, Math.min(1, value - fullStars));
+  const partialPct = Math.round(partial * 100);
+
   return (
-    <div className="flex gap-0.5">
-      {[0, 1, 2, 3].map((i) => (
-        <Star key={i} className="w-6 h-6 fill-amber-400 text-amber-400" />
+    <div className="flex gap-0.5" aria-label={`Note moyenne ${value} sur 5`}>
+      {Array.from({ length: fullStars }).map((_, i) => (
+        <Star key={`full-${i}`} className="w-6 h-6 fill-amber-400 text-amber-400" />
       ))}
-      <div className="relative w-6 h-6">
-        <Star className="w-6 h-6 text-muted-foreground/25 absolute inset-0" />
-        <div className="overflow-hidden absolute inset-0" style={{ width: "94%" }}>
-          <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
+      {fullStars < 5 && (
+        <div className="relative w-6 h-6">
+          <Star className="w-6 h-6 text-muted-foreground/25 absolute inset-0" />
+          {partialPct > 0 && (
+            <div className="overflow-hidden absolute inset-0" style={{ width: `${partialPct}%` }}>
+              <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
+            </div>
+          )}
         </div>
-      </div>
+      )}
+      {Array.from({ length: Math.max(0, 5 - fullStars - 1) }).map((_, i) => (
+        <Star key={`empty-${i}`} className="w-6 h-6 text-muted-foreground/25" />
+      ))}
     </div>
   );
 };
@@ -65,6 +74,7 @@ const Avis = () => {
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const { trackEvent } = useAnalyticsEvents();
+  const { data: aggregate } = useAggregateRating();
 
   useEffect(() => {
     let active = true;
@@ -86,8 +96,16 @@ const Avis = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
-        title="Avis clients — 4,94/5 sur Google | Le Cuivre Électrique"
-        description="Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Note moyenne 4,94/5 sur 17 avis vérifiés."
+        title={
+          aggregate
+            ? `Avis clients — ${aggregate.ratingValueFormatted}/5 sur Google | Le Cuivre Électrique`
+            : "Avis clients sur Google | Le Cuivre Électrique"
+        }
+        description={
+          aggregate
+            ? `Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Note moyenne ${aggregate.ratingValueFormatted}/5 sur ${aggregate.reviewCount} avis vérifiés.`
+            : "Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Avis vérifiés du Cuivre Électrique."
+        }
         keywords="avis électricien Brabant wallon, avis Le Cuivre Électrique, témoignages clients, avis Google électricien"
         canonical="https://cuivre-electrique.com/avis"
       />
@@ -107,17 +125,21 @@ const Avis = () => {
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
               Les avis de nos clients
             </h1>
-            <div className="flex flex-col items-center gap-3">
-              <AverageStars />
-              <p className="text-muted-foreground text-lg">
-                <span className="text-foreground font-bold">{TOTAL_REVIEWS} avis Google</span>{" "}
-                — Note moyenne{" "}
-                <span className="text-foreground font-bold">{AVERAGE_RATING.toString().replace(".", ",")}/5</span>
-              </p>
-              <p className="text-sm text-muted-foreground opacity-70">
-                14 commentaires détaillés ci-dessous
-              </p>
-            </div>
+            {aggregate && (
+              <div className="flex flex-col items-center gap-3">
+                <AverageStars value={aggregate.ratingValue} />
+                <p className="text-muted-foreground text-lg">
+                  <span className="text-foreground font-bold">{aggregate.reviewCount} avis Google</span>{" "}
+                  — Note moyenne{" "}
+                  <span className="text-foreground font-bold">{aggregate.ratingValueFormatted}/5</span>
+                </p>
+                {reviews.length > 0 && reviews.length !== aggregate.reviewCount && (
+                  <p className="text-sm text-muted-foreground opacity-70">
+                    {reviews.length} commentaires détaillés ci-dessous
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 

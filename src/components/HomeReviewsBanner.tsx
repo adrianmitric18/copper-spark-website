@@ -2,9 +2,14 @@ import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { useAggregateRating } from "@/hooks/useAggregateRating";
 
 const HomeReviewsBanner = () => {
   const { trackEvent } = useAnalyticsEvents();
+  const { data: rating } = useAggregateRating();
+
+  if (!rating) return null;
+
   return (
     <section className="py-12 md:py-16 bg-muted/30">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -18,10 +23,10 @@ const HomeReviewsBanner = () => {
             </div>
             <div className="flex flex-col md:flex-row md:items-baseline md:gap-2">
               <span className="font-display font-bold text-foreground text-lg">
-                4,94/5 sur Google
+                {rating.ratingValueFormatted}/5 sur Google
               </span>
               <span className="text-muted-foreground text-sm">
-                17 avis clients satisfaits
+                {rating.reviewCount} avis clients satisfaits
               </span>
             </div>
           </div>
