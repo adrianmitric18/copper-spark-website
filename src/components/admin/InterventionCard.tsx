@@ -121,18 +121,29 @@ const InterventionCard = ({
             variant="outline"
             size="sm"
             onClick={() => setResendOpen(true)}
+            className="min-h-[40px] flex-1 sm:flex-none"
           >
             <Send className="w-3.5 h-3.5" />
             Renvoyer confirmation
           </Button>
           {onEdit && (
-            <Button variant="outline" size="sm" onClick={onEdit}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onEdit}
+              className="min-h-[40px] flex-1 sm:flex-none"
+            >
               <Edit2 className="w-3.5 h-3.5" />
               Modifier
             </Button>
           )}
           {onTransformToProject && !intervention.project_id && (
-            <Button variant="outline" size="sm" onClick={onTransformToProject}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onTransformToProject}
+              className="min-h-[40px] w-full sm:w-auto"
+            >
               <Image className="w-3.5 h-3.5" />
               Transformer en chantier vitrine
             </Button>
@@ -142,7 +153,7 @@ const InterventionCard = ({
               variant="ghost"
               size="sm"
               onClick={onCancel}
-              className="text-destructive hover:bg-destructive/10"
+              className="min-h-[40px] flex-1 sm:flex-none text-destructive hover:bg-destructive/10"
             >
               <XCircle className="w-3.5 h-3.5" />
               Annuler
