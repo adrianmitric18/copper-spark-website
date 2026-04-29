@@ -193,6 +193,11 @@ export interface ConfirmationRdvPayload {
   dureeMinutes: number;
   /** Adresse complète si saisie. */
   address?: string;
+  /**
+   * Délai d'appel avant arrivée, en minutes. NULL/undefined = on n'affiche
+   * pas la phrase "Je vous appelle X min avant".
+   */
+  delaiAppelMinutes?: number | null;
 }
 
 export interface RelanceDevisPayload {
@@ -217,9 +222,34 @@ function formatDateLong(iso: string): string {
   });
 }
 
+/** Comme formatDateLong mais sans l'année — pour SMS courts. */
+function formatDateLongNoYear(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("fr-BE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
 function formatDateShort(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${d}/${m}`;
+}
+
+/** Convertit "17:15" en "17h15" (style français) ou "17h" si :00. */
+function formatHeureFr(heure: string): string {
+  const [h, m] = heure.split(":");
+  return m === "00" ? `${h}h` : `${h}h${m}`;
+}
+
+/**
+ * Phrase "Je vous appelle X min avant" si délai défini, sinon chaîne vide.
+ * Le caller décide d'inclure ou non la ligne dans son template.
+ */
+function phraseAppelDelai(delaiMinutes: number | null | undefined): string {
+  if (!delaiMinutes || delaiMinutes <= 0) return "";
+  return `Je vous appelle ${delaiMinutes} min avant mon arrivée.`;
 }
 
 function formatDureeShort(minutes: number): string {
@@ -249,18 +279,22 @@ function shortenAddress(address: string): string {
 
 export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string {
   const config = TYPE_CONFIGS[payload.typeVisite];
+  const dureeAvecAppel =
+    payload.delaiAppelMinutes && payload.delaiAppelMinutes > 0
+      ? `⏱️ ${formatDureeShort(payload.dureeMinutes)} | J'appelle ${payload.delaiAppelMinutes} min avant`
+      : `⏱️ ${formatDureeShort(payload.dureeMinutes)}`;
+
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName},`,
-    `${capitalize(config.introLabel)} :`,
-    `📅 ${formatDateShort(payload.dateIso)} à ${payload.heure}`,
+    `Bonjour ${payload.clientName}, ${config.shortLabel.toLowerCase()} confirmé :`,
+    `📅 ${formatDateLongNoYear(payload.dateIso)} - ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) {
     lines.push(`📍 ${shortenAddress(payload.address)}`);
   }
-  lines.push(`⏱️ ${formatDureeShort(payload.dureeMinutes)}`);
-  lines.push("À bientôt,");
-  lines.push(`${COMPANY.ownerFirstName} - ${COMPANY.tel}`);
+  lines.push(dureeAvecAppel);
+  lines.push(`🌐 ${COMPANY.site}`);
+  lines.push(`${COMPANY.owner} - ${COMPANY.tel}`);
   return lines.join("\n");
 }
 
@@ -276,8 +310,9 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
   const prerequis = config.prerequis.map((p) => `• ${p}`).join("\n");
 
   const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
+  const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
 
-  return [
+  const lines = [
     `⚡ *${COMPANY.name}*`,
     "",
     `Bonjour ${payload.clientName} 👋`,
@@ -285,7 +320,7 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
     config.introLine,
     "",
     `📅 *${dateFr}*`,
-    `🕐 *${payload.heure}*${adresseBlock}`,
+    `🕐 *${formatHeureFr(payload.heure)}*${adresseBlock}`,
     `⏱️ *Durée estimée : ${formatDureeLong(payload.dureeMinutes)}*`,
     "",
     `🔧 *Au programme :*`,
@@ -294,13 +329,16 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
     `📋 *À prévoir :*`,
     prerequis,
     "",
-    "Je vous appelle 30 minutes avant mon arrivée pour vous prévenir.",
-    "",
-    `À bientôt,`,
-    `${COMPANY.owner}`,
-    `🌐 ${COMPANY.site}`,
-    `📱 ${COMPANY.tel}`,
-  ].join("\n");
+  ];
+  if (phraseAppel) {
+    lines.push(phraseAppel);
+    lines.push("");
+  }
+  lines.push(`À bientôt,`);
+  lines.push(`${COMPANY.owner}`);
+  lines.push(`🌐 ${COMPANY.site}`);
+  lines.push(`📱 ${COMPANY.tel}`);
+  return lines.join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -310,6 +348,8 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
 export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): string {
   const config = TYPE_CONFIGS[payload.typeVisite];
   const dateFr = formatDateLong(payload.dateIso);
+  const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
+
   const lines = [
     `Bonjour ${payload.clientName},`,
     "",
@@ -317,7 +357,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
     "",
     "INFORMATIONS PRATIQUES",
     `Date    : ${dateFr}`,
-    `Heure   : ${payload.heure}`,
+    `Heure   : ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) lines.push(`Lieu    : ${payload.address}`);
   lines.push(`Durée   : environ ${formatDureeLong(payload.dureeMinutes)}`);
@@ -328,8 +368,10 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
   lines.push("À PRÉVOIR DE VOTRE CÔTÉ");
   config.prerequis.forEach((p) => lines.push(`- ${p}`));
   lines.push("");
-  lines.push("Je vous rappelle 30 minutes avant mon arrivée pour confirmer.");
-  lines.push("");
+  if (phraseAppel) {
+    lines.push(phraseAppel);
+    lines.push("");
+  }
   lines.push("En savoir plus sur ce service :");
   lines.push(`${COMPANY.siteUrl}${config.servicePath}`);
   lines.push("");
@@ -349,6 +391,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
 export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
   const config = TYPE_CONFIGS[payload.typeVisite];
   const dateFr = formatDateLong(payload.dateIso);
+  const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
 
   const programmeHtml = config.programme
     .map((p) => `<li style="margin-bottom: 6px;">${escapeHtml(p)}</li>`)
@@ -360,6 +403,10 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 
   const adresseRow = payload.address
     ? `<tr><td style="padding: 6px 0; color: #888; font-size: 13px;">📍 Lieu</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(payload.address)}</td></tr>`
+    : "";
+
+  const phraseAppelHtml = phraseAppel
+    ? `<p style="margin: 24px 0 16px; font-size: 14px; color: #555; font-style: italic;">${escapeHtml(phraseAppel)}</p>`
     : "";
 
   return `<!DOCTYPE html>
@@ -382,7 +429,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 
       <table style="width: 100%; border-collapse: collapse; border-top: 2px solid ${COMPANY.brandColor}; border-bottom: 2px solid ${COMPANY.brandColor}; margin: 24px 0;">
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 90px;">📅 Date</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateFr)}</td></tr>
-        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Heure</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(payload.heure)}</td></tr>
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Heure</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(formatHeureFr(payload.heure))}</td></tr>
         ${adresseRow}
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">⏱️ Durée</td><td style="padding: 6px 0; font-weight: 600;">environ ${escapeHtml(formatDureeLong(payload.dureeMinutes))}</td></tr>
       </table>
@@ -397,7 +444,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
         ${prerequisHtml}
       </ul>
 
-      <p style="margin: 24px 0 16px; font-size: 14px; color: #555; font-style: italic;">Je vous rappelle 30 minutes avant mon arrivée pour confirmer.</p>
+      ${phraseAppelHtml}
 
       <p style="margin: 24px 0 0; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
     </div>
@@ -427,36 +474,36 @@ export function emailSubjectConfirmation(payload: ConfirmationRdvPayload): strin
 // ---------------------------------------------------------------------------
 
 export function smsTemplateRelance1(payload: RelanceDevisPayload): string {
-  const dateFr = formatDateShort(payload.devisEnvoyeAt);
+  const dateFr = formatDateLongNoYear(payload.devisEnvoyeAt);
   const montantPart = payload.montant ? ` (${payload.montant})` : "";
   return [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName},`,
-    `Avez-vous eu l'occasion de regarder le devis${montantPart} envoyé le ${dateFr} ?`,
-    `Je reste à votre disposition pour toute précision.`,
-    `${COMPANY.ownerFirstName} - ${COMPANY.tel}`,
+    `Bonjour ${payload.clientName}, avez-vous eu le temps de regarder le devis${montantPart} du ${dateFr} ?`,
+    `Une question, un ajustement ? Un appel suffit.`,
+    `🌐 ${COMPANY.site}`,
+    `${COMPANY.owner} - ${COMPANY.tel}`,
   ].join("\n");
 }
 
 export function smsTemplateRelance2(payload: RelanceDevisPayload): string {
-  const dateFr = formatDateShort(payload.devisEnvoyeAt);
+  const dateFr = formatDateLongNoYear(payload.devisEnvoyeAt);
   return [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName},`,
-    `Je reviens vers vous concernant le devis du ${dateFr}.`,
-    `Si certains points sont à ajuster, un coup de fil suffit.`,
-    `${COMPANY.ownerFirstName} - ${COMPANY.tel}`,
+    `Bonjour ${payload.clientName}, je reviens sur le devis du ${dateFr}.`,
+    `Toujours intéressé ? Un coup de fil et on cale tout.`,
+    `🌐 ${COMPANY.site}`,
+    `${COMPANY.owner} - ${COMPANY.tel}`,
   ].join("\n");
 }
 
 export function smsTemplateRelance3(payload: RelanceDevisPayload): string {
-  const dateFr = formatDateShort(payload.devisEnvoyeAt);
+  const dateFr = formatDateLongNoYear(payload.devisEnvoyeAt);
   return [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName},`,
-    `Devis envoyé le ${dateFr} resté sans suite.`,
-    `Pourriez-vous me confirmer si le projet vous intéresse toujours ? Merci.`,
-    `${COMPANY.ownerFirstName} - ${COMPANY.tel}`,
+    `Bonjour ${payload.clientName}, dernier message concernant le devis du ${dateFr}.`,
+    `Faites-moi signe si le projet est encore d'actualité.`,
+    `🌐 ${COMPANY.site}`,
+    `${COMPANY.owner} - ${COMPANY.tel}`,
   ].join("\n");
 }
 

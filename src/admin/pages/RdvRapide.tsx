@@ -509,6 +509,7 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
     typeVisite: summary.typeVisite,
     dureeMinutes: summary.dureeMinutes,
     address: summary.address,
+    delaiAppelMinutes: summary.delaiAppelMinutes ?? null,
   };
 
   const smsHref = buildSmsHref(
