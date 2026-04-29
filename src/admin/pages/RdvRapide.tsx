@@ -210,7 +210,7 @@ const RdvRapide = () => {
 
   return (
     <AdminShell mobileTitle="RDV rapide">
-      <div className="p-4 md:p-6 max-w-xl mx-auto">
+      <div className="p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] max-w-xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <Phone className="w-7 h-7 text-primary" />
           <div>
@@ -267,7 +267,9 @@ const RdvRapide = () => {
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Grid 1 col sous 380px (iPhone SE) pour éviter l'écrasement
+              des inputs date/time. 2 cols dès 380px. */}
+          <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
             <Field
               label="Date *"
               error={form.formState.errors.dateRdv?.message}
@@ -554,7 +556,7 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
 
   return (
     <AdminShell mobileTitle="RDV créé">
-      <div className="p-4 md:p-6 max-w-xl mx-auto">
+      <div className="p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] max-w-xl mx-auto">
         <div className="flex items-center justify-center mb-6 mt-4">
           <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
             <CheckCircle2 className="w-9 h-9 text-primary" />
