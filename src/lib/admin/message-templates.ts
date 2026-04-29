@@ -633,6 +633,254 @@ export function emailSubjectRelance(palier: 1 | 2 | 3): string {
   return map[palier];
 }
 
+// ===========================================================================
+// CHANTIERS — Confirmations de chantiers programmés (multi-jours)
+// ===========================================================================
+
+export interface ChantierProgrammePayload {
+  clientName: string;
+  typeIntervention: TypeVisite;
+  /** YYYY-MM-DD */
+  dateDebut: string;
+  /** YYYY-MM-DD (peut être identique à dateDebut pour 1 jour) */
+  dateFin: string;
+  /** HH:MM */
+  heureDebut: string;
+  /** HH:MM */
+  heureFin: string;
+  /** Adresse complète si saisie. */
+  address?: string;
+  /** Message libre du client (notes_client de l'intervention). */
+  notesClient?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers de plage de dates
+// ---------------------------------------------------------------------------
+
+/** Vrai si dateDebut === dateFin (chantier sur 1 jour). */
+function isSameDay(dateDebut: string, dateFin: string): boolean {
+  return dateDebut === dateFin;
+}
+
+/** Formate la plage en version longue : "lundi 4 mai 2026 → mardi 5 mai 2026". */
+function formatPlageLong(dateDebut: string, dateFin: string): string {
+  if (isSameDay(dateDebut, dateFin)) return formatDateLong(dateDebut);
+  return `${formatDateLong(dateDebut)} → ${formatDateLong(dateFin)}`;
+}
+
+/** Plage sans année pour SMS court : "lundi 4 mai → mardi 5 mai". */
+function formatPlageLongNoYear(dateDebut: string, dateFin: string): string {
+  if (isSameDay(dateDebut, dateFin)) return formatDateLongNoYear(dateDebut);
+  return `${formatDateLongNoYear(dateDebut)} → ${formatDateLongNoYear(dateFin)}`;
+}
+
+/** Plage compacte pour subject email : "04/05 → 05/05" ou "04/05" si 1 jour. */
+function formatPlageShort(dateDebut: string, dateFin: string): string {
+  if (isSameDay(dateDebut, dateFin)) return formatDateShort(dateDebut);
+  return `${formatDateShort(dateDebut)} → ${formatDateShort(dateFin)}`;
+}
+
+/**
+ * Horaires journaliers : "8h-17h" si même jour, "8h-17h chaque jour" sinon.
+ * Adapté pour les chantiers où l'on travaille la même plage horaire chaque jour.
+ */
+function formatHorairesJournaliers(
+  dateDebut: string,
+  dateFin: string,
+  heureDebut: string,
+  heureFin: string,
+): string {
+  const plage = `${formatHeureFr(heureDebut)} - ${formatHeureFr(heureFin)}`;
+  return isSameDay(dateDebut, dateFin) ? plage : `${plage} chaque jour`;
+}
+
+// ---------------------------------------------------------------------------
+// SMS — Chantier programmé
+// ---------------------------------------------------------------------------
+
+export function smsTemplateChantier(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const lines = [
+    `🔌 ${COMPANY.name}`,
+    `Bonjour ${payload.clientName}, votre chantier ${config.shortLabel.toLowerCase()} est planifié :`,
+    `📅 ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}`,
+    `🕐 ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
+  ];
+  if (payload.address) {
+    lines.push(`📍 ${shortenAddress(payload.address)}`);
+  }
+  lines.push("Je vous appelle la veille pour finaliser.");
+  lines.push(`🌐 ${COMPANY.site}`);
+  lines.push(`${COMPANY.owner} - ${COMPANY.tel}`);
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// WhatsApp — Chantier programmé
+// ---------------------------------------------------------------------------
+
+export function whatsappTemplateChantier(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const programme = config.programme.map((p) => `✓ ${p}`).join("\n");
+  const prerequis = config.prerequis.map((p) => `• ${p}`).join("\n");
+  const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
+  const notesBlock = payload.notesClient
+    ? `\n📝 *Note :* ${payload.notesClient.trim()}\n`
+    : "";
+
+  return [
+    `⚡ *${COMPANY.name}*`,
+    "",
+    `Bonjour ${payload.clientName} 👋`,
+    "",
+    `Je vous confirme la planification de votre chantier *${config.shortLabel.toLowerCase()}*.`,
+    "",
+    `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
+    `🕐 *${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}*${adresseBlock}`,
+    "",
+    `🔧 *Au programme :*`,
+    programme,
+    "",
+    `📋 *À prévoir avant le chantier :*`,
+    prerequis,
+    notesBlock,
+    "Je vous appelle la veille pour finaliser les derniers détails.",
+    "",
+    `À bientôt,`,
+    `${COMPANY.owner}`,
+    `🌐 ${COMPANY.site}`,
+    `📱 ${COMPANY.tel}`,
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Email plaintext — Chantier programmé
+// ---------------------------------------------------------------------------
+
+export function emailPlaintextChantier(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+
+  const lines = [
+    `Bonjour ${payload.clientName},`,
+    "",
+    `Suite à votre acceptation du devis, je vous confirme la planification de votre chantier ${config.shortLabel.toLowerCase()}.`,
+    "",
+    "INFORMATIONS PRATIQUES",
+    `Dates    : ${dateRange}`,
+    `Horaires : ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
+  ];
+  if (payload.address) lines.push(`Lieu     : ${payload.address}`);
+  lines.push("");
+  lines.push("AU PROGRAMME");
+  config.programme.forEach((p) => lines.push(`- ${p}`));
+  lines.push("");
+  lines.push("À PRÉVOIR AVANT LE CHANTIER");
+  config.prerequis.forEach((p) => lines.push(`- ${p}`));
+  if (payload.notesClient) {
+    lines.push("");
+    lines.push("NOTE COMPLÉMENTAIRE");
+    lines.push(payload.notesClient.trim());
+  }
+  lines.push("");
+  lines.push("Je vous appelle la veille pour finaliser les derniers détails.");
+  lines.push("");
+  lines.push("En savoir plus sur ce service :");
+  lines.push(`${COMPANY.siteUrl}${config.servicePath}`);
+  lines.push("");
+  lines.push("Bien cordialement,");
+  lines.push(COMPANY.ownerFirstName);
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Email HTML — Chantier programmé
+// ---------------------------------------------------------------------------
+
+export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+  const horaires = formatHorairesJournaliers(
+    payload.dateDebut,
+    payload.dateFin,
+    payload.heureDebut,
+    payload.heureFin,
+  );
+
+  const programmeHtml = config.programme
+    .map((p) => `<li style="margin-bottom: 6px;">${escapeHtml(p)}</li>`)
+    .join("\n");
+
+  const prerequisHtml = config.prerequis
+    .map((p) => `<li style="margin-bottom: 6px;">${escapeHtml(p)}</li>`)
+    .join("\n");
+
+  const adresseRow = payload.address
+    ? `<tr><td style="padding: 6px 0; color: #888; font-size: 13px;">📍 Lieu</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(payload.address)}</td></tr>`
+    : "";
+
+  const notesBlock = payload.notesClient
+    ? `<div style="margin: 24px 0; padding: 16px; background: ${COMPANY.creamColor}; border-left: 3px solid ${COMPANY.brandColor};">
+        <p style="margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888;">Note complémentaire</p>
+        <p style="margin: 0; font-size: 14px; color: #1a1a1a; line-height: 1.6;">${escapeHtml(payload.notesClient.trim())}</p>
+      </div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Confirmation chantier ${escapeHtml(config.shortLabel)}</title>
+</head>
+<body style="margin: 0; padding: 0; background: #f4f4f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; background: #fff;">
+
+    <div style="background: ${COMPANY.darkColor}; padding: 32px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px; color: ${COMPANY.brandColor}; letter-spacing: -0.5px;">⚡ ${escapeHtml(COMPANY.name)}</h1>
+      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Électricien agréé · Brabant wallon · Bruxelles · Wallonie</p>
+    </div>
+
+    <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
+      <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
+      <p style="margin: 0 0 24px; font-size: 15px;">Suite à votre acceptation du devis, je vous confirme la planification de votre chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong>.</p>
+
+      <table style="width: 100%; border-collapse: collapse; border-top: 2px solid ${COMPANY.brandColor}; border-bottom: 2px solid ${COMPANY.brandColor}; margin: 24px 0;">
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 100px;">📅 Dates</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateRange)}</td></tr>
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Horaires</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(horaires)}</td></tr>
+        ${adresseRow}
+      </table>
+
+      <h3 style="margin: 32px 0 12px; color: ${COMPANY.brandColor}; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Au programme</h3>
+      <ul style="margin: 0 0 24px; padding-left: 20px;">
+        ${programmeHtml}
+      </ul>
+
+      <h3 style="margin: 24px 0 12px; color: ${COMPANY.brandColor}; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">À prévoir avant le chantier</h3>
+      <ul style="margin: 0 0 24px; padding-left: 20px;">
+        ${prerequisHtml}
+      </ul>
+
+      ${notesBlock}
+
+      <p style="margin: 24px 0 16px; font-size: 14px; color: #555; font-style: italic;">Je vous appelle la veille pour finaliser les derniers détails.</p>
+
+      <p style="margin: 24px 0 24px; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
+
+      <p style="margin: 32px 0 4px; font-size: 15px;">Bien cordialement,</p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600;">${escapeHtml(COMPANY.ownerFirstName)}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export function emailSubjectChantier(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const range = formatPlageShort(payload.dateDebut, payload.dateFin);
+  return `Confirmation chantier ${config.shortLabel.toLowerCase()} — ${range}`;
+}
+
 // ---------------------------------------------------------------------------
 // Liens deep links (sms: / wa.me / mailto:)
 // ---------------------------------------------------------------------------
