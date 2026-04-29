@@ -301,7 +301,7 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
 
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, ${config.shortLabel.toLowerCase()} confirmé :`,
+    `Bonjour ${payload.clientName}, ${config.confirmedLabel} :`,
     `📅 ${formatDateLongNoYear(payload.dateIso)} - ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) {
