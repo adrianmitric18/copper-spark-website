@@ -54,6 +54,11 @@ interface TypeConfig {
   servicePath: string;
   /** Phrase d'introduction de la confirmation. */
   introLine: string;
+  /**
+   * Phrase complète "votre X est confirmé(e)" pour le SMS court — préformulée
+   * par type pour respecter accord de genre et casse des acronymes (RGIE, PV).
+   */
+  confirmedLabel: string;
 }
 
 const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
@@ -62,6 +67,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre rendez-vous devis",
     emailSubject: "Confirmation RDV devis",
     introLine: "Je vous confirme notre rendez-vous pour l'établissement de votre devis.",
+    confirmedLabel: "votre RDV pour devis est confirmé",
     programme: [
       "Visite des lieux et écoute de votre besoin",
       "Prise de mesures et photos techniques",
@@ -80,6 +86,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "votre visite technique",
     emailSubject: "Confirmation visite technique",
     introLine: "Je vous confirme notre visite technique sur place.",
+    confirmedLabel: "votre visite technique est confirmée",
     programme: [
       "Analyse de l'installation électrique existante",
       "Identification des points d'amélioration et risques éventuels",
@@ -98,6 +105,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre intervention de dépannage",
     emailSubject: "Confirmation intervention dépannage",
     introLine: "Je vous confirme notre intervention de dépannage.",
+    confirmedLabel: "votre dépannage est confirmé",
     programme: [
       "Diagnostic complet de la panne",
       "Réparation immédiate si la pièce est sur le camion",
@@ -116,6 +124,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "votre inspection RGIE",
     emailSubject: "Confirmation inspection RGIE",
     introLine: "Je vous confirme notre rendez-vous pour l'inspection RGIE de votre installation.",
+    confirmedLabel: "votre inspection RGIE est confirmée",
     programme: [
       "Contrôle complet de la conformité au Règlement Général sur les Installations Électriques",
       "Mesures d'isolement, de continuité et de mise à la terre",
@@ -135,6 +144,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "l'installation de votre borne de recharge",
     emailSubject: "Confirmation installation borne de recharge",
     introLine: "Je vous confirme l'installation de votre borne de recharge pour véhicule électrique.",
+    confirmedLabel: "votre installation de borne est confirmée",
     programme: [
       "Pose de la borne (Hager Witty Pro recommandée)",
       "Création d'un sous-tableau dédié, conforme RGIE",
@@ -154,6 +164,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "l'installation de vos panneaux photovoltaïques",
     emailSubject: "Confirmation installation panneaux photovoltaïques",
     introLine: "Je vous confirme notre intervention pour vos panneaux photovoltaïques.",
+    confirmedLabel: "votre installation de panneaux photovoltaïques est confirmée",
     programme: [
       "Étude de faisabilité technique sur place",
       "Repérage des points de fixation et passages de câbles",
@@ -173,6 +184,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre rendez-vous",
     emailSubject: "Confirmation RDV",
     introLine: "Je vous confirme notre rendez-vous.",
+    confirmedLabel: "votre rendez-vous est confirmé",
     programme: ["Échange sur place selon votre demande"],
     prerequis: ["Accès aux pièces ou installations concernées"],
     servicePath: "/services",
@@ -244,28 +256,31 @@ function formatHeureFr(heure: string): string {
 }
 
 /**
- * Phrase "Je vous appelle X min avant" si délai défini, sinon chaîne vide.
+ * Formate une durée en minutes en français naturel.
+ *   15  → "15 minutes"
+ *   60  → "1 heure"
+ *   90  → "1 h 30"
+ *   120 → "2 heures"
+ *   150 → "2 h 30"
+ *   240 → "4 heures"
+ * Format français avec espaces ("1 h 30", pas "1h30") pour cohérence.
+ */
+function formatDuree(minutes: number): string {
+  if (minutes < 60) return `${minutes} minutes`;
+  if (minutes === 60) return "1 heure";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h} heures`;
+  return `${h} h ${m}`;
+}
+
+/**
+ * Phrase "Je vous appelle X avant mon arrivée" si délai défini, sinon "".
  * Le caller décide d'inclure ou non la ligne dans son template.
  */
 function phraseAppelDelai(delaiMinutes: number | null | undefined): string {
   if (!delaiMinutes || delaiMinutes <= 0) return "";
-  return `Je vous appelle ${delaiMinutes} min avant mon arrivée.`;
-}
-
-function formatDureeShort(minutes: number): string {
-  if (minutes < 60) return `~${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (m === 0) return h === 1 ? "~1 h" : `~${h} h`;
-  return `~${h}h${String(m).padStart(2, "0")}`;
-}
-
-function formatDureeLong(minutes: number): string {
-  if (minutes < 60) return `${minutes} minutes`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (m === 0) return h === 1 ? "1 heure" : `${h} heures`;
-  return `${h}h${String(m).padStart(2, "0")}`;
+  return `Je vous appelle ${formatDuree(delaiMinutes)} avant mon arrivée.`;
 }
 
 /** Tronque une adresse longue pour SMS en retirant le code postal. */
@@ -281,12 +296,12 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
   const config = TYPE_CONFIGS[payload.typeVisite];
   const dureeAvecAppel =
     payload.delaiAppelMinutes && payload.delaiAppelMinutes > 0
-      ? `⏱️ ${formatDureeShort(payload.dureeMinutes)} | J'appelle ${payload.delaiAppelMinutes} min avant`
-      : `⏱️ ${formatDureeShort(payload.dureeMinutes)}`;
+      ? `⏱️ ~${formatDuree(payload.dureeMinutes)} | J'appelle ${formatDuree(payload.delaiAppelMinutes)} avant`
+      : `⏱️ ~${formatDuree(payload.dureeMinutes)}`;
 
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, ${config.shortLabel.toLowerCase()} confirmé :`,
+    `Bonjour ${payload.clientName}, ${config.confirmedLabel} :`,
     `📅 ${formatDateLongNoYear(payload.dateIso)} - ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) {
@@ -321,7 +336,7 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
     "",
     `📅 *${dateFr}*`,
     `🕐 *${formatHeureFr(payload.heure)}*${adresseBlock}`,
-    `⏱️ *Durée estimée : ${formatDureeLong(payload.dureeMinutes)}*`,
+    `⏱️ *Durée estimée : ~${formatDuree(payload.dureeMinutes)}*`,
     "",
     `🔧 *Au programme :*`,
     programme,
@@ -360,7 +375,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
     `Heure   : ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.address) lines.push(`Lieu    : ${payload.address}`);
-  lines.push(`Durée   : environ ${formatDureeLong(payload.dureeMinutes)}`);
+  lines.push(`Durée   : environ ${formatDuree(payload.dureeMinutes)}`);
   lines.push("");
   lines.push("AU PROGRAMME");
   config.programme.forEach((p) => lines.push(`- ${p}`));
@@ -376,11 +391,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
   lines.push(`${COMPANY.siteUrl}${config.servicePath}`);
   lines.push("");
   lines.push("Bien cordialement,");
-  lines.push(`${COMPANY.owner}`);
-  lines.push(`${COMPANY.name}`);
-  lines.push(`${COMPANY.tel} · ${COMPANY.email}`);
-  lines.push(`${COMPANY.siteUrl}`);
-  lines.push(`${COMPANY.vat} · Électricien agréé`);
+  lines.push(COMPANY.ownerFirstName);
   return lines.join("\n");
 }
 
@@ -431,7 +442,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 90px;">📅 Date</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateFr)}</td></tr>
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Heure</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(formatHeureFr(payload.heure))}</td></tr>
         ${adresseRow}
-        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">⏱️ Durée</td><td style="padding: 6px 0; font-weight: 600;">environ ${escapeHtml(formatDureeLong(payload.dureeMinutes))}</td></tr>
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">⏱️ Durée</td><td style="padding: 6px 0; font-weight: 600;">environ ${escapeHtml(formatDuree(payload.dureeMinutes))}</td></tr>
       </table>
 
       <h3 style="margin: 32px 0 12px; color: ${COMPANY.brandColor}; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">Au programme</h3>
@@ -446,18 +457,10 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 
       ${phraseAppelHtml}
 
-      <p style="margin: 24px 0 0; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
-    </div>
+      <p style="margin: 24px 0 24px; font-size: 14px;">En savoir plus sur ce service : <a href="${COMPANY.siteUrl}${config.servicePath}" style="color: ${COMPANY.brandColor}; text-decoration: none; font-weight: 600;">${COMPANY.siteUrl}${config.servicePath}</a></p>
 
-    <div style="background: ${COMPANY.creamColor}; padding: 24px; border-top: 1px solid #e5e5e5;">
-      <p style="margin: 0 0 8px; font-size: 14px;"><strong style="color: ${COMPANY.darkColor};">${escapeHtml(COMPANY.owner)}</strong></p>
-      <p style="margin: 0 0 12px; font-size: 13px; color: #555;">${escapeHtml(COMPANY.name)} – Électricien agréé</p>
-      <p style="margin: 0; font-size: 13px; color: #555; line-height: 1.8;">
-        📱 <a href="tel:${COMPANY.telE164}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.tel}</a><br>
-        ✉️ <a href="mailto:${COMPANY.email}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.email}</a><br>
-        🌐 <a href="${COMPANY.siteUrl}" style="color: ${COMPANY.darkColor}; text-decoration: none;">${COMPANY.site}</a>
-      </p>
-      <p style="margin: 12px 0 0; font-size: 11px; color: #888;">${escapeHtml(COMPANY.vat)} · Court-Saint-Étienne, Belgique</p>
+      <p style="margin: 32px 0 4px; font-size: 15px;">Bien cordialement,</p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600;">${escapeHtml(COMPANY.ownerFirstName)}</p>
     </div>
   </div>
 </body>
