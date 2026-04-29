@@ -881,6 +881,151 @@ export function emailSubjectChantier(payload: ChantierProgrammePayload): string 
   return `Confirmation chantier ${config.shortLabel.toLowerCase()} — ${range}`;
 }
 
+// ===========================================================================
+// CHANTIERS — Rectifications (modification de planning)
+// ===========================================================================
+// Ton mesuré "Mise à jour de votre planning" plutôt que "MODIFICATION".
+// Évite l'effet alarmiste auprès du client.
+
+export function smsTemplateChantierRectification(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const lines = [
+    `🔌 ${COMPANY.name}`,
+    `Bonjour ${payload.clientName}, mise à jour du planning de votre chantier ${config.shortLabel.toLowerCase()} :`,
+    `📅 ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}`,
+    `🕐 ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
+  ];
+  if (payload.address) {
+    lines.push(`📍 ${shortenAddress(payload.address)}`);
+  }
+  lines.push("Merci de noter ces nouvelles dates.");
+  lines.push(`🌐 ${COMPANY.site}`);
+  lines.push(`${COMPANY.owner} - ${COMPANY.tel}`);
+  return lines.join("\n");
+}
+
+export function whatsappTemplateChantierRectification(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
+  const notesBlock = payload.notesClient
+    ? `\n📝 *Note :* ${payload.notesClient.trim()}\n`
+    : "";
+
+  return [
+    `⚡ *${COMPANY.name}*`,
+    "",
+    `Bonjour ${payload.clientName} 👋`,
+    "",
+    `Je reviens vers vous pour une *mise à jour du planning* de votre chantier *${config.shortLabel.toLowerCase()}*.`,
+    "",
+    `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
+    `🕐 *${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}*${adresseBlock}`,
+    notesBlock,
+    "Le reste de l'organisation prévue ne change pas. Si une question, n'hésitez pas.",
+    "",
+    `À bientôt,`,
+    `${COMPANY.owner}`,
+    `🌐 ${COMPANY.site}`,
+    `📱 ${COMPANY.tel}`,
+  ].join("\n");
+}
+
+export function emailPlaintextChantierRectification(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+
+  const lines = [
+    `Bonjour ${payload.clientName},`,
+    "",
+    `Je reviens vers vous pour une mise à jour du planning de votre chantier ${config.shortLabel.toLowerCase()}.`,
+    "",
+    "NOUVEAU PLANNING",
+    `Dates    : ${dateRange}`,
+    `Horaires : ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
+  ];
+  if (payload.address) lines.push(`Lieu     : ${payload.address}`);
+  if (payload.notesClient) {
+    lines.push("");
+    lines.push("NOTE COMPLÉMENTAIRE");
+    lines.push(payload.notesClient.trim());
+  }
+  lines.push("");
+  lines.push("Le reste de l'organisation prévue ne change pas — programme et points à prévoir restent identiques.");
+  lines.push("");
+  lines.push("Si une question, n'hésitez pas à me joindre.");
+  lines.push("");
+  lines.push("Bien cordialement,");
+  lines.push(COMPANY.ownerFirstName);
+  return lines.join("\n");
+}
+
+export function emailHtmlChantierRectification(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
+  const horaires = formatHorairesJournaliers(
+    payload.dateDebut,
+    payload.dateFin,
+    payload.heureDebut,
+    payload.heureFin,
+  );
+
+  const adresseRow = payload.address
+    ? `<tr><td style="padding: 6px 0; color: #888; font-size: 13px;">📍 Lieu</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(payload.address)}</td></tr>`
+    : "";
+
+  const notesBlock = payload.notesClient
+    ? `<div style="margin: 24px 0; padding: 16px; background: ${COMPANY.creamColor}; border-left: 3px solid ${COMPANY.brandColor};">
+        <p style="margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888;">Note complémentaire</p>
+        <p style="margin: 0; font-size: 14px; color: #1a1a1a; line-height: 1.6;">${escapeHtml(payload.notesClient.trim())}</p>
+      </div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mise à jour planning chantier ${escapeHtml(config.shortLabel)}</title>
+</head>
+<body style="margin: 0; padding: 0; background: #f4f4f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; background: #fff;">
+
+    <div style="background: ${COMPANY.darkColor}; padding: 32px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 24px; color: ${COMPANY.brandColor}; letter-spacing: -0.5px;">⚡ ${escapeHtml(COMPANY.name)}</h1>
+      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Mise à jour de votre planning</p>
+    </div>
+
+    <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
+      <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
+      <p style="margin: 0 0 24px; font-size: 15px;">Je reviens vers vous pour une <strong>mise à jour du planning</strong> de votre chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong>.</p>
+
+      <h3 style="margin: 24px 0 12px; color: ${COMPANY.brandColor}; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nouveau planning</h3>
+
+      <table style="width: 100%; border-collapse: collapse; border-top: 2px solid ${COMPANY.brandColor}; border-bottom: 2px solid ${COMPANY.brandColor}; margin: 0 0 24px;">
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 100px;">📅 Dates</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateRange)}</td></tr>
+        <tr><td style="padding: 6px 0; color: #888; font-size: 13px;">🕐 Horaires</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(horaires)}</td></tr>
+        ${adresseRow}
+      </table>
+
+      ${notesBlock}
+
+      <p style="margin: 24px 0 16px; font-size: 14px; color: #555;">Le reste de l'organisation prévue ne change pas — programme et points à prévoir restent identiques.</p>
+
+      <p style="margin: 16px 0 24px; font-size: 14px; color: #555;">Si une question, n'hésitez pas à me joindre.</p>
+
+      <p style="margin: 32px 0 4px; font-size: 15px;">Bien cordialement,</p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600;">${escapeHtml(COMPANY.ownerFirstName)}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export function emailSubjectChantierRectification(payload: ChantierProgrammePayload): string {
+  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const range = formatPlageShort(payload.dateDebut, payload.dateFin);
+  return `Mise à jour planning ${config.shortLabel.toLowerCase()} — ${range}`;
+}
+
 // ---------------------------------------------------------------------------
 // Liens deep links (sms: / wa.me / mailto:)
 // ---------------------------------------------------------------------------
