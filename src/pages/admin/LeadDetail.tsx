@@ -13,11 +13,19 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
 import ChecklistVisite from "@/components/admin/ChecklistVisite";
+import InterventionDialog from "@/components/admin/InterventionDialog";
+import {
+  createIntervention,
+  fetchInterventionsForLead,
+  type Intervention,
+  type InterventionFormValues,
+  type TypeIntervention,
+} from "@/lib/admin/interventions";
 import {
   sendRdvConfirmationEmails,
   sendRdvModificationEmail,
@@ -72,6 +80,12 @@ const LeadDetail = () => {
   const [submittingRdv, setSubmittingRdv] = useState(false);
   const [cancellingRdv, setCancellingRdv] = useState(false);
 
+  // Interventions (chantiers programmés) — distinct des RDV exploratoires
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [interventionDialogOpen, setInterventionDialogOpen] = useState(false);
+  const [submittingIntervention, setSubmittingIntervention] = useState(false);
+  const [lastCreatedIntervention, setLastCreatedIntervention] = useState<Intervention | null>(null);
+
   useEffect(() => {
     if (!ready || !id) return;
     let cancelled = false;
@@ -79,9 +93,10 @@ const LeadDetail = () => {
 
     (async () => {
       try {
-        const [loadedLead, loadedRdv] = await Promise.all([
+        const [loadedLead, loadedRdv, loadedInterventions] = await Promise.all([
           fetchLeadById(id),
           fetchActiveRdvForLead(id),
+          fetchInterventionsForLead(id),
         ]);
 
         if (cancelled) return;
@@ -95,6 +110,7 @@ const LeadDetail = () => {
         setLead(loadedLead);
         setNotes(loadedLead.notes_internes || loadedLead.notes || "");
         setRdv((loadedRdv as RendezVous | null) ?? null);
+        setInterventions(loadedInterventions);
 
         if (loadedLead.photo_urls?.length) {
           const urls = await fetchLeadPhotoSignedUrls(loadedLead.photo_urls);
@@ -279,6 +295,38 @@ const LeadDetail = () => {
     }
   };
 
+  // ==== Interventions (chantiers programmés) ====
+  // Devine un type d'intervention par défaut depuis les services du lead.
+  // Mapping volontairement simple — l'admin peut toujours surcharger dans le dialog.
+  const guessTypeIntervention = (): TypeIntervention => {
+    const services = (lead?.services ?? []).map((s) => s.toLowerCase()).join(" ");
+    if (services.includes("rgie") || services.includes("conformit")) return "Inspection RGIE";
+    if (services.includes("dépann") || services.includes("urgence")) return "Dépannage";
+    if (services.includes("borne") || services.includes("recharge")) return "Installation borne de recharge";
+    if (services.includes("photovolta") || services.includes("panneau")) return "Installation panneaux photovoltaïques";
+    if (services.includes("rénovation") || services.includes("installation")) return "Visite technique";
+    return "Autre";
+  };
+
+  const handleInterventionSubmit = async (values: InterventionFormValues) => {
+    if (!lead) return;
+    setSubmittingIntervention(true);
+    try {
+      const created = await createIntervention({ leadId: lead.id, ...values });
+      setInterventions((prev) => [created, ...prev]);
+      setLastCreatedIntervention(created);
+      setInterventionDialogOpen(false);
+      toast.success("Chantier programmé", {
+        description: `${created.type_intervention} — ${created.date_debut}${created.date_fin !== created.date_debut ? ` → ${created.date_fin}` : ""}`,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "création impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setSubmittingIntervention(false);
+    }
+  };
+
   const handleRdvCancel = async () => {
     if (!lead || !rdv) return;
     const info = leadInfo();
@@ -426,6 +474,35 @@ const LeadDetail = () => {
           </div>
         </Card>
       )}
+
+      {/* Programmer le chantier (devis accepté → blocage de dates) */}
+      <Card className="p-6 space-y-4 border-primary/30">
+        <h2 className="font-semibold text-lg flex items-center gap-2">
+          <Hammer className="w-5 h-5 text-primary" />
+          Programmer le chantier
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Bloque les dates du chantier (multi-jours possible) et envoie une
+          confirmation pro au client par SMS, WhatsApp ou email.
+        </p>
+        <Button
+          onClick={() => setInterventionDialogOpen(true)}
+          variant="copper"
+          size="lg"
+          className="min-h-[48px]"
+        >
+          <Hammer className="w-4 h-4" /> Programmer le chantier
+        </Button>
+      </Card>
+
+      {/* Dialog de création/édition d'intervention */}
+      <InterventionDialog
+        open={interventionDialogOpen}
+        onOpenChange={setInterventionDialogOpen}
+        defaultType={guessTypeIntervention()}
+        onSubmit={handleInterventionSubmit}
+        submitting={submittingIntervention}
+      />
 
       {/* Planifier / modifier RDV */}
       <Card className="p-6 space-y-4 border-[hsl(var(--copper))]/30">
