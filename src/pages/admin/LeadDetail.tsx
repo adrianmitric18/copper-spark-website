@@ -450,7 +450,9 @@ const LeadDetail = () => {
   const encodedBody = encodeURIComponent(quickMessage.body);
   const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
   const smsHref = `sms:${lead.phone}?body=${encodedBody}`;
-  const emailHref = `mailto:${lead.email}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
+  // mailto utilise encodeURIComponent (espaces → %20) pour conformité RFC 6068.
+  // Sinon URLSearchParams produit "+" qui s'affiche littéralement sur Gmail mobile.
+  const emailHref = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
 
   return (
     <AdminShell email={user.email} mobileTitle={lead.name}>

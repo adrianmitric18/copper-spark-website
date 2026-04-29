@@ -59,6 +59,13 @@ interface TypeConfig {
    * par type pour respecter accord de genre et casse des acronymes (RGIE, PV).
    */
   confirmedLabel: string;
+  /**
+   * Label utilisé dans les templates chantier (confirmation/rectification/
+   * annulation), ex : "votre chantier {chantierLabel} est planifié".
+   * Préformulé par type pour préserver la casse des acronymes (RGIE) et
+   * dérouler les abréviations (PV → photovoltaïques).
+   */
+  chantierLabel: string;
 }
 
 const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
@@ -68,6 +75,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation RDV devis",
     introLine: "Je vous confirme notre rendez-vous pour l'établissement de votre devis.",
     confirmedLabel: "votre RDV pour devis est confirmé",
+    chantierLabel: "RDV pour devis",
     programme: [
       "Visite des lieux et écoute de votre besoin",
       "Prise de mesures et photos techniques",
@@ -87,6 +95,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation visite technique",
     introLine: "Je vous confirme notre visite technique sur place.",
     confirmedLabel: "votre visite technique est confirmée",
+    chantierLabel: "visite technique",
     programme: [
       "Analyse de l'installation électrique existante",
       "Identification des points d'amélioration et risques éventuels",
@@ -106,6 +115,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation intervention dépannage",
     introLine: "Je vous confirme notre intervention de dépannage.",
     confirmedLabel: "votre dépannage est confirmé",
+    chantierLabel: "dépannage",
     programme: [
       "Diagnostic complet de la panne",
       "Réparation immédiate si la pièce est sur le camion",
@@ -125,6 +135,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation inspection RGIE",
     introLine: "Je vous confirme notre rendez-vous pour l'inspection RGIE de votre installation.",
     confirmedLabel: "votre inspection RGIE est confirmée",
+    chantierLabel: "inspection RGIE",
     programme: [
       "Contrôle complet de la conformité au Règlement Général sur les Installations Électriques",
       "Mesures d'isolement, de continuité et de mise à la terre",
@@ -144,7 +155,8 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "l'installation de votre borne de recharge",
     emailSubject: "Confirmation installation borne de recharge",
     introLine: "Je vous confirme l'installation de votre borne de recharge pour véhicule électrique.",
-    confirmedLabel: "votre installation de borne est confirmée",
+    confirmedLabel: "votre installation de borne de recharge est confirmée",
+    chantierLabel: "installation de borne de recharge",
     programme: [
       "Pose de la borne (Hager Witty Pro recommandée)",
       "Création d'un sous-tableau dédié, conforme RGIE",
@@ -165,6 +177,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation installation panneaux photovoltaïques",
     introLine: "Je vous confirme notre intervention pour vos panneaux photovoltaïques.",
     confirmedLabel: "votre installation de panneaux photovoltaïques est confirmée",
+    chantierLabel: "installation de panneaux photovoltaïques",
     programme: [
       "Étude de faisabilité technique sur place",
       "Repérage des points de fixation et passages de câbles",
@@ -185,6 +198,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     emailSubject: "Confirmation RDV",
     introLine: "Je vous confirme notre rendez-vous.",
     confirmedLabel: "votre rendez-vous est confirmé",
+    chantierLabel: "rendez-vous",
     programme: ["Échange sur place selon votre demande"],
     prerequis: ["Accès aux pièces ou installations concernées"],
     servicePath: "/services",
@@ -703,7 +717,7 @@ export function smsTemplateChantier(payload: ChantierProgrammePayload): string {
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, votre chantier ${config.shortLabel.toLowerCase()} est planifié :`,
+    `Bonjour ${payload.clientName}, votre chantier ${config.chantierLabel} est planifié :`,
     `📅 ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}`,
     `🕐 ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
   ];
@@ -734,7 +748,7 @@ export function whatsappTemplateChantier(payload: ChantierProgrammePayload): str
     "",
     `Bonjour ${payload.clientName} 👋`,
     "",
-    `Je vous confirme la planification de votre chantier *${config.shortLabel.toLowerCase()}*.`,
+    `Je vous confirme la planification de votre chantier *${config.chantierLabel}*.`,
     "",
     `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
     `🕐 *${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}*${adresseBlock}`,
@@ -765,7 +779,7 @@ export function emailPlaintextChantier(payload: ChantierProgrammePayload): strin
   const lines = [
     `Bonjour ${payload.clientName},`,
     "",
-    `Suite à votre acceptation du devis, je vous confirme la planification de votre chantier ${config.shortLabel.toLowerCase()}.`,
+    `Suite à votre acceptation du devis, je vous confirme la planification de votre chantier ${config.chantierLabel}.`,
     "",
     "INFORMATIONS PRATIQUES",
     `Dates    : ${dateRange}`,
@@ -843,7 +857,7 @@ export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
 
     <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
       <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
-      <p style="margin: 0 0 24px; font-size: 15px;">Suite à votre acceptation du devis, je vous confirme la planification de votre chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong>.</p>
+      <p style="margin: 0 0 24px; font-size: 15px;">Suite à votre acceptation du devis, je vous confirme la planification de votre chantier <strong>${escapeHtml(config.chantierLabel)}</strong>.</p>
 
       <table style="width: 100%; border-collapse: collapse; border-top: 2px solid ${COMPANY.brandColor}; border-bottom: 2px solid ${COMPANY.brandColor}; margin: 24px 0;">
         <tr><td style="padding: 6px 0; color: #888; font-size: 13px; width: 100px;">📅 Dates</td><td style="padding: 6px 0; font-weight: 600;">${escapeHtml(dateRange)}</td></tr>
@@ -878,7 +892,7 @@ export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
 export function emailSubjectChantier(payload: ChantierProgrammePayload): string {
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
-  return `Confirmation chantier ${config.shortLabel.toLowerCase()} — ${range}`;
+  return `Confirmation chantier ${config.chantierLabel} — ${range}`;
 }
 
 // ===========================================================================
@@ -891,7 +905,7 @@ export function smsTemplateChantierRectification(payload: ChantierProgrammePaylo
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, mise à jour du planning de votre chantier ${config.shortLabel.toLowerCase()} :`,
+    `Bonjour ${payload.clientName}, mise à jour du planning de votre chantier ${config.chantierLabel} :`,
     `📅 ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}`,
     `🕐 ${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}`,
   ];
@@ -916,7 +930,7 @@ export function whatsappTemplateChantierRectification(payload: ChantierProgramme
     "",
     `Bonjour ${payload.clientName} 👋`,
     "",
-    `Je reviens vers vous pour une *mise à jour du planning* de votre chantier *${config.shortLabel.toLowerCase()}*.`,
+    `Je reviens vers vous pour une *mise à jour du planning* de votre chantier *${config.chantierLabel}*.`,
     "",
     `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
     `🕐 *${formatHorairesJournaliers(payload.dateDebut, payload.dateFin, payload.heureDebut, payload.heureFin)}*${adresseBlock}`,
@@ -937,7 +951,7 @@ export function emailPlaintextChantierRectification(payload: ChantierProgrammePa
   const lines = [
     `Bonjour ${payload.clientName},`,
     "",
-    `Je reviens vers vous pour une mise à jour du planning de votre chantier ${config.shortLabel.toLowerCase()}.`,
+    `Je reviens vers vous pour une mise à jour du planning de votre chantier ${config.chantierLabel}.`,
     "",
     "NOUVEAU PLANNING",
     `Dates    : ${dateRange}`,
@@ -996,7 +1010,7 @@ export function emailHtmlChantierRectification(payload: ChantierProgrammePayload
 
     <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
       <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
-      <p style="margin: 0 0 24px; font-size: 15px;">Je reviens vers vous pour une <strong>mise à jour du planning</strong> de votre chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong>.</p>
+      <p style="margin: 0 0 24px; font-size: 15px;">Je reviens vers vous pour une <strong>mise à jour du planning</strong> de votre chantier <strong>${escapeHtml(config.chantierLabel)}</strong>.</p>
 
       <h3 style="margin: 24px 0 12px; color: ${COMPANY.brandColor}; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Nouveau planning</h3>
 
@@ -1023,7 +1037,7 @@ export function emailHtmlChantierRectification(payload: ChantierProgrammePayload
 export function emailSubjectChantierRectification(payload: ChantierProgrammePayload): string {
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
-  return `Mise à jour planning ${config.shortLabel.toLowerCase()} — ${range}`;
+  return `Mise à jour planning ${config.chantierLabel} — ${range}`;
 }
 
 // ===========================================================================
@@ -1048,7 +1062,7 @@ export function smsTemplateChantierAnnulation(payload: ChantierAnnulationPayload
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const lines = [
     `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, je dois annuler le chantier ${config.shortLabel.toLowerCase()} prévu ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}.`,
+    `Bonjour ${payload.clientName}, je dois annuler le chantier ${config.chantierLabel} prévu ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}.`,
   ];
   if (payload.raison) lines.push(`Raison : ${payload.raison.trim()}`);
   lines.push("Je vous recontacte rapidement pour reprogrammer.");
@@ -1066,7 +1080,7 @@ export function whatsappTemplateChantierAnnulation(payload: ChantierAnnulationPa
     "",
     `Bonjour ${payload.clientName},`,
     "",
-    `Je dois malheureusement *annuler* le chantier *${config.shortLabel.toLowerCase()}* prévu :`,
+    `Je dois malheureusement *annuler* le chantier *${config.chantierLabel}* prévu :`,
     "",
     `📅 *${formatPlageLong(payload.dateDebut, payload.dateFin)}*`,
     raisonBlock,
@@ -1085,7 +1099,7 @@ export function emailPlaintextChantierAnnulation(payload: ChantierAnnulationPayl
   const lines = [
     `Bonjour ${payload.clientName},`,
     "",
-    `Je dois malheureusement annuler le chantier ${config.shortLabel.toLowerCase()} qui était prévu :`,
+    `Je dois malheureusement annuler le chantier ${config.chantierLabel} qui était prévu :`,
     "",
     `Dates : ${dateRange}`,
   ];
@@ -1128,7 +1142,7 @@ export function emailHtmlChantierAnnulation(payload: ChantierAnnulationPayload):
     <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
       <p style="margin: 0 0 16px; font-size: 16px;">Bonjour <strong>${escapeHtml(payload.clientName)}</strong>,</p>
 
-      <p style="margin: 0 0 16px; font-size: 15px;">Je dois malheureusement <strong>annuler</strong> le chantier <strong>${escapeHtml(config.shortLabel.toLowerCase())}</strong> qui était prévu :</p>
+      <p style="margin: 0 0 16px; font-size: 15px;">Je dois malheureusement <strong>annuler</strong> le chantier <strong>${escapeHtml(config.chantierLabel)}</strong> qui était prévu :</p>
 
       <p style="margin: 16px 0; padding: 12px 16px; background: ${COMPANY.creamColor}; border-left: 3px solid ${COMPANY.brandColor}; font-size: 15px; font-weight: 600;">📅 ${escapeHtml(dateRange)}</p>
 
@@ -1149,7 +1163,7 @@ export function emailHtmlChantierAnnulation(payload: ChantierAnnulationPayload):
 export function emailSubjectChantierAnnulation(payload: ChantierAnnulationPayload): string {
   const config = TYPE_CONFIGS[payload.typeIntervention];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
-  return `Annulation chantier ${config.shortLabel.toLowerCase()} — ${range}`;
+  return `Annulation chantier ${config.chantierLabel} — ${range}`;
 }
 
 // ---------------------------------------------------------------------------

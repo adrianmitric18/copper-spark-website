@@ -152,35 +152,38 @@ const Interventions = () => {
           </div>
         </div>
 
-        {/* Filtres */}
-        <div className="flex flex-wrap gap-2">
-          {FILTER_OPTIONS.map((opt) => {
-            const active = filter === opt.value;
-            const count = counts[opt.value];
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setFilter(opt.value)}
-                className={`h-10 px-4 rounded-md border text-sm font-medium transition flex items-center gap-2 ${
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/40"
-                }`}
-              >
-                {opt.label}
-                <span
-                  className={`text-xs px-1.5 py-0.5 rounded-full ${
+        {/* Filtres — sticky top sur mobile pour rester accessible au scroll.
+            Sur desktop, comportement standard. */}
+        <div className="sticky top-14 md:top-0 -mx-4 md:mx-0 px-4 md:px-0 py-2 md:py-0 bg-background/95 backdrop-blur md:bg-transparent md:backdrop-blur-none z-10 md:z-auto border-b md:border-b-0 border-border/50">
+          <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible scrollbar-thin pb-1 md:pb-0">
+            {FILTER_OPTIONS.map((opt) => {
+              const active = filter === opt.value;
+              const count = counts[opt.value];
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFilter(opt.value)}
+                  className={`shrink-0 h-11 px-4 rounded-md border text-sm font-medium transition flex items-center gap-2 ${
                     active
-                      ? "bg-primary-foreground/20"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border hover:border-primary/40"
                   }`}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  {opt.label}
+                  <span
+                    className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      active
+                        ? "bg-primary-foreground/20"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Liste */}
@@ -205,9 +208,9 @@ const Interventions = () => {
                 <Link
                   key={it.id}
                   to={`/admin/lead/${it.lead_id}`}
-                  className="block group"
+                  className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
                 >
-                  <Card className="p-4 hover:border-primary/40 transition-colors group-hover:shadow-sm">
+                  <Card className="p-4 min-h-[88px] hover:border-primary/40 active:bg-muted/40 transition-colors group-hover:shadow-sm">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="min-w-0">
                         <p className="font-semibold truncate">
@@ -225,15 +228,17 @@ const Interventions = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5 capitalize">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {sameDay
-                          ? formatDateLong(it.date_debut)
-                          : `${formatDateLong(it.date_debut)} → ${formatDateLong(it.date_fin)}`}
+                        <Calendar className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">
+                          {sameDay
+                            ? formatDateLong(it.date_debut)
+                            : `${formatDateLong(it.date_debut)} → ${formatDateLong(it.date_fin)}`}
+                        </span>
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
                         {formatHeure(it.heure_debut.slice(0, 5))}
                         {" - "}
                         {formatHeure(it.heure_fin.slice(0, 5))}

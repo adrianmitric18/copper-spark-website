@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Menu, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/admin/layout/Sidebar";
 import CommandPalette from "@/admin/components/CommandPalette";
@@ -13,13 +14,33 @@ interface AdminShellProps {
 }
 
 /**
+ * Routes "racine" qui affichent le bouton menu (hamburger) à gauche du topbar.
+ * Toutes les autres routes admin sont considérées comme sous-pages et
+ * affichent un bouton retour intelligent à la place.
+ */
+const ROOT_ADMIN_ROUTES = new Set<string>([
+  "/admin",
+  "/admin/pipeline",
+  "/admin/rdv",
+  "/admin/rdv-rapide",
+  "/admin/interventions",
+  "/admin/chantiers",
+  "/admin/avis",
+]);
+
+/**
  * Layout principal de la nouvelle interface admin.
  *
  * Desktop : sidebar verticale fixe à gauche, contenu à droite.
  * Mobile : sidebar cachée par défaut, accessible via bouton menu en haut.
+ *           Sur les sous-pages (fiche lead, éditeur chantier...), le menu
+ *           est remplacé par un bouton retour automatique.
  */
 const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isRootRoute = ROOT_ADMIN_ROUTES.has(location.pathname);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -49,17 +70,42 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
       {/* Zone principale */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Topbar mobile uniquement */}
-        <div className="md:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/50 flex items-center gap-3 px-4 h-14">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Ouvrir le menu"
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+        <div className="md:hidden sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border/50 flex items-center gap-2 px-3 h-14">
+          {isRootRoute ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Ouvrir le menu"
+              className="min-h-[44px] min-w-[44px]"
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              aria-label="Retour à la page précédente"
+              className="min-h-[44px] min-w-[44px]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          )}
           {mobileTitle && (
-            <p className="font-semibold truncate">{mobileTitle}</p>
+            <p className="font-semibold truncate flex-1">{mobileTitle}</p>
+          )}
+          {/* Sur les sous-pages, raccourci menu hamburger en bout de barre */}
+          {!isRootRoute && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Ouvrir le menu"
+              className="min-h-[44px] min-w-[44px]"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
           )}
         </div>
 

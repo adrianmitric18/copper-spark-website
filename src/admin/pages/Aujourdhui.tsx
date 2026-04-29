@@ -218,8 +218,9 @@ const Aujourdhui = () => {
           <SkeletonContent />
         ) : (
           <>
-            {/* KPIs row */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {/* KPIs row — 2 cols mobile / 3 cols tablette / 5 cols desktop large.
+                Sur mobile : 5 cards = 2/2/1 lignes. Sur tablette : 3/2 lignes. */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               <Card className="p-4 space-y-1">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs">
                   <Users className="w-3.5 h-3.5" />

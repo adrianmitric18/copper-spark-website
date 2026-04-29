@@ -128,7 +128,9 @@ const InterventionDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 gap-4 sm:gap-5"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Hammer className="w-5 h-5 text-primary" />
@@ -176,8 +178,9 @@ const InterventionDialog = ({
             )}
           </div>
 
-          {/* Dates début / fin */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Dates début / fin — 2 cols dès 380px (sinon stack) pour éviter
+              l'écrasement sur petits écrans (iPhone SE, Galaxy A...). */}
+          <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Date début *</Label>
               <Input
@@ -219,8 +222,8 @@ const InterventionDialog = ({
             </div>
           )}
 
-          {/* Heures début / fin */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Heures début / fin — même breakpoint que les dates pour cohérence. */}
+          <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Heure début *</Label>
               <Input
