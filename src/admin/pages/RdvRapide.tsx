@@ -37,6 +37,8 @@ import {
   createRdvRapide,
   TYPE_VISITES,
   DUREE_DEFAUT_PAR_TYPE,
+  DELAI_APPEL_DEFAUT_PAR_TYPE,
+  DELAI_APPEL_PRESETS,
   type TypeVisite,
 } from "@/lib/admin/rdv-rapide";
 import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
@@ -71,6 +73,12 @@ const formSchema = z.object({
   heureRdv: z.string().min(1, "Heure requise"),
   typeVisite: z.enum(TYPE_VISITES),
   dureeMinutes: z.coerce.number().int().min(15).max(480),
+  delaiAppelMinutes: z
+    .union([
+      z.literal(""),
+      z.coerce.number().int().min(1, "Min 1 min").max(240, "Max 240 min"),
+    ])
+    .optional(),
   address: z.string().max(300).optional(),
   notes: z.string().max(1000).optional(),
 });
@@ -85,6 +93,7 @@ interface RdvSummary {
   heureRdv: string;
   typeVisite: TypeVisite;
   dureeMinutes: number;
+  delaiAppelMinutes?: number | null;
   address?: string;
   leadId: string;
 }
@@ -109,6 +118,7 @@ const RdvRapide = () => {
       heureRdv: "10:00",
       typeVisite: "Devis",
       dureeMinutes: 60,
+      delaiAppelMinutes: 30,
       address: "",
       notes: "",
     },
@@ -117,12 +127,19 @@ const RdvRapide = () => {
   // Auto-suggère la durée selon le type sélectionné, tant que l'utilisateur
   // n'a pas modifié manuellement la durée.
   const [autoDuree, setAutoDuree] = useState(true);
+  const [autoDelai, setAutoDelai] = useState(true);
   const typeVisiteWatch = form.watch("typeVisite");
   useEffect(() => {
     if (autoDuree && typeVisiteWatch) {
       form.setValue("dureeMinutes", DUREE_DEFAUT_PAR_TYPE[typeVisiteWatch]);
     }
-  }, [typeVisiteWatch, autoDuree, form]);
+    if (autoDelai && typeVisiteWatch) {
+      form.setValue(
+        "delaiAppelMinutes",
+        DELAI_APPEL_DEFAUT_PAR_TYPE[typeVisiteWatch],
+      );
+    }
+  }, [typeVisiteWatch, autoDuree, autoDelai, form]);
 
   const createMut = useMutation({
     mutationFn: createRdvRapide,
@@ -135,6 +152,7 @@ const RdvRapide = () => {
         heureRdv: vars.heureRdv,
         typeVisite: vars.typeVisite,
         dureeMinutes: vars.dureeMinutes,
+        delaiAppelMinutes: vars.delaiAppelMinutes,
         address: vars.address,
         leadId: res.leadId,
       });
@@ -148,6 +166,10 @@ const RdvRapide = () => {
   });
 
   const onSubmit = (values: FormValues) => {
+    const delai =
+      values.delaiAppelMinutes === "" || values.delaiAppelMinutes === undefined
+        ? null
+        : values.delaiAppelMinutes;
     createMut.mutate({
       name: values.name,
       phone: values.phone,
@@ -156,6 +178,7 @@ const RdvRapide = () => {
       heureRdv: values.heureRdv,
       typeVisite: values.typeVisite,
       dureeMinutes: values.dureeMinutes,
+      delaiAppelMinutes: delai,
       address: values.address,
       notes: values.notes,
     });
@@ -171,10 +194,12 @@ const RdvRapide = () => {
       heureRdv: "10:00",
       typeVisite: "Devis",
       dureeMinutes: 60,
+      delaiAppelMinutes: 30,
       address: "",
       notes: "",
     });
     setAutoDuree(true);
+    setAutoDelai(true);
   };
 
   if (!ready || !user) return <AdminLoading />;
@@ -312,6 +337,81 @@ const RdvRapide = () => {
                 onChange: () => setAutoDuree(false),
               })}
               className="h-12 text-base"
+            />
+          </Field>
+
+          <Field
+            label="Délai d'appel avant arrivée"
+            error={form.formState.errors.delaiAppelMinutes?.message as string | undefined}
+            hint={
+              autoDelai
+                ? "Suggéré selon le type — vous pouvez choisir une autre valeur ou laisser vide"
+                : "Personnalisé — laissez vide pour ne pas l'indiquer au client"
+            }
+            icon={<Phone className="w-4 h-4" />}
+          >
+            <Controller
+              control={form.control}
+              name="delaiAppelMinutes"
+              render={({ field }) => {
+                const current =
+                  typeof field.value === "number" ? field.value : null;
+                return (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {DELAI_APPEL_PRESETS.map((p) => {
+                        const active = current === p;
+                        return (
+                          <button
+                            type="button"
+                            key={p}
+                            onClick={() => {
+                              field.onChange(p);
+                              setAutoDelai(false);
+                            }}
+                            className={`h-10 px-4 rounded-md border text-sm font-medium transition ${
+                              active
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background border-border hover:border-primary/40"
+                            }`}
+                          >
+                            {p} min
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          field.onChange("");
+                          setAutoDelai(false);
+                        }}
+                        className={`h-10 px-4 rounded-md border text-sm font-medium transition ${
+                          current === null
+                            ? "bg-muted text-muted-foreground border-muted-foreground/30"
+                            : "bg-background border-border hover:border-primary/40"
+                        }`}
+                      >
+                        Aucun
+                      </button>
+                    </div>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={240}
+                      step={5}
+                      inputMode="numeric"
+                      placeholder="Ou valeur libre (ex: 20, 25, 90...)"
+                      value={current === null ? "" : current}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        field.onChange(v === "" ? "" : Number(v));
+                        setAutoDelai(false);
+                      }}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                );
+              }}
             />
           </Field>
 

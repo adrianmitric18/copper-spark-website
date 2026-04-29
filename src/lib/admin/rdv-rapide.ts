@@ -44,6 +44,26 @@ export const DUREE_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
   Autre: 60,
 };
 
+/**
+ * Délai d'appel par défaut suggéré (minutes avant l'arrivée) selon le type.
+ * L'admin peut toujours surcharger via les presets ou un input libre.
+ *   - Dépannage       : 15 min (urgence, déplacement court à anticiper)
+ *   - Borne / PV      : 45 min (gros chantier, accès à dégager)
+ *   - Tous les autres : 30 min (standard)
+ */
+export const DELAI_APPEL_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
+  Devis: 30,
+  "Visite technique": 30,
+  Dépannage: 15,
+  "Inspection RGIE": 30,
+  "Installation borne de recharge": 45,
+  "Installation panneaux photovoltaïques": 45,
+  Autre: 30,
+};
+
+/** Presets cliquables proposés sous le champ délai d'appel. */
+export const DELAI_APPEL_PRESETS = [15, 30, 45, 60] as const;
+
 export interface RdvRapideInput {
   name: string;
   phone: string;
@@ -59,6 +79,11 @@ export interface RdvRapideInput {
   address?: string;
   /** Notes internes courtes. */
   notes?: string;
+  /**
+   * Minutes avant l'arrivée pendant lesquelles Adrian appelle le client.
+   * NULL/undefined = mention masquée dans les templates.
+   */
+  delaiAppelMinutes?: number | null;
 }
 
 export interface RdvRapideResult {
@@ -110,6 +135,7 @@ export async function createRdvRapide(input: RdvRapideInput): Promise<RdvRapideR
       heure_rdv: input.heureRdv,
       type_visite: input.typeVisite,
       duree_minutes: input.dureeMinutes,
+      delai_appel_minutes: input.delaiAppelMinutes ?? null,
       notes_internes: input.notes?.trim() || null,
       statut: "confirme",
     })
