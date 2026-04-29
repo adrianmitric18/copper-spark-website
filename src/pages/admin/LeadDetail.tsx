@@ -13,11 +13,25 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
 import ChecklistVisite from "@/components/admin/ChecklistVisite";
+import InterventionDialog from "@/components/admin/InterventionDialog";
+import InterventionCard from "@/components/admin/InterventionCard";
+import InterventionSuccessScreen from "@/components/admin/InterventionSuccessScreen";
+import InterventionAnnulationDialog from "@/components/admin/InterventionAnnulationDialog";
+import {
+  createIntervention,
+  updateIntervention,
+  updateInterventionStatut,
+  fetchInterventionsForLead,
+  transformInterventionToProject,
+  type Intervention,
+  type InterventionFormValues,
+  type TypeIntervention,
+} from "@/lib/admin/interventions";
 import {
   sendRdvConfirmationEmails,
   sendRdvModificationEmail,
@@ -72,6 +86,16 @@ const LeadDetail = () => {
   const [submittingRdv, setSubmittingRdv] = useState(false);
   const [cancellingRdv, setCancellingRdv] = useState(false);
 
+  // Interventions (chantiers programmés) — distinct des RDV exploratoires
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
+  const [interventionDialogOpen, setInterventionDialogOpen] = useState(false);
+  const [editingIntervention, setEditingIntervention] = useState<Intervention | null>(null);
+  const [cancellingIntervention, setCancellingIntervention] = useState<Intervention | null>(null);
+  const [submittingIntervention, setSubmittingIntervention] = useState(false);
+  const [submittingAnnulation, setSubmittingAnnulation] = useState(false);
+  const [lastCreatedIntervention, setLastCreatedIntervention] = useState<Intervention | null>(null);
+  const [lastUpdatedIntervention, setLastUpdatedIntervention] = useState<Intervention | null>(null);
+
   useEffect(() => {
     if (!ready || !id) return;
     let cancelled = false;
@@ -79,9 +103,10 @@ const LeadDetail = () => {
 
     (async () => {
       try {
-        const [loadedLead, loadedRdv] = await Promise.all([
+        const [loadedLead, loadedRdv, loadedInterventions] = await Promise.all([
           fetchLeadById(id),
           fetchActiveRdvForLead(id),
+          fetchInterventionsForLead(id),
         ]);
 
         if (cancelled) return;
@@ -95,6 +120,7 @@ const LeadDetail = () => {
         setLead(loadedLead);
         setNotes(loadedLead.notes_internes || loadedLead.notes || "");
         setRdv((loadedRdv as RendezVous | null) ?? null);
+        setInterventions(loadedInterventions);
 
         if (loadedLead.photo_urls?.length) {
           const urls = await fetchLeadPhotoSignedUrls(loadedLead.photo_urls);
@@ -279,6 +305,118 @@ const LeadDetail = () => {
     }
   };
 
+  // ==== Interventions (chantiers programmés) ====
+  // Devine un type d'intervention par défaut depuis les services du lead.
+  // Mapping volontairement simple — l'admin peut toujours surcharger dans le dialog.
+  const guessTypeIntervention = (): TypeIntervention => {
+    const services = (lead?.services ?? []).map((s) => s.toLowerCase()).join(" ");
+    if (services.includes("rgie") || services.includes("conformit")) return "Inspection RGIE";
+    if (services.includes("dépann") || services.includes("urgence")) return "Dépannage";
+    if (services.includes("borne") || services.includes("recharge")) return "Installation borne de recharge";
+    if (services.includes("photovolta") || services.includes("panneau")) return "Installation panneaux photovoltaïques";
+    if (services.includes("rénovation") || services.includes("installation")) return "Visite technique";
+    return "Autre";
+  };
+
+  const handleInterventionSubmit = async (values: InterventionFormValues) => {
+    if (!lead) return;
+    setSubmittingIntervention(true);
+    try {
+      if (editingIntervention) {
+        // Mode édition → met à jour + bascule sur écran rectification
+        const updated = await updateIntervention({ id: editingIntervention.id, ...values });
+        setInterventions((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+        setLastUpdatedIntervention(updated);
+        setEditingIntervention(null);
+        setInterventionDialogOpen(false);
+        toast.success("Planning mis à jour", {
+          description: "Préviens le client avec le message de rectification.",
+        });
+      } else {
+        // Mode création → écran de confirmation initial
+        const created = await createIntervention({ leadId: lead.id, ...values });
+        setInterventions((prev) => [created, ...prev]);
+        setLastCreatedIntervention(created);
+        setInterventionDialogOpen(false);
+        toast.success("Chantier programmé", {
+          description: `${created.type_intervention} — ${created.date_debut}${created.date_fin !== created.date_debut ? ` → ${created.date_fin}` : ""}`,
+        });
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "enregistrement impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setSubmittingIntervention(false);
+    }
+  };
+
+  const handleEditIntervention = (intervention: Intervention) => {
+    setEditingIntervention(intervention);
+    setInterventionDialogOpen(true);
+  };
+
+  const handleAskCancelIntervention = (intervention: Intervention) => {
+    setCancellingIntervention(intervention);
+  };
+
+  const handleTransformToProject = async (intervention: Intervention) => {
+    if (!lead) return;
+    try {
+      const { projectId } = await transformInterventionToProject({
+        intervention,
+        leadCommune: lead.commune ?? undefined,
+        leadName: lead.name,
+      });
+      // Met à jour localement l'intervention pour faire disparaître le bouton
+      setInterventions((prev) =>
+        prev.map((i) => (i.id === intervention.id ? { ...i, project_id: projectId } : i)),
+      );
+      toast.success("Brouillon de chantier vitrine créé", {
+        description: "Édite le titre, ajoute des photos puis publie quand prêt.",
+      });
+      navigate(`/admin/chantiers/${projectId}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "transformation impossible";
+      toast.error("Erreur : " + msg);
+    }
+  };
+
+  const handleConfirmAnnulation = async (raison: string | null) => {
+    if (!cancellingIntervention) return;
+    setSubmittingAnnulation(true);
+    try {
+      const updated = await updateInterventionStatut(cancellingIntervention.id, "annule");
+      // On met aussi à jour notes_internes pour tracer la raison côté admin
+      if (raison) {
+        const newNotes = [updated.notes_internes, `[Annulation] ${raison}`]
+          .filter(Boolean)
+          .join("\n\n");
+        await updateIntervention({
+          id: updated.id,
+          typeIntervention: updated.type_intervention as TypeIntervention,
+          dateDebut: updated.date_debut,
+          dateFin: updated.date_fin,
+          heureDebut: updated.heure_debut.slice(0, 5),
+          heureFin: updated.heure_fin.slice(0, 5),
+          notesClient: updated.notes_client ?? "",
+          notesInternes: newNotes,
+        });
+        updated.notes_internes = newNotes;
+      }
+      setInterventions((prev) =>
+        prev.map((i) => (i.id === updated.id ? { ...updated, statut: "annule" } : i)),
+      );
+      // ⚠ on garde cancellingIntervention pour afficher l'écran de notification
+      // (le dialog passe en step "confirmed"). Reset au close.
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "annulation impossible";
+      toast.error("Erreur : " + msg);
+      throw e;
+    } finally {
+      setSubmittingAnnulation(false);
+    }
+  };
+
   const handleRdvCancel = async () => {
     if (!lead || !rdv) return;
     const info = leadInfo();
@@ -425,6 +563,122 @@ const LeadDetail = () => {
             ))}
           </div>
         </Card>
+      )}
+
+      {/* Chantiers programmés (devis accepté → blocage de dates) */}
+      <Card className="p-6 space-y-4 border-primary/30">
+        <h2 className="font-semibold text-lg flex items-center gap-2">
+          <Hammer className="w-5 h-5 text-primary" />
+          Chantiers programmés
+        </h2>
+
+        {interventions.length > 0 ? (
+          <div className="space-y-3">
+            {interventions.map((it) => (
+              <InterventionCard
+                key={it.id}
+                intervention={it}
+                clientName={lead.name}
+                clientPhone={lead.phone}
+                clientEmail={lead.email}
+                clientAddress={
+                  [lead.rue, lead.numero, lead.code_postal, lead.commune]
+                    .filter(Boolean)
+                    .join(" ") || lead.address
+                }
+                onEdit={() => handleEditIntervention(it)}
+                onCancel={() => handleAskCancelIntervention(it)}
+                onTransformToProject={() => handleTransformToProject(it)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Aucun chantier programmé pour ce lead. Une fois le devis accepté,
+            bloque les dates et envoie la confirmation au client.
+          </p>
+        )}
+
+        <Button
+          onClick={() => setInterventionDialogOpen(true)}
+          variant="copper"
+          size="lg"
+          className="min-h-[48px]"
+        >
+          <Hammer className="w-4 h-4" />
+          {interventions.length > 0
+            ? "Programmer un autre chantier"
+            : "Programmer le chantier"}
+        </Button>
+      </Card>
+
+      {/* Dialog de création/édition d'intervention */}
+      <InterventionDialog
+        open={interventionDialogOpen}
+        onOpenChange={(o) => {
+          setInterventionDialogOpen(o);
+          if (!o) setEditingIntervention(null);
+        }}
+        intervention={editingIntervention}
+        defaultType={guessTypeIntervention()}
+        onSubmit={handleInterventionSubmit}
+        submitting={submittingIntervention}
+      />
+
+      {/* Écran de succès post-création (mode confirmation) */}
+      {lastCreatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastCreatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastCreatedIntervention(null);
+          }}
+          intervention={lastCreatedIntervention}
+          mode="confirmation"
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
+
+      {/* Écran de rectification post-modification */}
+      {lastUpdatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastUpdatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastUpdatedIntervention(null);
+          }}
+          intervention={lastUpdatedIntervention}
+          mode="rectification"
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
+
+      {/* Dialog d'annulation d'intervention */}
+      {cancellingIntervention && (
+        <InterventionAnnulationDialog
+          open={!!cancellingIntervention}
+          onOpenChange={(o) => {
+            if (!o) setCancellingIntervention(null);
+          }}
+          intervention={cancellingIntervention}
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          onConfirm={handleConfirmAnnulation}
+          submitting={submittingAnnulation}
+        />
       )}
 
       {/* Planifier / modifier RDV */}

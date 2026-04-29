@@ -5,6 +5,7 @@ import {
   Calendar,
   Star,
   Hammer,
+  HardHat,
   Phone,
   Sun,
   Moon,
@@ -21,6 +22,7 @@ const NAV_ITEMS_PRIMARY = [
   { to: "/admin", label: "Aujourd'hui", icon: Home, end: true },
   { to: "/admin/pipeline", label: "Pipeline", icon: Kanban, end: false },
   { to: "/admin/rdv", label: "Calendrier", icon: Calendar, end: false },
+  { to: "/admin/interventions", label: "Chantiers", icon: HardHat, end: false },
 ];
 
 const NAV_ITEMS_SECONDARY = [
