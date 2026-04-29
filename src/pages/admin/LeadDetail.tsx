@@ -19,6 +19,8 @@ import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVou
 import RendezVousCard from "@/components/admin/RendezVousCard";
 import ChecklistVisite from "@/components/admin/ChecklistVisite";
 import InterventionDialog from "@/components/admin/InterventionDialog";
+import InterventionCard from "@/components/admin/InterventionCard";
+import InterventionSuccessScreen from "@/components/admin/InterventionSuccessScreen";
 import {
   createIntervention,
   fetchInterventionsForLead,
@@ -475,23 +477,47 @@ const LeadDetail = () => {
         </Card>
       )}
 
-      {/* Programmer le chantier (devis accepté → blocage de dates) */}
+      {/* Chantiers programmés (devis accepté → blocage de dates) */}
       <Card className="p-6 space-y-4 border-primary/30">
         <h2 className="font-semibold text-lg flex items-center gap-2">
           <Hammer className="w-5 h-5 text-primary" />
-          Programmer le chantier
+          Chantiers programmés
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Bloque les dates du chantier (multi-jours possible) et envoie une
-          confirmation pro au client par SMS, WhatsApp ou email.
-        </p>
+
+        {interventions.length > 0 ? (
+          <div className="space-y-3">
+            {interventions.map((it) => (
+              <InterventionCard
+                key={it.id}
+                intervention={it}
+                clientName={lead.name}
+                clientPhone={lead.phone}
+                clientEmail={lead.email}
+                clientAddress={
+                  [lead.rue, lead.numero, lead.code_postal, lead.commune]
+                    .filter(Boolean)
+                    .join(" ") || lead.address
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Aucun chantier programmé pour ce lead. Une fois le devis accepté,
+            bloque les dates et envoie la confirmation au client.
+          </p>
+        )}
+
         <Button
           onClick={() => setInterventionDialogOpen(true)}
           variant="copper"
           size="lg"
           className="min-h-[48px]"
         >
-          <Hammer className="w-4 h-4" /> Programmer le chantier
+          <Hammer className="w-4 h-4" />
+          {interventions.length > 0
+            ? "Programmer un autre chantier"
+            : "Programmer le chantier"}
         </Button>
       </Card>
 
@@ -503,6 +529,25 @@ const LeadDetail = () => {
         onSubmit={handleInterventionSubmit}
         submitting={submittingIntervention}
       />
+
+      {/* Écran de succès post-création (4 boutons) */}
+      {lastCreatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastCreatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastCreatedIntervention(null);
+          }}
+          intervention={lastCreatedIntervention}
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={lead.email}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
 
       {/* Planifier / modifier RDV */}
       <Card className="p-6 space-y-4 border-[hsl(var(--copper))]/30">
