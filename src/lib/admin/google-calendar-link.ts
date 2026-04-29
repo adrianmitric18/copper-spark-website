@@ -49,3 +49,43 @@ export function buildGoogleCalendarUrl(input: CalendarEventInput): string {
   if (input.location) params.set("location", input.location);
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
+
+export interface CalendarRangeEventInput {
+  title: string;
+  /** YYYY-MM-DD */
+  dateDebut: string;
+  /** HH:MM (format 24h) */
+  heureDebut: string;
+  /** YYYY-MM-DD (peut être identique à dateDebut pour 1 jour) */
+  dateFin: string;
+  /** HH:MM (format 24h) */
+  heureFin: string;
+  description?: string;
+  location?: string;
+}
+
+/**
+ * Variante pour un événement avec début et fin libres (chantier multi-jours).
+ * Produit `dates=YYYYMMDDTHHmmss/YYYYMMDDTHHmmss` qui couvre toute la plage
+ * en un seul événement Google Calendar.
+ */
+export function buildGoogleCalendarRangeUrl(input: CalendarRangeEventInput): string {
+  const [yd, md, dd] = input.dateDebut.split("-").map(Number);
+  const [hd, mnd] = input.heureDebut.split(":").map(Number);
+  const [yf, mf, df] = input.dateFin.split("-").map(Number);
+  const [hf, mnf] = input.heureFin.split(":").map(Number);
+
+  const fmt = (y: number, m: number, d: number, h: number, mn: number): string =>
+    `${y}${pad2(m)}${pad2(d)}T${pad2(h)}${pad2(mn)}00`;
+
+  const dates = `${fmt(yd, md, dd, hd, mnd)}/${fmt(yf, mf, df, hf, mnf)}`;
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: input.title,
+    dates,
+  });
+  if (input.description) params.set("details", input.description);
+  if (input.location) params.set("location", input.location);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
