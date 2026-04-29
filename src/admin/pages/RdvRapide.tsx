@@ -662,33 +662,42 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
           </div>
 
           {summary.email ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
-              >
-                <a href={mailtoHref}>
-                  <Mail className="w-5 h-5" />
-                  Email
-                </a>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={copyEmailHtml}
-                className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
-              >
-                <Copy className="w-5 h-5" />
-                Copier HTML
-              </Button>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <a href={mailtoHref}>
+                    <Mail className="w-5 h-5" />
+                    Ouvrir email (texte)
+                  </a>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={copyEmailHtml}
+                  className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <Copy className="w-5 h-5" />
+                  Copier HTML stylé
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed px-1">
+                <strong>Ouvrir email</strong> ouvre l'app mail avec un texte
+                propre (rapide).
+                <br />
+                <strong>Copier HTML</strong> copie la version stylée — colle-la
+                dans Gmail/Outlook (Ctrl+V) pour un email pro avec mise en forme.
+              </p>
             </div>
           ) : (
             <p className="text-xs text-center text-muted-foreground italic">
-              Saisis l'email du client pour activer les boutons "Email" et
-              "Copier HTML" lors du prochain RDV.
+              Saisis l'email du client pour activer les boutons "Ouvrir email"
+              et "Copier HTML" lors du prochain RDV.
             </p>
           )}
         </div>
