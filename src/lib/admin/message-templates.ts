@@ -54,6 +54,11 @@ interface TypeConfig {
   servicePath: string;
   /** Phrase d'introduction de la confirmation. */
   introLine: string;
+  /**
+   * Phrase complète "votre X est confirmé(e)" pour le SMS court — préformulée
+   * par type pour respecter accord de genre et casse des acronymes (RGIE, PV).
+   */
+  confirmedLabel: string;
 }
 
 const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
@@ -62,6 +67,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre rendez-vous devis",
     emailSubject: "Confirmation RDV devis",
     introLine: "Je vous confirme notre rendez-vous pour l'établissement de votre devis.",
+    confirmedLabel: "votre RDV pour devis est confirmé",
     programme: [
       "Visite des lieux et écoute de votre besoin",
       "Prise de mesures et photos techniques",
@@ -80,6 +86,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "votre visite technique",
     emailSubject: "Confirmation visite technique",
     introLine: "Je vous confirme notre visite technique sur place.",
+    confirmedLabel: "votre visite technique est confirmée",
     programme: [
       "Analyse de l'installation électrique existante",
       "Identification des points d'amélioration et risques éventuels",
@@ -98,6 +105,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre intervention de dépannage",
     emailSubject: "Confirmation intervention dépannage",
     introLine: "Je vous confirme notre intervention de dépannage.",
+    confirmedLabel: "votre dépannage est confirmé",
     programme: [
       "Diagnostic complet de la panne",
       "Réparation immédiate si la pièce est sur le camion",
@@ -116,6 +124,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "votre inspection RGIE",
     emailSubject: "Confirmation inspection RGIE",
     introLine: "Je vous confirme notre rendez-vous pour l'inspection RGIE de votre installation.",
+    confirmedLabel: "votre inspection RGIE est confirmée",
     programme: [
       "Contrôle complet de la conformité au Règlement Général sur les Installations Électriques",
       "Mesures d'isolement, de continuité et de mise à la terre",
@@ -135,6 +144,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "l'installation de votre borne de recharge",
     emailSubject: "Confirmation installation borne de recharge",
     introLine: "Je vous confirme l'installation de votre borne de recharge pour véhicule électrique.",
+    confirmedLabel: "votre installation de borne est confirmée",
     programme: [
       "Pose de la borne (Hager Witty Pro recommandée)",
       "Création d'un sous-tableau dédié, conforme RGIE",
@@ -154,6 +164,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "l'installation de vos panneaux photovoltaïques",
     emailSubject: "Confirmation installation panneaux photovoltaïques",
     introLine: "Je vous confirme notre intervention pour vos panneaux photovoltaïques.",
+    confirmedLabel: "votre installation de panneaux photovoltaïques est confirmée",
     programme: [
       "Étude de faisabilité technique sur place",
       "Repérage des points de fixation et passages de câbles",
@@ -173,6 +184,7 @@ const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
     introLabel: "notre rendez-vous",
     emailSubject: "Confirmation RDV",
     introLine: "Je vous confirme notre rendez-vous.",
+    confirmedLabel: "votre rendez-vous est confirmé",
     programme: ["Échange sur place selon votre demande"],
     prerequis: ["Accès aux pièces ou installations concernées"],
     servicePath: "/services",
