@@ -264,6 +264,7 @@ export type Database = {
         Row: {
           created_at: string
           date_rdv: string
+          delai_appel_minutes: number | null
           duree_minutes: number
           heure_rdv: string
           id: string
@@ -277,6 +278,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date_rdv: string
+          delai_appel_minutes?: number | null
           duree_minutes?: number
           heure_rdv: string
           id?: string
@@ -290,6 +292,7 @@ export type Database = {
         Update: {
           created_at?: string
           date_rdv?: string
+          delai_appel_minutes?: number | null
           duree_minutes?: number
           heure_rdv?: string
           id?: string
