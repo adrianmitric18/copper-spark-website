@@ -398,7 +398,7 @@ const RdvRapide = () => {
                       type="number"
                       min={1}
                       max={240}
-                      step={5}
+                      step={1}
                       inputMode="numeric"
                       placeholder="Ou valeur libre (ex: 20, 25, 90...)"
                       value={current === null ? "" : current}
