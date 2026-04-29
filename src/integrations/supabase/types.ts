@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      interventions: {
+        Row: {
+          created_at: string
+          date_debut: string
+          date_fin: string
+          heure_debut: string
+          heure_fin: string
+          id: string
+          lead_id: string
+          notes_client: string | null
+          notes_internes: string | null
+          project_id: string | null
+          statut: string
+          type_intervention: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_debut: string
+          date_fin: string
+          heure_debut: string
+          heure_fin: string
+          id?: string
+          lead_id: string
+          notes_client?: string | null
+          notes_internes?: string | null
+          project_id?: string | null
+          statut?: string
+          type_intervention: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_debut?: string
+          date_fin?: string
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          lead_id?: string
+          notes_client?: string | null
+          notes_internes?: string | null
+          project_id?: string | null
+          statut?: string
+          type_intervention?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interventions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interventions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           checklist_type: string
