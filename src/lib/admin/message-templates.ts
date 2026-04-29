@@ -610,10 +610,13 @@ export function buildMailtoHref(
   subject: string,
   body: string,
 ): string {
-  const params = new URLSearchParams({ subject, body });
+  // RFC 6068 exige le percent-encoding (espaces → %20). URLSearchParams produit
+  // de l'application/x-www-form-urlencoded (espaces → +), affiché littéralement
+  // sur Gmail mobile et iOS Mail.
+  const qs = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   return email && email.length > 0
-    ? `mailto:${email}?${params.toString()}`
-    : `mailto:?${params.toString()}`;
+    ? `mailto:${encodeURIComponent(email)}?${qs}`
+    : `mailto:?${qs}`;
 }
 
 // ---------------------------------------------------------------------------
