@@ -9,6 +9,7 @@ import {
   Users,
   Sparkles,
   ChevronRight,
+  HardHat,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   fetchLeadsWithUpcomingRdvs,
   fetchAllRdvs,
 } from "@/lib/admin/queries";
+import { fetchAllInterventions } from "@/lib/admin/interventions";
 import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -67,6 +69,14 @@ const Aujourdhui = () => {
   const rdvsQuery = useQuery({
     queryKey: ["admin-rdvs-all"],
     queryFn: fetchAllRdvs,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const interventionsQuery = useQuery({
+    queryKey: ["admin-interventions"],
+    queryFn: fetchAllInterventions,
     enabled: ready,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -135,6 +145,21 @@ const Aujourdhui = () => {
       .slice(0, 5);
   }, [leads, upcomingByLead]);
 
+  // Chantiers programmés cette semaine (du jour à +7 jours, statut programme/en_cours
+  // dont la plage englobe la fenêtre).
+  const upcomingInterventionsCount = useMemo(() => {
+    const all = interventionsQuery.data ?? [];
+    const todayDate = new Date();
+    const endDate = new Date(todayDate.getTime() + 7 * DAY_MS);
+    const todayStr = isoDateLocal(todayDate);
+    const endStr = isoDateLocal(endDate);
+    return all.filter((i) => {
+      if (i.statut === "annule" || i.statut === "termine") return false;
+      // chevauchement plage [date_debut, date_fin] avec [today, today+7]
+      return i.date_fin >= todayStr && i.date_debut <= endStr;
+    }).length;
+  }, [interventionsQuery.data]);
+
   const stats = useMemo(() => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -194,7 +219,7 @@ const Aujourdhui = () => {
         ) : (
           <>
             {/* KPIs row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               <Card className="p-4 space-y-1">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs">
                   <Users className="w-3.5 h-3.5" />
@@ -226,6 +251,25 @@ const Aujourdhui = () => {
                 <p className="text-2xl font-bold">{stats.weekRdvCount}</p>
                 <p className="text-xs text-muted-foreground">cette semaine</p>
               </Card>
+              <Link
+                to="/admin/interventions?filter=upcoming"
+                className="block group"
+              >
+                <Card className="p-4 space-y-1 h-full transition-colors group-hover:border-primary/40">
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                    <HardHat className="w-3.5 h-3.5" />
+                    Chantiers
+                  </div>
+                  <p
+                    className={`text-2xl font-bold ${upcomingInterventionsCount > 0 ? "text-primary" : ""}`}
+                  >
+                    {upcomingInterventionsCount}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    cette semaine
+                  </p>
+                </Card>
+              </Link>
               <Card className="p-4 space-y-1">
                 <div className="flex items-center gap-2 text-muted-foreground text-xs">
                   <AlertCircle className="w-3.5 h-3.5" />À relancer
