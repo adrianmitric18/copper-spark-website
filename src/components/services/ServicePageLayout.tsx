@@ -9,6 +9,7 @@ import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
+import InternalLinks from "@/components/InternalLinks";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -177,6 +178,13 @@ const ServicePageLayout = ({
             </div>
           </div>
         </section>
+
+        {/* Maillage interne : zones desservies */}
+        <InternalLinks
+          mode="zones"
+          title="Nos zones d'intervention"
+          intro={`Nous intervenons dans tout le Brabant wallon pour ${schemaServiceName.toLowerCase()}. Découvrez nos pages dédiées à chaque commune.`}
+        />
 
         {/* FAQ */}
         {faqs.length > 0 && (

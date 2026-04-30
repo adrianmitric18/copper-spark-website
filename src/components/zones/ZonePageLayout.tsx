@@ -8,6 +8,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
+import InternalLinks from "@/components/InternalLinks";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -128,6 +129,13 @@ const ZonePageLayout = ({
             </div>
           </div>
         </section>
+
+        {/* Maillage interne : services proposés à <ville> */}
+        <InternalLinks
+          mode="services"
+          title={`Nos services d'électricien à ${cityName}`}
+          intro={`Que ce soit pour une installation neuve, une rénovation, un dépannage urgent ou la pose d'une borne de recharge, nous intervenons à ${cityName} sur l'ensemble de nos prestations.`}
+        />
 
         {/* FAQ */}
         {faqs.length > 0 && (
