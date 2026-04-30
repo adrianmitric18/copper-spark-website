@@ -11,7 +11,12 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="geo.region" content="BE-WBR" />
     <meta name="geo.placename" content="Court-Saint-Étienne, Brabant wallon, Belgique" />
-    <link rel="canonical" href="https://cuivre-electrique.com/" />
+    <!--
+      Le canonical, le title et la meta description sont injectés par route via le
+      composant <SEO> (src/components/SEO.tsx). Ne pas remettre de canonical statique
+      ici : il pointerait vers "/" pour toutes les routes avant exécution du JS, ce
+      qui pousse Google à consolider toutes les pages vers la home.
+    -->
 
     <!-- Favicons Le Cuivre Électrique -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
@@ -168,6 +173,21 @@
       }
     }
     </script>
+    <!--
+      Ce schema Electrician statique est volontairement conservé ici (sans aggregateRating)
+      pour deux raisons :
+      - Fournir des données structurées aux bots qui n'exécutent pas le JS (Bing, bots sociaux, etc.)
+      - Servir de fallback avant l'hydratation React
+
+      L'aggregateRating est injecté dynamiquement via <StructuredData /> + useAggregateRating()
+      qui lit la vraie note depuis Supabase, ce qui évite de hardcoder une valeur qui drifterait.
+
+      À terme (Phase SSG future), une fois le pré-rendu en place, on pourra simplifier en
+      ne gardant que les données structurées dynamiques et retirer ce bloc statique.
+
+      NB : le canonical statique a été retiré (était bug : pointait vers / pour toutes les routes).
+      Il est désormais injecté dynamiquement par <SEO> dans src/components/SEO.tsx.
+    -->
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17861698648"></script>
     <script>
