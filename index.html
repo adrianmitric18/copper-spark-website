@@ -11,11 +11,35 @@
     <meta name="geo.region" content="BE-WBR" />
     <meta name="geo.placename" content="Court-Saint-Étienne, Brabant wallon, Belgique" />
     <!--
-      Le canonical, le title et la meta description sont injectés par route via le
-      composant <SEO> (src/components/SEO.tsx). Ne pas remettre de canonical statique
-      ici : il pointerait vers "/" pour toutes les routes avant exécution du JS, ce
-      qui pousse Google à consolider toutes les pages vers la home.
+      Le canonical est posé en deux temps :
+      1. Synchroniquement par le script ci-dessous, AVANT que React démarre.
+         Cela garantit que Googlebot voit le bon canonical pour chaque route
+         dès le premier snapshot du HTML, même avant l'hydratation React.
+      2. Mis à jour dynamiquement par <SEO /> (src/components/SEO.tsx) lors
+         des navigations client-side dans la SPA.
+
+      Bug fixé le 2026-05-01 : avant ce script, Googlebot recevait le même
+      HTML brut pour toutes les routes (CSR pure) sans canonical, et
+      consolidait tout sur la home dans Search Console.
     -->
+    <link rel="canonical" id="ce-canonical" href="https://cuivre-electrique.com/" />
+    <script>
+      (function () {
+        try {
+          var path = (window.location.pathname || "/").replace(/\/+$/, "") || "/";
+          // Routes admin = noindex donc on ne pose pas de canonical pour elles
+          if (path.indexOf("/admin") === 0) return;
+          var canonical = "https://cuivre-electrique.com" + (path === "/" ? "/" : path);
+          var link = document.getElementById("ce-canonical");
+          if (link) link.setAttribute("href", canonical);
+          // Aligne aussi og:url pour les bots sociaux
+          var og = document.querySelector('meta[property="og:url"]');
+          if (og) og.setAttribute("content", canonical);
+        } catch (e) {
+          /* fail silently — fallback canonical = home déjà posé */
+        }
+      })();
+    </script>
 
     <!-- Favicons Le Cuivre Électrique -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
