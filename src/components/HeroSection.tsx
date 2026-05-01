@@ -1,13 +1,15 @@
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, Phone, Star } from "lucide-react";
 import LogoIcon from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useEffect } from "react";
 import heroImage from "@/assets/hero-lighting-design.jpg";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { useAggregateRating } from "@/hooks/useAggregateRating";
 
 const HeroSection = () => {
   const { trackEvent } = useAnalyticsEvents();
+  const { data: rating } = useAggregateRating();
   const titleWords = ["Électricien", "agréé"];
   const subtitleWords = ["Brabant", "wallon,", "Wallonie", "&", "Bruxelles"];
 
@@ -153,11 +155,33 @@ const HeroSection = () => {
         }} transition={{
           duration: 0.6,
           delay: 1
-          }} className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed text-background">
+          }} className="text-lg md:text-xl max-w-2xl mx-auto mb-6 leading-relaxed text-background">
             <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span>
           </motion.p>
 
-          {/* CTA Buttons */}
+          {/* Note Google — chip discrète, données dynamiques Supabase */}
+          {rating && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1.05 }}
+              className="inline-flex items-center gap-2 mb-10"
+            >
+              <span className="flex" aria-hidden="true">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />
+                ))}
+              </span>
+              <span className="text-sm text-foreground/80">
+                <span className="font-semibold text-foreground">
+                  {rating.ratingValueFormatted}/5
+                </span>{" "}
+                sur Google · {rating.reviewCount} avis
+              </span>
+            </motion.div>
+          )}
+
+          {/* CTA principal */}
           <motion.div initial={{
           opacity: 0,
           y: 30
@@ -167,40 +191,32 @@ const HeroSection = () => {
         }} transition={{
           duration: 0.6,
           delay: 1.2
-        }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <motion.div whileHover={{
-            scale: 1.05
-          }} whileTap={{
-            scale: 0.98
-          }}>
-              <Button variant="copper" size="xl" asChild className="min-w-[200px]">
-                <a
-                  href="/contact"
-                  data-analytics="quote_request"
-                  onClick={() => trackEvent("quote_request", { source_section: "hero" })}
-                  className="flex items-center gap-2"
-                >
-                  Demander un devis gratuit
-                </a>
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{
-            scale: 1.05
-          }} whileTap={{
-            scale: 0.98
-          }}>
-              <Button variant="copperOutline" size="xl" asChild className="min-w-[200px]">
-                <a
-                  href="tel:+32485755227"
-                  data-analytics="call_click"
-                  onClick={() => trackEvent("call_click", { source_section: "hero" })}
-                  className="flex items-center gap-2"
-                >
-                  <LogoIcon className="w-5 h-5" />
+        }} className="flex flex-col items-center gap-4">
+            <Button variant="copper" size="xl" asChild className="min-w-[240px]">
+              <a
+                href="/contact"
+                data-analytics="quote_request"
+                onClick={() => trackEvent("quote_request", { source_section: "hero" })}
+              >
+                Demander un devis gratuit
+              </a>
+            </Button>
+
+            {/* CTA urgence — discret, sous le CTA principal */}
+            <a
+              href="tel:+32485755227"
+              data-analytics="call_click"
+              onClick={() => trackEvent("call_click", { source_section: "hero_emergency" })}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Phone className="w-4 h-4" aria-hidden="true" />
+              <span>
+                Urgence ?{" "}
+                <span className="font-semibold text-foreground/90">
                   0485 75 52 27
-                </a>
-              </Button>
-            </motion.div>
+                </span>
+              </span>
+            </a>
           </motion.div>
 
           {/* Horaires */}

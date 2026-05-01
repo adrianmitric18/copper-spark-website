@@ -9,14 +9,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-copper hover:shadow-copper-lg hover:-translate-y-0.5",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-copper hover:shadow-copper-lg hover:-translate-y-0.5 hover:scale-[1.02] motion-reduce:transform-none",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        copper: "bg-gradient-copper text-primary-foreground shadow-copper hover:shadow-copper-lg hover:-translate-y-0.5 active:translate-y-0",
-        copperOutline: "border-2 border-primary text-primary bg-transparent hover:bg-primary/10",
+        // Hover amélioré (brief 2026-05-01) : glow cuivre + zoom léger 1.02
+        // Respect prefers-reduced-motion via motion-reduce:transform-none.
+        copper: "bg-gradient-copper text-primary-foreground shadow-copper hover:shadow-copper-lg hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-100 motion-reduce:transform-none",
+        copperOutline: "border-2 border-primary text-primary bg-transparent hover:bg-primary/10 hover:scale-[1.02] motion-reduce:transform-none",
         emergency: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-lg hover:shadow-xl hover:-translate-y-0.5 animate-pulse-glow",
       },
       size: {
