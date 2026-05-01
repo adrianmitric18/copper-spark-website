@@ -46,7 +46,7 @@ const MentionsLegales = () => {
                   <li><strong className="text-foreground">N° BCE :</strong> 0805.376.944</li>
                   <li><strong className="text-foreground">Siège social :</strong> 1490 Court-Saint-Étienne, Belgique</li>
                   <li><strong className="text-foreground">Téléphone :</strong> +32 485 75 52 27</li>
-                  <li><strong className="text-foreground">Email :</strong> cuivre.electrique@gmail.com</li>
+                  <li><strong className="text-foreground">Email :</strong> contact@cuivre-electrique.com</li>
                 </ul>
               </div>
 
@@ -56,8 +56,9 @@ const MentionsLegales = () => {
                   2. Hébergement du site
                 </h2>
                 <ul className="space-y-2">
-                  <li><strong className="text-foreground">Hébergeur :</strong> Lovable (Netlify)</li>
-                  <li><strong className="text-foreground">Adresse :</strong> San Francisco, CA, USA</li>
+                  <li><strong className="text-foreground">Hébergeur :</strong> Cloudflare Pages (Cloudflare, Inc.)</li>
+                  <li><strong className="text-foreground">Adresse :</strong> 101 Townsend Street, San Francisco, CA 94107, USA</li>
+                  <li><strong className="text-foreground">Site web :</strong> <a href="https://www.cloudflare.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">cloudflare.com</a></li>
                 </ul>
               </div>
 
@@ -93,9 +94,18 @@ const MentionsLegales = () => {
                 </ul>
                 <p>
                   Pour exercer ces droits, contactez-nous par email à{" "}
-                  <a href="mailto:contact@cuivre-electrique.be" className="text-primary hover:underline">
-                    contact@cuivre-electrique.be
+                  <a href="mailto:contact@cuivre-electrique.com" className="text-primary hover:underline">
+                    contact@cuivre-electrique.com
                   </a>
+                  . Voir aussi notre{" "}
+                  <a href="/confidentialite" className="text-primary hover:underline">
+                    politique de confidentialité
+                  </a>{" "}
+                  et nos{" "}
+                  <a href="/cgv" className="text-primary hover:underline">
+                    Conditions Générales de Vente
+                  </a>
+                  .
                 </p>
               </div>
 

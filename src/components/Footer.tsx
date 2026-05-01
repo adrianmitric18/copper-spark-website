@@ -52,11 +52,11 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="mailto:cuivre.electrique@gmail.com"
+                  href="mailto:contact@cuivre-electrique.com"
                   className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Mail className="w-5 h-5 text-primary" />
-                  cuivre.electrique@gmail.com
+                  contact@cuivre-electrique.com
                 </a>
               </li>
               <li>
@@ -128,9 +128,26 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link
+                  to="/cgv"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  CGV
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/confidentialite"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Confidentialité
+                </Link>
+              </li>
+              <li>
                 <button
                   type="button"
                   onClick={openCookiePreferences}
+                  aria-haspopup="dialog"
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Gérer mes cookies

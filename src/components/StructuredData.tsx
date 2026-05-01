@@ -88,7 +88,7 @@ const StructuredData = (props: StructuredDataProps) => {
           "logo": "https://cuivre-electrique.com/android-chrome-512x512.png",
           "image": "https://cuivre-electrique.com/og-image.jpg",
           "telephone": "+32485755227",
-          "email": "cuivre.electrique@gmail.com",
+          "email": "contact@cuivre-electrique.com",
           "vatID": "BE0805376944",
           "address": {
             "@type": "PostalAddress",
@@ -171,7 +171,7 @@ const StructuredData = (props: StructuredDataProps) => {
           "description": `Électricien agréé intervenant à ${props.areaServed} et dans tout le Brabant wallon.`,
           "url": props.pageUrl,
           "telephone": "+32485755227",
-          "email": "cuivre.electrique@gmail.com",
+          "email": "contact@cuivre-electrique.com",
           "image": "https://cuivre-electrique.com/og-image.jpg",
           "priceRange": "€€",
           "address": {

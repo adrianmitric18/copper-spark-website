@@ -18,6 +18,8 @@ import Avis from "./pages/Avis";
 import Contact from "./pages/Contact";
 import Merci from "./pages/Merci";
 import MentionsLegales from "./pages/MentionsLegales";
+import CGV from "./pages/CGV";
+import Confidentialite from "./pages/Confidentialite";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/Login";
 import AdminAujourdhui from "./admin/pages/Aujourdhui";
@@ -90,6 +92,8 @@ const App = () => (
           <Route path="/contact" element={<Contact />} />
           <Route path="/merci" element={<Merci />} />
           <Route path="/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/cgv" element={<CGV />} />
+          <Route path="/confidentialite" element={<Confidentialite />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminAujourdhui />} />
           <Route path="/admin/pipeline" element={<AdminPipeline />} />

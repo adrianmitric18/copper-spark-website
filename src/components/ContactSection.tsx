@@ -421,7 +421,7 @@ const ContactSection = () => {
               </a>
 
               <a
-                href="mailto:cuivre.electrique@gmail.com"
+                href="mailto:contact@cuivre-electrique.com"
                 className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-border/50 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all duration-300"
               >
                 <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center">
@@ -430,7 +430,7 @@ const ContactSection = () => {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Écrivez-nous</p>
                   <p className="font-display text-base md:text-lg font-bold text-card-foreground break-all">
-                    cuivre.electrique@gmail.com
+                    contact@cuivre-electrique.com
                   </p>
                 </div>
               </a>
