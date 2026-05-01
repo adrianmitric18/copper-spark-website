@@ -45,6 +45,20 @@ const SERVICES = [
   "Autre (préciser dans le message)",
 ];
 
+// Type de projet — sélection principale (champ ajouté au brief 2026-05-01)
+const PROJECT_TYPES = [
+  "Borne de recharge VE",
+  "Panneaux photovoltaïques",
+  "Mise en conformité RGIE",
+  "Installation électrique",
+  "Dépannage urgent",
+  "Autre",
+];
+
+// Pré-qualification (brief 2026-05-01) : statut + type d'habitation
+const OWNERSHIP_OPTIONS = ["Propriétaire", "Locataire"];
+const HABITAT_OPTIONS = ["Neuve", "En rénovation", "Existante"];
+
 const TIMINGS = [
   "Urgent — dans les 24h",
   "Dans la semaine",
@@ -80,6 +94,9 @@ interface FormState {
   codePostal: string;
   commune: string;
   clientType: string;
+  projectType: string;
+  ownership: string;
+  habitatType: string;
   services: string[];
   message: string;
   timing: string;
@@ -96,6 +113,9 @@ const initialState: FormState = {
   codePostal: "",
   commune: "",
   clientType: "",
+  projectType: "",
+  ownership: "",
+  habitatType: "",
   services: [],
   message: "",
   timing: "",
@@ -121,6 +141,10 @@ const ContactSection = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+  // Confirmation visuelle améliorée (brief 2026-05-01) — overlay de succès
+  // affiché après l'envoi avant la redirection vers /merci.
+  const [submitSuccess, setSubmitSuccess] = useState<{ name: string } | null>(null);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -176,7 +200,9 @@ const ContactSection = () => {
     if (!/^\d{4}$/.test(form.codePostal.trim())) e.codePostal = "Code postal belge (4 chiffres)";
     if (!form.commune.trim()) e.commune = "Commune requise";
     if (!form.clientType) e.clientType = "Veuillez sélectionner";
-    if (form.services.length === 0) e.services = "Cochez au moins un service";
+    if (!form.projectType) e.projectType = "Veuillez choisir un type de projet";
+    if (!form.ownership) e.ownership = "Précisez votre statut";
+    if (!form.habitatType) e.habitatType = "Précisez le type d'habitation";
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
     if (!form.gdprConsent) e.gdprConsent = "Consentement requis";
     setErrors(e);
@@ -246,6 +272,18 @@ const ContactSection = () => {
       const codePostal = form.codePostal.trim();
       const commune = form.commune.trim();
       const fullAddress = `${rue} ${numero}, ${codePostal} ${commune}`;
+
+      // Pré-qualification (brief 2026-05-01) — préfixée au message DB pour
+      // ne pas casser le schéma existant. projectType est aussi mergé dans
+      // services[] pour la priorité côté admin.
+      const prequalHeader =
+        `[Type de projet] ${form.projectType}\n` +
+        `[Statut] ${form.ownership} · [Habitation] ${form.habitatType}\n\n`;
+      const enrichedMessage = prequalHeader + form.message.trim();
+      const enrichedServices = Array.from(
+        new Set([form.projectType, ...form.services].filter(Boolean))
+      );
+
       try {
         const { error } = await supabase.from("leads").insert({
           name: form.name.trim(),
@@ -257,8 +295,8 @@ const ContactSection = () => {
           code_postal: codePostal,
           commune,
           client_type: form.clientType,
-          services: form.services,
-          message: form.message.trim(),
+          services: enrichedServices,
+          message: enrichedMessage,
           timing: form.timing || null,
           source: form.source || null,
           photo_urls: photoUrls.length > 0 ? photoUrls : null,
@@ -308,8 +346,11 @@ const ContactSection = () => {
         code_postal: codePostal,
         commune,
         client_type: form.clientType,
+        project_type: form.projectType,
+        ownership: form.ownership,
+        habitat_type: form.habitatType,
         services: servicesStr,
-        message: form.message.trim(),
+        message: enrichedMessage,
         timing: form.timing || "Non précisé",
         source: form.source || "Non précisé",
         photos: photosStr,
@@ -359,8 +400,10 @@ const ContactSection = () => {
         source: form.source || undefined,
       });
 
-      // 5. Redirect
-      navigate("/merci");
+      // 5. Confirmation visuelle (brief 2026-05-01) puis redirection
+      const firstName = form.name.trim().split(/\s+/)[0];
+      setSubmitSuccess({ name: firstName });
+      setTimeout(() => navigate("/merci"), 2400);
     } catch (err: any) {
       console.error("Submit error:", err);
       setSubmitError("Une erreur inattendue est survenue. Réessayez ou appelez le 0485 75 52 27.");
@@ -369,6 +412,53 @@ const ContactSection = () => {
   };
 
   const requiredMark = <span className="text-destructive ml-0.5">*</span>;
+
+  // Confirmation visuelle améliorée — affichée à la place du formulaire
+  // pendant 2,4s avant la redirection vers /merci.
+  if (submitSuccess) {
+    return (
+      <section
+        id="contact"
+        className="py-24 md:py-32 bg-background"
+        aria-live="polite"
+      >
+        <div className="container mx-auto px-4 max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-card border border-primary/30 rounded-3xl p-8 md:p-12 text-center shadow-lg"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 14 }}
+              className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
+            >
+              <CheckCircle className="w-9 h-9" aria-hidden="true" strokeWidth={2} />
+            </motion.div>
+            <h3 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+              Merci {submitSuccess.name} !
+            </h3>
+            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-6">
+              Je vous recontacte personnellement dans les 24h ouvrées avec une
+              première estimation et la suite à donner.
+            </p>
+            <p className="text-sm text-muted-foreground border-t border-border pt-5">
+              Une urgence ?{" "}
+              <a
+                href="tel:+32485755227"
+                className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+              >
+                <Phone className="w-3.5 h-3.5" aria-hidden="true" />
+                0485 75 52 27
+              </a>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="contact" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
@@ -597,9 +687,108 @@ const ContactSection = () => {
                 {errors.clientType && <p className="text-destructive text-xs mt-1">{errors.clientType}</p>}
               </div>
 
+              {/* Type de projet (brief 2026-05-01) */}
+              <div>
+                <label htmlFor="projectType" className="block text-sm font-medium text-card-foreground mb-2">
+                  Type de projet{requiredMark}
+                </label>
+                <Select value={form.projectType} onValueChange={(v) => update("projectType", v)}>
+                  <SelectTrigger className={`h-11 ${errors.projectType ? "border-destructive" : ""}`}>
+                    <SelectValue placeholder="Choisissez le type principal..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJECT_TYPES.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.projectType && <p className="text-destructive text-xs mt-1">{errors.projectType}</p>}
+              </div>
+
+              {/* Pré-qualification — Statut + Habitation (brief 2026-05-01) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <fieldset>
+                  <legend className="block text-sm font-medium text-card-foreground mb-3">
+                    Vous êtes{requiredMark}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {OWNERSHIP_OPTIONS.map((opt) => {
+                      const selected = form.ownership === opt;
+                      return (
+                        <label
+                          key={opt}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                            selected
+                              ? "border-primary bg-primary/5 text-foreground font-medium"
+                              : "border-border hover:border-primary/40 bg-background text-card-foreground"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="ownership"
+                            value={opt}
+                            checked={selected}
+                            onChange={() => update("ownership", opt)}
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden="true"
+                            className={`w-3 h-3 rounded-full border ${
+                              selected ? "border-primary bg-primary" : "border-border"
+                            }`}
+                          />
+                          {opt}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.ownership && <p className="text-destructive text-xs mt-1">{errors.ownership}</p>}
+                </fieldset>
+
+                <fieldset>
+                  <legend className="block text-sm font-medium text-card-foreground mb-3">
+                    Habitation{requiredMark}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {HABITAT_OPTIONS.map((opt) => {
+                      const selected = form.habitatType === opt;
+                      return (
+                        <label
+                          key={opt}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                            selected
+                              ? "border-primary bg-primary/5 text-foreground font-medium"
+                              : "border-border hover:border-primary/40 bg-background text-card-foreground"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="habitatType"
+                            value={opt}
+                            checked={selected}
+                            onChange={() => update("habitatType", opt)}
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden="true"
+                            className={`w-3 h-3 rounded-full border ${
+                              selected ? "border-primary bg-primary" : "border-border"
+                            }`}
+                          />
+                          {opt}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {errors.habitatType && <p className="text-destructive text-xs mt-1">{errors.habitatType}</p>}
+                </fieldset>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-card-foreground mb-3">
-                  Quel(s) service(s) vous intéresse(nt) ?{requiredMark}
+                  Autres services qui vous intéressent (optionnel)
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   {SERVICES.map((service) => {
@@ -623,7 +812,6 @@ const ContactSection = () => {
                     );
                   })}
                 </div>
-                {errors.services && <p className="text-destructive text-xs mt-2">{errors.services}</p>}
               </div>
 
               <div>
