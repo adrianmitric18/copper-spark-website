@@ -26,7 +26,7 @@ const HomeReviewsBanner = () => {
                 {rating.ratingValueFormatted}/5 sur Google
               </span>
               <span className="text-muted-foreground text-sm">
-                {rating.reviewCount} avis clients satisfaits
+                {rating.reviewCount}+ avis Google vérifiés
               </span>
             </div>
           </div>
