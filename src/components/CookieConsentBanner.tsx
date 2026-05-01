@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CookiePreferencesModal from "./CookiePreferencesModal";
 import {
@@ -39,9 +40,10 @@ const CookieConsentBanner = () => {
               <div>
                 <h2
                   id="cookie-banner-title"
-                  className="font-display font-bold text-foreground text-base sm:text-lg mb-1"
+                  className="font-display font-bold text-foreground text-base sm:text-lg mb-1 flex items-center gap-2"
                 >
-                  🍪 Cookies & confidentialité
+                  <Cookie className="w-5 h-5 text-primary" aria-hidden="true" />
+                  Cookies & confidentialité
                 </h2>
                 <p id="cookie-banner-desc" className="text-sm text-muted-foreground leading-relaxed">
                   Nous utilisons des cookies pour analyser le trafic et améliorer votre expérience.

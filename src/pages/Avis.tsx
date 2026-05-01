@@ -147,8 +147,9 @@ const Avis = () => {
         <section className="pb-12 md:pb-16">
           <div className="container mx-auto px-4 max-w-3xl">
             <div className="rounded-3xl border-2 border-primary/40 bg-card shadow-lg p-8 md:p-10 text-center">
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                ⭐ Votre avis compte !
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3 flex items-center justify-center gap-2">
+                <Star className="w-6 h-6 fill-amber-400 text-amber-400" aria-hidden="true" />
+                Votre avis compte
               </h2>
               <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
                 Vous avez fait appel à nos services ? Merci de partager votre expérience

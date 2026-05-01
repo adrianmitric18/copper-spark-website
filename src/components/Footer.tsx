@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import LogoIcon from "@/components/LogoIcon";
 import { openCookiePreferences } from "@/hooks/useCookieConsent";
@@ -77,7 +77,8 @@ const Footer = () => {
                   onClick={() => trackEvent("review_click", { source_section: "footer" })}
                   className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
-                  ⭐ Nous évaluer sur Google
+                  <Star className="w-3.5 h-3.5" aria-hidden="true" />
+                  Nous évaluer sur Google
                 </a>
               </li>
             </ul>
