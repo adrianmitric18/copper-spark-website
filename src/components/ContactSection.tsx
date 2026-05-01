@@ -55,8 +55,9 @@ const PROJECT_TYPES = [
   "Autre",
 ];
 
-// Pré-qualification (brief 2026-05-01) : statut + type d'habitation
-const OWNERSHIP_OPTIONS = ["Propriétaire", "Locataire"];
+// Pré-qualification — habitation seulement (brief V3 : statut Propriétaire/
+// Locataire retiré, remplacé par champ libre 'Année de construction' utile
+// pour estimation de la TVA réduite 6% sur rénovation > 10 ans).
 const HABITAT_OPTIONS = ["Neuve", "En rénovation", "Existante"];
 
 const TIMINGS = [
@@ -95,8 +96,8 @@ interface FormState {
   commune: string;
   clientType: string;
   projectType: string;
-  ownership: string;
   habitatType: string;
+  buildYear: string;
   services: string[];
   message: string;
   timing: string;
@@ -114,8 +115,8 @@ const initialState: FormState = {
   commune: "",
   clientType: "",
   projectType: "",
-  ownership: "",
   habitatType: "",
+  buildYear: "",
   services: [],
   message: "",
   timing: "",
@@ -201,8 +202,9 @@ const ContactSection = () => {
     if (!form.commune.trim()) e.commune = "Commune requise";
     if (!form.clientType) e.clientType = "Veuillez sélectionner";
     if (!form.projectType) e.projectType = "Veuillez choisir un type de projet";
-    if (!form.ownership) e.ownership = "Précisez votre statut";
     if (!form.habitatType) e.habitatType = "Précisez le type d'habitation";
+    // buildYear est optionnel — pas de validation requise. On accepte une
+    // chaîne libre, l'utilisateur peut laisser vide ou écrire '~1985'.
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
     if (!form.gdprConsent) e.gdprConsent = "Consentement requis";
     setErrors(e);
@@ -273,12 +275,16 @@ const ContactSection = () => {
       const commune = form.commune.trim();
       const fullAddress = `${rue} ${numero}, ${codePostal} ${commune}`;
 
-      // Pré-qualification (brief 2026-05-01) — préfixée au message DB pour
-      // ne pas casser le schéma existant. projectType est aussi mergé dans
-      // services[] pour la priorité côté admin.
+      // Pré-qualification (brief V3) — préfixée au message DB pour ne pas
+      // casser le schéma existant. projectType est aussi mergé dans
+      // services[] pour la priorité côté admin. buildYear est ajouté
+      // seulement s'il est rempli.
+      const buildYearLine = form.buildYear.trim()
+        ? ` · [Construction] ${form.buildYear.trim()}`
+        : "";
       const prequalHeader =
         `[Type de projet] ${form.projectType}\n` +
-        `[Statut] ${form.ownership} · [Habitation] ${form.habitatType}\n\n`;
+        `[Habitation] ${form.habitatType}${buildYearLine}\n\n`;
       const enrichedMessage = prequalHeader + form.message.trim();
       const enrichedServices = Array.from(
         new Set([form.projectType, ...form.services].filter(Boolean))
@@ -347,8 +353,8 @@ const ContactSection = () => {
         commune,
         client_type: form.clientType,
         project_type: form.projectType,
-        ownership: form.ownership,
         habitat_type: form.habitatType,
+        build_year: form.buildYear.trim() || "Non précisée",
         services: servicesStr,
         message: enrichedMessage,
         timing: form.timing || "Non précisé",
@@ -707,83 +713,65 @@ const ContactSection = () => {
                 {errors.projectType && <p className="text-destructive text-xs mt-1">{errors.projectType}</p>}
               </div>
 
-              {/* Pré-qualification — Statut + Habitation (brief 2026-05-01) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <fieldset>
-                  <legend className="block text-sm font-medium text-card-foreground mb-3">
-                    Vous êtes{requiredMark}
-                  </legend>
-                  <div className="flex flex-wrap gap-2">
-                    {OWNERSHIP_OPTIONS.map((opt) => {
-                      const selected = form.ownership === opt;
-                      return (
-                        <label
-                          key={opt}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
-                            selected
-                              ? "border-primary bg-primary/5 text-foreground font-medium"
-                              : "border-border hover:border-primary/40 bg-background text-card-foreground"
+              {/* Pré-qualification — Habitation (radio) + Année construction
+                  (texte libre optionnel). Brief V3 : Propriétaire/Locataire
+                  retiré, remplacé par l'année qui sert vraiment au calcul
+                  TVA 6% rénovation. */}
+              <fieldset>
+                <legend className="block text-sm font-medium text-card-foreground mb-3">
+                  Habitation{requiredMark}
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {HABITAT_OPTIONS.map((opt) => {
+                    const selected = form.habitatType === opt;
+                    return (
+                      <label
+                        key={opt}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                          selected
+                            ? "border-primary bg-primary/5 text-foreground font-medium"
+                            : "border-border hover:border-primary/40 bg-background text-card-foreground"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="habitatType"
+                          value={opt}
+                          checked={selected}
+                          onChange={() => update("habitatType", opt)}
+                          className="sr-only"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className={`w-3 h-3 rounded-full border ${
+                            selected ? "border-primary bg-primary" : "border-border"
                           }`}
-                        >
-                          <input
-                            type="radio"
-                            name="ownership"
-                            value={opt}
-                            checked={selected}
-                            onChange={() => update("ownership", opt)}
-                            className="sr-only"
-                          />
-                          <span
-                            aria-hidden="true"
-                            className={`w-3 h-3 rounded-full border ${
-                              selected ? "border-primary bg-primary" : "border-border"
-                            }`}
-                          />
-                          {opt}
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {errors.ownership && <p className="text-destructive text-xs mt-1">{errors.ownership}</p>}
-                </fieldset>
+                        />
+                        {opt}
+                      </label>
+                    );
+                  })}
+                </div>
+                {errors.habitatType && <p className="text-destructive text-xs mt-1">{errors.habitatType}</p>}
+              </fieldset>
 
-                <fieldset>
-                  <legend className="block text-sm font-medium text-card-foreground mb-3">
-                    Habitation{requiredMark}
-                  </legend>
-                  <div className="flex flex-wrap gap-2">
-                    {HABITAT_OPTIONS.map((opt) => {
-                      const selected = form.habitatType === opt;
-                      return (
-                        <label
-                          key={opt}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
-                            selected
-                              ? "border-primary bg-primary/5 text-foreground font-medium"
-                              : "border-border hover:border-primary/40 bg-background text-card-foreground"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="habitatType"
-                            value={opt}
-                            checked={selected}
-                            onChange={() => update("habitatType", opt)}
-                            className="sr-only"
-                          />
-                          <span
-                            aria-hidden="true"
-                            className={`w-3 h-3 rounded-full border ${
-                              selected ? "border-primary bg-primary" : "border-border"
-                            }`}
-                          />
-                          {opt}
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {errors.habitatType && <p className="text-destructive text-xs mt-1">{errors.habitatType}</p>}
-                </fieldset>
+              <div>
+                <label htmlFor="buildYear" className="block text-sm font-medium text-card-foreground mb-2">
+                  Année de construction de la maison
+                </label>
+                <Input
+                  id="buildYear"
+                  type="text"
+                  inputMode="numeric"
+                  value={form.buildYear}
+                  onChange={(e) => update("buildYear", e.target.value)}
+                  placeholder="ex : 1985 (laissez vide si vous ne savez pas)"
+                  maxLength={20}
+                  className="h-11"
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Optionnel — pour estimation du taux de TVA applicable (6 % en rénovation au-delà de 10 ans).
+                </p>
               </div>
 
               <div>
