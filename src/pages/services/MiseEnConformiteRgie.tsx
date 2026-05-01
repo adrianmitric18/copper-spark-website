@@ -29,8 +29,8 @@ const MiseEnConformiteRgie = () => {
       slug="mise-en-conformite-rgie"
       breadcrumbLabel="Conformité RGIE"
       seoTitle="Mise en conformité RGIE à Court-Saint-Étienne et en Brabant wallon | Le Cuivre Électrique"
-      seoDescription="Mise en conformité RGIE pour vente, location ou contrôle. Électricien agréé à Court-Saint-Étienne. Diagnostic, travaux et accompagnement jusqu'au certificat. 0485 75 52 27."
-      seoKeywords="mise en conformité RGIE, certificat conformité électrique, contrôle Vinçotte, électricien agréé Brabant wallon, vente immobilier électrique"
+      seoDescription="Mise en conformité RGIE pour vente, location ou contrôle. Électricien indépendant à Court-Saint-Étienne. Diagnostic, travaux et accompagnement jusqu'au certificat. 0485 75 52 27."
+      seoKeywords="mise en conformité RGIE, certificat conformité électrique, contrôle Vinçotte, électricien indépendant Brabant wallon, vente immobilier électrique"
       schemaServiceName="Mise en conformité RGIE"
       schemaServiceDescription="Diagnostic, travaux correctifs et accompagnement jusqu'à l'obtention du certificat de conformité RGIE par organisme agréé. Brabant wallon, Wallonie et Bruxelles."
       hero={{

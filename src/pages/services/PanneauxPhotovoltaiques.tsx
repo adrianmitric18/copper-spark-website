@@ -19,7 +19,7 @@ const faqs = [
   {
     question: "Quelles sont les primes disponibles en Wallonie ?",
     answer:
-      "La Wallonie propose différentes aides régionales (primes énergie, certificats verts pour certaines configurations) ainsi qu'un mécanisme de compensation et un tarif d'injection. Les conditions évoluent régulièrement et certaines exigent une certification RESCERT côté installateur. Nous vous donnons les informations à jour lors du devis.",
+      "La Wallonie propose différentes aides régionales (primes énergie, certificats verts pour certaines configurations) ainsi qu'un mécanisme de compensation et un tarif d'injection. Les conditions évoluent chaque année — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
   },
   {
     question: "Puis-je coupler les panneaux à une borne de recharge ou une batterie ?",
@@ -150,19 +150,6 @@ const PanneauxPhotovoltaiques = () => {
         nous vous communiquons les informations à jour au moment du devis.
       </p>
 
-      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
-        Certification RESCERT — En toute transparence
-      </h2>
-      <div className="bg-accent/40 border border-primary/20 rounded-2xl p-6">
-        <p className="text-foreground leading-relaxed">
-          Notre certification <strong>RESCERT</strong> (nécessaire pour obtenir
-          certaines primes régionales wallonnes) est{" "}
-          <strong>en cours d'obtention</strong>. D'ici là, nous pouvons réaliser
-          votre installation conforme RGIE, mais nous vous orientons sans frais
-          vers un partenaire certifié si vous souhaitez bénéficier dès maintenant
-          des primes qui exigent RESCERT.
-        </p>
-      </div>
     </ServicePageLayout>
   );
 };

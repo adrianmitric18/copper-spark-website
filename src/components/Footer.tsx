@@ -170,8 +170,8 @@ const Footer = () => {
               <span className="ml-2 text-foreground font-medium">0805.376.944</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Agréé :</span>
-              <span className="ml-2 text-foreground font-medium">Électricien certifié</span>
+              <span className="text-muted-foreground">Statut :</span>
+              <span className="ml-2 text-foreground font-medium">Électricien indépendant</span>
             </div>
             <div>
               <span className="text-muted-foreground">Zone :</span>
@@ -200,7 +200,7 @@ const Footer = () => {
         <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} Le Cuivre Électrique. Tous droits réservés.</p>
           <p>
-            Électricien agréé en Belgique • Conforme RGIE
+            Électricien indépendant en Belgique • Conforme RGIE
           </p>
         </div>
       </div>

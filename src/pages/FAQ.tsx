@@ -36,22 +36,20 @@ const faqData: FaqItem[] = [
   // ─── GÉNÉRAL ───
   {
     category: "general",
-    question: "Êtes-vous un électricien agréé en Belgique ?",
+    question: "Qui est derrière Le Cuivre Électrique ?",
     answer:
-      "Oui. Adrian Mitric, fondateur de Le Cuivre Électrique, est électricien diplômé et agréé pour réaliser toutes les installations électriques en Belgique (société enregistrée BE 0805 376 944). Toutes nos installations sont conformes au Règlement Général sur les Installations Électriques (RGIE) en vigueur. À noter : nous sommes en cours d'obtention de la certification RESCERT, requise pour certains travaux spécifiques comme les panneaux photovoltaïques et les bornes de recharge donnant droit aux primes régionales. Dans l'intervalle, nous pouvons vous orienter vers un partenaire certifié si vous souhaitez bénéficier de ces primes.",
+      "Adrian Mitric, électricien indépendant à Court-Saint-Étienne, fondateur du Cuivre Électrique en 2021. Société enregistrée BE 0805.376.944. Toutes nos installations sont réalisées dans le respect du Règlement Général sur les Installations Électriques (RGIE) en vigueur en Belgique, avec coordination du contrôle final par un organisme agréé (Vinçotte, BTV, AIB-Vinçotte).",
     answerNode: (
       <>
         <p>
-          Oui. Adrian Mitric, fondateur de Le Cuivre Électrique, est électricien diplômé et agréé
-          pour réaliser toutes les installations électriques en Belgique (société enregistrée BE
-          0805 376 944). Toutes nos installations sont conformes au Règlement Général sur les
-          Installations Électriques (RGIE) en vigueur.
+          Adrian Mitric, électricien indépendant à Court-Saint-Étienne, fondateur
+          du Cuivre Électrique en 2021. Société enregistrée BE 0805.376.944.
         </p>
         <p>
-          À noter : nous sommes en cours d'obtention de la certification RESCERT, requise pour
-          certains travaux spécifiques comme les panneaux photovoltaïques et les bornes de recharge
-          donnant droit aux primes régionales. Dans l'intervalle, nous pouvons vous orienter vers
-          un partenaire certifié si vous souhaitez bénéficier de ces primes.
+          Toutes nos installations sont réalisées dans le respect du Règlement
+          Général sur les Installations Électriques (RGIE) en vigueur en Belgique,
+          avec coordination du contrôle final par un organisme agréé (Vinçotte,
+          BTV, AIB-Vinçotte).
         </p>
       </>
     ),
@@ -332,7 +330,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Installez-vous des bornes de recharge pour voiture électrique ?",
     answer:
-      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos marques de référence sont Alfen et Hager. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Pour bénéficier des primes régionales liées aux bornes, une certification RESCERT est requise. Comme nous sommes en cours d'obtention, nous pouvons vous orienter vers un partenaire certifié dans l'intervalle si vous souhaitez accéder à ces primes.",
+      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos marques de référence sont Alfen et Hager. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
     answerNode: (
       <>
         <p>
@@ -347,9 +345,9 @@ const faqData: FaqItem[] = [
           électriques sont nécessaires.
         </p>
         <p>
-          Pour bénéficier des primes régionales liées aux bornes, une certification RESCERT est
-          requise. Comme nous sommes en cours d'obtention, nous pouvons vous orienter vers un
-          partenaire certifié dans l'intervalle si vous souhaitez accéder à ces primes.
+          Des aides régionales existent pour les bornes de recharge. Les
+          conditions évoluent chaque année — nous vous donnons les informations
+          à jour lors du devis et vous orientons sur les démarches.
         </p>
       </>
     ),
@@ -358,7 +356,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Pouvez-vous installer des panneaux photovoltaïques ?",
     answer:
-      "Oui. Nous installons des panneaux photovoltaïques avec onduleurs Huawei (excellent rapport qualité-prix, fiabilité reconnue) ou SolarEdge (optimisation panneau par panneau, idéal pour toitures complexes ou partiellement ombragées). Les panneaux sont choisis avec vous selon votre budget et la performance recherchée. Notre approche : étude de consommation, analyse de l'orientation et inclinaison de votre toiture, dimensionnement sur mesure, installation soignée et mise en service. À noter : la certification RESCERT (nécessaire pour les primes régionales wallonnes) est en cours d'obtention chez nous. Si vous souhaitez bénéficier de ces primes, nous vous orientons vers un partenaire certifié le temps que la nôtre soit délivrée.",
+      "Oui. Nous installons des panneaux photovoltaïques avec onduleurs Huawei (excellent rapport qualité-prix, fiabilité reconnue) ou SolarEdge (optimisation panneau par panneau, idéal pour toitures complexes ou partiellement ombragées). Les panneaux sont choisis avec vous selon votre budget et la performance recherchée. Notre approche : étude de consommation, analyse de l'orientation et inclinaison de votre toiture, dimensionnement sur mesure, installation soignée et mise en service. Les conditions des primes régionales évoluent chaque année — nous vous donnons les informations à jour au moment du devis.",
     answerNode: (
       <>
         <p>
@@ -372,9 +370,9 @@ const faqData: FaqItem[] = [
           toiture, dimensionnement sur mesure, installation soignée et mise en service.
         </p>
         <p>
-          À noter : la certification RESCERT (nécessaire pour les primes régionales wallonnes) est
-          en cours d'obtention chez nous. Si vous souhaitez bénéficier de ces primes, nous vous
-          orientons vers un partenaire certifié le temps que la nôtre soit délivrée.
+          Les conditions des primes régionales évoluent chaque année — nous vous
+          donnons les informations à jour au moment du devis et vous orientons
+          sur les démarches.
         </p>
       </>
     ),
@@ -396,7 +394,7 @@ const FAQ = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title="Questions fréquentes | Le Cuivre Électrique - Électricien Brabant wallon"
-        description="Toutes les réponses à vos questions sur nos services d'électricien agréé en Brabant wallon : urgences, conformité RGIE, bornes de recharge, photovoltaïque."
+        description="Toutes les réponses à vos questions sur nos services d'électricien indépendant en Brabant wallon : urgences, conformité RGIE, bornes de recharge, photovoltaïque."
         keywords="FAQ électricien, questions fréquentes électricité, RGIE, dépannage urgent, borne de recharge, photovoltaïque, Brabant wallon, Bruxelles, Wallonie"
         canonical="https://cuivre-electrique.com/faq"
       />
@@ -429,7 +427,7 @@ const FAQ = () => {
               Questions <span className="text-primary">fréquentes</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Vos questions les plus courantes sur nos services d'électricien agréé en Brabant
+              Vos questions les plus courantes sur nos services d'électricien indépendant en Brabant
               wallon, à Bruxelles et en Wallonie.
             </p>
           </motion.div>

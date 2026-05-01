@@ -34,7 +34,7 @@ const InstallationRenovation = () => {
       slug="installation-electrique-renovation"
       breadcrumbLabel="Installation & Rénovation"
       seoTitle="Installation électrique et rénovation en Brabant wallon | Le Cuivre Électrique"
-      seoDescription="Installation électrique complète, neuve ou rénovation, par électricien agréé à Court-Saint-Étienne. Tableau Schneider, prises Niko. Devis gratuit."
+      seoDescription="Installation électrique complète, neuve ou rénovation, par électricien indépendant à Court-Saint-Étienne. Tableau Schneider, prises Niko. Devis gratuit."
       seoKeywords="installation électrique Brabant wallon, rénovation électrique, tableau Schneider, prises Niko, électricien Court-Saint-Étienne, mise aux normes"
       schemaServiceName="Installation électrique et rénovation"
       schemaServiceDescription="Installation électrique complète neuve ou rénovation : tableau Schneider, appareillage Niko, câblage, éclairage. Brabant wallon, Wallonie et Bruxelles."
@@ -85,7 +85,7 @@ const InstallationRenovation = () => {
       <p className="text-muted-foreground leading-relaxed mb-4">
         Le contrôle de conformité <strong>RGIE</strong> est obligatoire à la vente
         ou à la location et tous les 25 ans pour toute installation existante.
-        Choisir un électricien agréé, c'est s'assurer d'une installation conforme
+        Choisir un électricien indépendant, c'est s'assurer d'une installation conforme
         dès le départ et éviter des travaux correctifs coûteux par la suite.
       </p>
       <p className="text-muted-foreground leading-relaxed">

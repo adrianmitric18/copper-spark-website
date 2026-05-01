@@ -15,8 +15,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
-        title="Le Cuivre Électrique | Électricien agréé en Brabant wallon & Wallonie — Devis gratuit"
-        description="Électricien agréé basé à Court-Saint-Étienne. Installation, dépannage 24h/24, conformité RGIE, bornes de recharge, photovoltaïque. Brabant wallon, Wallonie et Bruxelles. Devis gratuit : 0485 75 52 27."
+        title="Le Cuivre Électrique | Électricien indépendant en Brabant wallon & Wallonie — Devis gratuit"
+        description="Électricien indépendant basé à Court-Saint-Étienne. Installation, dépannage 24h/24, conformité RGIE, bornes de recharge, photovoltaïque. Brabant wallon, Wallonie et Bruxelles. Devis gratuit : 0485 75 52 27."
         keywords="électricien Brabant wallon, électricien Court-Saint-Étienne, électricien Wallonie, électricien Bruxelles, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
         canonical="https://cuivre-electrique.com"
       />

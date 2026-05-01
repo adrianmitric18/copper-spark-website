@@ -3,8 +3,8 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 const features = [{
   icon: Award,
-  title: "Expertise certifiée",
-  description: "Électriciens qualifiés aux normes belges RGIE"
+  title: "Conformité RGIE",
+  description: "Toutes installations passées au contrôle RGIE par organisme agréé"
 }, {
   icon: Sparkles,
   title: "Travail impeccable",

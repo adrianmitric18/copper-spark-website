@@ -10,7 +10,7 @@ import { useAggregateRating } from "@/hooks/useAggregateRating";
 const HeroSection = () => {
   const { trackEvent } = useAnalyticsEvents();
   const { data: rating } = useAggregateRating();
-  const titleWords = ["Électricien", "agréé"];
+  const titleWords = ["Électricien", "indépendant"];
   const subtitleWords = ["Brabant", "wallon,", "Wallonie", "&", "Bruxelles"];
 
   // Mouse parallax effect only (no scroll parallax to avoid jank)

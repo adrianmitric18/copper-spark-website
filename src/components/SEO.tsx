@@ -79,7 +79,7 @@ const SEO = ({
 
     // Cleanup function to reset to defaults when component unmounts
     return () => {
-      document.title = "Le Cuivre Électrique | Électricien agréé en Brabant wallon & Wallonie";
+      document.title = "Le Cuivre Électrique | Électricien indépendant en Brabant wallon & Wallonie";
     };
   }, [title, description, keywords, ogImage, canonical, noindex]);
 
