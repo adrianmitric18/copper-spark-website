@@ -8,36 +8,35 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import heroImage from "@/assets/hero-electricite.jpg";
 
 /**
- * Page À propos — 4 blocs (cf. brief) :
- *   1. Photo Adrian (placeholder stock — TODO remplacer par photo réelle)
- *   2. Timeline parcours
- *   3. Philosophie (3-4 punchlines pro élégant)
+ * Page À propos — brief V3 du 2026-05-01 :
+ *   1. Hero texte plein largeur (photo principale retirée à la demande client)
+ *   2. Timeline parcours — 4 entrées (2021 / 2022 / 2024 / Aujourd'hui)
+ *   3. Philosophie (3 punchlines)
  *   4. Showcase matériel (outils + matériel posé)
  */
 
 const timeline = [
   {
-    year: "2020",
+    year: "2021",
     title: "Création du Cuivre Électrique",
     body: "Lancement de l'activité d'électricien indépendant à Court-Saint-Étienne, en Brabant wallon.",
   },
   {
-    year: "2021",
-    title: "Spécialisation rénovation et RGIE",
-    body: "Premiers gros chantiers de rénovation complète et de mise en conformité d'installations anciennes.",
+    year: "2022",
+    title: "Premiers gros chantiers",
+    body: "Mise en conformité RGIE et rénovations complètes d'installations anciennes.",
   },
   {
     year: "2024",
-    title: "Spécialisation photovoltaïque",
-    body: "Spécialisé en photovoltaïque depuis 2024 : étude, dimensionnement de l'installation, pose et raccordement Fluvius. Bornes de recharge VE posées en standard sur tous les types de tableau.",
+    title: "Bornes VE et photovoltaïque",
+    body: "Ajout des bornes de recharge et du photovoltaïque à l'offre. Étude, dimensionnement, raccordement réseau.",
   },
   {
-    year: "2026",
-    title: "200+ chantiers, 4,94/5 sur Google",
-    body: "L'activité tient sur le bouche-à-oreille et les avis Google. Aucun marketing payant à la pose.",
+    year: "Aujourd'hui",
+    title: "20+ chantiers réalisés",
+    body: "Bouche-à-oreille et avis Google. Note 4,94/5 sur 16+ avis vérifiés.",
   },
 ];
 
@@ -97,67 +96,43 @@ const APropos = () => {
           <Breadcrumbs items={[{ label: "À propos", href: "/a-propos" }]} />
         </div>
 
-        {/* === [1] Hero + photo === */}
+        {/* === [1] Hero texte (photo retirée — brief V3) === */}
         <section className="py-12 md:py-16">
-          <div className="container mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
-            <div className="lg:col-span-7">
-              <p className="section-marker mb-6 inline-block">
-                <span className="section-marker-num">I.</span> À propos
-              </p>
-              <motion.h1
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-                className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground tracking-[-0.025em] leading-tight mb-8"
-              >
-                Adrian Mitric, fondateur du
-                <span className="text-primary"> Cuivre Électrique</span>.
-              </motion.h1>
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="space-y-5 text-base md:text-lg text-foreground/85 leading-relaxed"
-              >
-                <p>
-                  Électricien indépendant à Court-Saint-Étienne, j'interviens
-                  dans tout le Brabant wallon en installation, rénovation,
-                  conformité RGIE, bornes de recharge et photovoltaïque.
-                </p>
-                <p className="text-muted-foreground">
-                  L'activité est organisée pour que vous échangiez avec une
-                  seule personne du devis à la fin du chantier. Le matériel est
-                  choisi pour durer — pas pour faire entrer un nom dans le
-                  devis.
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Photo (placeholder stock — TODO photo réelle Adrian) */}
-            <motion.div
-              initial={{ opacity: 0, y: reduce ? 0 : 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-5"
+          <div className="container mx-auto max-w-3xl">
+            <p className="section-marker mb-6 inline-block">
+              <span className="section-marker-num">I.</span> À propos
+            </p>
+            <motion.h1
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground tracking-[-0.025em] leading-tight mb-8"
             >
-              <figure className="rounded-2xl overflow-hidden border border-border bg-card shadow-md">
-                <div className="aspect-[4/5] overflow-hidden bg-cream-paper">
-                  <img
-                    src={heroImage}
-                    alt="Adrian Mitric, électricien indépendant en chantier en Brabant wallon"
-                    width={800}
-                    height={1000}
-                    className="w-full h-full object-cover"
-                    loading="eager"
-                    fetchPriority="high"
-                  />
-                </div>
-                <figcaption className="px-5 py-4 border-t border-border text-sm text-muted-foreground">
-                  Court-Saint-Étienne, Belgique · TVA BE 0805.376.944
-                </figcaption>
-              </figure>
+              Adrian Mitric, fondateur du
+              <span className="text-primary"> Cuivre Électrique</span>.
+            </motion.h1>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="space-y-5 text-base md:text-lg text-foreground/85 leading-relaxed"
+            >
+              <p>
+                Électricien indépendant à Court-Saint-Étienne, j'interviens
+                dans tout le Brabant wallon en installation, rénovation,
+                conformité RGIE, bornes de recharge et photovoltaïque.
+              </p>
+              <p className="text-muted-foreground">
+                L'activité est organisée pour que vous échangiez avec une
+                seule personne du devis à la fin du chantier. Le matériel est
+                choisi pour durer — pas pour faire entrer un nom dans le
+                devis.
+              </p>
+              <p className="text-sm text-muted-foreground pt-3 border-t border-border">
+                Court-Saint-Étienne, Belgique · TVA BE 0805.376.944
+              </p>
             </motion.div>
           </div>
         </section>
@@ -179,7 +154,14 @@ const APropos = () => {
               </div>
             </div>
 
-            <ol className="space-y-8 max-w-3xl ml-auto">
+            {/*
+              Bug visuel V3 corrigé : l'année et le titre étaient en absolute /
+              padding partagé, ce qui faisait chevaucher "Aujourd'hui"
+              (label long) sur "20+ chantiers réalisés". On passe en grid
+              2 colonnes : colonne année dédiée à gauche, contenu à droite,
+              avec gap explicite. Robuste à des libellés d'année variables.
+            */}
+            <ol className="space-y-10 max-w-3xl ml-auto">
               {timeline.map((t, i) => (
                 <motion.li
                   key={t.year}
@@ -187,20 +169,19 @@ const APropos = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-80px" }}
                   transition={{ duration: 0.5, delay: i * 0.07 }}
-                  className="relative pl-24 md:pl-28 border-l border-border ml-4"
+                  className="grid grid-cols-[auto_1fr] gap-x-6 md:gap-x-10"
                 >
-                  <span className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold tabular-nums">
-                    {i + 1}
-                  </span>
-                  <span className="absolute left-6 md:left-8 top-0 font-display text-2xl md:text-3xl font-bold text-primary tabular-nums">
+                  <div className="font-display text-xl md:text-2xl font-bold text-primary tabular-nums whitespace-nowrap pt-0.5">
                     {t.year}
-                  </span>
-                  <h3 className="font-display text-lg md:text-xl font-bold text-foreground mb-2 leading-snug">
-                    {t.title}
-                  </h3>
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                    {t.body}
-                  </p>
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg md:text-xl font-bold text-foreground mb-2 leading-snug">
+                      {t.title}
+                    </h3>
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                      {t.body}
+                    </p>
+                  </div>
                 </motion.li>
               ))}
             </ol>
