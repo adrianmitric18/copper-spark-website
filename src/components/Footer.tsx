@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import LogoIcon from "@/components/LogoIcon";
 import { openCookiePreferences } from "@/hooks/useCookieConsent";
@@ -52,11 +52,11 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="mailto:cuivre.electrique@gmail.com"
+                  href="mailto:contact@cuivre-electrique.com"
                   className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Mail className="w-5 h-5 text-primary" />
-                  cuivre.electrique@gmail.com
+                  contact@cuivre-electrique.com
                 </a>
               </li>
               <li>
@@ -77,7 +77,8 @@ const Footer = () => {
                   onClick={() => trackEvent("review_click", { source_section: "footer" })}
                   className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                 >
-                  ⭐ Nous évaluer sur Google
+                  <Star className="w-3.5 h-3.5" aria-hidden="true" />
+                  Nous évaluer sur Google
                 </a>
               </li>
             </ul>
@@ -128,9 +129,26 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link
+                  to="/cgv"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  CGV
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/confidentialite"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Confidentialité
+                </Link>
+              </li>
+              <li>
                 <button
                   type="button"
                   onClick={openCookiePreferences}
+                  aria-haspopup="dialog"
                   className="text-muted-foreground hover:text-primary transition-colors text-left"
                 >
                   Gérer mes cookies
@@ -152,8 +170,8 @@ const Footer = () => {
               <span className="ml-2 text-foreground font-medium">0805.376.944</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Agréé :</span>
-              <span className="ml-2 text-foreground font-medium">Électricien certifié</span>
+              <span className="text-muted-foreground">Statut :</span>
+              <span className="ml-2 text-foreground font-medium">Électricien indépendant</span>
             </div>
             <div>
               <span className="text-muted-foreground">Zone :</span>
@@ -182,7 +200,7 @@ const Footer = () => {
         <div className="mt-8 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} Le Cuivre Électrique. Tous droits réservés.</p>
           <p>
-            Électricien agréé en Belgique • Conforme RGIE
+            Électricien indépendant en Belgique • Conforme RGIE
           </p>
         </div>
       </div>

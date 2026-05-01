@@ -102,7 +102,7 @@ const ElectricienGenappe = () => (
     </p>
     <ul className="space-y-2 text-muted-foreground mb-4">
       <li>• Téléphone : <a href="tel:+32485755227" className="text-primary hover:underline">0485 75 52 27</a> (urgences 7j/7)</li>
-      <li>• Email : <a href="mailto:cuivre.electrique@gmail.com" className="text-primary hover:underline">cuivre.electrique@gmail.com</a></li>
+      <li>• Email : <a href="mailto:contact@cuivre-electrique.com" className="text-primary hover:underline">contact@cuivre-electrique.com</a></li>
       <li>• Formulaire en ligne : devis gratuit et sans engagement</li>
     </ul>
     <p className="text-muted-foreground leading-relaxed">

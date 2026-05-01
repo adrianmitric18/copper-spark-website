@@ -445,7 +445,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 
     <div style="background: ${COMPANY.darkColor}; padding: 32px 24px; text-align: center;">
       <h1 style="margin: 0; font-size: 24px; color: ${COMPANY.brandColor}; letter-spacing: -0.5px;">⚡ ${escapeHtml(COMPANY.name)}</h1>
-      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Électricien agréé · Brabant wallon · Bruxelles · Wallonie</p>
+      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Électricien indépendant · Brabant wallon · Bruxelles · Wallonie</p>
     </div>
 
     <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">
@@ -852,7 +852,7 @@ export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
 
     <div style="background: ${COMPANY.darkColor}; padding: 32px 24px; text-align: center;">
       <h1 style="margin: 0; font-size: 24px; color: ${COMPANY.brandColor}; letter-spacing: -0.5px;">⚡ ${escapeHtml(COMPANY.name)}</h1>
-      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Électricien agréé · Brabant wallon · Bruxelles · Wallonie</p>
+      <p style="margin: 8px 0 0; color: #ccc; font-size: 13px;">Électricien indépendant · Brabant wallon · Bruxelles · Wallonie</p>
     </div>
 
     <div style="padding: 32px 24px; color: #1a1a1a; line-height: 1.6;">

@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Existe-t-il des primes en Wallonie pour l'installation d'une borne ?",
     answer:
-      "Oui, des aides existent pour les particuliers et les entreprises (primes régionales wallonnes, déduction fiscale fédérale pour entreprises). Certaines exigent une certification RESCERT côté installateur. Notre certification RESCERT est en cours d'obtention : si vous souhaitez bénéficier d'une aide qui la requiert, nous vous orientons sans frais vers un partenaire certifié.",
+      "Oui, des aides existent pour les particuliers et les entreprises (primes régionales wallonnes, déduction fiscale fédérale pour entreprises). Les conditions évoluent chaque année — nous vous donnons les informations à jour lors du devis et vous orientons vers les démarches adaptées à votre situation.",
   },
 ];
 
@@ -170,19 +170,6 @@ const BornesDeRecharge = () => {
         ))}
       </ol>
 
-      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
-        Certification RESCERT — En toute transparence
-      </h2>
-      <div className="bg-accent/40 border border-primary/20 rounded-2xl p-6">
-        <p className="text-foreground leading-relaxed">
-          Notre certification <strong>RESCERT</strong> (requise pour certaines
-          primes régionales) est <strong>en cours d'obtention</strong>. Nous
-          pouvons néanmoins installer votre borne en respectant les normes RGIE.
-          Pour les clients souhaitant bénéficier d'une prime nécessitant RESCERT,
-          nous vous orientons sans frais vers des partenaires certifiés le temps
-          que la nôtre soit délivrée.
-        </p>
-      </div>
     </ServicePageLayout>
   );
 };

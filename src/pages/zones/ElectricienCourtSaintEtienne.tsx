@@ -35,14 +35,14 @@ const ElectricienCourtSaintEtienne = () => (
     seoTitle="Électricien à Court-Saint-Étienne — Le Cuivre Électrique"
     seoDescription="Électricien local à Court-Saint-Étienne : installation, rénovation, dépannage, bornes de recharge. Intervention rapide. Devis gratuit."
     h1="Électricien à Court-Saint-Étienne"
-    intro="Le Cuivre Électrique est implanté au cœur de Court-Saint-Étienne. Électricien agréé, nous sommes votre interlocuteur de proximité pour tous vos projets électriques."
+    intro="Le Cuivre Électrique est implanté au cœur de Court-Saint-Étienne. Électricien indépendant, nous sommes votre interlocuteur de proximité pour tous vos projets électriques."
     faqs={faqs}
   >
     <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-6">
       Votre électricien local à Court-Saint-Étienne
     </h2>
     <p className="text-muted-foreground leading-relaxed mb-4">
-      Le Cuivre Électrique est implanté au cœur de Court-Saint-Étienne. Électricien agréé, nous sommes votre interlocuteur de proximité pour tous vos projets électriques : installation neuve, rénovation complète, dépannage urgent, mise en conformité RGIE, installation de bornes de recharge et de panneaux photovoltaïques.
+      Le Cuivre Électrique est implanté au cœur de Court-Saint-Étienne. Électricien indépendant, nous sommes votre interlocuteur de proximité pour tous vos projets électriques : installation neuve, rénovation complète, dépannage urgent, mise en conformité RGIE, installation de bornes de recharge et de panneaux photovoltaïques.
     </p>
     <p className="text-muted-foreground leading-relaxed mb-10">
       Être basé dans votre commune, c'est vous garantir une réactivité maximale et une vraie connaissance du territoire. Que vous habitiez dans le centre, à Beaurieux, à Faux, Sart-Messire-Guillaume ou La Roche, nous intervenons dans un délai court avec un équipement complet.
@@ -72,7 +72,7 @@ const ElectricienCourtSaintEtienne = () => (
       Nos services à Court-Saint-Étienne
     </h2>
     <p className="text-muted-foreground leading-relaxed mb-4">
-      Nous proposons l'ensemble des prestations d'un électricien agréé, avec une expertise particulière sur les projets suivants :
+      Nous proposons l'ensemble des prestations d'un électricien indépendant, avec une expertise particulière sur les projets suivants :
     </p>
     <ul className="space-y-3 text-foreground mb-10">
       {[
@@ -122,7 +122,7 @@ const ElectricienCourtSaintEtienne = () => (
     </p>
     <ul className="space-y-2 text-muted-foreground mb-4">
       <li>• Téléphone : <a href="tel:+32485755227" className="text-primary hover:underline">0485 75 52 27</a> (disponible 7j/7 pour les urgences)</li>
-      <li>• Email : <a href="mailto:cuivre.electrique@gmail.com" className="text-primary hover:underline">cuivre.electrique@gmail.com</a></li>
+      <li>• Email : <a href="mailto:contact@cuivre-electrique.com" className="text-primary hover:underline">contact@cuivre-electrique.com</a></li>
       <li>• Formulaire : demande de devis gratuit et sans engagement</li>
     </ul>
     <p className="text-muted-foreground leading-relaxed">

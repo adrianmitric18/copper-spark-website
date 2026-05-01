@@ -1,0 +1,50 @@
+# =============================================================================
+# Cloudflare Pages headers — Le Cuivre Électrique
+#
+# Appliqués au niveau HTTP, là où ils ont effectivement leur poids. Les
+# <meta http-equiv> dans index.html sont ignorés par les navigateurs modernes
+# pour les directives de sécurité — ce fichier prend le relais.
+#
+# Doc Cloudflare : https://developers.cloudflare.com/pages/configuration/headers/
+# =============================================================================
+
+# === Tout le site ===
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=(), interest-cohort=()
+
+  # HSTS — force HTTPS pendant 1 an, inclut les sous-domaines, opt-in preload
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # CSP — restrictive mais compatible avec GA4, Google Ads, EmailJS, Supabase,
+  # Google Fonts, et l'embed Maps si besoin. 'unsafe-inline' sur script-src
+  # est nécessaire pour les snippets gtag inline dans index.html : à supprimer
+  # quand ils seront extraits ou attachés à une nonce.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com; connect-src 'self' https://*.supabase.co https://api.emailjs.com https://www.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+
+# === Assets versionnés (fingerprint Vite) — cache 1 an immutable ===
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# === Service worker — pas de cache (revalidation à chaque visite) ===
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# === Manifest et icônes — cache modéré ===
+/site.webmanifest
+  Cache-Control: public, max-age=86400
+/admin-manifest.webmanifest
+  Cache-Control: public, max-age=86400
+
+# === Sitemap et robots — cache court (revalidation rapide) ===
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+# === Espace admin : pas d'indexation, pas d'embedding ===
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  X-Frame-Options: DENY

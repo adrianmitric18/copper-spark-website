@@ -116,67 +116,48 @@ const Avis = () => {
           <Breadcrumbs items={[{ label: "Avis", href: "/avis" }]} />
         </div>
 
-        {/* HERO */}
-        <section className="py-12 md:py-16">
+        {/* HERO — titre + note dynamique + CTA principal Google (brief V3) */}
+        <section className="py-12 md:py-20">
           <div className="container mx-auto px-4 max-w-4xl text-center">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-5">
-              Avis clients vérifiés
-            </span>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-              Les avis de nos clients
+              Vos avis sur Google
             </h1>
             {aggregate && (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-4 mb-8">
                 <AverageStars value={aggregate.ratingValue} />
-                <p className="text-muted-foreground text-lg">
-                  <span className="text-foreground font-bold">{aggregate.reviewCount} avis Google</span>{" "}
-                  — Note moyenne{" "}
-                  <span className="text-foreground font-bold">{aggregate.ratingValueFormatted}/5</span>
+                <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
+                  <span className="text-foreground font-bold tabular-nums">
+                    {aggregate.ratingValueFormatted}/5
+                  </span>{" "}
+                  sur Google ·{" "}
+                  <span className="text-foreground font-bold tabular-nums">
+                    {aggregate.reviewCount}+
+                  </span>{" "}
+                  avis vérifiés
                 </p>
-                {reviews.length > 0 && reviews.length !== aggregate.reviewCount && (
-                  <p className="text-sm text-muted-foreground opacity-70">
-                    {reviews.length} commentaires détaillés ci-dessous
-                  </p>
-                )}
               </div>
             )}
+            <Button variant="copper" size="xl" asChild className="group">
+              <a
+                href={GOOGLE_REVIEW_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-analytics="review_click"
+                onClick={() => trackEvent("review_click", { source_section: "avis_page_hero" })}
+                className="inline-flex items-center gap-2"
+              >
+                Laissez votre avis sur Google
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
+              </a>
+            </Button>
+            <p className="text-xs text-muted-foreground mt-4">
+              Vous serez redirigé vers notre fiche Google Business
+            </p>
           </div>
         </section>
 
-        {/* CTA GOOGLE PRINCIPAL */}
-        <section className="pb-12 md:pb-16">
-          <div className="container mx-auto px-4 max-w-3xl">
-            <div className="rounded-3xl border-2 border-primary/40 bg-card/60 backdrop-blur-sm shadow-lg p-8 md:p-10 text-center">
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-                ⭐ Votre avis compte !
-              </h2>
-              <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto mb-6">
-                Vous avez fait appel à nos services ? Merci de partager votre expérience
-                sur Google. Cela nous aide énormément à nous développer et permet à
-                d'autres clients de nous trouver.
-              </p>
-              <Button variant="copper" size="xl" asChild>
-                <a
-                  href={GOOGLE_REVIEW_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-analytics="review_click"
-                  onClick={() => trackEvent("review_click", { source_section: "avis_page_hero" })}
-                  className="inline-flex items-center gap-2"
-                >
-                  Laisser un avis sur Google
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </Button>
-              <p className="text-xs text-muted-foreground mt-4">
-                Vous serez redirigé vers notre fiche Google Business
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* REVIEWS GRID */}
-        <section className="pb-16 md:pb-24">
+        {/* REVIEWS — 5 derniers en évidence puis le reste (brief V3) */}
+        <section className="pb-16 md:pb-24 border-t border-border pt-16 md:pt-20">
           <div className="container mx-auto px-4 max-w-6xl">
             {loading ? (
               <p className="text-center text-muted-foreground">Chargement des avis…</p>
@@ -186,62 +167,110 @@ const Avis = () => {
               </p>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {reviews.slice(0, visible).map((r) => (
+                <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
+                  Les derniers avis
+                </h2>
+
+                {/* 5 derniers avis : grille 5 colonnes desktop, scroll horizontal mobile.
+                    On évite un carrousel JS pour rester léger ; le scroll-snap mobile
+                    donne le même feeling de carousel sans JS supplémentaire. */}
+                <div
+                  className="-mx-4 md:mx-0 px-4 md:px-0 overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-5 md:gap-4 pb-4 md:pb-0"
+                >
+                  {reviews.slice(0, 5).map((r) => (
                     <article
                       key={r.id}
-                      className="relative bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col gap-4"
+                      className="snap-start shrink-0 w-[85vw] sm:w-[60vw] md:w-auto bg-card border border-primary/20 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col gap-3"
                     >
-                      <Quote className="absolute top-4 right-4 w-7 h-7 text-primary/15" aria-hidden="true" />
-                      <div className="flex items-center justify-between pr-8">
-                        <StarRow rating={r.rating} />
-                        {r.service && (
-                          <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                            {r.service}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-foreground/90 text-sm leading-relaxed flex-1">
-                        "{r.message}"
+                      <StarRow rating={r.rating} size="w-3.5 h-3.5" />
+                      <p className="text-foreground/90 text-sm leading-relaxed flex-1 line-clamp-6">
+                        “{r.message}”
                       </p>
-                      <div className="flex items-center justify-between pt-3 border-t border-border/40">
-                        <div>
-                          <p className="font-semibold text-sm text-foreground">{r.name}</p>
-                          {r.city && (
+                      <div className="pt-3 border-t border-border/40">
+                        <p className="font-semibold text-sm text-foreground">{r.name}</p>
+                        <div className="flex items-center justify-between mt-0.5">
+                          {r.city ? (
                             <p className="text-xs text-muted-foreground">{r.city}</p>
+                          ) : (
+                            <span />
                           )}
+                          <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <Quote className="w-3 h-3" aria-hidden="true" />
+                            Google · {formatDate(r.created_at)}
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(r.created_at)}
-                        </span>
                       </div>
                     </article>
                   ))}
                 </div>
 
-                {visible < reviews.length && (
-                  <div className="text-center mt-10">
-                    <Button
-                      variant="copperOutline"
-                      onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                    >
-                      Voir plus d'avis
-                    </Button>
-                  </div>
+                {reviews.length > 5 && (
+                  <>
+                    <h3 className="font-display text-xl md:text-2xl font-bold text-foreground text-center mt-16 mb-8">
+                      Tous les avis
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {reviews.slice(5, visible).map((r) => (
+                        <article
+                          key={r.id}
+                          className="relative bg-card border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col gap-4"
+                        >
+                          <Quote className="absolute top-4 right-4 w-7 h-7 text-primary/15" aria-hidden="true" />
+                          <div className="flex items-center justify-between pr-8">
+                            <StarRow rating={r.rating} />
+                            {r.service && (
+                              <span className="inline-block px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                                {r.service}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-foreground/90 text-sm leading-relaxed flex-1">
+                            "{r.message}"
+                          </p>
+                          <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                            <div>
+                              <p className="font-semibold text-sm text-foreground">{r.name}</p>
+                              {r.city && (
+                                <p className="text-xs text-muted-foreground">{r.city}</p>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(r.created_at)}
+                            </span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+
+                    {visible < reviews.length && (
+                      <div className="text-center mt-10">
+                        <Button
+                          variant="copperOutline"
+                          onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                        >
+                          Voir plus d'avis
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
           </div>
         </section>
 
-        {/* CTA BAS */}
+        {/* BANDEAU BAS — encourager à laisser un avis (brief V3) */}
         <section className="pb-20 md:pb-28">
           <div className="container mx-auto px-4 max-w-3xl">
-            <div className="rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left">
-              <p className="font-display text-lg md:text-xl font-semibold text-foreground">
-                Vous aussi, partagez votre avis
+            <div className="rounded-2xl border border-primary/30 bg-card p-8 md:p-10 text-center">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-3">
+                Laissez votre avis
+              </h2>
+              <p className="text-muted-foreground leading-relaxed mb-6 max-w-xl mx-auto">
+                Vous avez fait appel à mes services ? Votre avis m'aide à
+                grandir et aide d'autres clients à choisir en toute confiance.
               </p>
-              <Button variant="copper" asChild>
+              <Button variant="copper" size="lg" asChild>
                 <a
                   href={GOOGLE_REVIEW_URL}
                   target="_blank"
@@ -251,7 +280,7 @@ const Avis = () => {
                   className="inline-flex items-center gap-2"
                 >
                   Laisser un avis Google
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 </a>
               </Button>
             </div>

@@ -36,22 +36,20 @@ const faqData: FaqItem[] = [
   // ─── GÉNÉRAL ───
   {
     category: "general",
-    question: "Êtes-vous un électricien agréé en Belgique ?",
+    question: "Qui est derrière Le Cuivre Électrique ?",
     answer:
-      "Oui. Adrian Mitric, fondateur de Le Cuivre Électrique, est électricien diplômé et agréé pour réaliser toutes les installations électriques en Belgique (société enregistrée BE 0805 376 944). Toutes nos installations sont conformes au Règlement Général sur les Installations Électriques (RGIE) en vigueur. À noter : nous sommes en cours d'obtention de la certification RESCERT, requise pour certains travaux spécifiques comme les panneaux photovoltaïques et les bornes de recharge donnant droit aux primes régionales. Dans l'intervalle, nous pouvons vous orienter vers un partenaire certifié si vous souhaitez bénéficier de ces primes.",
+      "Adrian Mitric, électricien indépendant à Court-Saint-Étienne, fondateur du Cuivre Électrique en 2021. Société enregistrée BE 0805.376.944. Toutes nos installations sont réalisées dans le respect du Règlement Général sur les Installations Électriques (RGIE) en vigueur en Belgique, avec coordination du contrôle final par un organisme agréé (Vinçotte, BTV, AIB-Vinçotte).",
     answerNode: (
       <>
         <p>
-          Oui. Adrian Mitric, fondateur de Le Cuivre Électrique, est électricien diplômé et agréé
-          pour réaliser toutes les installations électriques en Belgique (société enregistrée BE
-          0805 376 944). Toutes nos installations sont conformes au Règlement Général sur les
-          Installations Électriques (RGIE) en vigueur.
+          Adrian Mitric, électricien indépendant à Court-Saint-Étienne, fondateur
+          du Cuivre Électrique en 2021. Société enregistrée BE 0805.376.944.
         </p>
         <p>
-          À noter : nous sommes en cours d'obtention de la certification RESCERT, requise pour
-          certains travaux spécifiques comme les panneaux photovoltaïques et les bornes de recharge
-          donnant droit aux primes régionales. Dans l'intervalle, nous pouvons vous orienter vers
-          un partenaire certifié si vous souhaitez bénéficier de ces primes.
+          Toutes nos installations sont réalisées dans le respect du Règlement
+          Général sur les Installations Électriques (RGIE) en vigueur en Belgique,
+          avec coordination du contrôle final par un organisme agréé (Vinçotte,
+          BTV, AIB-Vinçotte).
         </p>
       </>
     ),
@@ -112,6 +110,27 @@ const faqData: FaqItem[] = [
           Pour les diagnostics techniques approfondis ou les déplacements très éloignés, des frais
           de déplacement peuvent s'appliquer. Ils sont systématiquement annoncés à l'avance et
           déduits du montant final si les travaux sont acceptés.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "general",
+    question: "Quelles garanties proposez-vous ?",
+    answer:
+      "Toutes nos installations sont conformes au Règlement Général sur les Installations Électriques (RGIE) en vigueur en Belgique. La main-d'œuvre est garantie 2 ans à compter de la fin de chantier (garantie légale de conformité). Le matériel posé bénéficie en plus de la garantie constructeur (Schneider, Niko, Hager, Alfen, etc.) qui peut aller jusqu'à 5 ou 10 ans selon les marques et les références.",
+    answerNode: (
+      <>
+        <p>
+          Toutes nos installations sont conformes au Règlement Général sur
+          les Installations Électriques (RGIE) en vigueur en Belgique.
+        </p>
+        <p>
+          La main-d'œuvre est garantie 2 ans à compter de la fin de chantier
+          (garantie légale de conformité). Le matériel posé bénéficie en plus
+          de la garantie constructeur (Schneider, Niko, Hager, Alfen, etc.)
+          qui peut aller jusqu'à 5 ou 10 ans selon les marques et les
+          références.
         </p>
       </>
     ),
@@ -332,7 +351,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Installez-vous des bornes de recharge pour voiture électrique ?",
     answer:
-      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos marques de référence sont Alfen et Hager. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Pour bénéficier des primes régionales liées aux bornes, une certification RESCERT est requise. Comme nous sommes en cours d'obtention, nous pouvons vous orienter vers un partenaire certifié dans l'intervalle si vous souhaitez accéder à ces primes.",
+      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos marques de référence sont Alfen et Hager. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
     answerNode: (
       <>
         <p>
@@ -347,9 +366,9 @@ const faqData: FaqItem[] = [
           électriques sont nécessaires.
         </p>
         <p>
-          Pour bénéficier des primes régionales liées aux bornes, une certification RESCERT est
-          requise. Comme nous sommes en cours d'obtention, nous pouvons vous orienter vers un
-          partenaire certifié dans l'intervalle si vous souhaitez accéder à ces primes.
+          Des aides régionales existent pour les bornes de recharge. Les
+          conditions évoluent chaque année — nous vous donnons les informations
+          à jour lors du devis et vous orientons sur les démarches.
         </p>
       </>
     ),
@@ -358,7 +377,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Pouvez-vous installer des panneaux photovoltaïques ?",
     answer:
-      "Oui. Nous installons des panneaux photovoltaïques avec onduleurs Huawei (excellent rapport qualité-prix, fiabilité reconnue) ou SolarEdge (optimisation panneau par panneau, idéal pour toitures complexes ou partiellement ombragées). Les panneaux sont choisis avec vous selon votre budget et la performance recherchée. Notre approche : étude de consommation, analyse de l'orientation et inclinaison de votre toiture, dimensionnement sur mesure, installation soignée et mise en service. À noter : la certification RESCERT (nécessaire pour les primes régionales wallonnes) est en cours d'obtention chez nous. Si vous souhaitez bénéficier de ces primes, nous vous orientons vers un partenaire certifié le temps que la nôtre soit délivrée.",
+      "Oui. Nous installons des panneaux photovoltaïques avec onduleurs Huawei (excellent rapport qualité-prix, fiabilité reconnue) ou SolarEdge (optimisation panneau par panneau, idéal pour toitures complexes ou partiellement ombragées). Les panneaux sont choisis avec vous selon votre budget et la performance recherchée. Notre approche : étude de consommation, analyse de l'orientation et inclinaison de votre toiture, dimensionnement sur mesure, installation soignée et mise en service. Les conditions des primes régionales évoluent chaque année — nous vous donnons les informations à jour au moment du devis.",
     answerNode: (
       <>
         <p>
@@ -372,9 +391,163 @@ const faqData: FaqItem[] = [
           toiture, dimensionnement sur mesure, installation soignée et mise en service.
         </p>
         <p>
-          À noter : la certification RESCERT (nécessaire pour les primes régionales wallonnes) est
-          en cours d'obtention chez nous. Si vous souhaitez bénéficier de ces primes, nous vous
-          orientons vers un partenaire certifié le temps que la nôtre soit délivrée.
+          Les conditions des primes régionales évoluent chaque année — nous vous
+          donnons les informations à jour au moment du devis et vous orientons
+          sur les démarches.
+        </p>
+      </>
+    ),
+  },
+
+  // ─── BORNES DE RECHARGE — questions ciblées (brief V3) ───
+  {
+    category: "specialites",
+    question: "Quelle puissance de borne pour ma voiture ?",
+    answer:
+      "Pour un usage domestique, une borne 7,4 kW (monophasée) ou 11 kW (triphasée) recharge la plupart des voitures électriques en une nuit. La 22 kW est réservée aux installations triphasées robustes (entreprises, copropriétés), et seulement si votre véhicule l'accepte en courant alternatif. Avant le devis, nous vérifions toujours la configuration de votre tableau et le type de prise embarquée par votre voiture.",
+    answerNode: (
+      <>
+        <p>
+          Pour un usage domestique, une borne 7,4 kW (monophasée) ou 11 kW
+          (triphasée) recharge la plupart des voitures électriques en une
+          nuit. La 22 kW est réservée aux installations triphasées robustes
+          (entreprises, copropriétés), et seulement si votre véhicule
+          l'accepte en courant alternatif.
+        </p>
+        <p>
+          Avant le devis, nous vérifions toujours la configuration de votre
+          tableau et le type de prise embarquée par votre voiture.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
+    question: "Combien coûte l'installation d'une borne de recharge ?",
+    answer:
+      "Le prix dépend de la marque, de la puissance, de la longueur de câble entre tableau et borne, et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Une borne Hager ou Alfen avec pose simple démarre à quelques centaines d'euros HTVA hors matériel. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
+    answerNode: (
+      <>
+        <p>
+          Le prix dépend de la marque, de la puissance, de la longueur de
+          câble entre tableau et borne, et de la complexité de l'installation
+          (renforcement de tableau, tranchée éventuelle).
+        </p>
+        <p>
+          Une borne Hager ou Alfen avec pose simple démarre à quelques
+          centaines d'euros HTVA hors matériel. Le devis est gratuit après
+          visite technique sur place et détaille chaque poste séparément.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
+    question: "Faut-il l'accord du gestionnaire de réseau pour une borne ?",
+    answer:
+      "Pour une borne domestique jusqu'à 11 kW raccordée à une installation existante, aucune demande préalable n'est requise dans la majorité des cas. Au-delà (22 kW, recharge rapide, raccordement triphasé en monophasé existant) ou pour certaines copropriétés, une déclaration ou un renforcement chez le gestionnaire de réseau peut être nécessaire. Nous regardons cela ensemble lors de la visite et nous prenons en charge les démarches si elles s'imposent.",
+    answerNode: (
+      <>
+        <p>
+          Pour une borne domestique jusqu'à 11 kW raccordée à une installation
+          existante, aucune demande préalable n'est requise dans la majorité
+          des cas.
+        </p>
+        <p>
+          Au-delà (22 kW, recharge rapide, raccordement triphasé en
+          monophasé existant) ou pour certaines copropriétés, une
+          déclaration ou un renforcement chez le gestionnaire de réseau peut
+          être nécessaire. Nous regardons cela ensemble lors de la visite et
+          nous prenons en charge les démarches si elles s'imposent.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
+    question: "Comment fonctionne la prime VE en Wallonie ?",
+    answer:
+      "La Wallonie propose des aides régionales pour l'installation de bornes de recharge, principalement à destination des particuliers et de certaines entreprises. Les conditions et montants évoluent chaque année et certains dispositifs requièrent un installateur agréé pour ce type de prime. Nous vous donnons les informations à jour au moment du devis et vous orientons sur les démarches adaptées à votre situation.",
+    answerNode: (
+      <>
+        <p>
+          La Wallonie propose des aides régionales pour l'installation de
+          bornes de recharge, principalement à destination des particuliers
+          et de certaines entreprises.
+        </p>
+        <p>
+          Les conditions et montants évoluent chaque année et certains
+          dispositifs requièrent un installateur agréé pour ce type de prime.
+          Nous vous donnons les informations à jour au moment du devis et
+          vous orientons sur les démarches adaptées à votre situation.
+        </p>
+      </>
+    ),
+  },
+
+  // ─── PHOTOVOLTAÏQUE — questions ciblées (brief V3) ───
+  {
+    category: "specialites",
+    question: "Combien de panneaux pour couvrir ma consommation ?",
+    answer:
+      "En ordre de grandeur : un ménage belge consomme entre 3 000 et 5 000 kWh par an. Un panneau de 410-450 Wc bien orienté produit en Wallonie autour de 350 à 400 kWh/an. Pour couvrir une consommation moyenne il faut donc typiquement entre 8 et 14 panneaux. Le dimensionnement réel dépend de votre toiture (orientation, inclinaison, ombrages), de votre consommation détaillée et de votre stratégie d'autoconsommation. Nous faisons l'étude précise lors de la visite gratuite.",
+    answerNode: (
+      <>
+        <p>
+          En ordre de grandeur : un ménage belge consomme entre 3 000 et
+          5 000 kWh par an. Un panneau de 410-450 Wc bien orienté produit
+          en Wallonie autour de 350 à 400 kWh/an. Pour couvrir une
+          consommation moyenne il faut donc typiquement entre 8 et 14 panneaux.
+        </p>
+        <p>
+          Le dimensionnement réel dépend de votre toiture (orientation,
+          inclinaison, ombrages), de votre consommation détaillée et de
+          votre stratégie d'autoconsommation. Nous faisons l'étude précise
+          lors de la visite gratuite.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
+    question: "Quel délai pour rentabiliser une installation photovoltaïque ?",
+    answer:
+      "Le retour sur investissement dépend de votre consommation, du tarif d'électricité au moment où vous installez, du taux d'autoconsommation, et des aides régionales. En 2026 et avec une installation bien dimensionnée, le retour se situe généralement entre 7 et 12 ans. Une installation est garantie 25 ans côté production des panneaux, donc la part rentabilisée représente la majeure partie de la durée de vie. Nous vous fournissons une simulation chiffrée dans le devis.",
+    answerNode: (
+      <>
+        <p>
+          Le retour sur investissement dépend de votre consommation, du
+          tarif d'électricité au moment où vous installez, du taux
+          d'autoconsommation, et des aides régionales.
+        </p>
+        <p>
+          En 2026 et avec une installation bien dimensionnée, le retour se
+          situe généralement entre 7 et 12 ans. Une installation est
+          garantie 25 ans côté production des panneaux, donc la part
+          rentabilisée représente la majeure partie de la durée de vie.
+          Nous vous fournissons une simulation chiffrée dans le devis.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
+    question: "Quelles démarches administratives pour le photovoltaïque ?",
+    answer:
+      "Une installation photovoltaïque résidentielle en Wallonie demande typiquement : la déclaration auprès du gestionnaire de réseau pour autoriser l'injection, l'inscription au mécanisme de compensation ou de rachat (selon la puissance), une éventuelle demande de prime régionale, et le contrôle RGIE après pose. Nous prenons en charge le formalisme technique de A à Z et vous accompagnons sur la partie prime ; vous restez décideur sur les choix qui vous engagent (contrat, choix tarifaire).",
+    answerNode: (
+      <>
+        <p>
+          Une installation photovoltaïque résidentielle en Wallonie demande
+          typiquement : la déclaration auprès du gestionnaire de réseau pour
+          autoriser l'injection, l'inscription au mécanisme de compensation
+          ou de rachat (selon la puissance), une éventuelle demande de
+          prime régionale, et le contrôle RGIE après pose.
+        </p>
+        <p>
+          Nous prenons en charge le formalisme technique de A à Z et vous
+          accompagnons sur la partie prime ; vous restez décideur sur les
+          choix qui vous engagent (contrat, choix tarifaire).
         </p>
       </>
     ),
@@ -396,7 +569,7 @@ const FAQ = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title="Questions fréquentes | Le Cuivre Électrique - Électricien Brabant wallon"
-        description="Toutes les réponses à vos questions sur nos services d'électricien agréé en Brabant wallon : urgences, conformité RGIE, bornes de recharge, photovoltaïque."
+        description="Toutes les réponses à vos questions sur nos services d'électricien indépendant en Brabant wallon : urgences, conformité RGIE, bornes de recharge, photovoltaïque."
         keywords="FAQ électricien, questions fréquentes électricité, RGIE, dépannage urgent, borne de recharge, photovoltaïque, Brabant wallon, Bruxelles, Wallonie"
         canonical="https://cuivre-electrique.com/faq"
       />
@@ -429,7 +602,7 @@ const FAQ = () => {
               Questions <span className="text-primary">fréquentes</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Vos questions les plus courantes sur nos services d'électricien agréé en Brabant
+              Vos questions les plus courantes sur nos services d'électricien indépendant en Brabant
               wallon, à Bruxelles et en Wallonie.
             </p>
           </motion.div>
