@@ -1,106 +1,129 @@
 import { useEffect, useRef, useState } from "react";
-import { Zap, Star, Clock, Users } from "lucide-react";
+import { useAggregateRating } from "@/hooks/useAggregateRating";
 
-const figures = [
-  { icon: Zap, value: 200, suffix: "+", label: "Interventions réalisées" },
-  { icon: Star, value: 17, suffix: "", label: "Avis 5 étoiles" },
-  { icon: Clock, value: 4, suffix: "", label: "Ans d'expérience" },
-  { icon: Users, value: 98, suffix: "%", label: "Clients satisfaits" },
-];
-
-const useCountUp = (target: number, isVisible: boolean, duration = 2000) => {
-  const [count, setCount] = useState(0);
+/**
+ * Section "Chiffres clés" — refonte sobre brief 2026-05-01.
+ *
+ * 3 stats vraies, pas d'icônes criardes :
+ *   1. 20+ Chantiers (compteur animé)
+ *   2. Réponse en 24h (devis 48h après visite)
+ *   3. Note Google dynamique (useAggregateRating Supabase)
+ *
+ * Aucune statistique inventée (pas de "98% satisfaits", pas de "4 ans
+ * d'expérience"). Les chiffres en gros suffisent à porter la confiance.
+ */
+const useCountUp = (target: number, isVisible: boolean, decimals = 0, duration = 1600) => {
+  const [value, setValue] = useState(0);
   const hasAnimated = useRef(false);
 
   useEffect(() => {
     if (!isVisible || hasAnimated.current) return;
     hasAnimated.current = true;
 
-    const steps = 60;
-    const increment = target / steps;
-    const stepTime = duration / steps;
-    let current = 0;
-    let step = 0;
+    const start = performance.now();
+    let raf = 0;
 
-    const timer = setInterval(() => {
-      step++;
-      // Ease-out curve
-      const progress = step / steps;
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - progress, 3);
-      current = Math.round(eased * target);
-      setCount(current);
-      if (step >= steps) {
-        setCount(target);
-        clearInterval(timer);
-      }
-    }, stepTime);
+      setValue(eased * target);
+      if (progress < 1) raf = requestAnimationFrame(tick);
+      else setValue(target);
+    };
 
-    return () => clearInterval(timer);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [isVisible, target, duration]);
 
-  return count;
+  return decimals > 0
+    ? value.toFixed(decimals).replace(".", ",")
+    : Math.round(value).toString();
 };
 
-const FigureCard = ({ icon: Icon, value, suffix, label, isVisible, delay }: {
-  icon: typeof Zap;
-  value: number;
-  suffix: string;
+interface FigureProps {
+  value: string;
+  suffix?: string;
   label: string;
+  description: string;
   isVisible: boolean;
   delay: number;
-}) => {
-  const count = useCountUp(value, isVisible);
+}
 
-  return (
-    <div
-      className="flex flex-col items-center text-center p-6 md:p-8 rounded-2xl bg-card border border-border/50 shadow-sm hover:shadow-md transition-all duration-500"
-      style={{
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "translateY(0)" : "translateY(30px)",
-        transition: `opacity 0.6s ease-out ${delay}ms, transform 0.6s ease-out ${delay}ms`,
-      }}
-    >
-      <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-        <Icon className="w-7 h-7 text-primary" />
-      </div>
-      <span className="text-4xl md:text-5xl font-bold text-foreground font-display tabular-nums">
-        {count}{suffix}
-      </span>
-      <span className="text-sm text-muted-foreground mt-2">{label}</span>
+const Figure = ({ value, suffix, label, description, isVisible, delay }: FigureProps) => (
+  <div
+    className="text-center md:text-left"
+    style={{
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? "translateY(0)" : "translateY(20px)",
+      transition: `opacity 0.6s ease-out ${delay}ms, transform 0.6s ease-out ${delay}ms`,
+    }}
+  >
+    <div className="font-display font-bold text-foreground leading-none tabular-nums">
+      <span className="text-5xl md:text-6xl">{value}</span>
+      {suffix && (
+        <span className="text-3xl md:text-4xl text-primary ml-0.5">{suffix}</span>
+      )}
     </div>
-  );
-};
+    <p className="font-display text-base md:text-lg font-semibold text-foreground mt-3">
+      {label}
+    </p>
+    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+      {description}
+    </p>
+  </div>
+);
 
 const KeyFiguresSection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const { data: rating } = useAggregateRating();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) setIsVisible(true);
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
+  // Compteurs animés. Note Google fallback à 4.94 si la fetch n'est pas
+  // encore arrivée — la valeur réelle Supabase écrase dès que dispo.
+  const chantiersCount = useCountUp(20, isVisible);
+  const ratingValue = rating?.ratingValue ?? 4.94;
+  const reviewCount = rating?.reviewCount ?? 16;
+  const ratingAnimated = useCountUp(ratingValue, isVisible, 2);
+
   return (
     <section ref={sectionRef} className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4 max-w-5xl">
-        <div className="text-center mb-12 md:mb-16">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-5">
-            Chiffres clés
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground font-display">
-            Notre expertise en chiffres
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {figures.map((fig, i) => (
-            <FigureCard key={i} {...fig} isVisible={isVisible} delay={i * 150} />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 lg:gap-12">
+          <Figure
+            value={chantiersCount}
+            suffix="+"
+            label="Chantiers"
+            description="Bornes, photovoltaïque, rénovations électriques en Brabant wallon."
+            isVisible={isVisible}
+            delay={0}
+          />
+          <Figure
+            value="24"
+            suffix="h"
+            label="Réponse"
+            description="Devis détaillé en 48h après visite sur place."
+            isVisible={isVisible}
+            delay={120}
+          />
+          <Figure
+            value={ratingAnimated}
+            suffix="/5"
+            label="Note Google"
+            description={`Sur ${reviewCount}+ avis Google vérifiés.`}
+            isVisible={isVisible}
+            delay={240}
+          />
         </div>
       </div>
     </section>
