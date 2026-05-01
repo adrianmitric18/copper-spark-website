@@ -146,7 +146,7 @@ const Avis = () => {
         {/* CTA GOOGLE PRINCIPAL */}
         <section className="pb-12 md:pb-16">
           <div className="container mx-auto px-4 max-w-3xl">
-            <div className="rounded-3xl border-2 border-primary/40 bg-card/60 backdrop-blur-sm shadow-lg p-8 md:p-10 text-center">
+            <div className="rounded-3xl border-2 border-primary/40 bg-card shadow-lg p-8 md:p-10 text-center">
               <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
                 ⭐ Votre avis compte !
               </h2>

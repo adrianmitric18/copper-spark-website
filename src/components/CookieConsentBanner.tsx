@@ -34,7 +34,7 @@ const CookieConsentBanner = () => {
           className="fixed bottom-0 left-0 right-0 z-[200] p-3 sm:p-4 pb-[calc(env(safe-area-inset-bottom)+12px)] sm:pb-4 animate-slide-in-bottom"
           style={{ animation: "slide-up 300ms ease-out" }}
         >
-          <div className="mx-auto max-w-[600px] bg-card/95 backdrop-blur-md border border-border/60 rounded-2xl shadow-2xl p-4 sm:p-5">
+          <div className="mx-auto max-w-[600px] bg-card border border-border rounded-2xl shadow-xl p-4 sm:p-5">
             <div className="flex flex-col gap-3">
               <div>
                 <h2

@@ -5,7 +5,6 @@ import KeyFiguresSection from "@/components/KeyFiguresSection";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import MouseEffects from "@/components/MouseEffects";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import { useAggregateRating } from "@/hooks/useAggregateRating";
@@ -32,7 +31,6 @@ const Index = () => {
             : undefined
         }
       />
-      <MouseEffects />
       <Header />
       <main>
         <HeroSection />

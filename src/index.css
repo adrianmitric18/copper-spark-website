@@ -1,6 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
+/*
+  Roboto Mono retiré : non utilisé sur les pages publiques. Le token
+  `--font-mono` ci-dessous retombe sur `ui-monospace` (San Francisco Mono
+  sur macOS, Cascadia / Consolas sur Windows, monospace générique sinon),
+  ce qui couvre les rares usages admin sans charger une 4e police.
+  Anton n'a jamais été référencé : pas d'import à supprimer.
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -235,9 +241,13 @@ body {
     transform: translateY(-4px);
   }
 
-  /* Glass morphism */
+  /*
+    .glass — anciennement backdrop-blur-xl. Neutralisé en surface opaque
+    pour éliminer l'effet « fait IA » (glassmorphism), tout en gardant la
+    classe valide pour les composants existants (Header, mobile menu).
+  */
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    @apply bg-background/95 border border-border;
   }
 
   /* Animations */

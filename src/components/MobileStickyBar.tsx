@@ -10,7 +10,7 @@ const MobileStickyBar = () => {
   if (pathname.startsWith("/admin")) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-md border-t border-border/60 px-4 py-3 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border px-4 py-3 safe-area-bottom">
       <div className="flex gap-3">
         <a
           href="tel:+32485755227"
