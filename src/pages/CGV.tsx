@@ -149,7 +149,7 @@ const sections = [
         </p>
         <p>
           La garantie ne couvre pas l'usure normale, les dégâts liés à un défaut
-          d'entretien, à une surtension d'origine externe (foudre, réseau Fluvius)
+          d'entretien, à une surtension d'origine externe (foudre, réseau électrique)
           ou à une modification de l'installation par un tiers.
         </p>
       </>

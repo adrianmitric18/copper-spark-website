@@ -38,7 +38,7 @@ const PLACEHOLDER_PROJECTS: Array<{
     type: "Photovoltaïque résidentiel",
     location: "Wavre (1300)",
     date: "Mars 2026",
-    body: "Pose de 12 panneaux 410 Wc en autoconsommation, raccordement Fluvius et configuration de l'onduleur SolarEdge. Suivi de la prime régionale de bout en bout.",
+    body: "Pose de 12 panneaux 410 Wc en autoconsommation, raccordement réseau et configuration de l'onduleur SolarEdge. Suivi de la prime régionale de bout en bout.",
   },
   {
     id: "ph-3",

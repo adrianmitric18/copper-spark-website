@@ -231,7 +231,7 @@ export const categories: GalleryCategory[] = [
     slug: "bornes-de-recharge",
     label: "Bornes de recharge",
     description: "Mobilité électrique",
-    longDescription: "Installation et mise en service de bornes de recharge pour véhicules électriques et hybrides rechargeables. Du diagnostic technique à la programmation finale, en passant par le pré-câblage et les sous-tableaux dédiés conformes RGIE, nous accompagnons particuliers et copropriétés dans le Brabant wallon. Spécialistes de la marque Hager (gamme Witty Pro) et compatibles avec toutes les installations existantes : monophasé, triphasé, compteurs analogiques ou numériques Fluvius.",
+    longDescription: "Installation et mise en service de bornes de recharge pour véhicules électriques et hybrides rechargeables. Du diagnostic technique à la programmation finale, en passant par le pré-câblage et les sous-tableaux dédiés conformes RGIE, nous accompagnons particuliers et copropriétés dans le Brabant wallon. Spécialistes de la marque Hager (gamme Witty Pro) et compatibles avec toutes les installations existantes : monophasé, triphasé, compteurs analogiques ou numériques.",
     coverImage: bornesRecharge01,
     images: [
       { id: 1, title: "Borne Hager Witty Pro avec véhicule en charge", image: bornesRecharge01 },

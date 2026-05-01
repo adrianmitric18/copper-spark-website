@@ -55,7 +55,7 @@ const MiseEnConformiteRgie = () => {
       <ul className="space-y-3 text-foreground mb-10">
         {[
           ["Vente d'un bien immobilier", "Le notaire exigera un certificat de conformité ou un PV de visite avec délais de mise aux normes."],
-          ["Changement de compteur électrique", "Le gestionnaire de réseau (ORES, Sibelga…) demandera systématiquement le certificat."],
+          ["Changement de compteur électrique", "Le gestionnaire de réseau demandera systématiquement le certificat."],
           ["Rénovation majeure", "Toute modification significative de l'installation déclenche un nouveau contrôle."],
           ["Tous les 25 ans", "Tout certificat a une durée de validité limitée. Au-delà, un nouveau contrôle est obligatoire."],
         ].map(([title, desc]) => (
