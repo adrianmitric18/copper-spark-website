@@ -6,7 +6,6 @@
 
     <title>Le Cuivre Électrique | Électricien agréé en Brabant wallon & Wallonie — Devis gratuit</title>
     <meta name="description" content="Électricien agréé basé à Court-Saint-Étienne. Installation, dépannage 24h/24, conformité RGIE, bornes de recharge, photovoltaïque. Brabant wallon, Wallonie et Bruxelles. Devis gratuit : 0485 75 52 27." />
-    <meta name="keywords" content="électricien Brabant wallon, électricien Court-Saint-Étienne, électricien Wallonie, électricien Bruxelles, dépannage électrique urgence, mise en conformité RGIE, installation électrique, borne de recharge, panneau solaire, électricien agréé Belgique" />
     <meta name="author" content="Le Cuivre Électrique" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="geo.region" content="BE-WBR" />
@@ -93,100 +92,12 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet" />
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Electrician",
-      "name": "Le Cuivre Électrique",
-      "alternateName": "Le Cuivre Electrique",
-      "description": "Électricien artisan agréé basé à Court-Saint-Étienne. Installation électrique, mise en conformité RGIE, dépannage urgent 24h/24, panneaux photovoltaïques et bornes de recharge. Brabant wallon, Wallonie et Bruxelles.",
-      "url": "https://cuivre-electrique.com",
-      "logo": "https://cuivre-electrique.com/android-chrome-512x512.png",
-      "image": "https://cuivre-electrique.com/og-image.jpg",
-      "telephone": "+32485755227",
-      "email": "cuivre.electrique@gmail.com",
-      "vatID": "BE0805376944",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Court-Saint-Étienne",
-        "addressRegion": "Brabant wallon",
-        "addressCountry": "BE"
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "50.6420",
-        "longitude": "4.5710"
-      },
-      "areaServed": [
-        { "@type": "AdministrativeArea", "name": "Wallonie" },
-        { "@type": "AdministrativeArea", "name": "Brabant wallon" },
-        { "@type": "City", "name": "Court-Saint-Étienne" },
-        { "@type": "City", "name": "Ottignies-Louvain-la-Neuve" },
-        { "@type": "City", "name": "Wavre" },
-        { "@type": "City", "name": "Nivelles" },
-        { "@type": "City", "name": "Waterloo" },
-        { "@type": "City", "name": "Genappe" },
-        { "@type": "City", "name": "Rixensart" },
-        { "@type": "City", "name": "Lasne" },
-        { "@type": "City", "name": "Braine-l'Alleud" },
-        { "@type": "City", "name": "Jodoigne" },
-        { "@type": "City", "name": "Gembloux" },
-        { "@type": "City", "name": "Namur" },
-        { "@type": "City", "name": "Bruxelles" }
-      ],
-      "priceRange": "€€",
-      "openingHoursSpecification": [
-        {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
-          "opens": "08:00",
-          "closes": "18:00"
-        },
-        {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": "Saturday",
-          "opens": "09:00",
-          "closes": "13:00"
-        }
-      ],
-      "specialOpeningHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "description": "Service de dépannage électrique d'urgence disponible 24h/24 et 7j/7",
-        "opens": "00:00",
-        "closes": "23:59",
-        "validFrom": "2025-01-01",
-        "validThrough": "2030-12-31"
-      },
-      "sameAs": [
-        "https://wa.me/32485755227"
-      ],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Services électriques",
-        "itemListElement": [
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Installation électrique complète Bruxelles" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mise en conformité RGIE Belgique" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Dépannage électrique urgent 24h/24" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Borne de recharge véhicule électrique" } },
-          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panneaux photovoltaïques Bruxelles Wallonie" } }
-        ]
-      }
-    }
-    </script>
     <!--
-      Ce schema Electrician statique est volontairement conservé ici (sans aggregateRating)
-      pour deux raisons :
-      - Fournir des données structurées aux bots qui n'exécutent pas le JS (Bing, bots sociaux, etc.)
-      - Servir de fallback avant l'hydratation React
-
-      L'aggregateRating est injecté dynamiquement via <StructuredData /> + useAggregateRating()
-      qui lit la vraie note depuis Supabase, ce qui évite de hardcoder une valeur qui drifterait.
-
-      À terme (Phase SSG future), une fois le pré-rendu en place, on pourra simplifier en
-      ne gardant que les données structurées dynamiques et retirer ce bloc statique.
-
-      NB : le canonical statique a été retiré (était bug : pointait vers / pour toutes les routes).
-      Il est désormais injecté dynamiquement par <SEO> dans src/components/SEO.tsx.
+      Le JSON-LD LocalBusiness/Electrician est injecté dynamiquement par
+      <StructuredData /> (cf. src/components/StructuredData.tsx) avec
+      l'aggregateRating Google lu depuis Supabase. Pas de doublon statique
+      ici : Google consolidait précédemment sur le mauvais bloc.
+      Le canonical est lui aussi injecté dynamiquement par <SEO />.
     -->
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17861698648"></script>
@@ -222,9 +133,31 @@
 
   <body>
     <noscript>
-      <div style="padding:20px;text-align:center;font-family:sans-serif;">
-        <h1>Le Cuivre Électrique — Électricien en Brabant wallon, Wallonie &amp; Bruxelles</h1>
-        <p>Appelez-nous au <a href="tel:+32485755227">0485 75 52 27</a></p>
+      <div style="padding:32px 20px;max-width:760px;margin:0 auto;font-family:Inter,system-ui,sans-serif;line-height:1.6;color:#18181B;">
+        <h1 style="font-size:1.75rem;line-height:1.2;margin:0 0 16px;font-weight:800;">
+          Le Cuivre Électrique — Adrian Mitric
+        </h1>
+        <p style="font-size:1.0625rem;color:#3F3F46;margin:0 0 24px;">
+          Électricien indépendant à Court-Saint-Étienne, en Brabant wallon.
+          Installation, rénovation, mise en conformité RGIE, bornes de recharge,
+          panneaux photovoltaïques et dépannage 24h/24.
+        </p>
+        <p style="margin:0 0 16px;">
+          <strong>Téléphone :</strong>
+          <a href="tel:+32485755227" style="color:#E85D04;">0485 75 52 27</a>
+          &nbsp;·&nbsp;
+          <strong>Email :</strong>
+          <a href="mailto:contact@cuivre-electrique.com" style="color:#E85D04;">contact@cuivre-electrique.com</a>
+        </p>
+        <p style="margin:0 0 24px;">
+          <strong>TVA :</strong> BE 0805.376.944 &nbsp;·&nbsp;
+          <strong>Bureau :</strong> Lun–Ven 8h–18h, Sam 9h–13h &nbsp;·&nbsp;
+          <strong>Urgences :</strong> 7j/7, 24h/24
+        </p>
+        <p style="font-size:0.875rem;color:#71717A;margin:0;">
+          Le site nécessite JavaScript pour s'afficher correctement. Vous pouvez
+          toutefois nous joindre directement avec les coordonnées ci-dessus.
+        </p>
       </div>
     </noscript>
     <div id="root"></div>
