@@ -30,9 +30,9 @@ const timeline = [
     body: "Premiers gros chantiers de rénovation complète et de mise en conformité d'installations anciennes.",
   },
   {
-    year: "2023",
-    title: "Bornes de recharge et photovoltaïque",
-    body: "Formation et certifications pour la pose de bornes VE et de panneaux photovoltaïques résidentiels.",
+    year: "2024",
+    title: "Spécialisation photovoltaïque",
+    body: "Spécialisé en photovoltaïque depuis 2024 : étude, dimensionnement de l'installation, pose et raccordement Fluvius. Bornes de recharge VE posées en standard sur tous les types de tableau.",
   },
   {
     year: "2026",
@@ -173,8 +173,8 @@ const APropos = () => {
               </div>
               <div className="col-span-12 md:col-span-9">
                 <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground tracking-[-0.025em] leading-tight">
-                  Quatre ans à se construire
-                  <br className="hidden sm:block" /> sur le terrain.
+                  Le parcours,
+                  <br className="hidden sm:block" /> chantier après chantier.
                 </h2>
               </div>
             </div>
