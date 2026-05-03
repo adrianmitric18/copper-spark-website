@@ -3,7 +3,9 @@ import LogoIcon from "@/components/LogoIcon";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useEffect } from "react";
-import heroImage from "@/assets/hero-lighting-design.jpg";
+// Hero LCP image — responsive AVIF/WebP/JPG via vite-imagetools.
+// Marked fetchpriority/eager/async on the <img> below for fastest LCP.
+import heroPic from "@/assets/hero-lighting-design.jpg?w=640;1024;1920&format=avif;webp;jpg&as=picture";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { useAggregateRating } from "@/hooks/useAggregateRating";
 
@@ -37,19 +39,33 @@ const HeroSection = () => {
     };
   }, [mouseX, mouseY]);
   return <section id="accueil" className="relative min-h-screen flex items-center justify-center pt-24 pb-20 bg-background overflow-hidden">
-      {/* Hero background image - static, no scroll parallax */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Base image with fixed dimensions */}
-        <motion.img 
-          src={heroImage} 
-          alt="Installation électrique design" 
-          className="w-full h-full object-cover"
-          width={1920}
-          height={1080}
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        />
+      {/* Hero background image - static, no scroll parallax.
+          Animation : scale-in only (pas d'opacity-0 → 1) pour ne pas
+          retarder la détection LCP. */}
+      <motion.div
+        className="absolute inset-0 overflow-hidden"
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+      >
+        <picture>
+          <source type="image/avif" srcSet={heroPic.sources.avif} sizes="100vw" />
+          <source type="image/webp" srcSet={heroPic.sources.webp} sizes="100vw" />
+          <img
+            src={heroPic.img.src}
+            srcSet={heroPic.img.srcset}
+            sizes="100vw"
+            alt="Installation électrique design"
+            className="w-full h-full object-cover"
+            width={heroPic.img.w}
+            height={heroPic.img.h}
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
+      </motion.div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         
         {/* Mouse-following spotlight glow - DESKTOP ONLY */}
         <motion.div className="absolute inset-0 pointer-events-none hidden md:block" style={{
