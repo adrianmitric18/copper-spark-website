@@ -90,7 +90,8 @@ export default {
   			copper: {
   				DEFAULT: 'hsl(var(--copper))',
   				light: 'hsl(var(--copper-light))',
-  				dark: 'hsl(var(--copper-dark))'
+  				dark: 'hsl(var(--copper-dark))',
+  				deep: 'hsl(var(--copper-deep))'
   			},
 			whatsapp: {
 				DEFAULT: 'hsl(var(--whatsapp))',

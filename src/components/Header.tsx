@@ -83,8 +83,8 @@ const Header = () => {
               to={item.href}
               className={`font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
                 isActive(item.href)
-                  ? "text-primary after:w-full"
-                  : "text-foreground/70 hover:text-primary after:w-0 hover:after:w-full"
+                  ? "text-copper-deep after:w-full"
+                  : "text-foreground/70 hover:text-copper-deep after:w-0 hover:after:w-full"
               }`}
             >
               {item.label}
@@ -98,8 +98,8 @@ const Header = () => {
                 <NavigationMenuTrigger
                   className={`bg-transparent font-medium hover:bg-transparent data-[state=open]:bg-transparent focus:bg-transparent ${
                     isServicesActive
-                      ? "text-primary"
-                      : "text-foreground/70 hover:text-primary"
+                      ? "text-copper-deep"
+                      : "text-foreground/70 hover:text-copper-deep"
                   }`}
                 >
                   Services
@@ -110,7 +110,7 @@ const Header = () => {
                       <li key={s.href}>
                         <Link
                           to={s.href}
-                          className="block rounded-lg px-3 py-2 text-sm text-foreground/80 hover:bg-primary/10 hover:text-primary transition-colors"
+                          className="block rounded-lg px-3 py-2 text-sm text-foreground/80 hover:bg-primary/10 hover:text-copper-deep transition-colors"
                         >
                           {s.label}
                         </Link>
@@ -119,7 +119,7 @@ const Header = () => {
                     <li className="border-t border-border/60 mt-1 pt-1">
                       <Link
                         to="/services"
-                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-copper-deep hover:bg-primary/10 transition-colors"
                       >
                         Voir tous les services →
                       </Link>
@@ -137,8 +137,8 @@ const Header = () => {
               to={item.href}
               className={`font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
                 isActive(item.href)
-                  ? "text-primary after:w-full"
-                  : "text-foreground/70 hover:text-primary after:w-0 hover:after:w-full"
+                  ? "text-copper-deep after:w-full"
+                  : "text-foreground/70 hover:text-copper-deep after:w-0 hover:after:w-full"
               }`}
             >
               {item.label}
@@ -157,7 +157,7 @@ const Header = () => {
             href="tel:+32485755227"
             data-analytics="call_click"
             onClick={() => trackEvent("call_click", { source_section: "header_desktop" })}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-copper-deep hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
           >
             <Phone className="w-4 h-4 group-hover:animate-pulse" />
             <span className="font-bold">0485 75 52 27</span>
@@ -213,8 +213,8 @@ const Header = () => {
                   onClick={handleNavClick}
                   className={`block font-medium py-2 transition-colors ${
                     isActive(item.href)
-                      ? "text-primary"
-                      : "text-foreground/80 hover:text-primary"
+                      ? "text-copper-deep"
+                      : "text-foreground/80 hover:text-copper-deep"
                   }`}
                 >
                   {item.label}
@@ -227,7 +227,7 @@ const Header = () => {
                   type="button"
                   onClick={() => setServicesOpenMobile(!servicesOpenMobile)}
                   className={`flex items-center justify-between w-full py-2 font-medium transition-colors ${
-                    isServicesActive ? "text-primary" : "text-foreground/80"
+                    isServicesActive ? "text-copper-deep" : "text-foreground/80"
                   }`}
                 >
                   <span>Services</span>
@@ -250,7 +250,7 @@ const Header = () => {
                           key={s.href}
                           to={s.href}
                           onClick={handleNavClick}
-                          className="block py-1.5 text-sm text-foreground/70 hover:text-primary"
+                          className="block py-1.5 text-sm text-foreground/70 hover:text-copper-deep"
                         >
                           {s.label}
                         </Link>
@@ -258,7 +258,7 @@ const Header = () => {
                       <Link
                         to="/services"
                         onClick={handleNavClick}
-                        className="block py-1.5 text-sm font-semibold text-primary"
+                        className="block py-1.5 text-sm font-semibold text-copper-deep"
                       >
                         Voir tous les services →
                       </Link>
@@ -274,8 +274,8 @@ const Header = () => {
                   onClick={handleNavClick}
                   className={`block font-medium py-2 transition-colors ${
                     isActive(item.href)
-                      ? "text-primary"
-                      : "text-foreground/80 hover:text-primary"
+                      ? "text-copper-deep"
+                      : "text-foreground/80 hover:text-copper-deep"
                   }`}
                 >
                   {item.label}
@@ -290,7 +290,7 @@ const Header = () => {
                     trackEvent("call_click", { source_section: "header_mobile_menu" });
                     handleNavClick();
                   }}
-                  className="flex items-center gap-3 text-primary font-bold py-2"
+                  className="flex items-center gap-3 text-copper-deep font-bold py-2"
                 >
                   <Phone className="w-5 h-5" />
                   0485 75 52 27
