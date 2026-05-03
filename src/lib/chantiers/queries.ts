@@ -58,7 +58,12 @@ export async function fetchPublishedProjects(): Promise<Project[]> {
     .select("*")
     .eq("status", "published")
     .is("deleted_at", null)
-    .order("completed_at", { ascending: false });
+    .order("completed_at", { ascending: false })
+    // Tie-breaker stable : si plusieurs chantiers partagent la même
+    // completed_at, l'ordre d'insertion (created_at ASC) garantit un
+    // affichage déterministe au lieu d'un ordre dépendant du plan
+    // d'exécution Postgres.
+    .order("created_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as unknown as Project[];
 }
