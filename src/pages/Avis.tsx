@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
+import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,6 +109,20 @@ const Avis = () => {
         }
         keywords="avis électricien Brabant wallon, avis Le Cuivre Électrique, témoignages clients, avis Google électricien"
         canonical="https://cuivre-electrique.com/avis"
+      />
+      {/* Aggregate rating exposé en JSON-LD pour rich snippets Google sur
+          la page dédiée aux avis. Le hook ne renvoie le bloc que si
+          reviewCount >= seuil (cf. useAggregateRating.MIN_REVIEWS_FOR_AGGREGATE). */}
+      <StructuredData
+        type="LocalBusiness"
+        aggregateRating={
+          aggregate
+            ? {
+                ratingValue: aggregate.ratingValueSchema,
+                reviewCount: aggregate.reviewCount,
+              }
+            : undefined
+        }
       />
       <Header />
 
