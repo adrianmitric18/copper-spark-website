@@ -45,19 +45,6 @@ const SERVICES = [
   "Autre (préciser dans le message)",
 ];
 
-// Type de projet — sélection principale (champ ajouté au brief 2026-05-01)
-const PROJECT_TYPES = [
-  "Borne de recharge VE",
-  "Panneaux photovoltaïques",
-  "Mise en conformité RGIE",
-  "Installation électrique",
-  "Dépannage urgent",
-  "Autre",
-];
-
-// Pré-qualification — habitation seulement (brief V3 : statut Propriétaire/
-// Locataire retiré, remplacé par champ libre 'Année de construction' utile
-// pour estimation de la TVA réduite 6% sur rénovation > 10 ans).
 const HABITAT_OPTIONS = ["Neuve", "En rénovation", "Existante"];
 
 const TIMINGS = [
@@ -95,7 +82,6 @@ interface FormState {
   codePostal: string;
   commune: string;
   clientType: string;
-  projectType: string;
   habitatType: string;
   buildYear: string;
   services: string[];
@@ -114,7 +100,6 @@ const initialState: FormState = {
   codePostal: "",
   commune: "",
   clientType: "",
-  projectType: "",
   habitatType: "",
   buildYear: "",
   services: [],
@@ -201,8 +186,8 @@ const ContactSection = () => {
     if (!/^\d{4}$/.test(form.codePostal.trim())) e.codePostal = "Code postal belge (4 chiffres)";
     if (!form.commune.trim()) e.commune = "Commune requise";
     if (!form.clientType) e.clientType = "Veuillez sélectionner";
-    if (!form.projectType) e.projectType = "Veuillez choisir un type de projet";
     if (!form.habitatType) e.habitatType = "Précisez le type d'habitation";
+    if (form.services.length === 0) e.services = "Sélectionnez au moins un service";
     // buildYear est optionnel — pas de validation requise. On accepte une
     // chaîne libre, l'utilisateur peut laisser vide ou écrire '~1985'.
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
@@ -276,19 +261,13 @@ const ContactSection = () => {
       const fullAddress = `${rue} ${numero}, ${codePostal} ${commune}`;
 
       // Pré-qualification (brief V3) — préfixée au message DB pour ne pas
-      // casser le schéma existant. projectType est aussi mergé dans
-      // services[] pour la priorité côté admin. buildYear est ajouté
-      // seulement s'il est rempli.
+      // casser le schéma existant. buildYear est ajouté seulement s'il est
+      // rempli.
       const buildYearLine = form.buildYear.trim()
         ? ` · [Construction] ${form.buildYear.trim()}`
         : "";
-      const prequalHeader =
-        `[Type de projet] ${form.projectType}\n` +
-        `[Habitation] ${form.habitatType}${buildYearLine}\n\n`;
+      const prequalHeader = `[Habitation] ${form.habitatType}${buildYearLine}\n\n`;
       const enrichedMessage = prequalHeader + form.message.trim();
-      const enrichedServices = Array.from(
-        new Set([form.projectType, ...form.services].filter(Boolean))
-      );
 
       try {
         const { error } = await supabase.from("leads").insert({
@@ -301,7 +280,7 @@ const ContactSection = () => {
           code_postal: codePostal,
           commune,
           client_type: form.clientType,
-          services: enrichedServices,
+          services: form.services,
           message: enrichedMessage,
           timing: form.timing || null,
           source: form.source || null,
@@ -352,7 +331,6 @@ const ContactSection = () => {
         code_postal: codePostal,
         commune,
         client_type: form.clientType,
-        project_type: form.projectType,
         habitat_type: form.habitatType,
         build_year: form.buildYear.trim() || "Non précisée",
         services: servicesStr,
@@ -693,26 +671,6 @@ const ContactSection = () => {
                 {errors.clientType && <p className="text-destructive text-xs mt-1">{errors.clientType}</p>}
               </div>
 
-              {/* Type de projet (brief 2026-05-01) */}
-              <div>
-                <label htmlFor="projectType" className="block text-sm font-medium text-card-foreground mb-2">
-                  Type de projet{requiredMark}
-                </label>
-                <Select value={form.projectType} onValueChange={(v) => update("projectType", v)}>
-                  <SelectTrigger className={`h-11 ${errors.projectType ? "border-destructive" : ""}`}>
-                    <SelectValue placeholder="Choisissez le type principal..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECT_TYPES.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.projectType && <p className="text-destructive text-xs mt-1">{errors.projectType}</p>}
-              </div>
-
               {/* Pré-qualification — Habitation (radio) + Année construction
                   (texte libre optionnel). Brief V3 : Propriétaire/Locataire
                   retiré, remplacé par l'année qui sert vraiment au calcul
@@ -776,8 +734,11 @@ const ContactSection = () => {
 
               <div>
                 <label className="block text-sm font-medium text-card-foreground mb-3">
-                  Autres services qui vous intéressent (optionnel)
+                  Services qui vous intéressent{requiredMark}
                 </label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Cochez un ou plusieurs services concernés par votre demande.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                   {SERVICES.map((service) => {
                     const checked = form.services.includes(service);
@@ -800,6 +761,7 @@ const ContactSection = () => {
                     );
                   })}
                 </div>
+                {errors.services && <p className="text-destructive text-xs mt-2">{errors.services}</p>}
               </div>
 
               <div>
