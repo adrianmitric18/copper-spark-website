@@ -182,8 +182,11 @@ const Pipeline = () => {
     }
   }, [leadsQuery.error]);
 
-  const leads = leadsQuery.data?.leads ?? [];
-  const upcomingByLead = leadsQuery.data?.upcomingByLead ?? {};
+  const leads = useMemo(() => leadsQuery.data?.leads ?? [], [leadsQuery.data]);
+  const upcomingByLead = useMemo(
+    () => leadsQuery.data?.upcomingByLead ?? {},
+    [leadsQuery.data],
+  );
   const loading = leadsQuery.isLoading;
 
   const reload = () => {

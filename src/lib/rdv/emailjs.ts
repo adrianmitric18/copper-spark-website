@@ -182,7 +182,7 @@ function ensureEmailJsInitialized(): void {
   emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
   emailJsInitialized = true;
 
-  // eslint-disable-next-line no-console
+   
   console.log("[EmailJS] init OK", {
     serviceId: EMAILJS_SERVICE_ID,
     publicKeySource: "hardcoded",
@@ -235,7 +235,7 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
   });
 
   if (missing.length > 0) {
-    // eslint-disable-next-line no-console
+     
     console.error("[EmailJS] paramètres manquants", {
       templateId,
       toEmail,
@@ -273,13 +273,13 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
 
   validatePayload(templateId, toEmail, params);
 
-  // eslint-disable-next-line no-console
+   
   console.log("=== EMAILJS ENVOI ===");
-  // eslint-disable-next-line no-console
+   
   console.log("Template ID:", templateId);
-  // eslint-disable-next-line no-console
+   
   console.log("Service ID:", EMAILJS_SERVICE_ID);
-  // eslint-disable-next-line no-console
+   
   console.log("Params:", JSON.stringify(templateParams, null, 2));
 
   if (DRY_RUN) {
@@ -294,13 +294,13 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
     });
   } catch (error: unknown) {
     const typedError = error as { status?: number; text?: string };
-    // eslint-disable-next-line no-console
+     
     console.error("=== EMAILJS ERREUR ===");
-    // eslint-disable-next-line no-console
+     
     console.error("Status:", typedError?.status);
-    // eslint-disable-next-line no-console
+     
     console.error("Text:", typedError?.text);
-    // eslint-disable-next-line no-console
+     
     console.error("Error complet:", error);
     throw error;
   }
@@ -346,7 +346,7 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   const failed = results.filter((r) => r.status === "rejected");
   if (failed.length > 0) {
     failed.forEach((f) =>
-      // eslint-disable-next-line no-console
+       
       console.error("Email RDV échoué :", (f as PromiseRejectedResult).reason)
     );
     throw new Error(`${failed.length} email(s) sur 2 n'ont pas pu être envoyés`);

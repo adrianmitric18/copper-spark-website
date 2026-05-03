@@ -151,7 +151,7 @@ const ManualLeadDialog = () => {
           photo_urls: null,
           gdpr_consent: true,
           status: "nouveau",
-        } as any)
+        })
         .select("id")
         .single();
 
@@ -179,8 +179,9 @@ const ManualLeadDialog = () => {
       setOpen(false);
       const newLeadId = data.id;
       setTimeout(() => navigate(`/admin/lead/${newLeadId}`), 0);
-    } catch (error: any) {
-      toast.error("Erreur : " + (error?.message || "création impossible"));
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "création impossible";
+      toast.error("Erreur : " + msg);
     } finally {
       setSubmitting(false);
     }

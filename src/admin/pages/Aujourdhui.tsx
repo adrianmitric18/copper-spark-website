@@ -97,9 +97,12 @@ const Aujourdhui = () => {
     }
   }, [rdvsQuery.error]);
 
-  const leads = leadsQuery.data?.leads ?? [];
-  const upcomingByLead = leadsQuery.data?.upcomingByLead ?? {};
-  const rdvs = rdvsQuery.data ?? [];
+  const leads = useMemo(() => leadsQuery.data?.leads ?? [], [leadsQuery.data]);
+  const upcomingByLead = useMemo(
+    () => leadsQuery.data?.upcomingByLead ?? {},
+    [leadsQuery.data],
+  );
+  const rdvs = useMemo(() => rdvsQuery.data ?? [], [rdvsQuery.data]);
   const loading = leadsQuery.isLoading || rdvsQuery.isLoading;
 
   // ===== Données dérivées =====
