@@ -58,12 +58,11 @@ export async function fetchPublishedProjects(): Promise<Project[]> {
     .select("*")
     .eq("status", "published")
     .is("deleted_at", null)
-    .order("completed_at", { ascending: false })
-    // Tie-breaker stable : si plusieurs chantiers partagent la même
-    // completed_at, l'ordre d'insertion (created_at ASC) garantit un
-    // affichage déterministe au lieu d'un ordre dépendant du plan
-    // d'exécution Postgres.
-    .order("created_at", { ascending: true });
+    // Tri éditorial admin (Phase 2 CMS) — display_order ASC = plus petit
+    // = en premier sur /realisations. completed_at DESC en tie-breaker
+    // pour les rares cas où 2 chantiers auraient le même display_order.
+    .order("display_order", { ascending: true })
+    .order("completed_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as Project[];
 }
@@ -157,6 +156,10 @@ export async function fetchAllProjectsAdmin(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
     .select("*")
+    // Même tri que la requête publique (cf. fetchPublishedProjects). Permet
+    // au mode "Réorganiser" de l'admin d'afficher dans l'ordre exact rendu
+    // sur /realisations.
+    .order("display_order", { ascending: true })
     .order("completed_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as unknown as Project[];
@@ -303,6 +306,28 @@ export async function unpublishProject(id: string): Promise<void> {
     .update({ status: "draft" })
     .eq("id", id);
   if (error) throw error;
+}
+
+/**
+ * Réordonne les chantiers en assignant des display_order par incréments de 10
+ * selon l'ordre du tableau `orderedIds`. Multiplier par 10 laisse de la place
+ * pour des insertions futures (ex: insertion à 15 entre deux rows à 10 et 20)
+ * sans devoir renuméroter tous les chantiers.
+ *
+ * Toutes les UPDATEs sont lancées en parallèle (Promise.all). Si l'une
+ * échoue, on remonte la 1re erreur — l'état BDD peut alors être partiellement
+ * appliqué : à l'appelant de re-fetcher pour reconcilier.
+ */
+export async function reorderProjects(orderedIds: string[]): Promise<void> {
+  const updates = orderedIds.map((id, index) =>
+    supabase
+      .from("projects")
+      .update({ display_order: (index + 1) * 10 })
+      .eq("id", id),
+  );
+  const results = await Promise.all(updates);
+  const firstError = results.find((r) => r.error);
+  if (firstError?.error) throw firstError.error;
 }
 
 export async function softDeleteProject(id: string): Promise<void> {

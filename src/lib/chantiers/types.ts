@@ -30,6 +30,9 @@ export interface Project {
   featured: boolean;
   meta_title: string | null;
   meta_description: string | null;
+  /** Ordre éditorial admin (drag-drop /admin/chantiers). Incréments de 10
+   * pour permettre les insertions sans renumérotation globale. */
+  display_order: number;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
