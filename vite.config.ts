@@ -111,6 +111,14 @@ export default defineConfig(({ mode }) => ({
           router: ["react-router-dom"],
           animations: ["framer-motion"],
           ui: ["lucide-react"],
+          // Split data layer pour mieux cacher entre navigations.
+          // supabase/query : utilisés sur la home (useAggregateRating) et
+          // partout ailleurs → bénéficient d'un chunk dédié.
+          supabase: ["@supabase/supabase-js"],
+          query: ["@tanstack/react-query"],
+          // Les forms ne sont chargés que sur /contact et /admin → pas
+          // besoin de les inclure dans le chunk initial.
+          forms: ["react-hook-form", "@hookform/resolvers", "zod"],
         },
       },
     },
