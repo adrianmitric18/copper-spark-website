@@ -266,6 +266,7 @@ export type Database = {
           completed_at: string
           created_at: string
           deleted_at: string | null
+          display_order: number
           duration_days: number | null
           faq: Json | null
           featured: boolean
@@ -286,6 +287,7 @@ export type Database = {
           completed_at: string
           created_at?: string
           deleted_at?: string | null
+          display_order?: number
           duration_days?: number | null
           faq?: Json | null
           featured?: boolean
@@ -306,6 +308,7 @@ export type Database = {
           completed_at?: string
           created_at?: string
           deleted_at?: string | null
+          display_order?: number
           duration_days?: number | null
           faq?: Json | null
           featured?: boolean

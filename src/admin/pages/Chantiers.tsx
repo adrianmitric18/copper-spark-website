@@ -13,6 +13,8 @@ import {
   Search,
   Package,
   Sparkles,
+  GripVertical,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -29,15 +31,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   fetchAllProjectsWithMetaAdmin,
   publishProject,
   unpublishProject,
   softDeleteProject,
   restoreProject,
+  reorderProjects,
   type ProjectWithMeta,
 } from "@/lib/chantiers/queries";
 import { CHANTIER_TAGS, CHANTIER_ZONES } from "@/lib/chantiers/types";
 import { getChantierImageUrl } from "@/lib/chantiers/upload";
+import SortableChantierCard from "@/admin/components/chantiers/SortableChantierCard";
 
 type StatusFilter = "all" | "published" | "draft" | "trash";
 
@@ -48,6 +67,13 @@ const Chantiers = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [tagFilter, setTagFilter] = useState<string[]>([]);
   const [zoneFilter, setZoneFilter] = useState<string[]>([]);
+  // Mode "Réorganiser" — drag-drop pour ajuster display_order. Filtres et
+  // tabs cachés en mode reorder pour éviter qu'un drop ne corresponde à
+  // l'index de la liste filtrée plutôt qu'à l'index global.
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  // Snapshot de l'ordre courant pendant le drag (optimistic). Persisté en
+  // BDD au clic sur "Sauvegarder l'ordre".
+  const [reorderedIds, setReorderedIds] = useState<string[]>([]);
 
   useEffect(() => {
     document.title = "Réalisations – Le Cuivre Admin";
@@ -145,6 +171,64 @@ const Chantiers = () => {
     onError: (e: Error) =>
       toast.error("Échec restauration", { description: e.message }),
   });
+  const reorderMut = useMutation({
+    mutationFn: reorderProjects,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chantiers"] });
+      toast.success("Ordre enregistré");
+      setIsReorderMode(false);
+    },
+    onError: (e: Error) => {
+      toast.error("Échec sauvegarde de l'ordre", { description: e.message });
+      // Re-fetch pour resynchroniser avec l'état réel BDD (un UPDATE peut
+      // avoir partiellement réussi avant l'erreur).
+      qc.invalidateQueries({ queryKey: ["chantiers"] });
+    },
+  });
+
+  // Liste des chantiers actifs (hors corbeille), dans l'ordre canonique
+  // retourné par la query (= display_order ASC). Sert d'initial state au
+  // mode reorder et de source pour résoudre les ID en cards.
+  const activeProjects = useMemo(
+    () => projects.filter((p) => !p.deleted_at),
+    [projects],
+  );
+
+  // Map ID → projet, pour rendre la liste réordonnée même si la query se
+  // refetch en background pendant le mode reorder.
+  const projectById = useMemo(() => {
+    const m = new Map<string, ProjectWithMeta>();
+    for (const p of activeProjects) m.set(p.id, p);
+    return m;
+  }, [activeProjects]);
+
+  // Sensors @dnd-kit : pointer (souris/touch) avec seuil de 5px pour ne pas
+  // hijacker les clics, + clavier pour l'accessibilité (Espace/Flèches).
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const enterReorderMode = () => {
+    setReorderedIds(activeProjects.map((p) => p.id));
+    setIsReorderMode(true);
+  };
+
+  const cancelReorder = () => {
+    setReorderedIds([]);
+    setIsReorderMode(false);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setReorderedIds((items) => {
+      const oldIndex = items.indexOf(active.id as string);
+      const newIndex = items.indexOf(over.id as string);
+      if (oldIndex < 0 || newIndex < 0) return items;
+      return arrayMove(items, oldIndex, newIndex);
+    });
+  };
 
   if (!ready || !user) return <AdminLoading />;
 
@@ -162,21 +246,100 @@ const Chantiers = () => {
   return (
     <AdminShell mobileTitle="Réalisations">
       <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header — actions adaptées au mode (réorganiser ou liste) */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold">Réalisations</h1>
             <p className="text-sm text-muted-foreground">
-              {counts.all} chantiers actifs · {counts.trash} dans la corbeille
+              {isReorderMode
+                ? `Réorganisation — ${reorderedIds.length} chantiers actifs`
+                : `${counts.all} chantiers actifs · ${counts.trash} dans la corbeille`}
             </p>
           </div>
-          <Button asChild>
-            <Link to="/admin/chantiers/nouveau">
-              <Plus className="w-4 h-4" />
-              Nouveau chantier
-            </Link>
-          </Button>
+          {!isReorderMode && (
+            <div className="flex items-center gap-2">
+              {/* Toggle "Réorganiser" — uniquement sur tabs all/published où
+                  l'ordre éditorial a un sens. Sur drafts/trash on n'expose
+                  pas cette feature pour ne pas mélanger. */}
+              {(statusFilter === "all" || statusFilter === "published") &&
+                activeProjects.length >= 2 && (
+                  <Button
+                    onClick={enterReorderMode}
+                    variant="outline"
+                    title="Réorganiser l'ordre d'affichage des chantiers"
+                  >
+                    <GripVertical className="w-4 h-4" />
+                    Réorganiser l'ordre
+                  </Button>
+                )}
+              <Button asChild>
+                <Link to="/admin/chantiers/nouveau">
+                  <Plus className="w-4 h-4" />
+                  Nouveau chantier
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* MODE RÉORGANISER — UI dédiée drag-drop */}
+        {isReorderMode && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-primary/5 border border-primary/30">
+              <p className="text-sm text-foreground">
+                <span className="font-semibold">Drag-drop activé.</span>{" "}
+                Glisse les chantiers pour les réordonner, puis sauvegarde.
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  onClick={cancelReorder}
+                  disabled={reorderMut.isPending}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={() => reorderMut.mutate(reorderedIds)}
+                  disabled={reorderMut.isPending || reorderedIds.length === 0}
+                >
+                  {reorderMut.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sauvegarde…
+                    </>
+                  ) : (
+                    "Sauvegarder l'ordre"
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={reorderedIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {reorderedIds.map((id) => {
+                    const project = projectById.get(id);
+                    if (!project) return null;
+                    return (
+                      <SortableChantierCard key={id} project={project} />
+                    );
+                  })}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+        )}
+
+        {/* MODE NORMAL — banner aide + filtres + table (UI existante) */}
+        {!isReorderMode && (
+          <>
 
         {/* Banner d'aide quand le portfolio est vide */}
         {!isLoading && !error && projects.length === 0 && (
@@ -342,6 +505,8 @@ const Chantiers = () => {
             </TableBody>
           </Table>
         </div>
+          </>
+        )}
       </div>
     </AdminShell>
   );
