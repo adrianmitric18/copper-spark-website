@@ -70,10 +70,10 @@ const ReassuranceSection = () => {
           }}>
                 <feature.icon className="w-7 h-7 md:w-9 md:h-9 text-primary" />
               </motion.div>
-              <h3 className="font-display text-lg md:text-xl font-bold mb-2 text-yellow-300">
+              <h2 className="font-display text-lg md:text-xl font-bold mb-2 text-foreground">
                 {feature.title}
-              </h3>
-              <p className="text-sm md:text-base text-yellow-300">
+              </h2>
+              <p className="text-sm md:text-base text-foreground/85">
                 {feature.description}
               </p>
             </motion.div>)}
@@ -113,9 +113,9 @@ const ReassuranceSection = () => {
               <span className="font-display text-3xl md:text-4xl font-black text-white">6%</span>
             </motion.div>
             <div>
-              <h3 className="font-display text-xl md:text-2xl font-bold text-card-foreground mb-2">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-card-foreground mb-2">
                 TVA réduite applicable
-              </h3>
+              </h2>
               <p className="text-muted-foreground text-lg">
                 Bénéficiez du taux de TVA à 6% pour les travaux de rénovation dans les habitations de plus de 10 ans. 
                 <span className="text-primary font-medium"> Économies garanties !</span>

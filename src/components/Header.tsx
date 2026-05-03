@@ -69,7 +69,7 @@ const Header = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Link to="/">
+          <Link to="/" aria-label="Le Cuivre Électrique — Accueil">
             <Logo />
           </Link>
         </motion.div>
@@ -179,9 +179,10 @@ const Header = () => {
             href="tel:+32485755227"
             data-analytics="call_click"
             onClick={() => trackEvent("call_click", { source_section: "header_mobile" })}
+            aria-label="Appeler Le Cuivre Électrique au 0485 75 52 27"
             className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground"
           >
-            <Phone className="w-5 h-5" />
+            <Phone className="w-5 h-5" aria-hidden="true" />
           </a>
           <button
             onClick={() => setIsOpen(!isOpen)}
