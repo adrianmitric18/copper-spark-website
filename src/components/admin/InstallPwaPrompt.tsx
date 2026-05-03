@@ -13,8 +13,8 @@ type BeforeInstallPromptEvent = Event & {
 
 const isStandalone = () =>
   window.matchMedia("(display-mode: standalone)").matches ||
-  // iOS Safari
-  // @ts-ignore
+  // iOS Safari (non-standard property)
+  // @ts-expect-error — Safari iOS exposes navigator.standalone but it's not in the standard Navigator type
   window.navigator.standalone === true;
 
 const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);

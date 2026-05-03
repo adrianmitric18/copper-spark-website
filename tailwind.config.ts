@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -89,7 +90,8 @@ export default {
   			copper: {
   				DEFAULT: 'hsl(var(--copper))',
   				light: 'hsl(var(--copper-light))',
-  				dark: 'hsl(var(--copper-dark))'
+  				dark: 'hsl(var(--copper-dark))',
+  				deep: 'hsl(var(--copper-deep))'
   			},
 			whatsapp: {
 				DEFAULT: 'hsl(var(--whatsapp))',
@@ -158,5 +160,5 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

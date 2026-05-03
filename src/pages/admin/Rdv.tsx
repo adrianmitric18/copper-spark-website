@@ -74,7 +74,7 @@ const AdminRdv = () => {
     }
   }, [rdvsQuery.error]);
 
-  const rdvs = rdvsQuery.data ?? [];
+  const rdvs = useMemo(() => rdvsQuery.data ?? [], [rdvsQuery.data]);
   const loading = rdvsQuery.isLoading;
 
   const filtered = useMemo(() => {

@@ -287,7 +287,7 @@ const ContactSection = () => {
           photo_urls: photoUrls.length > 0 ? photoUrls : null,
           gdpr_consent: form.gdprConsent,
           status: "nouveau",
-        } as any);
+        });
         if (error) throw error;
         dbOk = true;
       } catch (err) {
@@ -388,7 +388,7 @@ const ContactSection = () => {
       const firstName = form.name.trim().split(/\s+/)[0];
       setSubmitSuccess({ name: firstName });
       setTimeout(() => navigate("/merci"), 2400);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Submit error:", err);
       setSubmitError("Une erreur inattendue est survenue. Réessayez ou appelez le 0485 75 52 27.");
       setIsSubmitting(false);

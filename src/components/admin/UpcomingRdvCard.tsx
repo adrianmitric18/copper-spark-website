@@ -52,8 +52,17 @@ const UpcomingRdvCard = () => {
         .order("date_rdv", { ascending: true })
         .order("heure_rdv", { ascending: true });
       if (!error && data) {
+        type RdvRow = {
+          id: string;
+          lead_id: string;
+          date_rdv: string;
+          heure_rdv: string;
+          type_visite: string | null;
+          statut: string;
+          leads: { name: string; commune: string | null } | null;
+        };
         setRdvs(
-          (data as any[]).map((r) => ({
+          (data as unknown as RdvRow[]).map((r) => ({
             id: r.id,
             lead_id: r.lead_id,
             date_rdv: r.date_rdv,

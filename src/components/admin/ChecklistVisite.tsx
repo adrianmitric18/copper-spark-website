@@ -60,7 +60,9 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
       return;
     }
 
-    const existingForType = (data || []).filter((d: any) => d.checklist_type === checklistType);
+    const existingForType = (data || []).filter(
+      (d: { checklist_type: string }) => d.checklist_type === checklistType,
+    );
 
     if (existingForType.length === 0) {
       // Seed

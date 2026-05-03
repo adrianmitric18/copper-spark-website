@@ -22,7 +22,7 @@ const Footer = () => {
                 <span className="font-display text-lg font-bold text-foreground leading-tight">
                   Le Cuivre
                 </span>
-                <span className="font-display text-sm font-semibold text-primary leading-tight">
+                <span className="font-display text-sm font-semibold text-copper-deep leading-tight">
                   Électrique
                 </span>
               </div>
@@ -30,7 +30,7 @@ const Footer = () => {
             <p className="text-muted-foreground mb-3 max-w-md leading-relaxed">
               Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation, conformité RGIE et dépannage 24h/24.
             </p>
-            <p className="text-primary font-medium text-lg italic">
+            <p className="text-copper-deep font-medium text-lg italic">
               "On alimente vos idées, sans court-circuiter votre journée !"
             </p>
           </div>
@@ -44,7 +44,7 @@ const Footer = () => {
                   href="tel:+32485755227"
                   data-analytics="call_click"
                   onClick={() => trackEvent("call_click", { source_section: "footer" })}
-                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   <Phone className="w-5 h-5 text-primary" />
                   0485 75 52 27
@@ -53,7 +53,7 @@ const Footer = () => {
               <li>
                 <a
                   href="mailto:contact@cuivre-electrique.com"
-                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   <Mail className="w-5 h-5 text-primary" />
                   contact@cuivre-electrique.com
@@ -75,7 +75,7 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   data-analytics="review_click"
                   onClick={() => trackEvent("review_click", { source_section: "footer" })}
-                  className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-copper-deep hover:bg-primary hover:text-copper-deep-foreground transition-colors"
                 >
                   <Star className="w-3.5 h-3.5" aria-hidden="true" />
                   Nous évaluer sur Google
@@ -91,7 +91,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/services"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Nos services
                 </Link>
@@ -99,7 +99,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/realisations"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Réalisations
                 </Link>
@@ -107,7 +107,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/avis"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Avis clients
                 </Link>
@@ -115,7 +115,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/contact"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Demander un devis
                 </Link>
@@ -123,7 +123,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/mentions-legales"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Mentions légales
                 </Link>
@@ -131,7 +131,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/cgv"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   CGV
                 </Link>
@@ -139,7 +139,7 @@ const Footer = () => {
               <li>
                 <Link
                   to="/confidentialite"
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Confidentialité
                 </Link>
@@ -149,7 +149,7 @@ const Footer = () => {
                   type="button"
                   onClick={openCookiePreferences}
                   aria-haspopup="dialog"
-                  className="text-muted-foreground hover:text-primary transition-colors text-left"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors text-left"
                 >
                   Gérer mes cookies
                 </button>
@@ -184,15 +184,15 @@ const Footer = () => {
         <div className="mt-8 pt-6 border-t border-border/50">
           <p className="text-sm text-muted-foreground text-center leading-relaxed">
             <span className="font-semibold text-foreground">Zones d'intervention :</span>{" "}
-            <Link to="/electricien-court-saint-etienne" className="hover:text-primary transition-colors">Court-Saint-Étienne</Link>
+            <Link to="/electricien-court-saint-etienne" className="hover:text-copper-deep transition-colors">Court-Saint-Étienne</Link>
             {" — "}
-            <Link to="/electricien-wavre" className="hover:text-primary transition-colors">Wavre</Link>
+            <Link to="/electricien-wavre" className="hover:text-copper-deep transition-colors">Wavre</Link>
             {" — "}
-            <Link to="/electricien-ottignies-louvain-la-neuve" className="hover:text-primary transition-colors">Ottignies-Louvain-la-Neuve</Link>
+            <Link to="/electricien-ottignies-louvain-la-neuve" className="hover:text-copper-deep transition-colors">Ottignies-Louvain-la-Neuve</Link>
             {" — "}
-            <Link to="/electricien-nivelles" className="hover:text-primary transition-colors">Nivelles</Link>
+            <Link to="/electricien-nivelles" className="hover:text-copper-deep transition-colors">Nivelles</Link>
             {" — "}
-            <Link to="/electricien-genappe" className="hover:text-primary transition-colors">Genappe</Link>
+            <Link to="/electricien-genappe" className="hover:text-copper-deep transition-colors">Genappe</Link>
           </p>
         </div>
 
