@@ -60,7 +60,7 @@ const CookieConsentBanner = () => {
                 <button
                   type="button"
                   onClick={() => setModalOpen(true)}
-                  className="text-sm text-primary hover:underline underline-offset-4 px-2 py-1 whitespace-nowrap"
+                  className="text-sm text-copper-deep hover:underline underline-offset-4 px-2 py-1 whitespace-nowrap"
                 >
                   Personnaliser
                 </button>

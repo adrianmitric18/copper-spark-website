@@ -25,7 +25,7 @@ const MobileStickyBar = () => {
           to="/contact"
           data-analytics="quote_request"
           onClick={() => trackEvent("quote_request", { source_section: "mobile_sticky_bar" })}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-primary text-primary font-semibold text-sm active:scale-95 transition-transform"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-primary text-copper-deep font-semibold text-sm active:scale-95 transition-transform"
         >
           <FileText className="w-4 h-4" />
           Devis gratuit
