@@ -1,6 +1,9 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ReassuranceSection from "@/components/ReassuranceSection";
+import ServicesSection from "@/components/ServicesSection";
+import ZoneSection from "@/components/ZoneSection";
+import InternalLinks from "@/components/InternalLinks";
 import KeyFiguresSection from "@/components/KeyFiguresSection";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import Footer from "@/components/Footer";
@@ -35,7 +38,14 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
+        <ServicesSection />
+        <ZoneSection />
         <KeyFiguresSection />
+        <InternalLinks
+          mode="zones"
+          title="Nos zones d'intervention"
+          intro="Le Cuivre Électrique intervient dans tout le Brabant wallon et au-delà. Pages dédiées à chaque commune avec contexte local, FAQ et délais d'intervention."
+        />
         <HomeReviewsBanner />
       </main>
       <Footer />
