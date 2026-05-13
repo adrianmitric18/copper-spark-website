@@ -1,11 +1,26 @@
 import { useEffect } from "react";
 
+/**
+ * Valeurs de repli pour l'aggregateRating quand Supabase n'a pas encore
+ * répondu (fetch async) ou échoue.
+ *
+ * Le bloc aggregateRating DOIT être présent dans le JSON-LD pour que Google
+ * affiche les étoiles dans les SERPs. Sans ce fallback, pendant les ~100-400ms
+ * entre l'hydratation React et la réponse Supabase, Googlebot pouvait crawler
+ * une page sans rating → perte des rich snippets.
+ *
+ * À synchroniser manuellement avec le compteur Google My Business si l'écart
+ * devient significatif (>2 avis). Pas critique : la valeur live Supabase
+ * écrase ce fallback dès qu'elle arrive.
+ */
+const FALLBACK_RATING = { ratingValue: "4.94", reviewCount: 21 } as const;
+
 interface LocalBusinessProps {
   type: "LocalBusiness";
   /**
    * Aggregate rating dynamique calculé depuis Supabase.
-   * Si non fourni, le bloc aggregateRating n'est PAS émis dans le JSON-LD
-   * (évite les valeurs hardcodées désynchronisées de la BDD).
+   * Si non fourni, le JSON-LD utilise FALLBACK_RATING ci-dessus pour
+   * garantir la présence d'étoiles dans les SERPs.
    */
   aggregateRating?: {
     ratingValue: number | string;
@@ -149,15 +164,20 @@ const StructuredData = (props: StructuredDataProps) => {
           }
         };
 
-        if (props.aggregateRating && props.aggregateRating.reviewCount > 0) {
-          localBusiness["aggregateRating"] = {
-            "@type": "AggregateRating",
-            "ratingValue": String(props.aggregateRating.ratingValue),
-            "reviewCount": String(props.aggregateRating.reviewCount),
-            "bestRating": "5",
-            "worstRating": "1"
-          };
-        }
+        // Toujours émettre aggregateRating : valeur live Supabase si dispo,
+        // sinon FALLBACK_RATING. Garantit la présence des étoiles SERP même
+        // pendant la fenêtre async entre hydratation et fetch Supabase.
+        const rating =
+          props.aggregateRating && props.aggregateRating.reviewCount > 0
+            ? props.aggregateRating
+            : FALLBACK_RATING;
+        localBusiness["aggregateRating"] = {
+          "@type": "AggregateRating",
+          "ratingValue": String(rating.ratingValue),
+          "reviewCount": String(rating.reviewCount),
+          "bestRating": "5",
+          "worstRating": "1"
+        };
 
         jsonLd = localBusiness;
         break;
