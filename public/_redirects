@@ -1,0 +1,14 @@
+# Redirections 301 Cloudflare Pages — Le Cuivre Électrique
+#
+# Anciennes pages catégories /realisations/* déplacées vers la grille
+# filtrée par tag. Ces routes existent aussi en client-side via
+# <Navigate> dans App.tsx pour double-sécurité, mais c'est ici, au
+# niveau HTTP, que Google reçoit un vrai 301 qui transmet le PageRank.
+#
+# Doc Cloudflare : https://developers.cloudflare.com/pages/configuration/redirects/
+
+/realisations/tableaux-et-prises     /realisations?tag=R%C3%A9novation+tableau+%C3%A9lectrique  301
+/realisations/ambiances-lumineuses   /realisations?tag=%C3%89clairage+LED                       301
+/realisations/installation-reseaux   /realisations?tag=R%C3%A9seau+%2F+VDI                      301
+/realisations/decoration-de-noel     /realisations?tag=D%C3%A9coration+de+No%C3%ABl             301
+/realisations/bornes-de-recharge     /realisations?tag=Bornes+de+recharge+VE                    301
