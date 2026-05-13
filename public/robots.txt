@@ -1,26 +1,11 @@
 # robots.txt — Le Cuivre Électrique
 Sitemap: https://cuivre-electrique.com/sitemap.xml
 
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 2
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
 Disallow: /merci
 Disallow: /admin
 Disallow: /admin/
-Disallow: /admin/avis
 Disallow: /src/
-Disallow: /*.json$
 Disallow: /supabase/
+Disallow: /*.json$
