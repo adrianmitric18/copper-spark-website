@@ -16,7 +16,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Roboto',
+  				'Inter',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -33,7 +33,6 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Libre Caslon Text',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -42,7 +41,6 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'Roboto Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
