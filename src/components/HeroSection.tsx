@@ -12,8 +12,6 @@ import { useAggregateRating } from "@/hooks/useAggregateRating";
 const HeroSection = () => {
   const { trackEvent } = useAnalyticsEvents();
   const { data: rating } = useAggregateRating();
-  const titleWords = ["Électricien", "indépendant"];
-  const subtitleWords = ["Brabant", "wallon,", "Wallonie", "&", "Bruxelles"];
 
   // Mouse parallax effect only (no scroll parallax to avoid jank)
   const mouseX = useMotionValue(0);
@@ -123,43 +121,18 @@ const HeroSection = () => {
             <span className="text-2xl font-serif text-center">Artisan Électricien </span>
           </motion.div>
 
-          {/* Main Title - Word by word animation */}
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-foreground leading-[1.1] mb-8">
-            <span className="block">
-              {titleWords.map((word, index) => <motion.span key={index} initial={{
-              opacity: 0,
-              y: 50,
-              rotateX: -90
-            }} animate={{
-              opacity: 1,
-              y: 0,
-              rotateX: 0
-            }} transition={{
-              duration: 0.6,
-              delay: 0.2 + index * 0.15,
-              ease: [0.25, 0.46, 0.45, 0.94]
-            }} className="inline-block mr-4">
-                  {word}
-                </motion.span>)}
-            </span>
+          {/* Main Title — fade simple pour LCP rapide (audit C5) */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="font-display text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-foreground leading-[1.1] mb-8"
+          >
+            <span className="block">Électricien indépendant</span>
             <span className="text-gradient-copper block mt-2">
-              {subtitleWords.map((word, index) => <motion.span key={index} initial={{
-              opacity: 0,
-              y: 50,
-              rotateX: -90
-            }} animate={{
-              opacity: 1,
-              y: 0,
-              rotateX: 0
-            }} transition={{
-              duration: 0.6,
-              delay: 0.5 + index * 0.12,
-              ease: [0.25, 0.46, 0.45, 0.94]
-            }} className="inline-block mr-3 md:mr-4">
-                  {word}
-                </motion.span>)}
+              Brabant wallon, Wallonie &amp; Bruxelles
             </span>
-          </h1>
+          </motion.h1>
 
           {/* Subtitle / Slogan */}
           <motion.p initial={{
@@ -170,7 +143,7 @@ const HeroSection = () => {
           y: 0
         }} transition={{
           duration: 0.6,
-          delay: 1
+          delay: 0.2
           }} className="text-lg md:text-xl max-w-2xl mx-auto mb-6 leading-relaxed text-background">
             <span className="text-foreground font-medium">Basé à Court-Saint-Étienne</span>
           </motion.p>
@@ -180,7 +153,7 @@ const HeroSection = () => {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1.05 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
               className="inline-flex items-center gap-2 mb-10"
             >
               <span className="flex" aria-hidden="true">
@@ -206,7 +179,7 @@ const HeroSection = () => {
           y: 0
         }} transition={{
           duration: 0.6,
-          delay: 1.2
+          delay: 0.4
         }} className="flex flex-col items-center gap-4">
             <Button variant="copper" size="xl" asChild className="min-w-[240px]">
               <a
@@ -239,7 +212,7 @@ const HeroSection = () => {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
             className="text-sm text-muted-foreground mt-6 max-w-2xl mx-auto text-center"
           >
             Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent disponible 7j/7 24h/24
@@ -253,7 +226,7 @@ const HeroSection = () => {
         opacity: 1
       }} transition={{
         duration: 0.6,
-        delay: 1.5
+        delay: 0.7
       }} className="mt-16 text-center">
           <a href="/services" className="inline-flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
             <span className="text-sm font-medium">Découvrir nos services</span>
