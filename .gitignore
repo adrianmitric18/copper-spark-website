@@ -15,6 +15,10 @@ dist-ssr
 # Lighthouse audit reports (generated locally, not versioned)
 lh-*.json
 
+# Backup des images gallery avant compression (script optimize-gallery.mjs)
+# Permet de revenir aux originaux si besoin, mais pas versionné (~180 MB).
+src/assets/gallery/_originals/
+
 # Environment variables — never commit secrets
 .env
 .env.*
