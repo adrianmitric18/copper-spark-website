@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Phone, Mail, CheckCircle, Upload, X, Loader2 } from "lucide-react";
+import { Phone, Mail, CheckCircle, Upload, X, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { motion, useInView } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,19 +184,33 @@ const ContactSection = () => {
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim() || form.name.trim().length < 2) e.name = "Nom et prénom requis";
-    if (!emailRegex.test(form.email.trim())) e.email = "Email invalide";
-    if (!phoneRegex.test(form.phone.trim().replace(/\s/g, ""))) e.phone = "Numéro belge invalide (ex : 0485 75 52 27)";
-    if (!form.rue.trim()) e.rue = "Rue requise";
-    if (!form.numero.trim()) e.numero = "Numéro requis";
-    if (!/^\d{4}$/.test(form.codePostal.trim())) e.codePostal = "Code postal belge (4 chiffres)";
+
+    // Téléphone OU email — au moins un (assouplissement 2026-05-22)
+    const phoneFilled = form.phone.trim().length > 0;
+    const emailFilled = form.email.trim().length > 0;
+    if (!phoneFilled && !emailFilled) {
+      e.phone = "Téléphone ou email requis";
+      e.email = "Téléphone ou email requis";
+    } else {
+      if (phoneFilled && !phoneRegex.test(form.phone.trim().replace(/\s/g, ""))) {
+        e.phone = "Numéro belge invalide (ex : 0485 75 52 27)";
+      }
+      if (emailFilled && !emailRegex.test(form.email.trim())) {
+        e.email = "Email invalide";
+      }
+    }
+
     if (!form.commune.trim()) e.commune = "Commune requise";
-    if (!form.clientType) e.clientType = "Veuillez sélectionner";
-    if (!form.habitatType) e.habitatType = "Précisez le type d'habitation";
     if (form.services.length === 0) e.services = "Sélectionnez au moins un service";
-    // buildYear est optionnel — pas de validation requise. On accepte une
-    // chaîne libre, l'utilisateur peut laisser vide ou écrire '~1985'.
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
     if (!form.gdprConsent) e.gdprConsent = "Consentement requis";
+
+    // Si codePostal est fourni dans "Plus de détails", valider le format ;
+    // sinon laisser vide accepté.
+    if (form.codePostal.trim() && !/^\d{4}$/.test(form.codePostal.trim())) {
+      e.codePostal = "Code postal belge (4 chiffres)";
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -258,15 +277,20 @@ const ContactSection = () => {
       const numero = form.numero.trim();
       const codePostal = form.codePostal.trim();
       const commune = form.commune.trim();
-      const fullAddress = `${rue} ${numero}, ${codePostal} ${commune}`;
 
-      // Pré-qualification (brief V3) — préfixée au message DB pour ne pas
-      // casser le schéma existant. buildYear est ajouté seulement s'il est
-      // rempli.
-      const buildYearLine = form.buildYear.trim()
-        ? ` · [Construction] ${form.buildYear.trim()}`
-        : "";
-      const prequalHeader = `[Habitation] ${form.habitatType}${buildYearLine}\n\n`;
+      // Construit l'adresse depuis ce qui est fourni — adresse complète
+      // optionnelle (passage 5 champs requis 2026-05-22). Si seul `commune`
+      // est rempli, c'est suffisant pour qualifier la zone.
+      const streetPart = [rue, numero].filter(Boolean).join(" ").trim();
+      const cityPart = [codePostal, commune].filter(Boolean).join(" ").trim();
+      const fullAddress = [streetPart, cityPart].filter(Boolean).join(", ");
+
+      // Pré-qualification — habitatType et buildYear sont désormais
+      // optionnels. On préfixe au message DB uniquement ce qui est rempli.
+      const prequalParts: string[] = [];
+      if (form.habitatType) prequalParts.push(`[Habitation] ${form.habitatType}`);
+      if (form.buildYear.trim()) prequalParts.push(`[Construction] ${form.buildYear.trim()}`);
+      const prequalHeader = prequalParts.length > 0 ? prequalParts.join(" · ") + "\n\n" : "";
       const enrichedMessage = prequalHeader + form.message.trim();
 
       try {
@@ -318,20 +342,20 @@ const ContactSection = () => {
         }
       }
 
-      const addressHtml = `${rue} ${numero}<br>${codePostal} ${commune}`;
-      const addressPlain = `${rue} ${numero}\n${codePostal} ${commune}`;
+      const addressHtml = [streetPart, cityPart].filter(Boolean).join("<br>") || "Adresse non précisée";
+      const addressPlain = [streetPart, cityPart].filter(Boolean).join("\n") || "Adresse non précisée";
 
       const adrianParams = {
         from_name: form.name.trim(),
-        from_email: form.email.trim(),
-        phone: form.phone.trim(),
+        from_email: form.email.trim() || "Non fourni",
+        phone: form.phone.trim() || "Non fourni",
         address: addressHtml,
         rue,
         numero,
         code_postal: codePostal,
         commune,
-        client_type: form.clientType,
-        habitat_type: form.habitatType,
+        client_type: form.clientType || "Non précisé",
+        habitat_type: form.habitatType || "Non précisé",
         build_year: form.buildYear.trim() || "Non précisée",
         services: servicesStr,
         message: enrichedMessage,
@@ -532,26 +556,42 @@ const ContactSection = () => {
             className="lg:col-span-3 order-1 lg:order-2 p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl space-y-8"
             noValidate
           >
-            {/* SECTION 1 - Coordonnées */}
+            {/* SECTION 1 — Coordonnées (assoupli 2026-05-22 : tél OU email) */}
             <div className="space-y-5">
               <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
                 Vos coordonnées
               </h3>
 
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-card-foreground mb-2">
+                  Nom et prénom{requiredMark}
+                </label>
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
+                  placeholder="Jean Dupont"
+                  maxLength={100}
+                  className={`h-11 ${errors.name ? "border-destructive" : ""}`}
+                />
+                {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-card-foreground mb-2">
-                    Nom et prénom{requiredMark}
+                  <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-2">
+                    Téléphone{requiredMark}
                   </label>
                   <Input
-                    id="name"
-                    value={form.name}
-                    onChange={(e) => update("name", e.target.value)}
-                    placeholder="Jean Dupont"
-                    maxLength={100}
-                    className={`h-11 ${errors.name ? "border-destructive" : ""}`}
+                    id="phone"
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => update("phone", e.target.value)}
+                    placeholder="0485 75 52 27"
+                    maxLength={30}
+                    className={`h-11 ${errors.phone ? "border-destructive" : ""}`}
                   />
-                  {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+                  {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-card-foreground mb-2">
@@ -569,168 +609,31 @@ const ContactSection = () => {
                   {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                Téléphone ou email — au moins un des deux.
+              </p>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-card-foreground mb-2">
-                  Téléphone{requiredMark}
+                <label htmlFor="commune" className="block text-sm font-medium text-card-foreground mb-2">
+                  Commune du chantier{requiredMark}
                 </label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  placeholder="0485 75 52 27"
-                  maxLength={30}
-                  className={`h-11 ${errors.phone ? "border-destructive" : ""}`}
+                  id="commune"
+                  value={form.commune}
+                  onChange={(e) => update("commune", e.target.value)}
+                  placeholder="Ex: Court-Saint-Étienne"
+                  maxLength={100}
+                  className={`h-11 ${errors.commune ? "border-destructive" : ""}`}
                 />
-                {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
-              </div>
-
-              <div>
-                <p className="block text-sm font-medium text-card-foreground mb-3">
-                  Adresse du chantier{requiredMark}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="rue" className="block text-xs text-muted-foreground mb-1">Rue</label>
-                    <Input
-                      id="rue"
-                      value={form.rue}
-                      onChange={(e) => update("rue", e.target.value)}
-                      placeholder="Ex: Rue de la Station"
-                      maxLength={150}
-                      className={`h-11 ${errors.rue ? "border-destructive" : ""}`}
-                    />
-                    {errors.rue && <p className="text-destructive text-xs mt-1">{errors.rue}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="numero" className="block text-xs text-muted-foreground mb-1">Numéro</label>
-                    <Input
-                      id="numero"
-                      value={form.numero}
-                      onChange={(e) => update("numero", e.target.value)}
-                      placeholder="Ex: 12 ou 12A"
-                      maxLength={20}
-                      className={`h-11 ${errors.numero ? "border-destructive" : ""}`}
-                    />
-                    {errors.numero && <p className="text-destructive text-xs mt-1">{errors.numero}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="codePostal" className="block text-xs text-muted-foreground mb-1">Code postal</label>
-                    <Input
-                      id="codePostal"
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]{4}"
-                      value={form.codePostal}
-                      onChange={(e) => update("codePostal", e.target.value.replace(/\D/g, "").slice(0, 4))}
-                      placeholder="Ex: 1490"
-                      maxLength={4}
-                      className={`h-11 ${errors.codePostal ? "border-destructive" : ""}`}
-                    />
-                    {errors.codePostal && <p className="text-destructive text-xs mt-1">{errors.codePostal}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="commune" className="block text-xs text-muted-foreground mb-1">Commune</label>
-                    <Input
-                      id="commune"
-                      value={form.commune}
-                      onChange={(e) => update("commune", e.target.value)}
-                      placeholder="Ex: Court-Saint-Étienne"
-                      maxLength={100}
-                      className={`h-11 ${errors.commune ? "border-destructive" : ""}`}
-                    />
-                    {errors.commune && <p className="text-destructive text-xs mt-1">{errors.commune}</p>}
-                  </div>
-                </div>
+                {errors.commune && <p className="text-destructive text-xs mt-1">{errors.commune}</p>}
               </div>
             </div>
 
-            {/* SECTION 2 - Projet */}
+            {/* SECTION 2 — Votre projet */}
             <div className="space-y-5">
               <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
                 Votre projet
               </h3>
-
-              <div>
-                <label htmlFor="clientType" className="block text-sm font-medium text-card-foreground mb-2">
-                  Vous êtes{requiredMark}
-                </label>
-                <Select value={form.clientType} onValueChange={(v) => update("clientType", v)}>
-                  <SelectTrigger className={`h-11 ${errors.clientType ? "border-destructive" : ""}`}>
-                    <SelectValue placeholder="Sélectionnez..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CLIENT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.clientType && <p className="text-destructive text-xs mt-1">{errors.clientType}</p>}
-              </div>
-
-              {/* Pré-qualification — Habitation (radio) + Année construction
-                  (texte libre optionnel). Brief V3 : Propriétaire/Locataire
-                  retiré, remplacé par l'année qui sert vraiment au calcul
-                  TVA 6% rénovation. */}
-              <fieldset>
-                <legend className="block text-sm font-medium text-card-foreground mb-3">
-                  Habitation{requiredMark}
-                </legend>
-                <div className="flex flex-wrap gap-2">
-                  {HABITAT_OPTIONS.map((opt) => {
-                    const selected = form.habitatType === opt;
-                    return (
-                      <label
-                        key={opt}
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
-                          selected
-                            ? "border-primary bg-primary/5 text-foreground font-medium"
-                            : "border-border hover:border-primary/40 bg-background text-card-foreground"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="habitatType"
-                          value={opt}
-                          checked={selected}
-                          onChange={() => update("habitatType", opt)}
-                          className="sr-only"
-                        />
-                        <span
-                          aria-hidden="true"
-                          className={`w-3 h-3 rounded-full border ${
-                            selected ? "border-primary bg-primary" : "border-border"
-                          }`}
-                        />
-                        {opt}
-                      </label>
-                    );
-                  })}
-                </div>
-                {errors.habitatType && <p className="text-destructive text-xs mt-1">{errors.habitatType}</p>}
-              </fieldset>
-
-              <div>
-                <label htmlFor="buildYear" className="block text-sm font-medium text-card-foreground mb-2">
-                  Année de construction de la maison
-                </label>
-                <Input
-                  id="buildYear"
-                  type="text"
-                  inputMode="numeric"
-                  value={form.buildYear}
-                  onChange={(e) => update("buildYear", e.target.value)}
-                  placeholder="ex : 1985 (laissez vide si vous ne savez pas)"
-                  maxLength={20}
-                  className="h-11"
-                />
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Optionnel — pour estimation du taux de TVA applicable (6 % en rénovation au-delà de 10 ans).
-                </p>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-card-foreground mb-3">
@@ -779,75 +682,35 @@ const ContactSection = () => {
                 />
                 {errors.message && <p className="text-destructive text-xs mt-1">{errors.message}</p>}
               </div>
-
-              {/* Photos */}
-              <div>
-                <label className="block text-sm font-medium text-card-foreground mb-2">
-                  Photos du chantier ou du problème (optionnel)
-                </label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Les photos nous aident à préparer un devis plus précis. Max {MAX_PHOTOS} photos, {MAX_PHOTO_SIZE_MB} Mo
-                  chacune.
-                </p>
-
-                {photos.length < MAX_PHOTOS && (
-                  <label
-                    htmlFor="photos"
-                    className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
-                  >
-                    <Upload className="w-6 h-6 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Cliquez pour ajouter {photos.length > 0 ? `(${photos.length}/${MAX_PHOTOS})` : "des photos"}
-                    </span>
-                    <input
-                      ref={fileInputRef}
-                      id="photos"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      multiple
-                      onChange={(e) => handleFiles(e.target.files)}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-
-                {photos.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3 mt-3">
-                    {photos.map((p, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
-                        <img src={p.previewUrl} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removePhoto(i)}
-                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/90 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
-                          aria-label="Retirer la photo"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
-            {/* SECTION 3 - Détails */}
-            <div className="space-y-5">
-              <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
-                Quelques détails (optionnel)
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* SECTION 3 — Plus de détails (optionnel, repliable) */}
+            <Collapsible className="space-y-4">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-4 rounded-xl bg-muted/40 border border-border/50 hover:bg-muted/60 transition-colors group">
+                <div className="text-left">
+                  <p className="font-display text-base font-semibold text-card-foreground">
+                    Plus de détails (optionnel)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Adresse précise, type de logement, photos… Aide à préparer un devis plus précis.
+                  </p>
+                </div>
+                <ChevronDown
+                  className="w-5 h-5 text-muted-foreground shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
+                  aria-hidden="true"
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-5 pt-2">
                 <div>
-                  <label htmlFor="timing" className="block text-sm font-medium text-card-foreground mb-2">
-                    Quand souhaitez-vous intervenir ?
+                  <label htmlFor="clientType" className="block text-sm font-medium text-card-foreground mb-2">
+                    Vous êtes
                   </label>
-                  <Select value={form.timing} onValueChange={(v) => update("timing", v)}>
+                  <Select value={form.clientType} onValueChange={(v) => update("clientType", v)}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Sélectionnez..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {TIMINGS.map((t) => (
+                      {CLIENT_TYPES.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>
@@ -855,25 +718,194 @@ const ContactSection = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <fieldset>
+                  <legend className="block text-sm font-medium text-card-foreground mb-3">
+                    Habitation
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {HABITAT_OPTIONS.map((opt) => {
+                      const selected = form.habitatType === opt;
+                      return (
+                        <label
+                          key={opt}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors text-sm ${
+                            selected
+                              ? "border-primary bg-primary/5 text-foreground font-medium"
+                              : "border-border hover:border-primary/40 bg-background text-card-foreground"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="habitatType"
+                            value={opt}
+                            checked={selected}
+                            onChange={() => update("habitatType", opt)}
+                            className="sr-only"
+                          />
+                          <span
+                            aria-hidden="true"
+                            className={`w-3 h-3 rounded-full border ${
+                              selected ? "border-primary bg-primary" : "border-border"
+                            }`}
+                          />
+                          {opt}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
                 <div>
-                  <label htmlFor="source" className="block text-sm font-medium text-card-foreground mb-2">
-                    Comment nous avez-vous connus ?
+                  <label htmlFor="buildYear" className="block text-sm font-medium text-card-foreground mb-2">
+                    Année de construction de la maison
                   </label>
-                  <Select value={form.source} onValueChange={(v) => update("source", v)}>
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Sélectionnez..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SOURCES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="buildYear"
+                    type="text"
+                    inputMode="numeric"
+                    value={form.buildYear}
+                    onChange={(e) => update("buildYear", e.target.value)}
+                    placeholder="ex : 1985 (laissez vide si vous ne savez pas)"
+                    maxLength={20}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Pour estimation du taux de TVA applicable (6 % en rénovation au-delà de 10 ans).
+                  </p>
                 </div>
-              </div>
-            </div>
+
+                <div>
+                  <p className="block text-sm font-medium text-card-foreground mb-3">
+                    Adresse précise du chantier
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="rue" className="block text-xs text-muted-foreground mb-1">Rue</label>
+                      <Input
+                        id="rue"
+                        value={form.rue}
+                        onChange={(e) => update("rue", e.target.value)}
+                        placeholder="Ex: Rue de la Station"
+                        maxLength={150}
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="numero" className="block text-xs text-muted-foreground mb-1">Numéro</label>
+                      <Input
+                        id="numero"
+                        value={form.numero}
+                        onChange={(e) => update("numero", e.target.value)}
+                        placeholder="Ex: 12 ou 12A"
+                        maxLength={20}
+                        className="h-11"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="codePostal" className="block text-xs text-muted-foreground mb-1">Code postal</label>
+                      <Input
+                        id="codePostal"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]{4}"
+                        value={form.codePostal}
+                        onChange={(e) => update("codePostal", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                        placeholder="Ex: 1490"
+                        maxLength={4}
+                        className={`h-11 ${errors.codePostal ? "border-destructive" : ""}`}
+                      />
+                      {errors.codePostal && <p className="text-destructive text-xs mt-1">{errors.codePostal}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="timing" className="block text-sm font-medium text-card-foreground mb-2">
+                      Quand souhaitez-vous intervenir ?
+                    </label>
+                    <Select value={form.timing} onValueChange={(v) => update("timing", v)}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Sélectionnez..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMINGS.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label htmlFor="source" className="block text-sm font-medium text-card-foreground mb-2">
+                      Comment nous avez-vous connus ?
+                    </label>
+                    <Select value={form.source} onValueChange={(v) => update("source", v)}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Sélectionnez..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOURCES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-card-foreground mb-2">
+                    Photos du chantier ou du problème
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Les photos nous aident à préparer un devis plus précis. Max {MAX_PHOTOS} photos, {MAX_PHOTO_SIZE_MB} Mo chacune.
+                  </p>
+
+                  {photos.length < MAX_PHOTOS && (
+                    <label
+                      htmlFor="photos"
+                      className="flex flex-col items-center justify-center gap-2 p-6 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
+                    >
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Cliquez pour ajouter {photos.length > 0 ? `(${photos.length}/${MAX_PHOTOS})` : "des photos"}
+                      </span>
+                      <input
+                        ref={fileInputRef}
+                        id="photos"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                        multiple
+                        onChange={(e) => handleFiles(e.target.files)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-3">
+                      {photos.map((p, i) => (
+                        <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                          <img src={p.previewUrl} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(i)}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/90 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
+                            aria-label="Retirer la photo"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* SECTION 4 - Consentement */}
             <div>
