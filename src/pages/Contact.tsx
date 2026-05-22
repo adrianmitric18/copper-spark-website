@@ -107,9 +107,15 @@ const Contact = () => {
           </div>
         </section>
 
+        {/* === Formulaire — ContactSection (priorité mobile, insight 2026-05-22) === */}
+        <ContactSection />
+
         {/* === 3 cartes canaux de contact === */}
-        <section className="pb-12 md:pb-16">
+        <section className="py-12 md:py-16 bg-muted/30 border-y border-border">
           <div className="container mx-auto px-4 max-w-5xl">
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-8">
+              Vous préférez nous joindre autrement ?
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
               {channels.map((c) => (
                 <a
@@ -135,7 +141,7 @@ const Contact = () => {
         </section>
 
         {/* === Section "Comment ça se passe" — 4 étapes === */}
-        <section className="py-12 md:py-16 bg-muted/30 border-y border-border">
+        <section className="py-12 md:py-16">
           <div className="container mx-auto px-4 max-w-6xl">
             <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
               Comment ça se passe
@@ -168,9 +174,6 @@ const Contact = () => {
             </ol>
           </div>
         </section>
-
-        {/* === Formulaire — ContactSection (logique inchangée) === */}
-        <ContactSection />
 
         <ZoneSection />
       </main>

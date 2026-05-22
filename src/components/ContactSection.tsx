@@ -445,11 +445,11 @@ const ContactSection = () => {
   }
 
   return (
-    <section id="contact" ref={sectionRef} className="py-24 md:py-32 bg-background relative overflow-hidden">
+    <section id="contact" ref={sectionRef} className="pt-4 md:pt-8 pb-20 md:pb-28 bg-background relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16">
-          {/* Left column - Info */}
-          <div className="lg:col-span-2">
+          {/* Left column - Info (passe APRÈS le formulaire en mobile) */}
+          <div className="lg:col-span-2 order-2 lg:order-1">
             <motion.span
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -523,13 +523,13 @@ const ContactSection = () => {
             </div>
           </div>
 
-          {/* Right column - Form */}
+          {/* Right column - Form (passe AVANT l'info en mobile) */}
           <motion.form
             initial={{ opacity: 0, x: 30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
             onSubmit={handleSubmit}
-            className="lg:col-span-3 p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl space-y-8"
+            className="lg:col-span-3 order-1 lg:order-2 p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl space-y-8"
             noValidate
           >
             {/* SECTION 1 - Coordonnées */}
