@@ -103,32 +103,32 @@
     <priority>0.75</priority>
   </url>
   <url>
-    <loc>https://cuivre-electrique.com/realisations/archives-ambiances-lumineuses</loc>
-    <lastmod>2026-05-03</lastmod>
+    <loc>https://cuivre-electrique.com/realisations/archives-tableaux-et-prises</loc>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://cuivre-electrique.com/realisations/archives-installation-reseaux</loc>
-    <lastmod>2026-05-03</lastmod>
+    <loc>https://cuivre-electrique.com/realisations/archives-ambiances-lumineuses</loc>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/realisations/archives-bornes-de-recharge</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://cuivre-electrique.com/realisations/archives-installation-reseaux</loc>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/realisations/archives-decoration-de-noel</loc>
-    <lastmod>2026-05-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-  <url>
-    <loc>https://cuivre-electrique.com/realisations/archives-tableaux-et-prises</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
