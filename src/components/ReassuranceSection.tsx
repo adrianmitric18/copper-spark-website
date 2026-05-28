@@ -79,49 +79,22 @@ const ReassuranceSection = () => {
             </motion.div>)}
         </div>
 
-        {/* TVA Banner */}
-        <motion.div initial={{
-        opacity: 0,
-        y: 50,
-        scale: 0.95
-      }} animate={isInView ? {
-        opacity: 1,
-        y: 0,
-        scale: 1
-      } : {
-        opacity: 0,
-        y: 50,
-        scale: 0.95
-      }} transition={{
-        duration: 0.6,
-        delay: 0.4
-      }} className="max-w-4xl mx-auto">
-          <motion.div whileHover={{
-          scale: 1.02,
-          y: -5
-        }} transition={{
-          duration: 0.3
-        }} className="p-8 rounded-3xl border border-border/50 shadow-xl shadow-black/10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left bg-muted">
-            <motion.div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0 shadow-lg shadow-primary/30" animate={{
-            boxShadow: ["0 0 20px rgba(205, 127, 50, 0.3)", "0 0 40px rgba(205, 127, 50, 0.5)", "0 0 20px rgba(205, 127, 50, 0.3)"],
-            scale: [1, 1.05, 1]
-          }} transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}>
-              <span className="font-display text-3xl md:text-4xl font-black text-white">6%</span>
-            </motion.div>
-            <div>
-              <h2 className="font-display text-xl md:text-2xl font-bold text-card-foreground mb-2">
-                TVA réduite applicable
-              </h2>
-              <p className="text-muted-foreground text-lg">
-                Bénéficiez du taux de TVA à 6% pour les travaux de rénovation dans les habitations de plus de 10 ans. 
-                <span className="text-primary font-medium"> Économies garanties !</span>
-              </p>
-            </div>
-          </motion.div>
+        {/* TVA Banner — version compacte (Sprint 3) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="max-w-2xl mx-auto"
+        >
+          <div className="flex items-center justify-center gap-3 px-5 py-3 rounded-full border border-primary/30 bg-primary/5 text-center">
+            <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white font-display font-bold text-sm shrink-0">
+              6%
+            </span>
+            <p className="text-sm md:text-base text-foreground/90">
+              <span className="font-semibold">TVA réduite</span> pour rénovation
+              (habitation &gt; 10 ans)
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>;
