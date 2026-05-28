@@ -1,12 +1,16 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ReassuranceSection from "@/components/ReassuranceSection";
-import ServicesSection from "@/components/ServicesSection";
-import ZoneSection from "@/components/ZoneSection";
-import InternalLinks from "@/components/InternalLinks";
-import KeyFiguresSection from "@/components/KeyFiguresSection";
-import MiniContactForm from "@/components/MiniContactForm";
-import HomeReviewsBanner from "@/components/HomeReviewsBanner";
+import ServicesCompact from "@/components/ServicesCompact";
+import CTAFinal from "@/components/CTAFinal";
+// Sprint 3 — home compacte : sections retirées (commentées, pas supprimées,
+// revert facile). Voir PHASE_3_RAPPORT_2026-05-28.md.
+// import ServicesSection from "@/components/ServicesSection";
+// import ZoneSection from "@/components/ZoneSection";
+// import InternalLinks from "@/components/InternalLinks";
+// import KeyFiguresSection from "@/components/KeyFiguresSection";
+// import MiniContactForm from "@/components/MiniContactForm";
+// import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
@@ -39,6 +43,10 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
+        <ServicesCompact />
+        {/* Placeholder avis — composant <ReviewsHome /> ajouté en étape 2 */}
+        <CTAFinal />
+        {/*
         <ServicesSection />
         <ZoneSection />
         <KeyFiguresSection />
@@ -49,6 +57,7 @@ const Index = () => {
         />
         <MiniContactForm />
         <HomeReviewsBanner />
+        */}
       </main>
       <Footer />
       <WhatsAppButton />
