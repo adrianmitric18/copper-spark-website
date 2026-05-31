@@ -2,13 +2,14 @@ import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
+import { useGoogleRating, FALLBACK_GOOGLE_RATING } from "@/hooks/useGoogleRating";
 
 const HomeReviewsBanner = () => {
   const { trackEvent } = useAnalyticsEvents();
-  const { data: rating } = useAggregateRating();
-
-  if (!rating) return null;
+  // Note Google LIVE (edge function + cache 24h). Fallback immédiat pour ne
+  // jamais masquer le bandeau pendant le fetch.
+  const { data } = useGoogleRating();
+  const rating = data ?? FALLBACK_GOOGLE_RATING;
 
   return (
     <section className="py-12 md:py-16 bg-muted/30">
@@ -23,10 +24,10 @@ const HomeReviewsBanner = () => {
             </div>
             <div className="flex flex-col md:flex-row md:items-baseline md:gap-2">
               <span className="font-display font-bold text-foreground text-lg">
-                {rating.ratingValueFormatted}/5 sur Google
+                {rating.ratingFormatted}/5 sur Google
               </span>
               <span className="text-muted-foreground text-sm">
-                {rating.reviewCount}+ avis Google vérifiés
+                {rating.userRatingsTotal}+ avis Google vérifiés
               </span>
             </div>
           </div>

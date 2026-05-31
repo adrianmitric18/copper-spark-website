@@ -2,3 +2,6 @@ project_id = "tipazyavmuteilmerfdl"
 
 [functions.send-contact-email]
 verify_jwt = false
+
+[functions.google-rating]
+verify_jwt = false

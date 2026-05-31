@@ -1,19 +1,5 @@
 import { useEffect } from "react";
-
-/**
- * Valeurs de repli pour l'aggregateRating quand Supabase n'a pas encore
- * répondu (fetch async) ou échoue.
- *
- * Le bloc aggregateRating DOIT être présent dans le JSON-LD pour que Google
- * affiche les étoiles dans les SERPs. Sans ce fallback, pendant les ~100-400ms
- * entre l'hydratation React et la réponse Supabase, Googlebot pouvait crawler
- * une page sans rating → perte des rich snippets.
- *
- * À synchroniser manuellement avec le compteur Google My Business si l'écart
- * devient significatif (>2 avis). Pas critique : la valeur live Supabase
- * écrase ce fallback dès qu'elle arrive.
- */
-const FALLBACK_RATING = { ratingValue: "4.94", reviewCount: 21 } as const;
+import { FALLBACK_AGGREGATE } from "@/hooks/useAggregateRating";
 
 interface LocalBusinessProps {
   type: "LocalBusiness";
@@ -165,12 +151,16 @@ const StructuredData = (props: StructuredDataProps) => {
         };
 
         // Toujours émettre aggregateRating : valeur live Supabase si dispo,
-        // sinon FALLBACK_RATING. Garantit la présence des étoiles SERP même
-        // pendant la fenêtre async entre hydratation et fetch Supabase.
+        // sinon FALLBACK_AGGREGATE (source unique dans useAggregateRating.ts).
+        // Garantit la présence des étoiles SERP même pendant la fenêtre async
+        // entre hydratation et fetch Supabase.
         const rating =
           props.aggregateRating && props.aggregateRating.reviewCount > 0
             ? props.aggregateRating
-            : FALLBACK_RATING;
+            : {
+                ratingValue: FALLBACK_AGGREGATE.ratingValueSchema,
+                reviewCount: FALLBACK_AGGREGATE.reviewCount,
+              };
         localBusiness["aggregateRating"] = {
           "@type": "AggregateRating",
           "ratingValue": String(rating.ratingValue),

@@ -1,11 +1,14 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ReassuranceSection from "@/components/ReassuranceSection";
-import ServicesSection from "@/components/ServicesSection";
+// Nettoyage home 2026-05-31 : section "Nos services" retirée (page /services dédiée existe).
+// import ServicesSection from "@/components/ServicesSection";
 import ZoneSection from "@/components/ZoneSection";
-import InternalLinks from "@/components/InternalLinks";
+// Nettoyage home 2026-05-31 : doublon "Zones" — InternalLinks zones fusionné dans ZoneSection (chips cliquables).
+// import InternalLinks from "@/components/InternalLinks";
 import KeyFiguresSection from "@/components/KeyFiguresSection";
-import MiniContactForm from "@/components/MiniContactForm";
+// Nettoyage home 2026-05-31 : mini-formulaire "Recevez un devis sous 24h" retiré (redondant avec /contact).
+// import MiniContactForm from "@/components/MiniContactForm";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -39,15 +42,20 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
-        <ServicesSection />
+        {/* Nettoyage home 2026-05-31 : "Nos services" retirée (page /services dédiée). */}
+        {/* <ServicesSection /> */}
+        {/* ZoneSection fusionne désormais le bloc visuel + les liens internes vers
+            les pages communes (ancien <InternalLinks mode="zones" />). */}
         <ZoneSection />
         <KeyFiguresSection />
+        {/* Nettoyage home 2026-05-31 : doublon "Zones" — fusionné dans <ZoneSection />.
         <InternalLinks
           mode="zones"
           title="Nos zones d'intervention"
           intro="Le Cuivre Électrique intervient dans tout le Brabant wallon et au-delà. Pages dédiées à chaque commune avec contexte local, FAQ et délais d'intervention."
-        />
-        <MiniContactForm />
+        /> */}
+        {/* Nettoyage home 2026-05-31 : mini-formulaire retiré (redondant avec /contact). */}
+        {/* <MiniContactForm /> */}
         <HomeReviewsBanner />
       </main>
       <Footer />

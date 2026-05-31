@@ -12,6 +12,26 @@ export interface AggregateRating {
   ratingValueSchema: string;
 }
 
+/**
+ * Valeurs de repli pour l'aggregateRating quand Supabase n'a pas encore
+ * répondu (fetch async) ou échoue. Sert aussi de source de vérité pour les
+ * compteurs hors-hook (ex: stats hardcodées dans /a-propos).
+ *
+ * **À garder synchronisé manuellement avec le compteur Google My Business.**
+ * 1 endroit, 1 ligne à modifier ici quand le nombre d'avis Google change.
+ * La valeur live Supabase écrase ce fallback dès que le hook répond.
+ *
+ * Le bloc aggregateRating DOIT être présent dans le JSON-LD initial pour
+ * que Google affiche les étoiles dans les SERPs même pendant la fenêtre
+ * ~100-400ms entre l'hydratation React et la réponse Supabase.
+ */
+export const FALLBACK_AGGREGATE: AggregateRating = {
+  ratingValue: 4.94,
+  reviewCount: 23,
+  ratingValueFormatted: "4,94",
+  ratingValueSchema: "4.94",
+};
+
 // Seuil minimal d'avis pour publier l'aggregateRating.
 // En-dessous, on ne diffuse pas le bloc Schema.org pour éviter
 // d'afficher une note non statistiquement fiable.

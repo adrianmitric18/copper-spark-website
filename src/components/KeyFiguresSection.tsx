@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
+import { useGoogleRating, FALLBACK_GOOGLE_RATING } from "@/hooks/useGoogleRating";
 
 /**
  * Section "Chiffres clés" — refonte sobre brief 2026-05-01.
  *
- * 3 stats vraies, pas d'icônes criardes :
- *   1. 20+ Chantiers (compteur animé)
- *   2. Réponse en 24h (devis 48h après visite)
- *   3. Note Google dynamique (useAggregateRating Supabase)
+ * Stats vraies, pas d'icônes criardes :
+ *   1. Réponse en 24h (devis 48h après visite)
+ *   2. Note Google LIVE (useGoogleRating — Places API via edge function)
  *
+ * Nettoyage home 2026-05-31 : la figure "20+ chantiers" a été retirée.
  * Aucune statistique inventée (pas de "98% satisfaits", pas de "4 ans
  * d'expérience"). Les chiffres en gros suffisent à porter la confiance.
  */
@@ -76,7 +76,7 @@ const Figure = ({ value, suffix, label, description, isVisible, delay }: FigureP
 const KeyFiguresSection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { data: rating } = useAggregateRating();
+  const { data: rating } = useGoogleRating();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -89,17 +89,19 @@ const KeyFiguresSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Compteurs animés. Note Google fallback à 4.94 si la fetch n'est pas
-  // encore arrivée — la valeur réelle Supabase écrase dès que dispo.
-  const chantiersCount = useCountUp(20, isVisible);
-  const ratingValue = rating?.ratingValue ?? 4.94;
-  const reviewCount = rating?.reviewCount ?? 16;
-  const ratingAnimated = useCountUp(ratingValue, isVisible, 2);
+  // Compteur animé. Note Google live (edge function + cache 24h) ; fallback
+  // immédiat tant que la fetch n'est pas arrivée, puis valeur réelle.
+  // Nettoyage home 2026-05-31 : figure "20+ chantiers" retirée du barème.
+  // const chantiersCount = useCountUp(20, isVisible);
+  const ratingValue = rating?.rating ?? FALLBACK_GOOGLE_RATING.rating;
+  const reviewCount = rating?.userRatingsTotal ?? FALLBACK_GOOGLE_RATING.userRatingsTotal;
+  const ratingAnimated = useCountUp(ratingValue, isVisible, 1);
 
   return (
     <section ref={sectionRef} className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-8 lg:gap-12 max-w-3xl mx-auto">
+          {/* Nettoyage home 2026-05-31 : figure "20+ Chantiers" retirée.
           <Figure
             value={chantiersCount}
             suffix="+"
@@ -107,14 +109,14 @@ const KeyFiguresSection = () => {
             description="Bornes, photovoltaïque, rénovations électriques en Brabant wallon."
             isVisible={isVisible}
             delay={0}
-          />
+          /> */}
           <Figure
             value="24"
             suffix="h"
             label="Réponse"
             description="Devis détaillé en 48h après visite sur place."
             isVisible={isVisible}
-            delay={120}
+            delay={0}
           />
           <Figure
             value={ratingAnimated}
@@ -122,7 +124,7 @@ const KeyFiguresSection = () => {
             label="Note Google"
             description={`Sur ${reviewCount}+ avis Google vérifiés.`}
             isVisible={isVisible}
-            delay={240}
+            delay={120}
           />
         </div>
       </div>
