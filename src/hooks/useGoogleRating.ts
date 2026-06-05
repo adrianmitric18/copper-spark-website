@@ -39,11 +39,13 @@ async function fetchGoogleRating(): Promise<GoogleRating | null> {
 
 /**
  * Lit les VRAIS chiffres de la fiche Google (note + nombre d'avis) depuis la
- * table cache `google_rating`, alimentée 1x/jour par l'edge function
- * `refresh-google-rating`.
+ * table `google_rating`, saisie manuellement depuis /admin/avis.
  *
- * Retourne `null` tant que le cache n'est pas alimenté → l'appelant retombe
- * alors sur `useAggregateRating` (testimonials) pour ne rien casser.
+ * (Saisie manuelle car la fiche est un établissement zone-de-service non servi
+ * par l'API Places — voir le commentaire de la migration google_rating.)
+ *
+ * Retourne `null` tant que la table est vide → l'appelant retombe alors sur
+ * `useAggregateRating` (testimonials) pour ne rien casser.
  *
  * ⚠️ Réservé à l'AFFICHAGE UI. Le JSON-LD aggregateRating reste, lui, basé sur
  * les avis first-party (useAggregateRating) — on ne marque pas en Schema.org

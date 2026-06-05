@@ -24,6 +24,7 @@ import { fetchTestimonials, deleteTestimonial } from "@/lib/admin/queries";
 import type { Testimonial } from "@/lib/admin/types";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
+import GoogleRatingCard from "@/components/admin/GoogleRatingCard";
 
 type FormState = {
   id?: string;
@@ -206,6 +207,8 @@ const AvisManager = () => {
           <Plus className="w-4 h-4" /> Ajouter un avis
         </Button>
       </div>
+
+      <GoogleRatingCard />
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>
