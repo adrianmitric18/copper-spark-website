@@ -200,16 +200,16 @@ const ContactSection = () => {
       }
     }
 
+    // Adresse complète requise (business need 2026-05-23) : Adrian a besoin
+    // de la rue + numéro + CP + commune pour son process opérationnel.
+    if (!form.rue.trim()) e.rue = "Rue requise";
+    if (!form.numero.trim()) e.numero = "Numéro requis";
+    if (!/^\d{4}$/.test(form.codePostal.trim())) e.codePostal = "Code postal belge (4 chiffres)";
     if (!form.commune.trim()) e.commune = "Commune requise";
+
     if (form.services.length === 0) e.services = "Sélectionnez au moins un service";
     if (form.message.trim().length < 20) e.message = "Décrivez votre projet (min. 20 caractères)";
     if (!form.gdprConsent) e.gdprConsent = "Consentement requis";
-
-    // Si codePostal est fourni dans "Plus de détails", valider le format ;
-    // sinon laisser vide accepté.
-    if (form.codePostal.trim() && !/^\d{4}$/.test(form.codePostal.trim())) {
-      e.codePostal = "Code postal belge (4 chiffres)";
-    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -296,7 +296,9 @@ const ContactSection = () => {
       try {
         const { error } = await supabase.from("leads").insert({
           name: form.name.trim(),
-          email: form.email.trim(),
+          // email facultatif (tél OU email) : la RLS leads exige 3-255 car. ->
+          // fallback non vide pour ne pas perdre le lead quand seul le tél est fourni.
+          email: form.email.trim() || "Non fourni",
           phone: form.phone.trim(),
           address: fullAddress,
           rue,
@@ -612,10 +614,68 @@ const ContactSection = () => {
               <p className="text-xs text-muted-foreground -mt-2">
                 Téléphone ou email — au moins un des deux.
               </p>
+            </div>
+
+            {/* SECTION 2 — Adresse du chantier (à nouveau requise, business need 2026-05-23) */}
+            <div className="space-y-5">
+              <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
+                Adresse du chantier
+              </h3>
+
+              <div>
+                <label htmlFor="rue" className="block text-sm font-medium text-card-foreground mb-2">
+                  Rue{requiredMark}
+                </label>
+                <Input
+                  id="rue"
+                  value={form.rue}
+                  onChange={(e) => update("rue", e.target.value)}
+                  placeholder="Ex: Rue de la Station"
+                  maxLength={150}
+                  className={`h-11 ${errors.rue ? "border-destructive" : ""}`}
+                  autoComplete="address-line1"
+                />
+                {errors.rue && <p className="text-destructive text-xs mt-1">{errors.rue}</p>}
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-1">
+                  <label htmlFor="numero" className="block text-sm font-medium text-card-foreground mb-2">
+                    Numéro{requiredMark}
+                  </label>
+                  <Input
+                    id="numero"
+                    value={form.numero}
+                    onChange={(e) => update("numero", e.target.value)}
+                    placeholder="12"
+                    maxLength={20}
+                    className={`h-11 ${errors.numero ? "border-destructive" : ""}`}
+                  />
+                  {errors.numero && <p className="text-destructive text-xs mt-1">{errors.numero}</p>}
+                </div>
+                <div className="col-span-2">
+                  <label htmlFor="codePostal" className="block text-sm font-medium text-card-foreground mb-2">
+                    Code postal{requiredMark}
+                  </label>
+                  <Input
+                    id="codePostal"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{4}"
+                    value={form.codePostal}
+                    onChange={(e) => update("codePostal", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    placeholder="Ex: 1490"
+                    maxLength={4}
+                    className={`h-11 ${errors.codePostal ? "border-destructive" : ""}`}
+                    autoComplete="postal-code"
+                  />
+                  {errors.codePostal && <p className="text-destructive text-xs mt-1">{errors.codePostal}</p>}
+                </div>
+              </div>
 
               <div>
                 <label htmlFor="commune" className="block text-sm font-medium text-card-foreground mb-2">
-                  Commune du chantier{requiredMark}
+                  Commune{requiredMark}
                 </label>
                 <Input
                   id="commune"
@@ -624,12 +684,13 @@ const ContactSection = () => {
                   placeholder="Ex: Court-Saint-Étienne"
                   maxLength={100}
                   className={`h-11 ${errors.commune ? "border-destructive" : ""}`}
+                  autoComplete="address-level2"
                 />
                 {errors.commune && <p className="text-destructive text-xs mt-1">{errors.commune}</p>}
               </div>
             </div>
 
-            {/* SECTION 2 — Votre projet */}
+            {/* SECTION 3 — Votre projet */}
             <div className="space-y-5">
               <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
                 Votre projet
@@ -684,7 +745,7 @@ const ContactSection = () => {
               </div>
             </div>
 
-            {/* SECTION 3 — Plus de détails (optionnel, repliable) */}
+            {/* SECTION 4 — Plus de détails (optionnel, repliable) */}
             <Collapsible className="space-y-4">
               <CollapsibleTrigger className="flex items-center justify-between w-full p-4 rounded-xl bg-muted/40 border border-border/50 hover:bg-muted/60 transition-colors group">
                 <div className="text-left">
@@ -692,7 +753,7 @@ const ContactSection = () => {
                     Plus de détails (optionnel)
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Adresse précise, type de logement, photos… Aide à préparer un devis plus précis.
+                    Type de logement, année de construction, photos… Aide à préparer un devis plus précis.
                   </p>
                 </div>
                 <ChevronDown
@@ -773,51 +834,6 @@ const ContactSection = () => {
                   <p className="text-xs text-muted-foreground mt-1.5">
                     Pour estimation du taux de TVA applicable (6 % en rénovation au-delà de 10 ans).
                   </p>
-                </div>
-
-                <div>
-                  <p className="block text-sm font-medium text-card-foreground mb-3">
-                    Adresse précise du chantier
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="rue" className="block text-xs text-muted-foreground mb-1">Rue</label>
-                      <Input
-                        id="rue"
-                        value={form.rue}
-                        onChange={(e) => update("rue", e.target.value)}
-                        placeholder="Ex: Rue de la Station"
-                        maxLength={150}
-                        className="h-11"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="numero" className="block text-xs text-muted-foreground mb-1">Numéro</label>
-                      <Input
-                        id="numero"
-                        value={form.numero}
-                        onChange={(e) => update("numero", e.target.value)}
-                        placeholder="Ex: 12 ou 12A"
-                        maxLength={20}
-                        className="h-11"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="codePostal" className="block text-xs text-muted-foreground mb-1">Code postal</label>
-                      <Input
-                        id="codePostal"
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]{4}"
-                        value={form.codePostal}
-                        onChange={(e) => update("codePostal", e.target.value.replace(/\D/g, "").slice(0, 4))}
-                        placeholder="Ex: 1490"
-                        maxLength={4}
-                        className={`h-11 ${errors.codePostal ? "border-destructive" : ""}`}
-                      />
-                      {errors.codePostal && <p className="text-destructive text-xs mt-1">{errors.codePostal}</p>}
-                    </div>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
