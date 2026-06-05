@@ -1,31 +1,10 @@
 import { useEffect } from "react";
 
-/**
- * Valeurs de repli pour l'aggregateRating quand Supabase n'a pas encore
- * répondu (fetch async) ou échoue.
- *
- * Le bloc aggregateRating DOIT être présent dans le JSON-LD pour que Google
- * affiche les étoiles dans les SERPs. Sans ce fallback, pendant les ~100-400ms
- * entre l'hydratation React et la réponse Supabase, Googlebot pouvait crawler
- * une page sans rating → perte des rich snippets.
- *
- * À synchroniser manuellement avec le compteur Google My Business si l'écart
- * devient significatif (>2 avis). Pas critique : la valeur live Supabase
- * écrase ce fallback dès qu'elle arrive.
- */
-const FALLBACK_RATING = { ratingValue: "4.94", reviewCount: 21 } as const;
-
+// Note : pas d'aggregateRating dans le JSON-LD. La note visible (5,0/25) provient
+// de la fiche Google (tierce) ; on ne balise pas une note agrégée tierce sur le
+// LocalBusiness (déconseillé par Google) et on évite tout décalage visible/schema.
 interface LocalBusinessProps {
   type: "LocalBusiness";
-  /**
-   * Aggregate rating dynamique calculé depuis Supabase.
-   * Si non fourni, le JSON-LD utilise FALLBACK_RATING ci-dessus pour
-   * garantir la présence d'étoiles dans les SERPs.
-   */
-  aggregateRating?: {
-    ratingValue: number | string;
-    reviewCount: number;
-  };
 }
 
 interface LocalBusinessZoneProps {
@@ -162,21 +141,6 @@ const StructuredData = (props: StructuredDataProps) => {
               { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panneaux photovoltaïques Bruxelles Wallonie" } }
             ]
           }
-        };
-
-        // Toujours émettre aggregateRating : valeur live Supabase si dispo,
-        // sinon FALLBACK_RATING. Garantit la présence des étoiles SERP même
-        // pendant la fenêtre async entre hydratation et fetch Supabase.
-        const rating =
-          props.aggregateRating && props.aggregateRating.reviewCount > 0
-            ? props.aggregateRating
-            : FALLBACK_RATING;
-        localBusiness["aggregateRating"] = {
-          "@type": "AggregateRating",
-          "ratingValue": String(rating.ratingValue),
-          "reviewCount": String(rating.reviewCount),
-          "bestRating": "5",
-          "worstRating": "1"
         };
 
         jsonLd = localBusiness;

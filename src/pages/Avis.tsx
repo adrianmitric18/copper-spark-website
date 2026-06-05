@@ -9,7 +9,6 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
 import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 interface Testimonial {
@@ -78,8 +77,6 @@ const Avis = () => {
   const { trackEvent } = useAnalyticsEvents();
   // Affichage visible + meta : source unique (Google manuel puis fallback testimonials).
   const { data: display } = useDisplayRating();
-  // JSON-LD aggregateRating : reste sur les testimonials first-party (décision SEO).
-  const { data: aggregate } = useAggregateRating();
 
   useEffect(() => {
     let active = true;
@@ -114,20 +111,9 @@ const Avis = () => {
         keywords="avis électricien Brabant wallon, avis Le Cuivre Électrique, témoignages clients, avis Google électricien"
         canonical="https://cuivre-electrique.com/avis"
       />
-      {/* Aggregate rating exposé en JSON-LD pour rich snippets Google sur
-          la page dédiée aux avis. Le hook ne renvoie le bloc que si
-          reviewCount >= seuil (cf. useAggregateRating.MIN_REVIEWS_FOR_AGGREGATE). */}
-      <StructuredData
-        type="LocalBusiness"
-        aggregateRating={
-          aggregate
-            ? {
-                ratingValue: aggregate.ratingValueSchema,
-                reviewCount: aggregate.reviewCount,
-              }
-            : undefined
-        }
-      />
+      {/* Pas d'aggregateRating balisé : la note visible vient de Google (tierce).
+          On évite de baliser une note agrégée tierce + tout décalage visible/schema. */}
+      <StructuredData type="LocalBusiness" />
       <Header />
 
       <main className="pt-24">

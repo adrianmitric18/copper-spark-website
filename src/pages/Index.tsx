@@ -15,11 +15,8 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
 
 const Index = () => {
-  const { data: aggregateRating } = useAggregateRating();
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
@@ -28,17 +25,7 @@ const Index = () => {
         keywords="électricien Brabant wallon, électricien Court-Saint-Étienne, électricien Wallonie, électricien Bruxelles, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
         canonical="https://cuivre-electrique.com"
       />
-      <StructuredData
-        type="LocalBusiness"
-        aggregateRating={
-          aggregateRating
-            ? {
-                ratingValue: aggregateRating.ratingValueSchema,
-                reviewCount: aggregateRating.reviewCount,
-              }
-            : undefined
-        }
-      />
+      <StructuredData type="LocalBusiness" />
       <Header />
       <main>
         <HeroSection />
