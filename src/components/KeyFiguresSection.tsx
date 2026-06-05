@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAggregateRating } from "@/hooks/useAggregateRating";
+import { useGoogleRating } from "@/hooks/useGoogleRating";
 
 /**
  * Section "Chiffres clés" — refonte sobre brief 2026-05-01.
@@ -76,7 +77,10 @@ const Figure = ({ value, suffix, label, description, isVisible, delay }: FigureP
 const KeyFiguresSection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { data: rating } = useAggregateRating();
+  // 2026-06-05 — Vrais chiffres Google (cache auto) en priorité, fallback testimonials.
+  const { data: googleRating } = useGoogleRating();
+  const { data: testimonialRating } = useAggregateRating();
+  const rating = googleRating ?? testimonialRating;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -91,7 +95,8 @@ const KeyFiguresSection = () => {
 
   // Compteurs animés. Note Google fallback à 4.94 si la fetch n'est pas
   // encore arrivée — la valeur réelle Supabase écrase dès que dispo.
-  const chantiersCount = useCountUp(20, isVisible);
+  // 2026-06-05 — Chiffre "20+ Chantiers" retiré du barème (allègement home).
+  // const chantiersCount = useCountUp(20, isVisible);
   const ratingValue = rating?.ratingValue ?? 4.94;
   const reviewCount = rating?.reviewCount ?? 16;
   const ratingAnimated = useCountUp(ratingValue, isVisible, 2);
@@ -99,7 +104,8 @@ const KeyFiguresSection = () => {
   return (
     <section ref={sectionRef} className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4 max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-8 lg:gap-12 max-w-3xl mx-auto">
+          {/* 2026-06-05 — Chiffre "20+ Chantiers" retiré (allègement home).
           <Figure
             value={chantiersCount}
             suffix="+"
@@ -107,14 +113,14 @@ const KeyFiguresSection = () => {
             description="Bornes, photovoltaïque, rénovations électriques en Brabant wallon."
             isVisible={isVisible}
             delay={0}
-          />
+          /> */}
           <Figure
             value="24"
             suffix="h"
             label="Réponse"
             description="Devis détaillé en 48h après visite sur place."
             isVisible={isVisible}
-            delay={120}
+            delay={0}
           />
           <Figure
             value={ratingAnimated}
@@ -122,7 +128,7 @@ const KeyFiguresSection = () => {
             label="Note Google"
             description={`Sur ${reviewCount}+ avis Google vérifiés.`}
             isVisible={isVisible}
-            delay={240}
+            delay={120}
           />
         </div>
       </div>

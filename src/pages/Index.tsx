@@ -1,11 +1,15 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ReassuranceSection from "@/components/ReassuranceSection";
-import ServicesSection from "@/components/ServicesSection";
-import ZoneSection from "@/components/ZoneSection";
+// 2026-06-05 — Allègement home : section "Nos services" retirée (page /services dédiée existe déjà).
+// import ServicesSection from "@/components/ServicesSection";
+// 2026-06-05 — Doublon "Zones d'intervention" : on garde InternalLinks (maillage SEO),
+// ZoneSection (bloc visuel sans liens) retiré.
+// import ZoneSection from "@/components/ZoneSection";
 import InternalLinks from "@/components/InternalLinks";
 import KeyFiguresSection from "@/components/KeyFiguresSection";
-import MiniContactForm from "@/components/MiniContactForm";
+// 2026-06-05 — Mini-formulaire "Recevez un devis sous 24h" retiré (redondant avec /contact).
+// import MiniContactForm from "@/components/MiniContactForm";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -39,15 +43,18 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
-        <ServicesSection />
-        <ZoneSection />
+        {/* 2026-06-05 — "Nos services" retiré de la home (page /services dédiée). */}
+        {/* <ServicesSection /> */}
+        {/* 2026-06-05 — Doublon zones : ZoneSection retiré, on garde InternalLinks ci-dessous. */}
+        {/* <ZoneSection /> */}
         <KeyFiguresSection />
         <InternalLinks
           mode="zones"
           title="Nos zones d'intervention"
           intro="Le Cuivre Électrique intervient dans tout le Brabant wallon et au-delà. Pages dédiées à chaque commune avec contexte local, FAQ et délais d'intervention."
         />
-        <MiniContactForm />
+        {/* 2026-06-05 — Mini-formulaire devis retiré (redondant avec /contact). */}
+        {/* <MiniContactForm /> */}
         <HomeReviewsBanner />
       </main>
       <Footer />
