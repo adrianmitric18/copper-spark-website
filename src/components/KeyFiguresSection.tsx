@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
-import { useGoogleRating } from "@/hooks/useGoogleRating";
+import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 /**
  * Section "Chiffres clés" — refonte sobre brief 2026-05-01.
  *
- * 3 stats vraies, pas d'icônes criardes :
- *   1. 20+ Chantiers (compteur animé)
- *   2. Réponse en 24h (devis 48h après visite)
- *   3. Note Google dynamique (useAggregateRating Supabase)
+ * Stats vraies, pas d'icônes criardes :
+ *   - Réponse en 24h (devis 48h après visite)
+ *   - Note Google dynamique (useDisplayRating : Google manuel puis fallback testimonials)
+ *   (le chiffre "20+ Chantiers" a été retiré le 2026-06-05 pour alléger la home)
  *
  * Aucune statistique inventée (pas de "98% satisfaits", pas de "4 ans
  * d'expérience"). Les chiffres en gros suffisent à porter la confiance.
@@ -77,10 +76,8 @@ const Figure = ({ value, suffix, label, description, isVisible, delay }: FigureP
 const KeyFiguresSection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // 2026-06-05 — Vrais chiffres Google (cache auto) en priorité, fallback testimonials.
-  const { data: googleRating } = useGoogleRating();
-  const { data: testimonialRating } = useAggregateRating();
-  const rating = googleRating ?? testimonialRating;
+  // Source unique d'affichage : Google (manuel) puis fallback testimonials.
+  const { data: rating } = useDisplayRating();
 
   useEffect(() => {
     const observer = new IntersectionObserver(

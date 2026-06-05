@@ -7,11 +7,12 @@ import { useEffect } from "react";
 // Marked fetchpriority/eager/async on the <img> below for fastest LCP.
 import heroPic from "@/assets/hero-lighting-design.jpg?w=640;1024;1920&format=avif;webp;jpg&as=picture";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
+import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 const HeroSection = () => {
   const { trackEvent } = useAnalyticsEvents();
-  const { data: rating } = useAggregateRating();
+  // Source unique d'affichage : Google (manuel) puis fallback testimonials.
+  const { data: rating } = useDisplayRating();
 
   // Mouse parallax effect only (no scroll parallax to avoid jank)
   const mouseX = useMotionValue(0);

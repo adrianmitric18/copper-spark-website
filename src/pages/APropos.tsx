@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 /**
  * Page À propos — brief V3 du 2026-05-01 :
@@ -36,7 +37,7 @@ const timeline = [
   {
     year: "Aujourd'hui",
     title: "20+ chantiers réalisés",
-    body: "Bouche-à-oreille et avis Google. Note 4,94/5 sur 16+ avis vérifiés.",
+    body: "Bouche-à-oreille et avis Google.",
   },
 ];
 
@@ -70,6 +71,8 @@ const installed = [
 
 const APropos = () => {
   const reduce = useReducedMotion();
+  // Note/avis affichés : source unique (Google manuel puis fallback testimonials).
+  const { data: rating } = useDisplayRating();
   const fadeUp = {
     hidden: { opacity: 0, y: reduce ? 0 : 16 },
     visible: { opacity: 1, y: 0 },
@@ -180,6 +183,13 @@ const APropos = () => {
                     </h3>
                     <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                       {t.body}
+                      {t.year === "Aujourd'hui" && rating && (
+                        <>
+                          {" "}
+                          Note <span className="text-foreground font-semibold">{rating.ratingValueFormatted}/5</span>{" "}
+                          sur {rating.reviewCount}+ avis vérifiés.
+                        </>
+                      )}
                     </p>
                   </div>
                 </motion.li>
