@@ -296,7 +296,9 @@ const ContactSection = () => {
       try {
         const { error } = await supabase.from("leads").insert({
           name: form.name.trim(),
-          email: form.email.trim(),
+          // email facultatif (tél OU email) : la RLS leads exige 3-255 car. ->
+          // fallback non vide pour ne pas perdre le lead quand seul le tél est fourni.
+          email: form.email.trim() || "Non fourni",
           phone: form.phone.trim(),
           address: fullAddress,
           rue,
