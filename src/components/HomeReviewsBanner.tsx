@@ -2,16 +2,12 @@ import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { useAggregateRating } from "@/hooks/useAggregateRating";
-import { useGoogleRating } from "@/hooks/useGoogleRating";
+import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 const HomeReviewsBanner = () => {
   const { trackEvent } = useAnalyticsEvents();
-  // 2026-06-05 — Affichage : vrais chiffres Google (cache auto) en priorité,
-  // fallback sur les testimonials first-party tant que le cache n'est pas alimenté.
-  const { data: googleRating } = useGoogleRating();
-  const { data: testimonialRating } = useAggregateRating();
-  const rating = googleRating ?? testimonialRating;
+  // Source unique d'affichage : Google (manuel) puis fallback testimonials.
+  const { data: rating } = useDisplayRating();
 
   if (!rating) return null;
 

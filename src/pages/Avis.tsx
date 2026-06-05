@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { useAggregateRating } from "@/hooks/useAggregateRating";
+import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 interface Testimonial {
   id: string;
@@ -75,6 +76,9 @@ const Avis = () => {
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(PAGE_SIZE);
   const { trackEvent } = useAnalyticsEvents();
+  // Affichage visible + meta : source unique (Google manuel puis fallback testimonials).
+  const { data: display } = useDisplayRating();
+  // JSON-LD aggregateRating : reste sur les testimonials first-party (décision SEO).
   const { data: aggregate } = useAggregateRating();
 
   useEffect(() => {
@@ -98,13 +102,13 @@ const Avis = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title={
-          aggregate
-            ? `Avis clients — ${aggregate.ratingValueFormatted}/5 sur Google | Le Cuivre Électrique`
+          display
+            ? `Avis clients — ${display.ratingValueFormatted}/5 sur Google | Le Cuivre Électrique`
             : "Avis clients sur Google | Le Cuivre Électrique"
         }
         description={
-          aggregate
-            ? `Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Note moyenne ${aggregate.ratingValueFormatted}/5 sur ${aggregate.reviewCount} avis vérifiés.`
+          display
+            ? `Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Note moyenne ${display.ratingValueFormatted}/5 sur ${display.reviewCount} avis vérifiés.`
             : "Découvrez les avis Google de nos clients en Brabant wallon, Wallonie et Bruxelles. Avis vérifiés du Cuivre Électrique."
         }
         keywords="avis électricien Brabant wallon, avis Le Cuivre Électrique, témoignages clients, avis Google électricien"
@@ -137,16 +141,16 @@ const Avis = () => {
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
               Vos avis sur Google
             </h1>
-            {aggregate && (
+            {display && (
               <div className="flex flex-col items-center gap-4 mb-8">
-                <AverageStars value={aggregate.ratingValue} />
+                <AverageStars value={display.ratingValue} />
                 <p className="text-muted-foreground text-lg md:text-xl leading-relaxed">
                   <span className="text-foreground font-bold tabular-nums">
-                    {aggregate.ratingValueFormatted}/5
+                    {display.ratingValueFormatted}/5
                   </span>{" "}
                   sur Google ·{" "}
                   <span className="text-foreground font-bold tabular-nums">
-                    {aggregate.reviewCount}+
+                    {display.reviewCount}+
                   </span>{" "}
                   avis vérifiés
                 </p>
