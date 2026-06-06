@@ -216,7 +216,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-sm text-muted-foreground mt-6 max-w-2xl mx-auto text-center"
           >
-            Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent disponible 7j/7 24h/24
+            Bureau : Lun–Sam 7h–19h, dimanche fermé — Disponible 24h/24, 7j/7 pour les urgences
           </motion.p>
         </motion.div>
 

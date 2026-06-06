@@ -515,7 +515,7 @@ const ContactSection = () => {
                   <p className="text-sm text-muted-foreground mb-1">Appelez-nous</p>
                   <p className="font-display text-xl font-bold text-card-foreground">0485 75 52 27</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Lun-Ven 8h-18h, Sam 9h-13h — Urgences 7j/7 24h/24
+                    Lun–Sam 7h–19h · Dimanche fermé — Disponible 24h/24, 7j/7 pour les urgences
                   </p>
                 </div>
               </a>
