@@ -11,30 +11,28 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  TYPES_VISITE,
+  familleDeVisite,
+  type TypeVisite,
+  type ServiceFamily,
+} from "@/lib/rdv/constants";
 
-export const TYPE_VISITES = [
-  "Devis",
-  "Visite technique",
-  "Dépannage",
-  "Inspection RGIE",
-  "Installation borne de recharge",
-  "Installation panneaux photovoltaïques",
-  "Autre",
-] as const;
-
-export type TypeVisite = (typeof TYPE_VISITES)[number];
+// Source unique : on réexporte la liste partagée sous l'ancien nom pour les
+// imports existants. La vérité vit dans @/lib/rdv/constants.
+export const TYPE_VISITES = TYPES_VISITE;
+export type { TypeVisite };
 
 /**
- * Durées par défaut selon le type de visite (en minutes).
- * Réaligné avec les services du site le 2026-04-30.
- *   - Devis / Visite                    : 60 min
- *   - Dépannage                         : 90 min
- *   - Inspection RGIE                   : 120 min
+ * Durées par défaut (minutes) par FAMILLE de service.
+ *   - Devis / Visite technique : 60 min
+ *   - Dépannage                : 90 min
+ *   - Inspection RGIE          : 120 min
  *   - Borne de recharge (sous-tableau + pose + mise en service) : 180 min
  *   - Panneaux PV (étude faisabilité + repérage)                : 240 min
- *   - Autre                             : 60 min (à ajuster)
+ *   - Autre                    : 60 min (à ajuster)
  */
-export const DUREE_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
+export const DUREE_DEFAUT_PAR_FAMILLE: Record<ServiceFamily, number> = {
   Devis: 60,
   "Visite technique": 60,
   Dépannage: 90,
@@ -45,13 +43,12 @@ export const DUREE_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
 };
 
 /**
- * Délai d'appel par défaut suggéré (minutes avant l'arrivée) selon le type.
- * L'admin peut toujours surcharger via les presets ou un input libre.
+ * Délai d'appel par défaut suggéré (minutes avant l'arrivée) par FAMILLE.
  *   - Dépannage       : 15 min (urgence, déplacement court à anticiper)
  *   - Borne / PV      : 45 min (gros chantier, accès à dégager)
  *   - Tous les autres : 30 min (standard)
  */
-export const DELAI_APPEL_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
+export const DELAI_APPEL_DEFAUT_PAR_FAMILLE: Record<ServiceFamily, number> = {
   Devis: 30,
   "Visite technique": 30,
   Dépannage: 15,
@@ -60,6 +57,16 @@ export const DELAI_APPEL_DEFAUT_PAR_TYPE: Record<TypeVisite, number> = {
   "Installation panneaux photovoltaïques": 45,
   Autre: 30,
 };
+
+/** Durée par défaut suggérée pour un type de visite (résolue via sa famille). */
+export function dureeDefaut(type: string): number {
+  return DUREE_DEFAUT_PAR_FAMILLE[familleDeVisite(type)];
+}
+
+/** Délai d'appel par défaut suggéré pour un type de visite (via sa famille). */
+export function delaiDefaut(type: string): number {
+  return DELAI_APPEL_DEFAUT_PAR_FAMILLE[familleDeVisite(type)];
+}
 
 /** Presets cliquables proposés sous le champ délai d'appel. */
 export const DELAI_APPEL_PRESETS = [15, 30, 45, 60] as const;

@@ -14,7 +14,12 @@
  * puisse ajuster un seul endroit et que les 3 supports restent alignés.
  */
 
-import type { TypeVisite } from "./rdv-rapide";
+import {
+  familleDeVisite,
+  type TypeVisite,
+  type ServiceFamily,
+} from "@/lib/rdv/constants";
+import type { TypeIntervention } from "./interventions";
 
 // ---------------------------------------------------------------------------
 // Constantes branding
@@ -68,7 +73,7 @@ interface TypeConfig {
   chantierLabel: string;
 }
 
-const TYPE_CONFIGS: Record<TypeVisite, TypeConfig> = {
+const TYPE_CONFIGS: Record<ServiceFamily, TypeConfig> = {
   Devis: {
     shortLabel: "RDV devis",
     introLabel: "notre rendez-vous devis",
@@ -215,7 +220,7 @@ export interface ConfirmationRdvPayload {
   dateIso: string;
   /** HH:MM */
   heure: string;
-  typeVisite: TypeVisite;
+  typeVisite: TypeVisite | ServiceFamily;
   dureeMinutes: number;
   /** Adresse complète si saisie. */
   address?: string;
@@ -307,7 +312,7 @@ function shortenAddress(address: string): string {
 // ---------------------------------------------------------------------------
 
 export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[payload.typeVisite];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
   const dureeAvecAppel =
     payload.delaiAppelMinutes && payload.delaiAppelMinutes > 0
       ? `⏱️ ~${formatDuree(payload.dureeMinutes)} | J'appelle ${formatDuree(payload.delaiAppelMinutes)} avant`
@@ -332,7 +337,7 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
 // ---------------------------------------------------------------------------
 
 export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[payload.typeVisite];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
   const dateFr = formatDateLong(payload.dateIso);
 
   const programme = config.programme.map((p) => `✓ ${p}`).join("\n");
@@ -375,7 +380,7 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
 // ---------------------------------------------------------------------------
 
 export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[payload.typeVisite];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
   const dateFr = formatDateLong(payload.dateIso);
   const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
 
@@ -414,7 +419,7 @@ export function emailPlaintextConfirmation(payload: ConfirmationRdvPayload): str
 // ---------------------------------------------------------------------------
 
 export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[payload.typeVisite];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
   const dateFr = formatDateLong(payload.dateIso);
   const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
 
@@ -482,7 +487,7 @@ export function emailHtmlConfirmation(payload: ConfirmationRdvPayload): string {
 }
 
 export function emailSubjectConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[payload.typeVisite];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
   return `${config.emailSubject} — ${formatDateShort(payload.dateIso)} à ${payload.heure}`;
 }
 
@@ -653,7 +658,7 @@ export function emailSubjectRelance(palier: 1 | 2 | 3): string {
 
 export interface ChantierProgrammePayload {
   clientName: string;
-  typeIntervention: TypeVisite;
+  typeIntervention: TypeIntervention;
   /** YYYY-MM-DD */
   dateDebut: string;
   /** YYYY-MM-DD (peut être identique à dateDebut pour 1 jour) */
@@ -714,7 +719,7 @@ function formatHorairesJournaliers(
 // ---------------------------------------------------------------------------
 
 export function smsTemplateChantier(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const lines = [
     `🔌 ${COMPANY.name}`,
     `Bonjour ${payload.clientName}, votre chantier ${config.chantierLabel} est planifié :`,
@@ -735,7 +740,7 @@ export function smsTemplateChantier(payload: ChantierProgrammePayload): string {
 // ---------------------------------------------------------------------------
 
 export function whatsappTemplateChantier(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const programme = config.programme.map((p) => `✓ ${p}`).join("\n");
   const prerequis = config.prerequis.map((p) => `• ${p}`).join("\n");
   const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
@@ -773,7 +778,7 @@ export function whatsappTemplateChantier(payload: ChantierProgrammePayload): str
 // ---------------------------------------------------------------------------
 
 export function emailPlaintextChantier(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
 
   const lines = [
@@ -813,7 +818,7 @@ export function emailPlaintextChantier(payload: ChantierProgrammePayload): strin
 // ---------------------------------------------------------------------------
 
 export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
   const horaires = formatHorairesJournaliers(
     payload.dateDebut,
@@ -890,7 +895,7 @@ export function emailHtmlChantier(payload: ChantierProgrammePayload): string {
 }
 
 export function emailSubjectChantier(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
   return `Confirmation chantier ${config.chantierLabel} — ${range}`;
 }
@@ -902,7 +907,7 @@ export function emailSubjectChantier(payload: ChantierProgrammePayload): string 
 // Évite l'effet alarmiste auprès du client.
 
 export function smsTemplateChantierRectification(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const lines = [
     `🔌 ${COMPANY.name}`,
     `Bonjour ${payload.clientName}, mise à jour du planning de votre chantier ${config.chantierLabel} :`,
@@ -919,7 +924,7 @@ export function smsTemplateChantierRectification(payload: ChantierProgrammePaylo
 }
 
 export function whatsappTemplateChantierRectification(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
   const notesBlock = payload.notesClient
     ? `\n📝 *Note :* ${payload.notesClient.trim()}\n`
@@ -945,7 +950,7 @@ export function whatsappTemplateChantierRectification(payload: ChantierProgramme
 }
 
 export function emailPlaintextChantierRectification(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
 
   const lines = [
@@ -974,7 +979,7 @@ export function emailPlaintextChantierRectification(payload: ChantierProgrammePa
 }
 
 export function emailHtmlChantierRectification(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
   const horaires = formatHorairesJournaliers(
     payload.dateDebut,
@@ -1035,7 +1040,7 @@ export function emailHtmlChantierRectification(payload: ChantierProgrammePayload
 }
 
 export function emailSubjectChantierRectification(payload: ChantierProgrammePayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
   return `Mise à jour planning ${config.chantierLabel} — ${range}`;
 }
@@ -1050,7 +1055,7 @@ export function emailSubjectChantierRectification(payload: ChantierProgrammePayl
 
 export interface ChantierAnnulationPayload {
   clientName: string;
-  typeIntervention: TypeVisite;
+  typeIntervention: TypeIntervention;
   /** Anciennes dates avant annulation, YYYY-MM-DD */
   dateDebut: string;
   dateFin: string;
@@ -1059,7 +1064,7 @@ export interface ChantierAnnulationPayload {
 }
 
 export function smsTemplateChantierAnnulation(payload: ChantierAnnulationPayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const lines = [
     `🔌 ${COMPANY.name}`,
     `Bonjour ${payload.clientName}, je dois annuler le chantier ${config.chantierLabel} prévu ${formatPlageLongNoYear(payload.dateDebut, payload.dateFin)}.`,
@@ -1072,7 +1077,7 @@ export function smsTemplateChantierAnnulation(payload: ChantierAnnulationPayload
 }
 
 export function whatsappTemplateChantierAnnulation(payload: ChantierAnnulationPayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const raisonBlock = payload.raison ? `\n_Raison : ${payload.raison.trim()}_\n` : "";
 
   return [
@@ -1093,7 +1098,7 @@ export function whatsappTemplateChantierAnnulation(payload: ChantierAnnulationPa
 }
 
 export function emailPlaintextChantierAnnulation(payload: ChantierAnnulationPayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
 
   const lines = [
@@ -1118,7 +1123,7 @@ export function emailPlaintextChantierAnnulation(payload: ChantierAnnulationPayl
 }
 
 export function emailHtmlChantierAnnulation(payload: ChantierAnnulationPayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const dateRange = formatPlageLong(payload.dateDebut, payload.dateFin);
 
   const raisonBlock = payload.raison
@@ -1161,7 +1166,7 @@ export function emailHtmlChantierAnnulation(payload: ChantierAnnulationPayload):
 }
 
 export function emailSubjectChantierAnnulation(payload: ChantierAnnulationPayload): string {
-  const config = TYPE_CONFIGS[payload.typeIntervention];
+  const config = TYPE_CONFIGS[familleDeVisite(payload.typeIntervention)];
   const range = formatPlageShort(payload.dateDebut, payload.dateFin);
   return `Annulation chantier ${config.chantierLabel} — ${range}`;
 }

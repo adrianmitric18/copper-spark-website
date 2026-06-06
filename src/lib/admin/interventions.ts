@@ -11,12 +11,24 @@
 
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { TYPE_VISITES, type TypeVisite } from "./rdv-rapide";
 import { slugify } from "@/lib/chantiers/slug";
 
-/** Réutilise les 7 valeurs de TYPE_VISITES (alignées avec rendez_vous). */
-export const TYPE_INTERVENTIONS = TYPE_VISITES;
-export type TypeIntervention = TypeVisite;
+/**
+ * Liste PROPRE aux interventions/chantiers — découplée des types de visite RDV.
+ * Doit rester alignée sur la contrainte DB `interventions_type_valide`
+ * (migration 20260429140000_interventions.sql). Ces 7 valeurs sont aussi les
+ * 7 familles de templates (cf. SERVICE_FAMILIES dans @/lib/rdv/constants).
+ */
+export const TYPE_INTERVENTIONS = [
+  "Devis",
+  "Visite technique",
+  "Dépannage",
+  "Inspection RGIE",
+  "Installation borne de recharge",
+  "Installation panneaux photovoltaïques",
+  "Autre",
+] as const;
+export type TypeIntervention = (typeof TYPE_INTERVENTIONS)[number];
 
 export const STATUTS_INTERVENTION = [
   "programme",

@@ -1,4 +1,11 @@
-// Constantes partagées pour le module RDV
+// Constantes partagées pour le module RDV.
+//
+// ⚠️ SOURCE UNIQUE des types de visite. Cette liste est utilisée par :
+//   - la fiche lead (RendezVousForm)
+//   - la page RDV rapide (rdv-rapide.ts / RdvRapide.tsx)
+//   - la contrainte DB `rdv_type_visite_valide` (migration alignée dessus)
+// Toute valeur hors liste est rejetée par Postgres à l'INSERT (code 23514).
+// Les interventions/chantiers ont leur PROPRE liste (voir interventions.ts).
 
 export const TYPES_VISITE = [
   "Visite devis - Mise en conformité RGIE",
@@ -17,6 +24,60 @@ export const TYPES_VISITE = [
 ] as const;
 
 export type TypeVisite = (typeof TYPES_VISITE)[number];
+
+// ---------------------------------------------------------------------------
+// Familles de templates / métadonnées
+// ---------------------------------------------------------------------------
+// Les 13 types de visite (granulaires, orientés UX admin) sont rattachés à
+// 7 familles. Les familles portent la copie éditoriale (message-templates.ts)
+// et les défauts de durée/délai (rdv-rapide.ts). Ça évite de dupliquer du
+// contenu client pour chaque sous-type. Les noms de familles sont aussi les
+// 7 valeurs de la table interventions, d'où l'identité côté interventions.
+
+export const SERVICE_FAMILIES = [
+  "Devis",
+  "Visite technique",
+  "Dépannage",
+  "Inspection RGIE",
+  "Installation borne de recharge",
+  "Installation panneaux photovoltaïques",
+  "Autre",
+] as const;
+
+export type ServiceFamily = (typeof SERVICE_FAMILIES)[number];
+
+/** Chaque libellé de visite (13) → la famille de template la plus proche (7). */
+export const FAMILLE_PAR_TYPE_VISITE: Record<TypeVisite, ServiceFamily> = {
+  "Visite devis - Mise en conformité RGIE": "Inspection RGIE",
+  "Visite devis - Installation électrique complète": "Devis",
+  "Visite devis - Rénovation électrique": "Devis",
+  "Visite devis - Remplacement tableau électrique": "Devis",
+  "Visite devis - Borne de recharge voiture électrique": "Installation borne de recharge",
+  "Visite devis - Panneaux photovoltaïques": "Installation panneaux photovoltaïques",
+  "Visite devis - Éclairage intérieur/extérieur": "Devis",
+  "Visite devis - Câblage informatique RJ45": "Devis",
+  "Visite devis - Parlophonie/vidéophonie": "Devis",
+  "Visite devis - Contrat de maintenance Pro": "Devis",
+  "Intervention - Dépannage": "Dépannage",
+  "Intervention - Chantier confirmé": "Visite technique",
+  "Autre": "Autre",
+};
+
+const SERVICE_FAMILY_SET = new Set<string>(SERVICE_FAMILIES);
+
+/**
+ * Résout la famille de template d'un type, qu'il vienne de la liste des
+ * visites (13 libellés) OU des interventions (7 libellés = noms de familles).
+ * Tolérant : tout libellé inconnu retombe sur "Autre".
+ */
+export function familleDeVisite(type: string): ServiceFamily {
+  if (SERVICE_FAMILY_SET.has(type)) return type as ServiceFamily;
+  return FAMILLE_PAR_TYPE_VISITE[type as TypeVisite] ?? "Autre";
+}
+
+// ---------------------------------------------------------------------------
+// Durées & statuts
+// ---------------------------------------------------------------------------
 
 export const DUREES_OPTIONS = [
   { value: 30, label: "30 minutes" },
@@ -41,29 +102,4 @@ export interface RendezVous {
   rappel_envoye_at: string | null;
   created_at: string;
   updated_at: string;
-}
-
-/**
- * Renvoie les 5 booléens Handlebars correspondant au type de visite,
- * à passer au template fusionné `template_rdv_client_fusion`.
- * Un seul booléen est `true`, les 4 autres `false`.
- */
-export function getServiceFlags(typeVisite: string): {
-  is_rgie: boolean;
-  is_pv: boolean;
-  is_borne: boolean;
-  is_installation: boolean;
-  is_generique: boolean;
-} {
-  const t = typeVisite.toLowerCase();
-  const is_rgie =
-    t.includes("rgie") ||
-    t.includes("rénovation") ||
-    t.includes("remplacement tableau");
-  const is_pv = !is_rgie && (t.includes("photovoltaïque") || t.includes("panneaux"));
-  const is_borne = !is_rgie && !is_pv && t.includes("borne de recharge");
-  const is_installation =
-    !is_rgie && !is_pv && !is_borne && t.includes("installation électrique complète");
-  const is_generique = !is_rgie && !is_pv && !is_borne && !is_installation;
-  return { is_rgie, is_pv, is_borne, is_installation, is_generique };
 }

@@ -36,8 +36,8 @@ import AdminLoading from "@/components/admin/AdminLoading";
 import {
   createRdvRapide,
   TYPE_VISITES,
-  DUREE_DEFAUT_PAR_TYPE,
-  DELAI_APPEL_DEFAUT_PAR_TYPE,
+  dureeDefaut,
+  delaiDefaut,
   DELAI_APPEL_PRESETS,
   type TypeVisite,
 } from "@/lib/admin/rdv-rapide";
@@ -116,7 +116,7 @@ const RdvRapide = () => {
       email: "",
       dateRdv: todayIso,
       heureRdv: "10:00",
-      typeVisite: "Devis",
+      typeVisite: "Visite devis - Installation électrique complète",
       dureeMinutes: 60,
       delaiAppelMinutes: 30,
       address: "",
@@ -131,13 +131,10 @@ const RdvRapide = () => {
   const typeVisiteWatch = form.watch("typeVisite");
   useEffect(() => {
     if (autoDuree && typeVisiteWatch) {
-      form.setValue("dureeMinutes", DUREE_DEFAUT_PAR_TYPE[typeVisiteWatch]);
+      form.setValue("dureeMinutes", dureeDefaut(typeVisiteWatch));
     }
     if (autoDelai && typeVisiteWatch) {
-      form.setValue(
-        "delaiAppelMinutes",
-        DELAI_APPEL_DEFAUT_PAR_TYPE[typeVisiteWatch],
-      );
+      form.setValue("delaiAppelMinutes", delaiDefaut(typeVisiteWatch));
     }
   }, [typeVisiteWatch, autoDuree, autoDelai, form]);
 
@@ -192,7 +189,7 @@ const RdvRapide = () => {
       email: "",
       dateRdv: todayIso,
       heureRdv: "10:00",
-      typeVisite: "Devis",
+      typeVisite: "Visite devis - Installation électrique complète",
       dureeMinutes: 60,
       delaiAppelMinutes: 30,
       address: "",
@@ -316,7 +313,7 @@ const RdvRapide = () => {
                   <SelectContent>
                     {TYPE_VISITES.map((t) => (
                       <SelectItem key={t} value={t}>
-                        {t} ({DUREE_DEFAUT_PAR_TYPE[t]} min)
+                        {t} ({dureeDefaut(t)} min)
                       </SelectItem>
                     ))}
                   </SelectContent>
