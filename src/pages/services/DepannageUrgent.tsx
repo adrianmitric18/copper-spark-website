@@ -21,7 +21,7 @@ const faqs = [
   {
     question: "Intervenez-vous la nuit et le week-end ?",
     answer:
-      "Oui, notre service de dépannage est disponible 24h/24 et 7j/7. Le bureau est ouvert en semaine 8h-18h et le samedi 9h-13h ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences.",
+      "Oui, notre service de dépannage est disponible 24h/24 et 7j/7. Le bureau est ouvert du lundi au samedi de 7h à 19h (fermé le dimanche) ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences.",
   },
 ];
 

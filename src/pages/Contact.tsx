@@ -70,7 +70,7 @@ const Contact = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title="Contact & Devis gratuit | Le Cuivre Électrique 0485 75 52 27"
-        description="Contactez Le Cuivre Électrique pour un devis gratuit. Bureau : Lun-Ven 8h-18h, Sam 9h-13h — Dépannage urgent 7j/7 24h/24 au 0485 75 52 27."
+        description="Contactez Le Cuivre Électrique pour un devis gratuit. Bureau : Lun-Sam 7h-19h, dimanche fermé — Disponible 24h/24, 7j/7 pour les urgences au 0485 75 52 27."
         keywords="contact électricien, devis gratuit, électricien Bruxelles, électricien Brabant wallon, dépannage urgent"
         canonical="https://cuivre-electrique.com/contact"
       />
@@ -101,7 +101,7 @@ const Contact = () => {
                 <span className="font-semibold text-foreground">
                   Devis gratuit sous 48h
                 </span>{" "}
-                · Bureau Lun–Ven 8h–18h
+                · Bureau Lun–Sam 7h–19h · Disponible 24h/24, 7j/7 pour les urgences
               </span>
             </div>
           </div>
