@@ -299,13 +299,17 @@ const ContactSection = () => {
           // email facultatif (tél OU email) : la RLS leads exige 3-255 car. ->
           // fallback non vide pour ne pas perdre le lead quand seul le tél est fourni.
           email: form.email.trim() || "Non fourni",
-          phone: form.phone.trim(),
+          // tél facultatif (tél OU email) : la RLS leads exige 6-30 car. ->
+          // fallback non vide pour ne pas perdre le lead quand seul l'email est fourni.
+          phone: form.phone.trim() || "Non fourni",
           address: fullAddress,
           rue,
           numero,
           code_postal: codePostal,
           commune,
-          client_type: form.clientType,
+          // client_type facultatif (volet optionnel) : la RLS leads exige 1-50 car. ->
+          // fallback non vide pour ne pas perdre le lead quand le type n'est pas choisi.
+          client_type: form.clientType || "Non précisé",
           services: form.services,
           message: enrichedMessage,
           timing: form.timing || null,
