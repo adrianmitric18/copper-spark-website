@@ -8,7 +8,10 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { useDisplayRating } from "@/hooks/useDisplayRating";
+// Note Google non affichée sur cette page depuis la refonte de la timeline
+// (plus d'entrée "Aujourd'hui"). Import conservé en commentaire — règle projet :
+// commenter, pas supprimer. À réactiver avec le bloc note (plus bas) si besoin.
+// import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 /**
  * Page À propos — brief V3 du 2026-05-01 :
@@ -20,24 +23,24 @@ import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 const timeline = [
   {
-    year: "2021",
-    title: "Création du Cuivre Électrique",
-    body: "Lancement de l'activité d'électricien indépendant à Court-Saint-Étienne, en Brabant wallon.",
+    year: "Avant 2023",
+    title: "Plusieurs années dans le bâtiment",
+    body: "Plusieurs années d'expérience comme électricien salarié, et sur d'autres corps de métier du bâtiment : une vision complète d'un chantier, pas seulement de l'électricité.",
   },
   {
-    year: "2022",
-    title: "Premiers gros chantiers",
-    body: "Mise en conformité RGIE et rénovations complètes d'installations anciennes.",
+    year: "20 août 2023",
+    title: "Création de Le Cuivre Électrique",
+    body: "Lancement en indépendant en Brabant wallon.",
   },
   {
-    year: "2024",
-    title: "Bornes VE et photovoltaïque",
-    body: "Ajout des bornes de recharge et du photovoltaïque à l'offre. Étude, dimensionnement, raccordement réseau.",
+    year: "2024–2025",
+    title: "Développement de l'activité",
+    body: "Installations, rénovations et mises en conformité RGIE chez les particuliers.",
   },
   {
-    year: "Aujourd'hui",
-    title: "20+ chantiers réalisés",
-    body: "Bouche-à-oreille et avis Google.",
+    year: "2026",
+    title: "Lancement des bornes de recharge",
+    body: "Bornes de recharge pour véhicules électriques, dont une installation de 4 bornes en lotissement.",
   },
 ];
 
@@ -71,8 +74,9 @@ const installed = [
 
 const APropos = () => {
   const reduce = useReducedMotion();
-  // Note/avis affichés : source unique (Google manuel puis fallback testimonials).
-  const { data: rating } = useDisplayRating();
+  // Note/avis : source unique (Google manuel puis fallback testimonials).
+  // Désactivé depuis la refonte timeline — réactiver avec le bloc note plus bas.
+  // const { data: rating } = useDisplayRating();
   const fadeUp = {
     hidden: { opacity: 0, y: reduce ? 0 : 16 },
     visible: { opacity: 1, y: 0 },
@@ -125,7 +129,7 @@ const APropos = () => {
               <p>
                 Électricien indépendant à Court-Saint-Étienne, j'interviens
                 dans tout le Brabant wallon en installation, rénovation,
-                conformité RGIE, bornes de recharge et photovoltaïque.
+                conformité RGIE et bornes de recharge.
               </p>
               <p className="text-muted-foreground">
                 L'activité est organisée pour que vous échangiez avec une
@@ -158,11 +162,10 @@ const APropos = () => {
             </div>
 
             {/*
-              Bug visuel V3 corrigé : l'année et le titre étaient en absolute /
-              padding partagé, ce qui faisait chevaucher "Aujourd'hui"
-              (label long) sur "20+ chantiers réalisés". On passe en grid
-              2 colonnes : colonne année dédiée à gauche, contenu à droite,
-              avec gap explicite. Robuste à des libellés d'année variables.
+              Layout en grid 2 colonnes : colonne année dédiée à gauche,
+              contenu à droite, avec gap explicite. Robuste à des libellés
+              d'année variables (ex. "Avant 2023", "2024–2025") qui pourraient
+              sinon chevaucher le titre de l'entrée.
             */}
             <ol className="space-y-10 max-w-3xl ml-auto">
               {timeline.map((t, i) => (
@@ -183,13 +186,18 @@ const APropos = () => {
                     </h3>
                     <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                       {t.body}
-                      {t.year === "Aujourd'hui" && rating && (
-                        <>
-                          {" "}
-                          Note <span className="text-foreground font-semibold">{rating.ratingValueFormatted}/5</span>{" "}
-                          sur {rating.reviewCount}+ avis vérifiés.
-                        </>
-                      )}
+                      {/*
+                        Note Google retirée de la timeline (plus d'entrée "Aujourd'hui"
+                        depuis la refonte). Bloc conservé — règle projet : commenter,
+                        pas supprimer. Réactiver l'import/hook en haut pour réafficher.
+                        {t.year === "Aujourd'hui" && rating && (
+                          <>
+                            {" "}
+                            Note <span className="text-foreground font-semibold">{rating.ratingValueFormatted}/5</span>{" "}
+                            sur {rating.reviewCount}+ avis vérifiés.
+                          </>
+                        )}
+                      */}
                     </p>
                   </div>
                 </motion.li>
