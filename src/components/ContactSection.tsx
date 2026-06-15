@@ -351,6 +351,12 @@ const ContactSection = () => {
       const addressHtml = [streetPart, cityPart].filter(Boolean).join("<br>") || "Adresse non précisée";
       const addressPlain = [streetPart, cityPart].filter(Boolean).join("\n") || "Adresse non précisée";
 
+      // Alerte interne (email Adrian uniquement) : si l'insert DB a échoué mais que
+      // l'email part, on préfixe le message pour qu'Adrian ré-encode le lead à la main.
+      const dbAlertPrefix = dbOk
+        ? ""
+        : "⚠️ ÉCHEC BASE — lead à ré-encoder manuellement ⚠️\n\n";
+
       const adrianParams = {
         from_name: form.name.trim(),
         from_email: form.email.trim() || "Non fourni",
@@ -364,7 +370,7 @@ const ContactSection = () => {
         habitat_type: form.habitatType || "Non précisé",
         build_year: form.buildYear.trim() || "Non précisée",
         services: servicesStr,
-        message: enrichedMessage,
+        message: dbAlertPrefix + enrichedMessage,
         timing: form.timing || "Non précisé",
         source: form.source || "Non précisé",
         photos: photosStr,
