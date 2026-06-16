@@ -55,6 +55,7 @@ import {
 } from "@/lib/admin/types";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
+import CollapsibleCard from "@/components/admin/CollapsibleCard";
 
 const cleanPhoneForWhatsapp = (phone: string) => phone.replace(/[^\d]/g, "").replace(/^0/, "32").replace(/^0032/, "32");
 const firstNameOf = (name: string) => name.trim().split(/\s+/)[0] || name;
@@ -668,9 +669,8 @@ const LeadDetail = () => {
         </div>
       </Card>
 
-      {/* Demande */}
-      <Card className="p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Détails de la demande</h2>
+      {/* Demande (repliable, ouverte par défaut — contexte avant la visite) */}
+      <CollapsibleCard title="Détails de la demande" defaultOpen>
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type}</div>
           <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
@@ -689,7 +689,7 @@ const LeadDetail = () => {
           <p className="text-sm text-muted-foreground mb-2">Message :</p>
           <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message}</div>
         </div>
-      </Card>
+      </CollapsibleCard>
 
       {/* Checklist visite */}
       <ChecklistVisite
@@ -916,9 +916,8 @@ const LeadDetail = () => {
         </div>
       </Card>
 
-      {/* Actions */}
-      <Card className="p-6 space-y-3">
-        <h2 className="font-semibold text-lg">Actions rapides</h2>
+      {/* Actions (repliable, fermée par défaut) */}
+      <CollapsibleCard title="Actions rapides">
         <div className="grid sm:grid-cols-3 gap-2">
           <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
             <a href={whatsappHref} target="_blank" rel="noreferrer">
@@ -944,11 +943,10 @@ const LeadDetail = () => {
             <Star className="w-4 h-4" /> Envoyer le lien avis Google
           </Button>
         </div>
-      </Card>
+      </CollapsibleCard>
 
-      {/* Réponses rapides (Phase 2.2) — message type pré-rempli en 1 tap */}
-      <Card className="p-6 space-y-3">
-        <h2 className="font-semibold text-lg">Réponses rapides</h2>
+      {/* Réponses rapides (Phase 2.2) — repliable, fermée par défaut */}
+      <CollapsibleCard title="Réponses rapides">
         <p className="text-sm text-muted-foreground">
           Un message type pré-rempli, à envoyer en SMS ou WhatsApp sans rien retaper.
         </p>
@@ -984,11 +982,14 @@ const LeadDetail = () => {
             );
           })}
         </ul>
-      </Card>
+      </CollapsibleCard>
 
-      {/* Zone dangereuse */}
-      <Card className="p-6 mt-8 border-destructive/40 bg-destructive/5 space-y-3">
-        <h2 className="font-semibold text-lg text-destructive">Zone dangereuse</h2>
+      {/* Zone dangereuse (repliable, fermée par défaut) */}
+      <CollapsibleCard
+        title="Zone dangereuse"
+        className="mt-8 border-destructive/40 bg-destructive/5"
+        titleClassName="text-destructive"
+      >
         <p className="text-sm text-muted-foreground">
           La suppression est définitive : le lead et ses photos seront effacés.
         </p>
@@ -1014,7 +1015,7 @@ const LeadDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </Card>
+      </CollapsibleCard>
       </div>
     </AdminShell>
   );
