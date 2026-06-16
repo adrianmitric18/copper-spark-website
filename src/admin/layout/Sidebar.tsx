@@ -94,6 +94,9 @@ const Sidebar = ({ email, onNavigate }: SidebarProps) => {
         })}
 
         <div className="my-3 border-t border-border/50" />
+        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          Contenu
+        </p>
 
         {NAV_ITEMS_SECONDARY.map((item) => {
           const Icon = item.icon;

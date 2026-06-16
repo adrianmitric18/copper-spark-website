@@ -163,7 +163,7 @@ const Pipeline = () => {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    document.title = "Pipeline – Le Cuivre Admin";
+    document.title = "Leads – Le Cuivre Admin";
   }, []);
 
   // Cache partagé avec Aujourd'hui : nav instantanée entre les 2 pages.
@@ -256,13 +256,13 @@ const Pipeline = () => {
   };
 
   return (
-    <AdminShell email={user?.email} mobileTitle="Pipeline">
+    <AdminShell email={user?.email} mobileTitle="Leads">
       <div className="p-4 md:p-6 space-y-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-display font-bold">
-              Pipeline
+              Leads
             </h1>
             <p className="text-sm text-muted-foreground">
               {filtered.length} {filtered.length === 1 ? "lead" : "leads"}
