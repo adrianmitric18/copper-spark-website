@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -242,6 +242,19 @@ const LeadDetail = () => {
     rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
   };
 
+  // Phase 1.6 — un email est "utilisable" pour l'envoi auto seulement s'il est
+  // réel : pas vide, pas "Non fourni", pas le placeholder local généré par le
+  // RDV rapide (rdv-...@local.cuivre-electrique.com). Sinon on n'envoie pas
+  // (ça planterait à la validation) et on bascule sur SMS/WhatsApp.
+  const hasUsableEmail = (email: string | null | undefined): boolean => {
+    if (!email) return false;
+    const e = email.trim().toLowerCase();
+    if (!e.includes("@")) return false;
+    if (e === "non fourni") return false;
+    if (e.endsWith("@local.cuivre-electrique.com")) return false;
+    return true;
+  };
+
   // ==== RDV : créer / modifier / annuler ====
   // Logique métier complexe (3 emails à envoyer côté création, mise à jour
   // du statut du lead en cascade) — laissée inline plutôt qu'extraite dans
@@ -289,10 +302,29 @@ const LeadDetail = () => {
           .single();
         if (error) throw error;
         saved = data as RendezVous;
-        await sendRdvConfirmationEmails(info, saved);
+        // Phase 1.6 — confirmation unifiée selon le client :
+        //  - client web (vrai email) -> envoi auto (email client + mémo Adrian) ;
+        //  - client téléphone (email placeholder/absent) -> pas d'envoi auto
+        //    (il planterait), on invite à prévenir par SMS/WhatsApp.
+        // Dans tous les cas, un échec d'email NE perd PAS le RDV déjà enregistré.
+        if (hasUsableEmail(lead.email)) {
+          try {
+            await sendRdvConfirmationEmails(info, saved);
+            toast.success("RDV confirmé — email envoyé au client + mémo pour toi");
+          } catch (mailErr: unknown) {
+            const m = mailErr instanceof Error ? mailErr.message : "envoi email impossible";
+            toast.warning("RDV confirmé, mais l'email n'est pas parti", {
+              description: `${m}. Préviens le client par SMS/WhatsApp (boutons plus bas).`,
+            });
+          }
+        } else {
+          toast.success("RDV confirmé", {
+            description:
+              "Pas d'email valide pour ce client — préviens-le par SMS ou WhatsApp (boutons plus bas).",
+          });
+        }
         await updateLeadStatus(lead.id, "RDV confirmé");
         setLead({ ...lead, status: "RDV confirmé" });
-        toast.success("RDV confirmé, 3 emails envoyés");
       }
       setRdv(saved);
       setShowForm(false);
@@ -453,6 +485,13 @@ const LeadDetail = () => {
   // mailto utilise encodeURIComponent (espaces → %20) pour conformité RFC 6068.
   // Sinon URLSearchParams produit "+" qui s'affiche littéralement sur Gmail mobile.
   const emailHref = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
+  // Itinéraire Google Maps depuis l'adresse précise (fallback adresse libre).
+  const mapsDirQuery =
+    [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ").trim() ||
+    (lead.address ?? "").trim();
+  const mapsDirUrl = mapsDirQuery
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapsDirQuery)}`
+    : null;
 
   return (
     <AdminShell email={user.email} mobileTitle={lead.name}>
@@ -468,6 +507,43 @@ const LeadDetail = () => {
           <h1 className="text-xl md:text-2xl font-display font-bold truncate">{lead.name}</h1>
           <p className="text-xs text-muted-foreground">Reçu le {formatDate(lead.created_at)}</p>
         </div>
+      </div>
+
+      {/* Phase 1.3 — barre d'actions figée : l'essentiel accessible sans scroller.
+          Reste collée sous la topbar mobile (top-14) / en haut sur desktop (top-0). */}
+      <div className="sticky top-14 md:top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-y border-border/50 flex gap-2">
+        <Button asChild size="sm" variant="copper" className="flex-1 min-h-[44px]">
+          <a href={`tel:${lead.phone}`} aria-label={`Appeler ${lead.name}`}>
+            <Phone className="w-4 h-4" /> Appeler
+          </a>
+        </Button>
+        {mapsDirUrl && (
+          <Button asChild size="sm" variant="outline" className="flex-1 min-h-[44px]">
+            <a href={mapsDirUrl} target="_blank" rel="noreferrer" aria-label="Itinéraire">
+              <Navigation className="w-4 h-4" /> Itinéraire
+            </a>
+          </Button>
+        )}
+        {rdv ? (
+          <Button
+            asChild
+            size="sm"
+            className="flex-1 min-h-[44px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+          >
+            <a href={whatsappHref} target="_blank" rel="noreferrer">
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+          </Button>
+        ) : (
+          <Button
+            onClick={() => { setEditing(false); setShowForm(true); }}
+            size="sm"
+            variant="outline"
+            className="flex-1 min-h-[44px]"
+          >
+            <CalendarPlus className="w-4 h-4" /> Caler RDV
+          </Button>
+        )}
       </div>
 
       {/* RDV planifié (en haut, encadré orange) */}
