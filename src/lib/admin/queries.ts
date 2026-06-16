@@ -157,6 +157,9 @@ export type RdvWithLead = {
   lead_rue: string | null;
   lead_numero: string | null;
   lead_code_postal: string | null;
+  // Phase 2.1 — nécessaires au rappel J-1 (email client via sendRappelJ1Emails).
+  duree_minutes: number;
+  lead_email: string;
 };
 
 /** Charge tous les RDV avec les infos client (jointure leads). Utilisé par /admin/rdv. */
@@ -164,7 +167,7 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
   const { data, error } = await supabase
     .from("rendez_vous")
     .select(
-      "id, lead_id, date_rdv, heure_rdv, type_visite, statut, leads(name, phone, commune, rue, numero, code_postal)",
+      "id, lead_id, date_rdv, heure_rdv, duree_minutes, type_visite, statut, leads(name, phone, email, commune, rue, numero, code_postal)",
     )
     .order("date_rdv", { ascending: true })
     .order("heure_rdv", { ascending: true });
@@ -173,6 +176,7 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
     const leadJoin = r.leads as {
       name?: string;
       phone?: string;
+      email?: string;
       commune?: string | null;
       rue?: string | null;
       numero?: string | null;
@@ -191,6 +195,8 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
       lead_rue: leadJoin?.rue ?? null,
       lead_numero: leadJoin?.numero ?? null,
       lead_code_postal: leadJoin?.code_postal ?? null,
+      duree_minutes: (r.duree_minutes as number) ?? 60,
+      lead_email: leadJoin?.email ?? "",
     };
   });
 }
