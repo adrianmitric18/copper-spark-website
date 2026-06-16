@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/admin/layout/Sidebar";
+import BottomTabBar from "@/admin/layout/BottomTabBar";
 import CommandPalette from "@/admin/components/CommandPalette";
 import RdvRapideFab from "@/admin/components/RdvRapideFab";
 
@@ -109,11 +110,19 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
           )}
         </div>
 
-        <main className="flex-1 overflow-x-hidden">{children}</main>
+        {/* pb mobile : laisse la place à la barre d'onglets (~56px + safe area)
+            pour qu'elle ne recouvre pas le bas du contenu. Aucun effet desktop. */}
+        <main className="flex-1 overflow-x-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          {children}
+        </main>
       </div>
 
       {/* FAB mobile-only : créer un RDV rapide depuis n'importe où */}
       <RdvRapideFab />
+
+      {/* Barre d'onglets mobile-only : navigation pouce. « Plus » rouvre le
+          drawer Sidebar existant (rien n'est supprimé, rail 4). */}
+      <BottomTabBar onOpenMore={() => setMobileOpen(true)} />
     </div>
   );
 };
