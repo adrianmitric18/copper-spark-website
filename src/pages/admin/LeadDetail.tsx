@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -66,6 +66,43 @@ const daysUntilRdv = (dateStr: string) => {
   const [year, month, day] = dateStr.split("-").map(Number);
   const rdvDay = new Date(year, month - 1, day, 12);
   return Math.round((rdvDay.getTime() - todayMidday.getTime()) / 86400000);
+};
+
+// Phase 2.2 — réponses rapides : messages types pré-remplis (SMS/WhatsApp).
+// Le client final tape juste « Envoyer ». Signature commune Le Cuivre Électrique.
+const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = [
+  { label: "Je vous rappelle", body: (n) => `Bonjour ${n}, je vous rappelle très vite au sujet de votre demande. Adrian — Le Cuivre Électrique` },
+  { label: "Indispo cette semaine", body: (n) => `Bonjour ${n}, je suis complet cette semaine, mais je reviens vers vous pour caler une date au plus tôt. Adrian — Le Cuivre Électrique` },
+  { label: "En route, j'arrive", body: (n) => `Bonjour ${n}, je suis en route, j'arrive d'ici peu. Adrian — Le Cuivre Électrique` },
+  { label: "Bien reçu", body: (n) => `Bonjour ${n}, bien reçu, merci ! Je traite votre demande et reviens vers vous rapidement. Adrian — Le Cuivre Électrique` },
+];
+
+// Phase 2.5 — dictée vocale (Web Speech API, gratuite, surtout utile sur
+// chantier). Types minimaux car l'API n'est pas dans lib.dom par défaut.
+interface SpeechAlt { transcript: string }
+interface SpeechResult { 0: SpeechAlt; isFinal: boolean }
+interface SpeechEvent { resultIndex: number; results: ArrayLike<SpeechResult> }
+interface SpeechRecognizer {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((e: SpeechEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+const getRecognizer = (): SpeechRecognizer | null => {
+  const w = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognizer;
+    webkitSpeechRecognition?: new () => SpeechRecognizer;
+  };
+  const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+  return Ctor ? new Ctor() : null;
+};
+const dictationSupported = (): boolean => {
+  const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+  return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
 };
 
 const LeadDetail = () => {
@@ -253,6 +290,39 @@ const LeadDetail = () => {
     if (e === "non fourni") return false;
     if (e.endsWith("@local.cuivre-electrique.com")) return false;
     return true;
+  };
+
+  // Phase 2.5 — dictée vocale qui alimente les notes internes.
+  const recognizerRef = useRef<SpeechRecognizer | null>(null);
+  const [listening, setListening] = useState(false);
+  const canDictate = dictationSupported();
+
+  const toggleDictation = () => {
+    if (listening) {
+      recognizerRef.current?.stop();
+      return;
+    }
+    const rec = getRecognizer();
+    if (!rec) {
+      toast.error("Dictée non supportée sur ce navigateur");
+      return;
+    }
+    rec.lang = "fr-FR";
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      let chunk = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) chunk += e.results[i][0].transcript;
+      }
+      const clean = chunk.trim();
+      if (clean) setNotes((prev) => (prev ? prev.trimEnd() + " " : "") + clean);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recognizerRef.current = rec;
+    rec.start();
+    setListening(true);
   };
 
   // ==== RDV : créer / modifier / annuler ====
@@ -801,14 +871,41 @@ const LeadDetail = () => {
           </Select>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Notes internes</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm text-muted-foreground">Notes internes</label>
+            {canDictate && (
+              <Button
+                type="button"
+                variant={listening ? "destructive" : "outline"}
+                size="sm"
+                onClick={toggleDictation}
+                aria-label={listening ? "Arrêter la dictée" : "Dicter une note"}
+              >
+                {listening ? (
+                  <>
+                    <MicOff className="w-4 h-4" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4" /> Dicter
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={2000}
             rows={4}
-            placeholder="Vos notes sur ce lead..."
+            placeholder="Vos notes sur ce lead... (ou dictez avec le micro)"
           />
+          {listening && (
+            <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Dictée en cours… parlez, puis « Stop ». Pensez à enregistrer.
+            </p>
+          )}
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
             <Button onClick={saveNotes} disabled={saving} variant="copper" size="sm">
@@ -847,6 +944,46 @@ const LeadDetail = () => {
             <Star className="w-4 h-4" /> Envoyer le lien avis Google
           </Button>
         </div>
+      </Card>
+
+      {/* Réponses rapides (Phase 2.2) — message type pré-rempli en 1 tap */}
+      <Card className="p-6 space-y-3">
+        <h2 className="font-semibold text-lg">Réponses rapides</h2>
+        <p className="text-sm text-muted-foreground">
+          Un message type pré-rempli, à envoyer en SMS ou WhatsApp sans rien retaper.
+        </p>
+        <ul className="space-y-2">
+          {QUICK_REPLIES.map((q) => {
+            const enc = encodeURIComponent(q.body(firstNameOf(lead.name)));
+            return (
+              <li
+                key={q.label}
+                className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+              >
+                <span className="flex-1 min-w-[8rem] text-sm font-medium">{q.label}</span>
+                <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`}>
+                    <Smartphone className="w-4 h-4" /> SMS
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                >
+                  <a
+                    href={`https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${enc}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`WhatsApp : ${q.label}`}
+                  >
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
+                  </a>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
       </Card>
 
       {/* Zone dangereuse */}
