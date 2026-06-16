@@ -58,15 +58,17 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
 - [x] **→ Push preview + POINT avec Adrian. Validation direction avant Phase 2.**
 
 ## PHASE 2 — Quick wins (réutilise l'existant)
-- [ ] **2.1 — Rappel J-1 en 1 tap** ♻️ : carte « Rappels demain » → `sendRappelJ1Emails` (déjà codé)
-      + SMS/WhatsApp pré-remplis. **Pas de cron** (rail 5) : envoi manuel groupé.
-- [ ] **2.2 — Réponses rapides** ♻️ : messages types depuis la fiche (« je vous rappelle »,
-      « indispo cette semaine »…) via le moteur SMS/WhatsApp/mailto existant.
-- [ ] **2.3 — Recherche client mobile** ♻️ : nom/tél, réutilise la palette `Cmd+K` (`CommandPalette`).
-- [ ] **2.4 — Checklist « reste à faire / à ramener »** ♻️ : réutilise `checklist_items`, texte persistant
-      par lead/chantier.
-- [ ] **2.5 — Dictée vocale sur la fiche** 🆕(gratuit, Web Speech API) : note que ~90 % du temps c'est
-      sur chantier (à relire). **Filet fiable** = mémo audio dans le bucket storage existant.
+- [x] **2.1 — Rappel J-1 en 1 tap** ♻️ : carte « Rappels demain » sur le cockpit → SMS/WhatsApp
+      pré-remplis + bouton Email (`sendRappelJ1Emails`, déjà codé) qui marque le RDV « rappel_envoye ».
+      **Pas de cron** (rail 5) : envoi manuel groupé. ✅ fait
+- [x] **2.2 — Réponses rapides** ♻️ : 4 messages types (SMS/WhatsApp) sur la fiche. ✅ fait
+- [x] **2.3 — Recherche client mobile** ♻️ : bouton loupe (topbar) qui ouvre la palette réutilisée. ✅ fait
+- [ ] **2.4 — Checklist « à ramener / reste à faire »** ⛔ **STOP DB** : `checklist_items.checklist_type`
+      a une contrainte CHECK `('rgie','pv','borne','installation','generique')`. Ajouter un type dédié
+      = changement DB. **SQL proposé ci-dessous, à appliquer par Adrian.** Implémentation UI ensuite.
+- [x] **2.5 — Dictée vocale sur la fiche** 🆕 : micro sur les notes internes (Web Speech API), masqué
+      si non supporté. ✅ fait. **Filet « mémo audio » ⛔ STOP** : demande un bucket storage dédié
+      (`lead-audio`) + policies → à valider (voir ci-dessous).
 
 ## PHASE 3 — Relances devis ⛔ (DB)
 - [ ] **3.1 — STOP : champ `devis_envoye_at`** sur `leads` → je fournirai le SQL, Adrian applique.
@@ -94,6 +96,34 @@ notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle
 
 ---
 
+## 🟥 STOP DB — en attente de validation d'Adrian (je n'applique RIEN, rail 2)
+
+### (a) Phase 2.4 — nouveau type de checklist « à ramener / reste à faire »
+But : une liste persistante par lead (matériel à ramener, tâches restantes), réutilisant
+`checklist_items`. Bloqué par la contrainte CHECK sur `checklist_type`.
+
+D'abord confirmer le **nom réel** de la contrainte (CHECK inline → nom auto) :
+```sql
+SELECT conname FROM pg_constraint
+WHERE conrelid = 'public.checklist_items'::regclass AND contype = 'c';
+```
+Puis (remplace le nom si différent de `checklist_items_checklist_type_check`) :
+```sql
+ALTER TABLE public.checklist_items
+  DROP CONSTRAINT IF EXISTS checklist_items_checklist_type_check;
+ALTER TABLE public.checklist_items
+  ADD CONSTRAINT checklist_items_checklist_type_check
+  CHECK (checklist_type IN ('rgie','pv','borne','installation','generique','a_ramener'));
+```
+Non destructif (élargit la liste autorisée). Une fois appliqué, je code l'UI « À ramener ».
+
+### (b) Phase 2.5 (filet) — mémo audio fiable
+Pour stocker un enregistrement vocal (si la dictée échoue sur un chantier bruyant), il faut un
+**bucket storage dédié** + policies admin. C'est de l'infra (rail 5). Proposition à valider :
+bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (mêmes règles que
+`lead-photos`). **Dis-moi si tu le veux** et je fournis le SQL/console exact. La dictée
+(texte) marche déjà sans ça.
+
 ## 🔧 À configurer par Adrian pour que les PREVIEWS atteignent Supabase
 1. **Cloudflare Pages → Settings → Environment variables** (pour *Preview* ET *Production*) :
    - `VITE_SUPABASE_URL` = l'URL du projet Supabase
@@ -118,3 +148,8 @@ notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle
   POINT de fin de Phase 1 envoyé (URL preview + checklist de test). En attente du retour d'Adrian
   avant Phase 2 (quick wins).
   Différés non bloquants : repli profond fiche (1.3), réécriture kanban→liste (1.4).
+- 2026-06-16 — Adrian : « continue la Phase 2 en autonomie ».
+- 2026-06-16 — **PHASE 2** : 2.1 (rappels demain), 2.2 (réponses rapides), 2.3 (recherche mobile),
+  2.5 (dictée vocale) livrés et poussés. Build/typecheck/lint verts.
+  **STOP DB en attente** : 2.4 (type checklist « à ramener ») + filet mémo audio (bucket) — SQL/infra
+  proposés ci-dessus, non appliqués (rail 2/5). Récap consolidé de test (Phase 1 + 2) envoyé à Adrian.
