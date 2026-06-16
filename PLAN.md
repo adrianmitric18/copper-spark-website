@@ -47,12 +47,15 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
 - [x] **1.2 — Cockpit « Aujourd'hui »** : itinéraire 1 tap ajouté sur les RDV du jour (Appeler existait déjà).
       Le cockpit (KPIs, à faire aujourd'hui, 7 prochains jours, sources) était déjà solide. ✅ fait
       *(Confirmer/Checklist en 1 tap depuis la carte → à voir avec 1.3/1.6.)*
-- [ ] **1.3 — Fiche lead allégée** : barre d'actions figée en haut, détails repliés.
-- [ ] **1.4 — Calendrier** relégué en vue secondaire ; **Pipeline → liste « Leads »** filtrable.
-- [ ] **1.5 — « Plus »/Contenu** : Réalisations + Avis rangés là.
-- [ ] **1.6 — Confirmation unifiée** : canal par défaut selon la source (web = email auto / tél = SMS).
-      *(Dépend de 0.2 pour l'email auto.)*
-- [ ] **→ Push preview + POINT avec Adrian. Validation direction avant Phase 2.**
+- [x] **1.3 — Fiche lead allégée** : barre d'actions figée en haut (Appeler / Itinéraire /
+      WhatsApp ou Caler RDV). ✅ fait. *(Repli profond des cartes du bas : différé, non bloquant.)*
+- [x] **1.4 — Pipeline → « Leads »** : renommé partout (titre/en-tête/onglet). ✅ fait.
+      *(Réécriture kanban→liste : différée — le tableau filtrable actuel marche, Adrian n'a pas
+      tranché ce point. À reposer si besoin.)* Calendrier déjà secondaire (sous « Plus »).
+- [x] **1.5 — « Contenu »** : libellé au-dessus de Réalisations + Avis dans la sidebar. ✅ fait.
+- [x] **1.6 — Confirmation unifiée** : email auto si vrai email (web), sinon bascule SMS/WhatsApp
+      (tél) sans planter ; échec email ne perd plus le RDV. ✅ fait *(dépendait de 0.2, appliqué)*.
+- [x] **→ Push preview + POINT avec Adrian. Validation direction avant Phase 2.**
 
 ## PHASE 2 — Quick wins (réutilise l'existant)
 - [ ] **2.1 — Rappel J-1 en 1 tap** ♻️ : carte « Rappels demain » → `sendRappelJ1Emails` (déjà codé)
@@ -110,4 +113,8 @@ notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle
   la preview connectée à la base.
 - 2026-06-16 — Env câblé (OK Adrian). Phase 1 démarrée.
 - 2026-06-16 — 1.1 (barre d'onglets mobile) + 1.2 (itinéraire cockpit) livrés et poussés.
-  **CHECKPOINT direction** demandé à Adrian avant 1.3 (fiche allégée) / 1.6 (confirmation unifiée).
+- 2026-06-16 — Adrian : « déroule 1.3 → 1.6, je teste en fin de Phase 1 ».
+- 2026-06-16 — 1.3 → 1.6 livrés et poussés. **PHASE 1 terminée.** Build/typecheck/lint verts.
+  POINT de fin de Phase 1 envoyé (URL preview + checklist de test). En attente du retour d'Adrian
+  avant Phase 2 (quick wins).
+  Différés non bloquants : repli profond fiche (1.3), réécriture kanban→liste (1.4).
