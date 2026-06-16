@@ -42,10 +42,11 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
     ne revient pas sur la preview et on ne peut pas tester l'admin).
 
 ## PHASE 1 — Redesign structure (écran par écran) — **CHECKPOINT après cette phase**
-- [ ] **1.1 — Navigation unifiée** : barre d'onglets en bas sur mobile (pouce), nav latérale sur desktop.
-      4 entrées : `Aujourd'hui · Leads · Chantiers · Plus`. Ancien hamburger conservé sous « Plus ».
-- [ ] **1.2 — Cockpit « Aujourd'hui »** : RDV du jour + chantiers du jour + alertes (nouveaux leads,
-      à relancer). Chaque carte = actions 1 tap (Appeler / Itinéraire / Confirmer / Checklist).
+- [x] **1.1 — Navigation unifiée** : barre d'onglets en bas sur mobile (pouce), nav latérale sur desktop.
+      4 entrées : `Aujourd'hui · Leads · Chantiers · Plus`. Ancien hamburger conservé sous « Plus ». ✅ fait
+- [x] **1.2 — Cockpit « Aujourd'hui »** : itinéraire 1 tap ajouté sur les RDV du jour (Appeler existait déjà).
+      Le cockpit (KPIs, à faire aujourd'hui, 7 prochains jours, sources) était déjà solide. ✅ fait
+      *(Confirmer/Checklist en 1 tap depuis la carte → à voir avec 1.3/1.6.)*
 - [ ] **1.3 — Fiche lead allégée** : barre d'actions figée en haut, détails repliés.
 - [ ] **1.4 — Calendrier** relégué en vue secondaire ; **Pipeline → liste « Leads »** filtrable.
 - [ ] **1.5 — « Plus »/Contenu** : Réalisations + Avis rangés là.
@@ -106,4 +107,7 @@ notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle
 - 2026-06-16 — Branche poussée, preview Cloudflare déclenchée.
 - 2026-06-16 — **Décision Adrian** : il câble d'abord l'env (0.2 migration + 0.3 variables
   Cloudflare + redirect URL Supabase). Je reprends Phase 1 ensuite, en testant chaque écran sur
-  la preview connectée à la base. **En attente de son signal pour démarrer Phase 1.**
+  la preview connectée à la base.
+- 2026-06-16 — Env câblé (OK Adrian). Phase 1 démarrée.
+- 2026-06-16 — 1.1 (barre d'onglets mobile) + 1.2 (itinéraire cockpit) livrés et poussés.
+  **CHECKPOINT direction** demandé à Adrian avant 1.3 (fiche allégée) / 1.6 (confirmation unifiée).
