@@ -4,7 +4,14 @@ import type { User } from "@supabase/supabase-js";
 
 const ADMIN_EMAIL = "cuivre.electrique@gmail.com";
 const LAST_ACTIVITY_KEY = "ce_admin_last_activity_at";
-const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000;
+// Phase 0.1 (2026-06-16) — "déconnecte à chaque fois" : l'ancienne limite de 24 h
+// forçait une reconnexion par lien magique dès qu'Adrian n'ouvrait pas l'app un
+// jour. Outil mono-utilisateur, sur son propre téléphone, gardé par OTP email :
+// 30 jours est sûr et évite la friction. persistSession + autoRefreshToken
+// (cf. client.ts) rafraîchissent la session automatiquement entre-temps.
+// Ancienne valeur conservée pour mémoire (rail 4 : ne rien supprimer) :
+// const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000;
+const INACTIVITY_LIMIT_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const useAdminAuth = () => {
   const [user, setUser] = useState<User | null>(null);
