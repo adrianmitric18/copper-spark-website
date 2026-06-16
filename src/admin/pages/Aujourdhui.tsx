@@ -10,6 +10,7 @@ import {
   Sparkles,
   ChevronRight,
   HardHat,
+  Navigation,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,16 @@ const formatLongDate = (d: Date): string =>
     day: "numeric",
     month: "long",
   });
+
+/**
+ * Lien d'itinéraire Google Maps depuis les morceaux d'adresse du lead.
+ * Renvoie null si on n'a aucune info exploitable (pas de bouton affiché).
+ */
+const buildMapsDir = (parts: (string | null | undefined)[]): string | null => {
+  const query = parts.filter(Boolean).join(" ").trim();
+  if (!query) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+};
 
 const Aujourdhui = () => {
   const { user, ready } = useAdminGuard();
@@ -317,39 +328,59 @@ const Aujourdhui = () => {
                       </p>
                     ) : (
                       <ul className="space-y-1.5">
-                        {todayRdvs.map((r) => (
-                          <li key={r.id}>
-                            <Link
-                              to={`/admin/lead/${r.lead_id}`}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-primary/40 transition-colors min-h-[56px]"
-                            >
-                              <div className="text-center w-14 shrink-0">
-                                <p className="text-base font-bold text-primary">
-                                  {formatHeure(r.heure_rdv)}
-                                </p>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">
-                                  {r.lead_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {r.type_visite}
-                                  {r.lead_commune && ` · ${r.lead_commune}`}
-                                </p>
-                              </div>
-                              {r.lead_phone && (
-                                <a
-                                  href={`tel:${r.lead_phone}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center justify-center w-10 h-10 rounded-md text-primary hover:bg-primary/10 shrink-0"
-                                  aria-label={`Appeler ${r.lead_name}`}
-                                >
-                                  <Phone className="w-4 h-4" />
-                                </a>
-                              )}
-                            </Link>
-                          </li>
-                        ))}
+                        {todayRdvs.map((r) => {
+                          const mapsUrl = buildMapsDir([
+                            r.lead_rue,
+                            r.lead_numero,
+                            r.lead_code_postal,
+                            r.lead_commune,
+                          ]);
+                          return (
+                            <li key={r.id}>
+                              <Link
+                                to={`/admin/lead/${r.lead_id}`}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-primary/40 transition-colors min-h-[56px]"
+                              >
+                                <div className="text-center w-14 shrink-0">
+                                  <p className="text-base font-bold text-primary">
+                                    {formatHeure(r.heure_rdv)}
+                                  </p>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">
+                                    {r.lead_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {r.type_visite}
+                                    {r.lead_commune && ` · ${r.lead_commune}`}
+                                  </p>
+                                </div>
+                                {mapsUrl && (
+                                  <a
+                                    href={mapsUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center w-10 h-10 rounded-md text-muted-foreground hover:bg-muted shrink-0"
+                                    aria-label={`Itinéraire vers ${r.lead_name}`}
+                                  >
+                                    <Navigation className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {r.lead_phone && (
+                                  <a
+                                    href={`tel:${r.lead_phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center w-10 h-10 rounded-md text-primary hover:bg-primary/10 shrink-0"
+                                    aria-label={`Appeler ${r.lead_name}`}
+                                  >
+                                    <Phone className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
