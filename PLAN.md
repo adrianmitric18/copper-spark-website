@@ -103,3 +103,7 @@ notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle
 ## 📌 Journal des décisions
 - 2026-06-16 — Branche `redesign/admin-cockpit` créée depuis `main`. PLAN.md posé.
 - 2026-06-16 — Phase 0.1 : limite d'inactivité auth 24 h → 30 j (mono-utilisateur).
+- 2026-06-16 — Branche poussée, preview Cloudflare déclenchée.
+- 2026-06-16 — **Décision Adrian** : il câble d'abord l'env (0.2 migration + 0.3 variables
+  Cloudflare + redirect URL Supabase). Je reprends Phase 1 ensuite, en testant chaque écran sur
+  la preview connectée à la base. **En attente de son signal pour démarrer Phase 1.**
