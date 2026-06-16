@@ -48,7 +48,8 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
       Le cockpit (KPIs, à faire aujourd'hui, 7 prochains jours, sources) était déjà solide. ✅ fait
       *(Confirmer/Checklist en 1 tap depuis la carte → à voir avec 1.3/1.6.)*
 - [x] **1.3 — Fiche lead allégée** : barre d'actions figée en haut (Appeler / Itinéraire /
-      WhatsApp ou Caler RDV). ✅ fait. *(Repli profond des cartes du bas : différé, non bloquant.)*
+      WhatsApp ou Caler RDV) **+ cartes secondaires repliables** (CollapsibleCard : Détails ouverte,
+      Actions / Réponses rapides / Zone dangereuse fermées par défaut). ✅ fait (complet).
 - [x] **1.4 — Pipeline → « Leads »** : renommé partout (titre/en-tête/onglet). ✅ fait.
       *(Réécriture kanban→liste : différée — le tableau filtrable actuel marche, Adrian n'a pas
       tranché ce point. À reposer si besoin.)* Calendrier déjà secondaire (sous « Plus »).
