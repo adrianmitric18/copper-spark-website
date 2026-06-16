@@ -50,9 +50,9 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
 - [x] **1.3 — Fiche lead allégée** : barre d'actions figée en haut (Appeler / Itinéraire /
       WhatsApp ou Caler RDV) **+ cartes secondaires repliables** (CollapsibleCard : Détails ouverte,
       Actions / Réponses rapides / Zone dangereuse fermées par défaut). ✅ fait (complet).
-- [x] **1.4 — Pipeline → « Leads »** : renommé partout (titre/en-tête/onglet). ✅ fait.
-      *(Réécriture kanban→liste : différée — le tableau filtrable actuel marche, Adrian n'a pas
-      tranché ce point. À reposer si besoin.)* Calendrier déjà secondaire (sous « Plus »).
+- [x] **1.4 — « Leads » en liste filtrable** : renommage + **kanban → liste verticale** avec chips
+      de statut (Tous + 5 statuts, compteurs), recherche conservée. Choix validé par Adrian
+      (« liste filtrable »). Ancien board commenté (rail 4). ✅ fait (complet).
 - [x] **1.5 — « Contenu »** : libellé au-dessus de Réalisations + Avis dans la sidebar. ✅ fait.
 - [x] **1.6 — Confirmation unifiée** : email auto si vrai email (web), sinon bascule SMS/WhatsApp
       (tél) sans planter ; échec email ne perd plus le RDV. ✅ fait *(dépendait de 0.2, appliqué)*.
@@ -154,3 +154,8 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   2.5 (dictée vocale) livrés et poussés. Build/typecheck/lint verts.
   **STOP DB en attente** : 2.4 (type checklist « à ramener ») + filet mémo audio (bucket) — SQL/infra
   proposés ci-dessus, non appliqués (rail 2/5). Récap consolidé de test (Phase 1 + 2) envoyé à Adrian.
+- 2026-06-16 (soir) — Adrian : finir les 2 parqués de Phase 1, sans toucher la prod ; reporter les
+  features DB. **1.3 complété** (cartes repliables, CollapsibleCard). **1.4 complété** (Leads kanban →
+  liste filtrable, choix validé par Adrian). Build/typecheck/lint verts, poussés.
+  **PHASE 1 100 % terminée.** Restent en attente du SQL d'Adrian : 2.4 + Phase 3 (relances, champ
+  `devis_envoye_at`) + Phase 4 (suivi devis) + mémo audio.
