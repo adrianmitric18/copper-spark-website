@@ -23,6 +23,7 @@ import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -33,6 +34,12 @@ const COLUMNS: { key: string; label: string; tint: string }[] = [
   { key: "devis envoyé", label: "Devis envoyé", tint: "border-blue-500/40 bg-blue-500/5" },
   { key: "converti", label: "Converti", tint: "border-green-500/40 bg-green-500/5" },
   { key: "perdu", label: "Perdu", tint: "border-muted bg-muted/30" },
+];
+
+// Phase 1.4 — chips de filtre (liste filtrable mobile-first) : "Tous" + statuts.
+const STATUS_CHIPS = [
+  { key: "all", label: "Tous" },
+  ...COLUMNS.map((c) => ({ key: c.key, label: c.label })),
 ];
 
 const ageInHours = (createdAt: string): number =>
@@ -129,38 +136,25 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
   );
 };
 
-/** Squelette du kanban pendant le chargement initial. */
-const KanbanSkeleton = () => (
-  <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-2">
-    <div className="flex gap-3 min-w-max md:min-w-0">
-      {COLUMNS.map((col) => (
-        <div
-          key={col.key}
-          className={`flex-1 min-w-[280px] md:min-w-0 rounded-xl border ${col.tint} p-3 space-y-2`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="h-4 w-20 rounded bg-muted/60 animate-pulse" />
-            <div className="h-4 w-6 rounded bg-muted/60 animate-pulse" />
-          </div>
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-20 rounded-lg bg-muted/40 animate-pulse"
-                style={{ animationDelay: `${i * 100}ms` }}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+// Phase 1.4 — ancien squelette du board kanban, conservé commenté (rail 4 :
+// ne rien supprimer). Remplacé par un squelette de liste dans le rendu.
+// const KanbanSkeleton = () => (
+//   <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-2">
+//     <div className="flex gap-3 min-w-max md:min-w-0">
+//       {COLUMNS.map((col) => (
+//         <div key={col.key} className={`flex-1 min-w-[280px] md:min-w-0 rounded-xl border ${col.tint} p-3 space-y-2`}>
+//           ... colonnes ...
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// );
 
 const Pipeline = () => {
   const { user, ready } = useAdminGuard();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     document.title = "Leads – Le Cuivre Admin";
@@ -206,27 +200,22 @@ const Pipeline = () => {
     );
   }, [leads, search]);
 
-  const byStatus = useMemo(() => {
-    const map = new Map<string, Lead[]>();
-    for (const col of COLUMNS) map.set(col.key, []);
-    for (const lead of filtered) {
-      const list = map.get(lead.status);
-      if (list) list.push(lead);
-      // statuts hors COLUMNS (RDV confirmé, RDV annulé) → ignorés du kanban
-      // mais on les compte ailleurs
-    }
-    // tri : plus anciens d'abord dans nouveau/traité (urgence), plus récents
-    // d'abord dans converti/perdu (historique)
-    for (const [key, list] of map) {
-      const reverse = key === "converti" || key === "perdu";
-      list.sort((a, b) => {
-        const da = new Date(a.created_at).getTime();
-        const db = new Date(b.created_at).getTime();
-        return reverse ? db - da : da - db;
-      });
-    }
-    return map;
-  }, [filtered]);
+  // Phase 1.4 — liste plate filtrée par statut (chip) puis triée.
+  // Statuts actifs (nouveau/traité/devis) : plus anciens d'abord (urgence).
+  // "Tous" / converti / perdu : plus récents d'abord (historique).
+  const listed = useMemo(() => {
+    const arr =
+      statusFilter === "all"
+        ? filtered
+        : filtered.filter((l) => l.status === statusFilter);
+    const reverse =
+      statusFilter === "all" || statusFilter === "converti" || statusFilter === "perdu";
+    return [...arr].sort((a, b) => {
+      const da = new Date(a.created_at).getTime();
+      const db = new Date(b.created_at).getTime();
+      return reverse ? db - da : da - db;
+    });
+  }, [filtered, statusFilter]);
 
   const handleStatusChange = async (lead: Lead, newStatus: string) => {
     if (newStatus === lead.status) return;
@@ -307,48 +296,63 @@ const Pipeline = () => {
           />
         </div>
 
-        {/* Kanban board */}
-        {loading ? (
-          <KanbanSkeleton />
-        ) : (
-          <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6 pb-2">
-            <div className="flex gap-3 min-w-max md:min-w-0">
-              {COLUMNS.map((col) => {
-                const items = byStatus.get(col.key) || [];
-                return (
-                  <div
-                    key={col.key}
-                    className={`flex-1 min-w-[280px] md:min-w-0 rounded-xl border ${col.tint} p-3 space-y-2`}
-                  >
-                    <div className="flex items-center justify-between sticky top-0">
-                      <h2 className="font-semibold text-sm">
-                        {col.label}
-                      </h2>
-                      <Badge variant="outline" className="text-xs bg-background">
-                        {items.length}
-                      </Badge>
-                    </div>
+        {/* Filtres par statut (Phase 1.4 — liste filtrable, pouce, sans scroll horizontal du contenu) */}
+        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+          {STATUS_CHIPS.map((chip) => {
+            const count =
+              chip.key === "all"
+                ? filtered.length
+                : filtered.filter((l) => l.status === chip.key).length;
+            const active = statusFilter === chip.key;
+            return (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setStatusFilter(chip.key)}
+                aria-pressed={active}
+                className={cn(
+                  "shrink-0 min-h-[40px] px-3 rounded-full border text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-border hover:border-primary/40",
+                )}
+              >
+                {chip.label}
+                {count > 0 && (
+                  <span className={cn("ml-1.5 text-xs", active ? "opacity-90" : "text-muted-foreground")}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-                    <div className="space-y-2 min-h-[80px]">
-                      {items.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic text-center py-6">
-                          Aucun lead
-                        </p>
-                      ) : (
-                        items.map((lead) => (
-                          <LeadCard
-                            key={lead.id}
-                            lead={lead}
-                            upcoming={upcomingByLead[lead.id]}
-                            onStatusChange={handleStatusChange}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Liste verticale (Phase 1.4) — réutilise LeadCard en une colonne */}
+        {loading ? (
+          <div className="space-y-2 max-w-2xl">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-24 rounded-lg bg-muted/40 animate-pulse"
+                style={{ animationDelay: `${i * 80}ms` }}
+              />
+            ))}
+          </div>
+        ) : listed.length === 0 ? (
+          <Card className="p-10 text-center text-muted-foreground">
+            Aucun lead pour ce filtre.
+          </Card>
+        ) : (
+          <div className="space-y-2 max-w-2xl">
+            {listed.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                upcoming={upcomingByLead[lead.id]}
+                onStatusChange={handleStatusChange}
+              />
+            ))}
           </div>
         )}
 
