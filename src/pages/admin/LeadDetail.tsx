@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff, FileText } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -46,6 +46,7 @@ import {
   fetchLeadPhotoSignedUrls,
   updateLeadStatus,
   updateLeadNotes,
+  setLeadDevisEnvoye,
   deleteLeadWithPhotos,
 } from "@/lib/admin/queries";
 import {
@@ -68,6 +69,14 @@ const daysUntilRdv = (dateStr: string) => {
   const rdvDay = new Date(year, month - 1, day, 12);
   return Math.round((rdvDay.getTime() - todayMidday.getTime()) / 86400000);
 };
+// Tier 1 / Phase 3 — date du jour (YYYY-MM-DD, local) pour stamper devis_envoye_at.
+const todayIso = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+// Affichage d'une date seule (colonne `date`) en français.
+const formatDevisDate = (iso: string) =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("fr-BE", { day: "numeric", month: "long", year: "numeric" });
 
 // Phase 2.2 — réponses rapides : messages types pré-remplis (SMS/WhatsApp).
 // Le client final tape juste « Envoyer ». Signature commune Le Cuivre Électrique.
@@ -196,9 +205,33 @@ const LeadDetail = () => {
   const updateStatus = async (newStatus: string) => {
     if (!lead) return;
     try {
-      await updateLeadStatus(lead.id, newStatus);
-      setLead({ ...lead, status: newStatus });
+      // Tier 1 / Phase 3 — au passage en "devis envoyé", on stampe la date
+      // d'envoi si elle n'existe pas encore : c'est elle qui arme les relances
+      // J+3/7/14 (carte cockpit). Un seul geste pour Adrian : changer le statut.
+      if (newStatus === "devis envoyé" && !lead.devis_envoye_at) {
+        const today = todayIso();
+        await setLeadDevisEnvoye(lead.id, today);
+        setLead({ ...lead, status: newStatus, devis_envoye_at: today });
+      } else {
+        await updateLeadStatus(lead.id, newStatus);
+        setLead({ ...lead, status: newStatus });
+      }
       toast.success("Statut mis à jour");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "mise à jour impossible";
+      toast.error("Erreur : " + msg);
+    }
+  };
+
+  // Marque (ou re-marque) le devis comme envoyé aujourd'hui — utile pour
+  // backfiller un lead existant ou repartir le compteur de relance après renvoi.
+  const markDevisToday = async () => {
+    if (!lead) return;
+    try {
+      const today = todayIso();
+      await setLeadDevisEnvoye(lead.id, today);
+      setLead({ ...lead, status: "devis envoyé", devis_envoye_at: today });
+      toast.success("Devis marqué envoyé aujourd'hui");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "mise à jour impossible";
       toast.error("Erreur : " + msg);
@@ -882,6 +915,23 @@ const LeadDetail = () => {
               {LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
+            J+3/7/14 (carte « Relances devis » du cockpit). */}
+        <div>
+          <label className="text-sm text-muted-foreground mb-2 block">Devis</label>
+          <div className="flex flex-wrap items-center gap-2">
+            {lead.devis_envoye_at ? (
+              <span className="text-sm">Envoyé le <strong>{formatDevisDate(lead.devis_envoye_at)}</strong></span>
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Pas encore envoyé</span>
+            )}
+            <Button variant="outline" size="sm" onClick={markDevisToday} className="min-h-[40px]">
+              <FileText className="w-4 h-4" />
+              {lead.devis_envoye_at ? "Renvoyé aujourd'hui" : "Marquer envoyé aujourd'hui"}
+            </Button>
+          </div>
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">

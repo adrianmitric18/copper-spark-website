@@ -104,6 +104,19 @@ export async function updateLeadNotes(leadId: string, notes: string): Promise<vo
 }
 
 /**
+ * Tier 1 / Phase 3.1 — marque (ou efface) la date d'envoi du devis.
+ * Cette date `devis_envoye_at` est la base des relances J+3/7/14 (carte cockpit).
+ * Quand on stampe une date, on bascule aussi le statut sur "devis envoyé" pour
+ * que le lead apparaisse bien dans le suivi des relances. `null` efface la date.
+ */
+export async function setLeadDevisEnvoye(leadId: string, dateStr: string | null): Promise<void> {
+  const patch: { devis_envoye_at: string | null; status?: string } = { devis_envoye_at: dateStr };
+  if (dateStr) patch.status = "devis envoyé";
+  const { error } = await supabase.from("leads").update(patch).eq("id", leadId);
+  if (error) throw error;
+}
+
+/**
  * Supprime un lead + ses photos associées dans le storage.
  * Logique précédemment dupliquée entre Dashboard et LeadDetail.
  * Les erreurs de storage sont loggées mais n'empêchent pas la suppression DB.

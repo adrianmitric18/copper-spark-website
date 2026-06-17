@@ -16,6 +16,7 @@ import {
   Smartphone,
   Mail,
   Loader2,
+  FileText,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +32,22 @@ import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
 import { type RendezVous } from "@/lib/rdv/constants";
-import { buildSmsHref, buildWhatsappHref } from "@/lib/admin/message-templates";
+import {
+  buildSmsHref,
+  buildWhatsappHref,
+  buildMailtoHref,
+  smsTemplateRelance1,
+  smsTemplateRelance2,
+  smsTemplateRelance3,
+  whatsappTemplateRelance1,
+  whatsappTemplateRelance2,
+  whatsappTemplateRelance3,
+  emailPlaintextRelance1,
+  emailPlaintextRelance2,
+  emailPlaintextRelance3,
+  emailSubjectRelance,
+  type RelanceDevisPayload,
+} from "@/lib/admin/message-templates";
 import { supabase } from "@/integrations/supabase/client";
 import AdminShell from "@/admin/layout/AdminShell";
 import { toast } from "sonner";
@@ -89,6 +105,36 @@ const rappelText = (r: RdvWithLead): string => {
   return `Bonjour ${firstName}, petit rappel pour notre rendez-vous demain ${dateLong} à ${formatHeure(
     r.heure_rdv,
   )}. À demain ! Adrian — Le Cuivre Électrique`;
+};
+
+// Tier 1 / Phase 3 — relances devis.
+// Nombre de jours calendaires écoulés depuis une date YYYY-MM-DD (locale).
+const daysSinceIso = (iso: string): number => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const start = new Date(y, m - 1, d, 12).getTime();
+  const now = new Date();
+  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12).getTime();
+  return Math.round((todayMid - start) / DAY_MS);
+};
+
+type RelancePalier = 1 | 2 | 3;
+
+// Palier selon l'ancienneté du devis : J+3 → 1, J+7 → 2, J+14 → 3.
+const relancePalier = (days: number): RelancePalier | null =>
+  days >= 14 ? 3 : days >= 7 ? 2 : days >= 3 ? 1 : null;
+
+// Sélectionne les bons templates (déjà écrits dans message-templates) par palier.
+const buildRelanceMessages = (palier: RelancePalier, payload: RelanceDevisPayload) => ({
+  sms: palier === 1 ? smsTemplateRelance1(payload) : palier === 2 ? smsTemplateRelance2(payload) : smsTemplateRelance3(payload),
+  wa: palier === 1 ? whatsappTemplateRelance1(payload) : palier === 2 ? whatsappTemplateRelance2(payload) : whatsappTemplateRelance3(payload),
+  emailBody: palier === 1 ? emailPlaintextRelance1(payload) : palier === 2 ? emailPlaintextRelance2(payload) : emailPlaintextRelance3(payload),
+  subject: emailSubjectRelance(palier),
+});
+
+const PALIER_BADGE: Record<RelancePalier, string> = {
+  1: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  2: "bg-orange-500/15 text-orange-700 border-orange-500/30",
+  3: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const Aujourdhui = () => {
@@ -241,6 +287,19 @@ const Aujourdhui = () => {
       )
       .slice(0, 5);
   }, [leads, upcomingByLead]);
+
+  // Tier 1 / Phase 3 — devis envoyés sans réponse depuis 3 j+ (statut encore
+  // "devis envoyé" → ni converti ni perdu). Bucketés par palier J+3/7/14.
+  const relanceLeads = useMemo(() => {
+    return leads
+      .filter((l) => l.status === "devis envoyé" && l.devis_envoye_at)
+      .map((l) => {
+        const days = daysSinceIso(l.devis_envoye_at as string);
+        return { lead: l, days, palier: relancePalier(days) };
+      })
+      .filter((x): x is { lead: Lead; days: number; palier: RelancePalier } => x.palier !== null)
+      .sort((a, b) => b.days - a.days);
+  }, [leads]);
 
   // Chantiers programmés cette semaine (du jour à +7 jours, statut programme/en_cours
   // dont la plage englobe la fenêtre).
@@ -590,6 +649,85 @@ const Aujourdhui = () => {
                               <Mail className="w-4 h-4" />
                             )}
                             Email
+                          </Button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            )}
+
+            {/* Relances devis (Tier 1 / Phase 3) — devis sans réponse depuis 3 j+ */}
+            {relanceLeads.length > 0 && (
+              <Card className="p-5 md:p-6 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">
+                    Relances devis ({relanceLeads.length})
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Devis envoyés sans réponse depuis 3 jours et plus. Relance en 1 tap — le message
+                  s'adapte au palier (J+3 / J+7 / J+14).
+                </p>
+                <ul className="space-y-2">
+                  {relanceLeads.map(({ lead: l, days, palier }) => {
+                    const firstName = l.name.trim().split(/\s+/)[0] || l.name;
+                    const payload: RelanceDevisPayload = {
+                      clientName: firstName,
+                      devisEnvoyeAt: l.devis_envoye_at as string,
+                    };
+                    const { sms, wa, emailBody, subject } = buildRelanceMessages(palier, payload);
+                    return (
+                      <li
+                        key={l.id}
+                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
+                      >
+                        <div className="flex-1 min-w-[10rem]">
+                          <p className="font-medium text-sm truncate flex items-center gap-2">
+                            <Link to={`/admin/lead/${l.id}`} className="hover:underline">
+                              {l.name}
+                            </Link>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 ${PALIER_BADGE[palier]}`}
+                            >
+                              Relance {palier}
+                            </Badge>
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            devis envoyé il y a {days} jours
+                            {l.commune && ` · ${l.commune}`}
+                          </p>
+                        </div>
+                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                          <a href={buildSmsHref(l.phone, sms)} aria-label={`SMS relance ${l.name}`}>
+                            <Smartphone className="w-4 h-4" /> SMS
+                          </a>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                        >
+                          <a
+                            href={buildWhatsappHref(l.phone, wa)}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`WhatsApp relance ${l.name}`}
+                          >
+                            <MessageCircle className="w-4 h-4" /> WA
+                          </a>
+                        </Button>
+                        {hasUsableEmail(l.email) && (
+                          <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                            <a
+                              href={buildMailtoHref(l.email, subject, emailBody)}
+                              aria-label={`Email relance ${l.name}`}
+                            >
+                              <Mail className="w-4 h-4" /> Email
+                            </a>
                           </Button>
                         )}
                       </li>
