@@ -212,9 +212,11 @@ function getRequiredKeys(templateId: string): readonly string[] {
     case TPL_CLIENT_FUSION:
       return [...REQUIRED_BASE_KEYS, "section_preparation"];
     case TPL_MEMO_ADRIAN:
+      // notes_internes est facultatif (un RDV peut être confirmé sans note) :
+      // l'exiger non vide faisait échouer la validation du mémo, donc le mémo
+      // Adrian ne partait pas alors que l'email client, lui, passait.
       return [
         ...REQUIRED_BASE_KEYS,
-        "notes_internes",
         "lien_google_calendar",
         "url_fiche_lead",
       ];

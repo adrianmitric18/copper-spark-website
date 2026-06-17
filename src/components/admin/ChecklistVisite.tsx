@@ -28,6 +28,7 @@ interface DbItem {
   is_checked: boolean;
   item_order: number;
   updated_at: string;
+  checklist_type: string;
 }
 
 const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = false }: Props) => {
@@ -40,17 +41,24 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(defaultOpen);
   const [resetting, setResetting] = useState(false);
+  // La contrainte DB est UNIQUE (lead_id, item_key) sans le type : un lead ne
+  // peut donc porter qu'UNE checklist. On affiche le type réellement stocké
+  // (et non celui détecté à la volée) pour rester cohérent si le type détecté
+  // diffère du seed initial. Voir loadOrSeed.
+  const [effectiveType, setEffectiveType] = useState<ChecklistType>(checklistType);
 
   useEffect(() => {
     void loadOrSeed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId, checklistType]);
 
+  const SELECT_COLS = "id,item_key,item_label,is_checked,item_order,updated_at,checklist_type";
+
   const loadOrSeed = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("checklist_items")
-      .select("id,item_key,item_label,is_checked,item_order,updated_at,checklist_type")
+      .select(SELECT_COLS)
       .eq("lead_id", leadId)
       .order("item_order", { ascending: true });
 
@@ -60,14 +68,15 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
       return;
     }
 
-    const existingForType = (data || []).filter(
-      (d: { checklist_type: string }) => d.checklist_type === checklistType,
-    );
+    let rows = (data || []) as DbItem[];
 
-    if (existingForType.length === 0) {
-      // Seed
+    // Le lead n'a encore AUCUNE checklist → on sème le type détecté.
+    // upsert + ignoreDuplicates = ON CONFLICT DO NOTHING : idempotent, donc
+    // re-confirmer un lead (ou un double-montage React) ne lève jamais l'erreur
+    // "duplicate key value violates unique constraint checklist_items_lead_id_item_key_key".
+    if (rows.length === 0) {
       const template = CHECKLISTS[checklistType];
-      const rows = template.map((tpl, idx) => ({
+      const seedRows = template.map((tpl, idx) => ({
         lead_id: leadId,
         checklist_type: checklistType,
         item_key: tpl.key,
@@ -75,19 +84,33 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
         is_checked: false,
         item_order: idx,
       }));
-      const { data: inserted, error: insErr } = await supabase
+      const { error: insErr } = await supabase
         .from("checklist_items")
-        .insert(rows)
-        .select("id,item_key,item_label,is_checked,item_order,updated_at");
+        .upsert(seedRows, { onConflict: "lead_id,item_key", ignoreDuplicates: true });
       if (insErr) {
         toast.error("Erreur création checklist : " + insErr.message);
         setLoading(false);
         return;
       }
-      setItems((inserted || []) as DbItem[]);
-    } else {
-      setItems(existingForType as DbItem[]);
+      // Re-lecture après seed : récupère l'état réel (gère la course du
+      // double-montage et toute ligne déjà présente ignorée par le upsert).
+      const { data: after, error: reErr } = await supabase
+        .from("checklist_items")
+        .select(SELECT_COLS)
+        .eq("lead_id", leadId)
+        .order("item_order", { ascending: true });
+      if (reErr) {
+        toast.error("Erreur chargement checklist : " + reErr.message);
+        setLoading(false);
+        return;
+      }
+      rows = (after || []) as DbItem[];
     }
+
+    setItems(rows);
+    // Type d'affichage = celui réellement stocké (cohérent même si le type
+    // détecté a changé depuis le seed initial).
+    setEffectiveType((rows[0]?.checklist_type as ChecklistType) ?? checklistType);
     setLoading(false);
   };
 
@@ -113,7 +136,7 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
       .from("checklist_items")
       .update({ is_checked: false })
       .eq("lead_id", leadId)
-      .eq("checklist_type", checklistType);
+      .eq("checklist_type", effectiveType);
     setResetting(false);
     if (error) {
       toast.error("Erreur réinitialisation");
@@ -135,7 +158,7 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
       li{padding:8px 0;border-bottom:1px dashed #ccc;font-size:14px}
       li:before{content:"☐ ";color:#E85D04;font-size:18px;margin-right:6px}
       </style></head><body>
-      <h1>Checklist visite — ${CHECKLIST_LABELS[checklistType]}</h1>
+      <h1>Checklist visite — ${CHECKLIST_LABELS[effectiveType]}</h1>
       <h2>${remaining.length} élément(s) restant(s)</h2>
       <ul>${remaining.map((i) => `<li>${escapeHtml(i.item_label)}</li>`).join("")}</ul>
       </body></html>`);
@@ -152,7 +175,7 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
   );
 
   // Group items by template group via key prefix recovery
-  const template = CHECKLISTS[checklistType];
+  const template = CHECKLISTS[effectiveType];
   const groupOf = new Map(template.map((t) => [t.key, t.group]));
   const grouped = items.reduce<Record<string, DbItem[]>>((acc, it) => {
     const g = groupOf.get(it.item_key) || "Autres";
@@ -171,7 +194,7 @@ const ChecklistVisite = ({ leadId, leadServices, rdvTypeVisite, defaultOpen = fa
             <ListChecks className="w-5 h-5 text-[hsl(var(--copper))] shrink-0" />
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-base sm:text-lg truncate">
-                Checklist visite — {CHECKLIST_LABELS[checklistType]}
+                Checklist visite — {CHECKLIST_LABELS[effectiveType]}
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {done}/{total} éléments • {pct}%
