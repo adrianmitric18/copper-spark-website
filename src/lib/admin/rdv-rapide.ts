@@ -166,6 +166,11 @@ export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapi
     input.notes?.trim() ||
     `Lead créé par téléphone le ${new Date().toLocaleDateString("fr-BE")}.`;
 
+  // La policy RLS d'INSERT minimale ("Admin can insert rdv_rapide leads",
+  // migration 20260429100000) exige source='rdv_rapide' ET status='rdv_pris'.
+  // On réutilise donc ces valeurs (mêmes que createRdvRapide, qui passe déjà) :
+  // l'absence de rendez_vous distingue un lead express d'un RDV rapide, pas le
+  // statut. Aligné ici pour rester SANS changement DB.
   const { data: lead, error } = await supabase
     .from("leads")
     .insert({
@@ -174,11 +179,11 @@ export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapi
       email: emailFinal,
       address: adresseFinale,
       client_type: "Particulier",
-      services: ["À préciser"],
+      services: ["rdv_rapide"],
       message: messageFinal,
       gdpr_consent: true,
-      source: "telephone",
-      status: "nouveau",
+      source: "rdv_rapide",
+      status: "rdv_pris",
     })
     .select("id")
     .single();
