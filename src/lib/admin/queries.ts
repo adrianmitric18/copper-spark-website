@@ -152,18 +152,36 @@ export type RdvWithLead = {
   lead_name: string;
   lead_phone: string;
   lead_commune: string | null;
+  // Adresse précise pour le bouton « Itinéraire » du cockpit (Phase 1.2).
+  // Colonnes déjà présentes sur `leads` — simple extension de la jointure.
+  lead_rue: string | null;
+  lead_numero: string | null;
+  lead_code_postal: string | null;
+  // Phase 2.1 — nécessaires au rappel J-1 (email client via sendRappelJ1Emails).
+  duree_minutes: number;
+  lead_email: string;
 };
 
 /** Charge tous les RDV avec les infos client (jointure leads). Utilisé par /admin/rdv. */
 export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
   const { data, error } = await supabase
     .from("rendez_vous")
-    .select("id, lead_id, date_rdv, heure_rdv, type_visite, statut, leads(name, phone, commune)")
+    .select(
+      "id, lead_id, date_rdv, heure_rdv, duree_minutes, type_visite, statut, leads(name, phone, email, commune, rue, numero, code_postal)",
+    )
     .order("date_rdv", { ascending: true })
     .order("heure_rdv", { ascending: true });
   if (error) throw error;
   return ((data as Array<Record<string, unknown>>) || []).map((r) => {
-    const leadJoin = r.leads as { name?: string; phone?: string; commune?: string | null } | null;
+    const leadJoin = r.leads as {
+      name?: string;
+      phone?: string;
+      email?: string;
+      commune?: string | null;
+      rue?: string | null;
+      numero?: string | null;
+      code_postal?: string | null;
+    } | null;
     return {
       id: r.id as string,
       lead_id: r.lead_id as string,
@@ -174,6 +192,11 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
       lead_name: leadJoin?.name ?? "—",
       lead_phone: leadJoin?.phone ?? "",
       lead_commune: leadJoin?.commune ?? null,
+      lead_rue: leadJoin?.rue ?? null,
+      lead_numero: leadJoin?.numero ?? null,
+      lead_code_postal: leadJoin?.code_postal ?? null,
+      duree_minutes: (r.duree_minutes as number) ?? 60,
+      lead_email: leadJoin?.email ?? "",
     };
   });
 }

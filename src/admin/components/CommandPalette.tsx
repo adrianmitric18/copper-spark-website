@@ -43,6 +43,14 @@ const CommandPalette = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // Phase 2.3 — ouverture depuis le bouton loupe mobile (la topbar dispatche
+  // cet événement). Réutilise la même palette que le Cmd+K desktop.
+  useEffect(() => {
+    const openHandler = () => setOpen(true);
+    window.addEventListener("admin:open-search", openHandler);
+    return () => window.removeEventListener("admin:open-search", openHandler);
+  }, []);
+
   // Précharge les leads quand la palette s'ouvre la première fois.
   useEffect(() => {
     if (!open || leads.length > 0) return;
@@ -71,7 +79,7 @@ const CommandPalette = () => {
           </CommandItem>
           <CommandItem onSelect={() => go("/admin/pipeline")}>
             <Kanban className="mr-2 h-4 w-4" />
-            <span>Pipeline (leads)</span>
+            <span>Leads</span>
           </CommandItem>
           <CommandItem onSelect={() => go("/admin/rdv")}>
             <Calendar className="mr-2 h-4 w-4" />

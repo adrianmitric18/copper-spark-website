@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Phone,
   Calendar,
@@ -10,6 +10,12 @@ import {
   Sparkles,
   ChevronRight,
   HardHat,
+  Navigation,
+  Bell,
+  MessageCircle,
+  Smartphone,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +24,15 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import {
   fetchLeadsWithUpcomingRdvs,
   fetchAllRdvs,
+  type RdvWithLead,
 } from "@/lib/admin/queries";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
 import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
+import { sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
+import { type RendezVous } from "@/lib/rdv/constants";
+import { buildSmsHref, buildWhatsappHref } from "@/lib/admin/message-templates";
+import { supabase } from "@/integrations/supabase/client";
 import AdminShell from "@/admin/layout/AdminShell";
 import { toast } from "sonner";
 
@@ -50,8 +61,40 @@ const formatLongDate = (d: Date): string =>
     month: "long",
   });
 
+/**
+ * Lien d'itinéraire Google Maps depuis les morceaux d'adresse du lead.
+ * Renvoie null si on n'a aucune info exploitable (pas de bouton affiché).
+ */
+const buildMapsDir = (parts: (string | null | undefined)[]): string | null => {
+  const query = parts.filter(Boolean).join(" ").trim();
+  if (!query) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+};
+
+// Phase 2.1 — email réel (sinon pas d'envoi auto, on s'en tient à SMS/WhatsApp).
+const hasUsableEmail = (email: string | null | undefined): boolean => {
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  return e.includes("@") && e !== "non fourni" && !e.endsWith("@local.cuivre-electrique.com");
+};
+
+// Texte court de rappel J-1 pour SMS/WhatsApp.
+const rappelText = (r: RdvWithLead): string => {
+  const dateLong = new Date(`${r.date_rdv}T12:00:00`).toLocaleDateString("fr-BE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const firstName = r.lead_name.trim().split(/\s+/)[0] || r.lead_name;
+  return `Bonjour ${firstName}, petit rappel pour notre rendez-vous demain ${dateLong} à ${formatHeure(
+    r.heure_rdv,
+  )}. À demain ! Adrian — Le Cuivre Électrique`;
+};
+
 const Aujourdhui = () => {
   const { user, ready } = useAdminGuard();
+  const queryClient = useQueryClient();
+  const [rappelSending, setRappelSending] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Aujourd'hui – Le Cuivre Admin";
@@ -115,6 +158,57 @@ const Aujourdhui = () => {
         .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv)),
     [rdvs, today],
   );
+
+  const tomorrowRdvs = useMemo(() => {
+    const tStr = isoDateLocal(new Date(Date.now() + DAY_MS));
+    return rdvs
+      .filter((r) => r.statut !== "annule" && r.date_rdv === tStr)
+      .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv));
+  }, [rdvs]);
+
+  // Phase 2.1 — envoie le rappel J-1 par email (client + mémo Adrian) via la
+  // fonction existante sendRappelJ1Emails, puis marque le RDV "rappel_envoye".
+  // Pas de cron (rail 5) : déclenchement manuel groupé depuis le cockpit.
+  const sendRappelEmail = async (r: RdvWithLead) => {
+    setRappelSending(r.id);
+    try {
+      const lead: LeadInfo = {
+        id: r.lead_id,
+        name: r.lead_name,
+        email: r.lead_email,
+        phone: r.lead_phone,
+        rue: r.lead_rue,
+        numero: r.lead_numero,
+        code_postal: r.lead_code_postal,
+        commune: r.lead_commune,
+      };
+      const rdv = {
+        id: r.id,
+        lead_id: r.lead_id,
+        date_rdv: r.date_rdv,
+        heure_rdv: r.heure_rdv,
+        duree_minutes: r.duree_minutes,
+        type_visite: r.type_visite,
+        notes_internes: null,
+        statut: r.statut,
+        rappel_envoye_at: null,
+        created_at: "",
+        updated_at: "",
+      } as RendezVous;
+      await sendRappelJ1Emails(lead, rdv);
+      await supabase
+        .from("rendez_vous")
+        .update({ statut: "rappel_envoye", rappel_envoye_at: new Date().toISOString() })
+        .eq("id", r.id);
+      toast.success("Rappel email envoyé (client + mémo pour toi)");
+      queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+    } catch (e: unknown) {
+      const m = e instanceof Error ? e.message : "envoi impossible";
+      toast.error("Rappel non envoyé : " + m);
+    } finally {
+      setRappelSending(null);
+    }
+  };
 
   const weekRdvs = useMemo(() => {
     const todayDate = new Date();
@@ -317,39 +411,59 @@ const Aujourdhui = () => {
                       </p>
                     ) : (
                       <ul className="space-y-1.5">
-                        {todayRdvs.map((r) => (
-                          <li key={r.id}>
-                            <Link
-                              to={`/admin/lead/${r.lead_id}`}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-primary/40 transition-colors min-h-[56px]"
-                            >
-                              <div className="text-center w-14 shrink-0">
-                                <p className="text-base font-bold text-primary">
-                                  {formatHeure(r.heure_rdv)}
-                                </p>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">
-                                  {r.lead_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {r.type_visite}
-                                  {r.lead_commune && ` · ${r.lead_commune}`}
-                                </p>
-                              </div>
-                              {r.lead_phone && (
-                                <a
-                                  href={`tel:${r.lead_phone}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center justify-center w-10 h-10 rounded-md text-primary hover:bg-primary/10 shrink-0"
-                                  aria-label={`Appeler ${r.lead_name}`}
-                                >
-                                  <Phone className="w-4 h-4" />
-                                </a>
-                              )}
-                            </Link>
-                          </li>
-                        ))}
+                        {todayRdvs.map((r) => {
+                          const mapsUrl = buildMapsDir([
+                            r.lead_rue,
+                            r.lead_numero,
+                            r.lead_code_postal,
+                            r.lead_commune,
+                          ]);
+                          return (
+                            <li key={r.id}>
+                              <Link
+                                to={`/admin/lead/${r.lead_id}`}
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-primary/40 transition-colors min-h-[56px]"
+                              >
+                                <div className="text-center w-14 shrink-0">
+                                  <p className="text-base font-bold text-primary">
+                                    {formatHeure(r.heure_rdv)}
+                                  </p>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">
+                                    {r.lead_name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {r.type_visite}
+                                    {r.lead_commune && ` · ${r.lead_commune}`}
+                                  </p>
+                                </div>
+                                {mapsUrl && (
+                                  <a
+                                    href={mapsUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center w-10 h-10 rounded-md text-muted-foreground hover:bg-muted shrink-0"
+                                    aria-label={`Itinéraire vers ${r.lead_name}`}
+                                  >
+                                    <Navigation className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {r.lead_phone && (
+                                  <a
+                                    href={`tel:${r.lead_phone}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="flex items-center justify-center w-10 h-10 rounded-md text-primary hover:bg-primary/10 shrink-0"
+                                    aria-label={`Appeler ${r.lead_name}`}
+                                  >
+                                    <Phone className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>
@@ -404,6 +518,86 @@ const Aujourdhui = () => {
                 </div>
               )}
             </Card>
+
+            {/* Rappels demain (Phase 2.1) — préviens les RDV du lendemain */}
+            {tomorrowRdvs.length > 0 && (
+              <Card className="p-5 md:p-6 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">
+                    Rappels demain ({tomorrowRdvs.length})
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Préviens tes RDV de demain : SMS / WhatsApp en 1 tap, ou email de rappel.
+                </p>
+                <ul className="space-y-2">
+                  {tomorrowRdvs.map((r) => {
+                    const already = r.statut === "rappel_envoye";
+                    return (
+                      <li
+                        key={r.id}
+                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
+                      >
+                        <div className="flex-1 min-w-[10rem]">
+                          <p className="font-medium text-sm truncate flex items-center gap-2">
+                            {formatHeure(r.heure_rdv)} · {r.lead_name}
+                            {already && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-600 border-blue-500/30"
+                              >
+                                Rappel envoyé
+                              </Badge>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {r.type_visite}
+                            {r.lead_commune && ` · ${r.lead_commune}`}
+                          </p>
+                        </div>
+                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                          <a href={buildSmsHref(r.lead_phone, rappelText(r))} aria-label={`SMS rappel ${r.lead_name}`}>
+                            <Smartphone className="w-4 h-4" /> SMS
+                          </a>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                        >
+                          <a
+                            href={buildWhatsappHref(r.lead_phone, rappelText(r))}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`WhatsApp rappel ${r.lead_name}`}
+                          >
+                            <MessageCircle className="w-4 h-4" /> WA
+                          </a>
+                        </Button>
+                        {hasUsableEmail(r.lead_email) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="min-h-[40px]"
+                            disabled={rappelSending === r.id}
+                            onClick={() => sendRappelEmail(r)}
+                            aria-label={`Envoyer le rappel email à ${r.lead_name}`}
+                          >
+                            {rappelSending === r.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Mail className="w-4 h-4" />
+                            )}
+                            Email
+                          </Button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            )}
 
             {/* Cette semaine */}
             <Card className="p-5 md:p-6 space-y-3">

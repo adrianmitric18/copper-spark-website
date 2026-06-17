@@ -22,7 +22,9 @@ const RdvRapideFab = () => {
       to="/admin/rdv-rapide"
       aria-label="Créer un RDV rapide"
       style={{
-        bottom: "max(1.25rem, env(safe-area-inset-bottom) + 0.75rem)",
+        // Relevé au-dessus de la barre d'onglets (~3.5rem + safe area) ajoutée
+        // en Phase 1.1, pour ne pas se superposer à l'onglet « Plus ».
+        bottom: "calc(env(safe-area-inset-bottom) + 4.5rem)",
         right: "max(1.25rem, env(safe-area-inset-right) + 0.75rem)",
       }}
       className={cn(

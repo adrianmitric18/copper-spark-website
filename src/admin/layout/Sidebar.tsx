@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS_PRIMARY = [
   { to: "/admin/rdv-rapide", label: "RDV rapide", icon: Phone, end: false, highlight: true },
   { to: "/admin", label: "Aujourd'hui", icon: Home, end: true },
-  { to: "/admin/pipeline", label: "Pipeline", icon: Kanban, end: false },
+  { to: "/admin/pipeline", label: "Leads", icon: Kanban, end: false },
   { to: "/admin/rdv", label: "Calendrier", icon: Calendar, end: false },
   { to: "/admin/interventions", label: "Chantiers", icon: HardHat, end: false },
 ];
@@ -94,6 +94,9 @@ const Sidebar = ({ email, onNavigate }: SidebarProps) => {
         })}
 
         <div className="my-3 border-t border-border/50" />
+        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          Contenu
+        </p>
 
         {NAV_ITEMS_SECONDARY.map((item) => {
           const Icon = item.icon;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -55,6 +55,7 @@ import {
 } from "@/lib/admin/types";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
+import CollapsibleCard from "@/components/admin/CollapsibleCard";
 
 const cleanPhoneForWhatsapp = (phone: string) => phone.replace(/[^\d]/g, "").replace(/^0/, "32").replace(/^0032/, "32");
 const firstNameOf = (name: string) => name.trim().split(/\s+/)[0] || name;
@@ -66,6 +67,43 @@ const daysUntilRdv = (dateStr: string) => {
   const [year, month, day] = dateStr.split("-").map(Number);
   const rdvDay = new Date(year, month - 1, day, 12);
   return Math.round((rdvDay.getTime() - todayMidday.getTime()) / 86400000);
+};
+
+// Phase 2.2 — réponses rapides : messages types pré-remplis (SMS/WhatsApp).
+// Le client final tape juste « Envoyer ». Signature commune Le Cuivre Électrique.
+const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = [
+  { label: "Je vous rappelle", body: (n) => `Bonjour ${n}, je vous rappelle très vite au sujet de votre demande. Adrian — Le Cuivre Électrique` },
+  { label: "Indispo cette semaine", body: (n) => `Bonjour ${n}, je suis complet cette semaine, mais je reviens vers vous pour caler une date au plus tôt. Adrian — Le Cuivre Électrique` },
+  { label: "En route, j'arrive", body: (n) => `Bonjour ${n}, je suis en route, j'arrive d'ici peu. Adrian — Le Cuivre Électrique` },
+  { label: "Bien reçu", body: (n) => `Bonjour ${n}, bien reçu, merci ! Je traite votre demande et reviens vers vous rapidement. Adrian — Le Cuivre Électrique` },
+];
+
+// Phase 2.5 — dictée vocale (Web Speech API, gratuite, surtout utile sur
+// chantier). Types minimaux car l'API n'est pas dans lib.dom par défaut.
+interface SpeechAlt { transcript: string }
+interface SpeechResult { 0: SpeechAlt; isFinal: boolean }
+interface SpeechEvent { resultIndex: number; results: ArrayLike<SpeechResult> }
+interface SpeechRecognizer {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((e: SpeechEvent) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+}
+const getRecognizer = (): SpeechRecognizer | null => {
+  const w = window as unknown as {
+    SpeechRecognition?: new () => SpeechRecognizer;
+    webkitSpeechRecognition?: new () => SpeechRecognizer;
+  };
+  const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+  return Ctor ? new Ctor() : null;
+};
+const dictationSupported = (): boolean => {
+  const w = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+  return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
 };
 
 const LeadDetail = () => {
@@ -143,6 +181,17 @@ const LeadDetail = () => {
   useEffect(() => {
     if (lead) document.title = `${lead.name} – Admin`;
   }, [lead]);
+
+  // Phase 1.3 — la barre d'actions « Caler RDV » est collée en haut, mais le
+  // formulaire est rendu tout en bas de la page. Sans scroll, le clic ouvre le
+  // formulaire hors écran et donne l'impression que rien ne se passe. On amène
+  // donc la carte du formulaire dans le viewport dès qu'on l'affiche.
+  const rdvSectionRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (showForm) {
+      rdvSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [showForm]);
 
   const updateStatus = async (newStatus: string) => {
     if (!lead) return;
@@ -242,6 +291,52 @@ const LeadDetail = () => {
     rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
   };
 
+  // Phase 1.6 — un email est "utilisable" pour l'envoi auto seulement s'il est
+  // réel : pas vide, pas "Non fourni", pas le placeholder local généré par le
+  // RDV rapide (rdv-...@local.cuivre-electrique.com). Sinon on n'envoie pas
+  // (ça planterait à la validation) et on bascule sur SMS/WhatsApp.
+  const hasUsableEmail = (email: string | null | undefined): boolean => {
+    if (!email) return false;
+    const e = email.trim().toLowerCase();
+    if (!e.includes("@")) return false;
+    if (e === "non fourni") return false;
+    if (e.endsWith("@local.cuivre-electrique.com")) return false;
+    return true;
+  };
+
+  // Phase 2.5 — dictée vocale qui alimente les notes internes.
+  const recognizerRef = useRef<SpeechRecognizer | null>(null);
+  const [listening, setListening] = useState(false);
+  const canDictate = dictationSupported();
+
+  const toggleDictation = () => {
+    if (listening) {
+      recognizerRef.current?.stop();
+      return;
+    }
+    const rec = getRecognizer();
+    if (!rec) {
+      toast.error("Dictée non supportée sur ce navigateur");
+      return;
+    }
+    rec.lang = "fr-FR";
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.onresult = (e) => {
+      let chunk = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) chunk += e.results[i][0].transcript;
+      }
+      const clean = chunk.trim();
+      if (clean) setNotes((prev) => (prev ? prev.trimEnd() + " " : "") + clean);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    recognizerRef.current = rec;
+    rec.start();
+    setListening(true);
+  };
+
   // ==== RDV : créer / modifier / annuler ====
   // Logique métier complexe (3 emails à envoyer côté création, mise à jour
   // du statut du lead en cascade) — laissée inline plutôt qu'extraite dans
@@ -289,10 +384,29 @@ const LeadDetail = () => {
           .single();
         if (error) throw error;
         saved = data as RendezVous;
-        await sendRdvConfirmationEmails(info, saved);
+        // Phase 1.6 — confirmation unifiée selon le client :
+        //  - client web (vrai email) -> envoi auto (email client + mémo Adrian) ;
+        //  - client téléphone (email placeholder/absent) -> pas d'envoi auto
+        //    (il planterait), on invite à prévenir par SMS/WhatsApp.
+        // Dans tous les cas, un échec d'email NE perd PAS le RDV déjà enregistré.
+        if (hasUsableEmail(lead.email)) {
+          try {
+            await sendRdvConfirmationEmails(info, saved);
+            toast.success("RDV confirmé — email envoyé au client + mémo pour toi");
+          } catch (mailErr: unknown) {
+            const m = mailErr instanceof Error ? mailErr.message : "envoi email impossible";
+            toast.warning("RDV confirmé, mais l'email n'est pas parti", {
+              description: `${m}. Préviens le client par SMS/WhatsApp (boutons plus bas).`,
+            });
+          }
+        } else {
+          toast.success("RDV confirmé", {
+            description:
+              "Pas d'email valide pour ce client — préviens-le par SMS ou WhatsApp (boutons plus bas).",
+          });
+        }
         await updateLeadStatus(lead.id, "RDV confirmé");
         setLead({ ...lead, status: "RDV confirmé" });
-        toast.success("RDV confirmé, 3 emails envoyés");
       }
       setRdv(saved);
       setShowForm(false);
@@ -453,6 +567,13 @@ const LeadDetail = () => {
   // mailto utilise encodeURIComponent (espaces → %20) pour conformité RFC 6068.
   // Sinon URLSearchParams produit "+" qui s'affiche littéralement sur Gmail mobile.
   const emailHref = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
+  // Itinéraire Google Maps depuis l'adresse précise (fallback adresse libre).
+  const mapsDirQuery =
+    [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ").trim() ||
+    (lead.address ?? "").trim();
+  const mapsDirUrl = mapsDirQuery
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapsDirQuery)}`
+    : null;
 
   return (
     <AdminShell email={user.email} mobileTitle={lead.name}>
@@ -468,6 +589,43 @@ const LeadDetail = () => {
           <h1 className="text-xl md:text-2xl font-display font-bold truncate">{lead.name}</h1>
           <p className="text-xs text-muted-foreground">Reçu le {formatDate(lead.created_at)}</p>
         </div>
+      </div>
+
+      {/* Phase 1.3 — barre d'actions figée : l'essentiel accessible sans scroller.
+          Reste collée sous la topbar mobile (top-14) / en haut sur desktop (top-0). */}
+      <div className="sticky top-14 md:top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-y border-border/50 flex gap-2">
+        <Button asChild size="sm" variant="copper" className="flex-1 min-h-[44px]">
+          <a href={`tel:${lead.phone}`} aria-label={`Appeler ${lead.name}`}>
+            <Phone className="w-4 h-4" /> Appeler
+          </a>
+        </Button>
+        {mapsDirUrl && (
+          <Button asChild size="sm" variant="outline" className="flex-1 min-h-[44px]">
+            <a href={mapsDirUrl} target="_blank" rel="noreferrer" aria-label="Itinéraire">
+              <Navigation className="w-4 h-4" /> Itinéraire
+            </a>
+          </Button>
+        )}
+        {rdv ? (
+          <Button
+            asChild
+            size="sm"
+            className="flex-1 min-h-[44px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+          >
+            <a href={whatsappHref} target="_blank" rel="noreferrer">
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+          </Button>
+        ) : (
+          <Button
+            onClick={() => { setEditing(false); setShowForm(true); }}
+            size="sm"
+            variant="outline"
+            className="flex-1 min-h-[44px]"
+          >
+            <CalendarPlus className="w-4 h-4" /> Caler RDV
+          </Button>
+        )}
       </div>
 
       {/* RDV planifié (en haut, encadré orange) */}
@@ -522,9 +680,8 @@ const LeadDetail = () => {
         </div>
       </Card>
 
-      {/* Demande */}
-      <Card className="p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Détails de la demande</h2>
+      {/* Demande (repliable, ouverte par défaut — contexte avant la visite) */}
+      <CollapsibleCard title="Détails de la demande" defaultOpen>
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type}</div>
           <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
@@ -543,7 +700,7 @@ const LeadDetail = () => {
           <p className="text-sm text-muted-foreground mb-2">Message :</p>
           <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message}</div>
         </div>
-      </Card>
+      </CollapsibleCard>
 
       {/* Checklist visite */}
       <ChecklistVisite
@@ -684,7 +841,9 @@ const LeadDetail = () => {
       )}
 
       {/* Planifier / modifier RDV */}
-      <Card className="p-6 space-y-4 border-[hsl(var(--copper))]/30">
+      {/* scroll-mt : marge sous la barre d'actions collée (top-14 mobile / top-0 desktop)
+          pour que le titre ne soit pas masqué par la barre au scrollIntoView. */}
+      <Card ref={rdvSectionRef} className="scroll-mt-32 md:scroll-mt-20 p-6 space-y-4 border-[hsl(var(--copper))]/30">
         <h2 className="font-semibold text-lg flex items-center gap-2">
           <CalendarPlus className="w-5 h-5 text-[hsl(var(--copper))]" />
           {editing ? "Modifier le rendez-vous" : rdv ? "Replanifier" : "Planifier un rendez-vous"}
@@ -725,14 +884,41 @@ const LeadDetail = () => {
           </Select>
         </div>
         <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Notes internes</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm text-muted-foreground">Notes internes</label>
+            {canDictate && (
+              <Button
+                type="button"
+                variant={listening ? "destructive" : "outline"}
+                size="sm"
+                onClick={toggleDictation}
+                aria-label={listening ? "Arrêter la dictée" : "Dicter une note"}
+              >
+                {listening ? (
+                  <>
+                    <MicOff className="w-4 h-4" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4" /> Dicter
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={2000}
             rows={4}
-            placeholder="Vos notes sur ce lead..."
+            placeholder="Vos notes sur ce lead... (ou dictez avec le micro)"
           />
+          {listening && (
+            <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Dictée en cours… parlez, puis « Stop ». Pensez à enregistrer.
+            </p>
+          )}
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
             <Button onClick={saveNotes} disabled={saving} variant="copper" size="sm">
@@ -743,9 +929,8 @@ const LeadDetail = () => {
         </div>
       </Card>
 
-      {/* Actions */}
-      <Card className="p-6 space-y-3">
-        <h2 className="font-semibold text-lg">Actions rapides</h2>
+      {/* Actions (repliable, fermée par défaut) */}
+      <CollapsibleCard title="Actions rapides">
         <div className="grid sm:grid-cols-3 gap-2">
           <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
             <a href={whatsappHref} target="_blank" rel="noreferrer">
@@ -771,11 +956,53 @@ const LeadDetail = () => {
             <Star className="w-4 h-4" /> Envoyer le lien avis Google
           </Button>
         </div>
-      </Card>
+      </CollapsibleCard>
 
-      {/* Zone dangereuse */}
-      <Card className="p-6 mt-8 border-destructive/40 bg-destructive/5 space-y-3">
-        <h2 className="font-semibold text-lg text-destructive">Zone dangereuse</h2>
+      {/* Réponses rapides (Phase 2.2) — repliable, fermée par défaut */}
+      <CollapsibleCard title="Réponses rapides">
+        <p className="text-sm text-muted-foreground">
+          Un message type pré-rempli, à envoyer en SMS ou WhatsApp sans rien retaper.
+        </p>
+        <ul className="space-y-2">
+          {QUICK_REPLIES.map((q) => {
+            const enc = encodeURIComponent(q.body(firstNameOf(lead.name)));
+            return (
+              <li
+                key={q.label}
+                className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+              >
+                <span className="flex-1 min-w-[8rem] text-sm font-medium">{q.label}</span>
+                <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`}>
+                    <Smartphone className="w-4 h-4" /> SMS
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                >
+                  <a
+                    href={`https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${enc}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`WhatsApp : ${q.label}`}
+                  >
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
+                  </a>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      </CollapsibleCard>
+
+      {/* Zone dangereuse (repliable, fermée par défaut) */}
+      <CollapsibleCard
+        title="Zone dangereuse"
+        className="mt-8 border-destructive/40 bg-destructive/5"
+        titleClassName="text-destructive"
+      >
         <p className="text-sm text-muted-foreground">
           La suppression est définitive : le lead et ses photos seront effacés.
         </p>
@@ -801,7 +1028,7 @@ const LeadDetail = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </Card>
+      </CollapsibleCard>
       </div>
     </AdminShell>
   );

@@ -212,9 +212,11 @@ function getRequiredKeys(templateId: string): readonly string[] {
     case TPL_CLIENT_FUSION:
       return [...REQUIRED_BASE_KEYS, "section_preparation"];
     case TPL_MEMO_ADRIAN:
+      // notes_internes est facultatif (un RDV peut être confirmé sans note) :
+      // l'exiger non vide faisait échouer la validation du mémo, donc le mémo
+      // Adrian ne partait pas alors que l'email client, lui, passait.
       return [
         ...REQUIRED_BASE_KEYS,
-        "notes_internes",
         "lien_google_calendar",
         "url_fiche_lead",
       ];
@@ -370,18 +372,59 @@ export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promi
 }
 
 export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
-  await sendOne({
-    templateId: TPL_CHANGEMENT,
-    toEmail: lead.email,
-    params: {
-      ...buildBaseParams(lead, rdv),
-      statut_rdv: "Votre rendez-vous a été déplacé",
-      message_principal:
-        "Je vous informe que votre rendez-vous a été déplacé à une nouvelle date. Voici les détails mis à jour. Les autres détails restent identiques.",
-      titre_contact: "EMPÊCHEMENT ?",
-      texte_contact: "En cas de changement ou d'imprévu, prévenez-moi dès que possible :",
-    },
+  const base = buildBaseParams(lead, rdv);
+  // base est construit depuis `rdv` (la ligne déjà mise à jour) → toutes les
+  // valeurs (date_rdv_formatee, heure_rdv…) reflètent la NOUVELLE date.
+  const lienGCal = buildGoogleCalendarUrl({
+    date_rdv: rdv.date_rdv,
+    heure_rdv: rdv.heure_rdv,
+    duree_minutes: rdv.duree_minutes,
+    type_visite: rdv.type_visite,
+    client_name: lead.name,
+    client_phone: lead.phone,
+    notes_internes: rdv.notes_internes,
+    rue: lead.rue,
+    numero: lead.numero,
+    code_postal: lead.code_postal,
+    commune: lead.commune,
   });
+  const urlFicheLead = `${window.location.origin}/admin/lead/${lead.id}`;
+
+  // Comme à la confirmation : email client + mémo Adrian envoyés en parallèle et
+  // isolés (allSettled) — un échec de l'un ne bloque pas l'autre.
+  const results = await Promise.allSettled([
+    sendOne({
+      templateId: TPL_CHANGEMENT,
+      toEmail: lead.email,
+      params: {
+        ...base,
+        statut_rdv: "Votre rendez-vous a été déplacé",
+        message_principal:
+          "Je vous informe que votre rendez-vous a été déplacé à une nouvelle date. Voici les détails mis à jour. Les autres détails restent identiques.",
+        titre_contact: "EMPÊCHEMENT ?",
+        texte_contact: "En cas de changement ou d'imprévu, prévenez-moi dès que possible :",
+      },
+    }),
+    sendOne({
+      templateId: TPL_MEMO_ADRIAN,
+      toEmail: ADRIAN_EMAIL,
+      params: {
+        ...base,
+        notes_internes: rdv.notes_internes ?? "",
+        lien_google_calendar: lienGCal,
+        url_fiche_lead: urlFicheLead,
+      },
+    }),
+  ]);
+
+  const failed = results.filter((r) => r.status === "rejected");
+  if (failed.length > 0) {
+    failed.forEach((f) =>
+
+      console.error("Email modification RDV échoué :", (f as PromiseRejectedResult).reason)
+    );
+    throw new Error(`${failed.length} email(s) sur 2 n'ont pas pu être envoyés`);
+  }
 }
 
 export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
