@@ -650,8 +650,6 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
     emailSubjectConfirmation(messagePayload),
     emailPlaintextConfirmation(messagePayload),
   );
-  // T5 — SMS "carte de visite" : le client enregistre le numéro d'Adrian.
-  const carteVisiteHref = buildSmsHref(summary.phone, smsCarteDeVisite(summary.name));
 
   const copyEmailHtml = async () => {
     const html = emailHtmlConfirmation(messagePayload);
@@ -788,19 +786,6 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
             </Button>
           </div>
 
-          {/* T5 — carte de visite SMS (numéro d'Adrian + trace écrite). */}
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="w-full h-12 text-sm font-medium"
-          >
-            <a href={carteVisiteHref}>
-              <Contact className="w-5 h-5" />
-              Envoyer ma carte de visite (SMS)
-            </a>
-          </Button>
-
           {summary.email ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -931,7 +916,7 @@ const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
             </Link>
           </Button>
 
-          {/* T5 — carte de visite SMS (numéro d'Adrian + trace écrite). */}
+          {/* T5 — SMS "bien reçu" (accusé de réception après un appel sans RDV). */}
           <Button
             asChild
             variant="outline"
@@ -940,7 +925,7 @@ const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
           >
             <a href={carteVisiteHref}>
               <Contact className="w-5 h-5" />
-              Envoyer ma carte de visite (SMS)
+              Prévenir le client (bien reçu)
             </a>
           </Button>
 
