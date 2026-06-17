@@ -147,13 +147,13 @@ D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en bas
 > (placeholder email `@local.cuivre-electrique.com` + `hasUsableEmail` couvrent déjà les NOT NULL ;
 > `RdvRapide` insère déjà un lead sans email/sans adresse structurée en prod).
 
-- [ ] **T1 — Lead express (appel sans RDV)** ♻️ — 🟢 aucune DB — **S — P1**.
+- [x] **T1 — Lead express (appel sans RDV)** ♻️ — 🟢 aucune DB — **S — P1**. ✅ fait (`644b4b3`).
       Trou : `ManualLeadDialog` exige email + adresse structurée + services + message ; `RdvRapide`
       force une date/heure/type. Solution recommandée : **toggle « 📞 Juste un lead (pas encore de date) »**
       dans `RdvRapide` → masque date/heure/type/durée/délai, ne crée que le lead. Requis = nom + tél +
       commune ; email optionnel (placeholder réutilisé). Réutilise `createRdvRapide` (variante sans
       INSERT `rendez_vous`) + `SuccessScreen`. Alternative : page « Lead express » séparée (plus de code).
-- [ ] **T2 — Confirmation SMS/WhatsApp 1-tap depuis la FICHE lead** ♻️ — 🟢 aucune DB — **S — P1**.
+- [x] **T2 — Confirmation SMS/WhatsApp 1-tap depuis la FICHE lead** ♻️ — 🟢 aucune DB — **S — P1**. ✅ fait (`a28da2c`).
       Trou : caler un RDV depuis `LeadDetail` pour un lead sans email → seulement un toast ; `RendezVousCard`
       n'a aucun bouton SMS/WA, et « Réponses rapides » est générique (pas la date du RDV). Fix : ajouter
       2 boutons **SMS/WhatsApp** dans `RendezVousCard`, pré-remplis avec la date/heure réelles via
@@ -162,11 +162,11 @@ D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en bas
 - [x] **T3 — Rappel J-1 SMS/WhatsApp/Email 1-tap** ✅ **déjà fait** (= Phase 2.1, carte « Rappels demain »).
       Reste un micro-écart cosmétique (texte rappel inline dans `Aujourdhui.tsx:82-92` au lieu de
       `message-templates.ts`) — **S — P3**, pure cohérence, non urgent.
-- [ ] **T4 — Anti-doublon par téléphone** ♻️ — 🟢 aucune DB — **S — P1** (= C2/I.1, **remonté P1**).
-      À la création (express + RDV rapide) : si le tél existe déjà → bandeau « déjà {Nom} — ouvrir sa fiche ? ».
-- [ ] **T5 — SMS « carte de visite » post-1er appel** ♻️ — 🟢 aucune DB — **S — P2**.
-      Bouton sur l'écran succès : SMS 1-tap « c'est Adrian du Cuivre Électrique suite à notre appel… »
-      → le client enregistre le numéro + trace écrite. Réutilise `buildSmsHref` + 1 template court neuf.
+- [x] **T4 — Anti-doublon par téléphone** ♻️ — 🟢 aucune DB — **S — P1** (= C2/I.1, **remonté P1**). ✅ fait (`9885984`).
+      Au blur du tél : bandeau « déjà {Nom} — ouvrir sa fiche ? » (informe sans bloquer). `findLeadsByPhone`.
+- [x] **T5 — SMS « carte de visite » post-1er appel** ♻️ — 🟢 aucune DB — **S — P2**. ✅ fait (`2044831`).
+      Bouton sur les 2 écrans succès : SMS 1-tap « c'est Adrian du Cuivre Électrique suite à notre appel… »
+      → le client enregistre le numéro + trace écrite. `smsCarteDeVisite` + `buildSmsHref`.
 - [ ] **T6 — Coller le numéro depuis le presse-papier** ♻️ — 🟢 aucune DB — **S — P3**.
       À l'ouverture de Lead express, si le presse-papier contient un numéro → proposer « Coller 0485… ».
       `navigator.clipboard.readText`, échec silencieux. Confort (dépend permissions navigateur).
@@ -256,3 +256,7 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   **ne demandent AUCUN changement DB** (placeholder email + `hasUsableEmail` existants). Carte blanche :
   T4 anti-doublon tél (P1), T5 SMS carte de visite, T6 coller numéro, T7 carte « leads à rappeler ».
   🟡 **À valider avec Adrian. Aucun code écrit.** Ordre proposé : T1 → T2 → T4.
+- 2026-06-17 — **PHASE 6 livrée** sur `feat/intake-telephone` : T1 lead express (`644b4b3`),
+  T2 confirmation SMS/WA datée sur la fiche (`a28da2c`), T4 anti-doublon téléphone (`9885984`),
+  T5 SMS carte de visite (`2044831`). Build/typecheck/lint verts, **zéro changement DB**.
+  Reste P2/P3 : T6 (coller numéro, optionnel), T7 (carte « leads à rappeler », heuristique). Preview poussée.
