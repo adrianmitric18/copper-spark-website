@@ -16,6 +16,7 @@ import {
   Mail,
   Send,
   Copy,
+  Contact,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
+  smsCarteDeVisite,
   emailPlaintextConfirmation,
   emailHtmlConfirmation,
   emailSubjectConfirmation,
@@ -648,6 +650,8 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
     emailSubjectConfirmation(messagePayload),
     emailPlaintextConfirmation(messagePayload),
   );
+  // T5 — SMS "carte de visite" : le client enregistre le numéro d'Adrian.
+  const carteVisiteHref = buildSmsHref(summary.phone, smsCarteDeVisite(summary.name));
 
   const copyEmailHtml = async () => {
     const html = emailHtmlConfirmation(messagePayload);
@@ -784,6 +788,19 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
             </Button>
           </div>
 
+          {/* T5 — carte de visite SMS (numéro d'Adrian + trace écrite). */}
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full h-12 text-sm font-medium"
+          >
+            <a href={carteVisiteHref}>
+              <Contact className="w-5 h-5" />
+              Envoyer ma carte de visite (SMS)
+            </a>
+          </Button>
+
           {summary.email ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -851,6 +868,8 @@ interface LeadSuccessScreenProps {
 
 const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
   const telHref = `tel:${summary.phone.replace(/\s/g, "")}`;
+  // T5 — SMS "carte de visite" : le client enregistre le numéro d'Adrian.
+  const carteVisiteHref = buildSmsHref(summary.phone, smsCarteDeVisite(summary.name));
 
   return (
     <AdminShell mobileTitle="Lead créé">
@@ -910,6 +929,19 @@ const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
               <CalendarIcon className="w-5 h-5" />
               Voir la fiche & caler un RDV
             </Link>
+          </Button>
+
+          {/* T5 — carte de visite SMS (numéro d'Adrian + trace écrite). */}
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full h-12 text-sm font-medium"
+          >
+            <a href={carteVisiteHref}>
+              <Contact className="w-5 h-5" />
+              Envoyer ma carte de visite (SMS)
+            </a>
           </Button>
 
           <div className="grid grid-cols-2 gap-3">

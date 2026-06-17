@@ -332,6 +332,19 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
   return lines.join("\n");
 }
 
+/**
+ * T5 — SMS "carte de visite" envoyé juste après un 1er appel. Donne au client
+ * le numéro d'Adrian (qu'il enregistre) + une trace écrite, sans rien sur un RDV.
+ */
+export function smsCarteDeVisite(clientName: string): string {
+  const prenom = clientName.trim().split(/\s+/)[0] || clientName.trim();
+  return [
+    `Bonjour ${prenom}, c'est ${COMPANY.ownerFirstName} de ${COMPANY.name} suite à notre appel.`,
+    `Vous avez mon numéro : ${COMPANY.tel}. Enregistrez-le, je reste joignable ici.`,
+    `À bientôt — ${COMPANY.site}`,
+  ].join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // WhatsApp — Confirmations
 // ---------------------------------------------------------------------------
