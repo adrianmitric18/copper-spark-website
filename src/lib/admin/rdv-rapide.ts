@@ -120,6 +120,43 @@ export interface LeadRapideResult {
   leadId: string;
 }
 
+// T4 — Anti-doublon par téléphone.
+// Normalise un numéro belge en digits significatifs (sans préfixe 0 / +32),
+// pour comparer deux numéros saisis dans des formats différents.
+export function normalizePhone(raw: string): string {
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("0032")) d = d.slice(4);
+  else if (d.startsWith("32") && d.length > 9) d = d.slice(2);
+  else if (d.startsWith("0")) d = d.slice(1);
+  return d;
+}
+
+export interface LeadMatch {
+  id: string;
+  name: string;
+  phone: string;
+  status: string | null;
+}
+
+/**
+ * Cherche les leads existants ayant le même numéro (anti-doublon, T4).
+ * Pré-filtre serveur lâche (ilike sur les digits intercalés de "%", tolère les
+ * séparateurs) puis comparaison EXACTE normalisée côté client. Aucune colonne
+ * ni contrainte DB : pure lecture.
+ */
+export async function findLeadsByPhone(rawPhone: string): Promise<LeadMatch[]> {
+  const norm = normalizePhone(rawPhone);
+  if (norm.length < 6) return []; // trop court pour être fiable
+  const pattern = "%" + norm.split("").join("%") + "%";
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id, name, phone, status")
+    .ilike("phone", pattern)
+    .limit(20);
+  if (error) throw error;
+  return (data ?? []).filter((l) => normalizePhone(l.phone) === norm);
+}
+
 /** Crée un lead minimal sans rendez-vous (lead express téléphone). */
 export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapideResult> {
   const placeholderEmail = `lead-${Date.now()}@local.cuivre-electrique.com`;

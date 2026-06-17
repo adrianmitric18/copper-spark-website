@@ -37,11 +37,13 @@ import AdminLoading from "@/components/admin/AdminLoading";
 import {
   createRdvRapide,
   createLeadRapide,
+  findLeadsByPhone,
   TYPE_VISITES,
   dureeDefaut,
   delaiDefaut,
   DELAI_APPEL_PRESETS,
   type TypeVisite,
+  type LeadMatch,
 } from "@/lib/admin/rdv-rapide";
 import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
@@ -119,6 +121,17 @@ const RdvRapide = () => {
   const [success, setSuccess] = useState<SuccessState | null>(null);
   // T1 — mode "lead express" : on masque les champs RDV et on ne crée que le lead.
   const [sansRdv, setSansRdv] = useState(false);
+  // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
+  const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
+
+  const checkDuplicates = async (phone: string) => {
+    try {
+      setDuplicates(await findLeadsByPhone(phone));
+    } catch {
+      // L'anti-doublon ne doit jamais bloquer la saisie : on ignore l'erreur.
+      setDuplicates([]);
+    }
+  };
 
   useEffect(() => {
     document.title = "RDV rapide – Le Cuivre Admin";
@@ -319,7 +332,9 @@ const RdvRapide = () => {
             icon={<Phone className="w-4 h-4" />}
           >
             <Input
-              {...form.register("phone")}
+              {...form.register("phone", {
+                onBlur: (e) => checkDuplicates(e.target.value),
+              })}
               type="tel"
               placeholder="Ex: 0485 12 34 56"
               autoComplete="tel"
@@ -327,6 +342,28 @@ const RdvRapide = () => {
               className="h-12 text-base"
             />
           </Field>
+
+          {/* T4 — bandeau anti-doublon : informe sans bloquer (nouveau client possible). */}
+          {duplicates.length > 0 && (
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm space-y-2">
+              <p className="font-medium text-amber-700">
+                ⚠️ Ce numéro est déjà enregistré
+              </p>
+              <ul className="space-y-1.5">
+                {duplicates.map((d) => (
+                  <li key={d.id} className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{d.name}</span>
+                    <Button asChild size="sm" variant="outline" className="h-8 shrink-0">
+                      <Link to={`/admin/lead/${d.id}`}>Ouvrir la fiche</Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                Continue quand même si c'est un nouveau client.
+              </p>
+            </div>
+          )}
 
           <Field
             label="Email"
