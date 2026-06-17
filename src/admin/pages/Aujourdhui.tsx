@@ -31,7 +31,7 @@ import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
 import { type RendezVous } from "@/lib/rdv/constants";
-import { buildSmsHref, buildWhatsappHref } from "@/lib/admin/message-templates";
+import { buildSmsHref, buildWhatsappHref, COMPANY } from "@/lib/admin/message-templates";
 import { supabase } from "@/integrations/supabase/client";
 import AdminShell from "@/admin/layout/AdminShell";
 import { toast } from "sonner";
@@ -78,17 +78,30 @@ const hasUsableEmail = (email: string | null | undefined): boolean => {
   return e.includes("@") && e !== "non fourni" && !e.endsWith("@local.cuivre-electrique.com");
 };
 
-// Texte court de rappel J-1 pour SMS/WhatsApp.
+// Texte de rappel J-1 pour SMS/WhatsApp (lignes 🔧/📍 affichées seulement si l'info existe).
 const rappelText = (r: RdvWithLead): string => {
   const dateLong = new Date(`${r.date_rdv}T12:00:00`).toLocaleDateString("fr-BE", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-  const firstName = r.lead_name.trim().split(/\s+/)[0] || r.lead_name;
-  return `Bonjour ${firstName}, petit rappel pour notre rendez-vous demain ${dateLong} à ${formatHeure(
-    r.heure_rdv,
-  )}. À demain ! Adrian — Le Cuivre Électrique`;
+  const prenom = r.lead_name.trim().split(/\s+/)[0] || r.lead_name;
+  const adresse = [
+    [r.lead_rue, r.lead_numero].filter(Boolean).join(" "),
+    [r.lead_code_postal, r.lead_commune].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const lines = [
+    `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique.`,
+    `Petit rappel pour demain :`,
+    `📅 ${dateLong} à ${formatHeure(r.heure_rdv)}`,
+  ];
+  if (r.type_visite) lines.push(`🔧 ${r.type_visite}`);
+  if (adresse) lines.push(`📍 ${adresse}`);
+  lines.push(`Si ça ne convient plus, prévenez-moi au ${COMPANY.tel} et on décale sans souci.`);
+  lines.push(`À demain ! ${COMPANY.ownerFirstName}`);
+  return lines.join("\n");
 };
 
 const Aujourdhui = () => {

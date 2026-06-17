@@ -99,6 +99,100 @@ export interface RdvRapideResult {
 }
 
 /**
+ * T1 — Lead express (appel sans RDV).
+ * Entrée minimale d'un lead pris au téléphone quand AUCUNE date n'est encore
+ * fixée. Mêmes placeholders que `createRdvRapide` pour respecter les NOT NULL
+ * du schema `leads` (email/adresse/message), donc ZÉRO changement DB. Adrian
+ * enrichit / cale le RDV plus tard depuis la fiche.
+ */
+export interface LeadRapideInput {
+  name: string;
+  phone: string;
+  /** Email du client, optionnel. Si vide → placeholder local (hasUsableEmail le filtre). */
+  email?: string;
+  /** Adresse / commune, optionnelle. */
+  address?: string;
+  /** Notes internes courtes. */
+  notes?: string;
+}
+
+export interface LeadRapideResult {
+  leadId: string;
+}
+
+// T4 — Anti-doublon par téléphone.
+// Normalise un numéro belge en digits significatifs (sans préfixe 0 / +32),
+// pour comparer deux numéros saisis dans des formats différents.
+export function normalizePhone(raw: string): string {
+  let d = raw.replace(/\D/g, "");
+  if (d.startsWith("0032")) d = d.slice(4);
+  else if (d.startsWith("32") && d.length > 9) d = d.slice(2);
+  else if (d.startsWith("0")) d = d.slice(1);
+  return d;
+}
+
+export interface LeadMatch {
+  id: string;
+  name: string;
+  phone: string;
+  status: string | null;
+}
+
+/**
+ * Cherche les leads existants ayant le même numéro (anti-doublon, T4).
+ * Pré-filtre serveur lâche (ilike sur les digits intercalés de "%", tolère les
+ * séparateurs) puis comparaison EXACTE normalisée côté client. Aucune colonne
+ * ni contrainte DB : pure lecture.
+ */
+export async function findLeadsByPhone(rawPhone: string): Promise<LeadMatch[]> {
+  const norm = normalizePhone(rawPhone);
+  if (norm.length < 6) return []; // trop court pour être fiable
+  const pattern = "%" + norm.split("").join("%") + "%";
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id, name, phone, status")
+    .ilike("phone", pattern)
+    .limit(20);
+  if (error) throw error;
+  return (data ?? []).filter((l) => normalizePhone(l.phone) === norm);
+}
+
+/** Crée un lead minimal sans rendez-vous (lead express téléphone). */
+export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapideResult> {
+  const placeholderEmail = `lead-${Date.now()}@local.cuivre-electrique.com`;
+  const emailFinal = input.email?.trim() || placeholderEmail;
+  const adresseFinale = input.address?.trim() || "À préciser";
+  const messageFinal =
+    input.notes?.trim() ||
+    `Lead créé par téléphone le ${new Date().toLocaleDateString("fr-BE")}.`;
+
+  // La policy RLS d'INSERT minimale ("Admin can insert rdv_rapide leads",
+  // migration 20260429100000) exige source='rdv_rapide' ET status='rdv_pris'.
+  // On réutilise donc ces valeurs (mêmes que createRdvRapide, qui passe déjà) :
+  // l'absence de rendez_vous distingue un lead express d'un RDV rapide, pas le
+  // statut. Aligné ici pour rester SANS changement DB.
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .insert({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      email: emailFinal,
+      address: adresseFinale,
+      client_type: "Particulier",
+      services: ["rdv_rapide"],
+      message: messageFinal,
+      gdpr_consent: true,
+      source: "rdv_rapide",
+      status: "rdv_pris",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return { leadId: lead.id };
+}
+
+/**
  * Crée un lead minimal puis un rendez_vous attaché. Si l'INSERT du rdv
  * échoue, on supprime le lead créé pour ne pas laisser de fantôme.
  */
