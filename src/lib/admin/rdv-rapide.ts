@@ -99,6 +99,58 @@ export interface RdvRapideResult {
 }
 
 /**
+ * T1 — Lead express (appel sans RDV).
+ * Entrée minimale d'un lead pris au téléphone quand AUCUNE date n'est encore
+ * fixée. Mêmes placeholders que `createRdvRapide` pour respecter les NOT NULL
+ * du schema `leads` (email/adresse/message), donc ZÉRO changement DB. Adrian
+ * enrichit / cale le RDV plus tard depuis la fiche.
+ */
+export interface LeadRapideInput {
+  name: string;
+  phone: string;
+  /** Email du client, optionnel. Si vide → placeholder local (hasUsableEmail le filtre). */
+  email?: string;
+  /** Adresse / commune, optionnelle. */
+  address?: string;
+  /** Notes internes courtes. */
+  notes?: string;
+}
+
+export interface LeadRapideResult {
+  leadId: string;
+}
+
+/** Crée un lead minimal sans rendez-vous (lead express téléphone). */
+export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapideResult> {
+  const placeholderEmail = `lead-${Date.now()}@local.cuivre-electrique.com`;
+  const emailFinal = input.email?.trim() || placeholderEmail;
+  const adresseFinale = input.address?.trim() || "À préciser";
+  const messageFinal =
+    input.notes?.trim() ||
+    `Lead créé par téléphone le ${new Date().toLocaleDateString("fr-BE")}.`;
+
+  const { data: lead, error } = await supabase
+    .from("leads")
+    .insert({
+      name: input.name.trim(),
+      phone: input.phone.trim(),
+      email: emailFinal,
+      address: adresseFinale,
+      client_type: "Particulier",
+      services: ["À préciser"],
+      message: messageFinal,
+      gdpr_consent: true,
+      source: "telephone",
+      status: "nouveau",
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return { leadId: lead.id };
+}
+
+/**
  * Crée un lead minimal puis un rendez_vous attaché. Si l'INSERT du rdv
  * échoue, on supprime le lead créé pour ne pas laisser de fantôme.
  */
