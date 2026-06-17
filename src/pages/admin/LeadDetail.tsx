@@ -182,6 +182,17 @@ const LeadDetail = () => {
     if (lead) document.title = `${lead.name} – Admin`;
   }, [lead]);
 
+  // Phase 1.3 — la barre d'actions « Caler RDV » est collée en haut, mais le
+  // formulaire est rendu tout en bas de la page. Sans scroll, le clic ouvre le
+  // formulaire hors écran et donne l'impression que rien ne se passe. On amène
+  // donc la carte du formulaire dans le viewport dès qu'on l'affiche.
+  const rdvSectionRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (showForm) {
+      rdvSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [showForm]);
+
   const updateStatus = async (newStatus: string) => {
     if (!lead) return;
     try {
@@ -830,7 +841,9 @@ const LeadDetail = () => {
       )}
 
       {/* Planifier / modifier RDV */}
-      <Card className="p-6 space-y-4 border-[hsl(var(--copper))]/30">
+      {/* scroll-mt : marge sous la barre d'actions collée (top-14 mobile / top-0 desktop)
+          pour que le titre ne soit pas masqué par la barre au scrollIntoView. */}
+      <Card ref={rdvSectionRef} className="scroll-mt-32 md:scroll-mt-20 p-6 space-y-4 border-[hsl(var(--copper))]/30">
         <h2 className="font-semibold text-lg flex items-center gap-2">
           <CalendarPlus className="w-5 h-5 text-[hsl(var(--copper))]" />
           {editing ? "Modifier le rendez-vous" : rdv ? "Replanifier" : "Planifier un rendez-vous"}
