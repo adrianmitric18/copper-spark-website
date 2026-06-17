@@ -91,6 +91,52 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
 - [ ] **I.3 — « Prochaine action » par lead** ♻️ : un libellé clair (Appeler / Relancer / RAS) calculé
       depuis statut + dernier contact, pour vider le cerveau et ne rien oublier.
 
+## PHASE 5 — Proposition « terrain & argent » (carte blanche, 2026-06-17) — 🟡 À VALIDER AVEC ADRIAN
+> Liste consolidée présentée à Adrian le 2026-06-17. **Aucun code tant qu'elle n'est pas tranchée.**
+> Effort : S (≤½j) · M (1-2j) · L (3j+/risqué). 🟥 = SQL à appliquer par Adrian · 🟦 = brique infra (OK requis).
+> Note : A1/A2 recoupent Phase 3-4, B1 recoupe 2.4, C2/C3/C4 recoupent I.1/I.3/I.2 (regroupés ici par priorité).
+
+### Bloc A — Argent : devis & encaissement
+- [ ] **A1 — Relances devis 1-tap (J+3/7/14)** ♻️ — 🟥 `leads.devis_envoye_at` (date) — **S — P1**
+      (= Phase 3). Templates `message-templates.ts` déjà écrits. Pas de cron : envoi manuel groupé.
+- [ ] **A2 — Suivi devis « argent en attente »** ♻️ — 🟥 `leads.devis_montant` (numeric) + `devis_statut`
+      (envoyé/accepté/refusé) — **M — P1** (= Phase 4). Vue total CA en attente.
+- [ ] **A3 — QR de paiement SEPA / Payconiq** (acompte + solde) 🆕 — génération QR côté client +
+      communication structurée belge `+++/+++` (mod-97). **Aucune DB** (sans état au départ). **M — P1**.
+- [ ] **A4 — Demande d'acompte à la programmation d'une intervention** ♻️ (utilise A3) — Aucune DB — **S — P2**.
+
+### Bloc B — Terrain : gagner du temps sur place
+- [ ] **B1 — Checklist « à ramener / reste à faire »** ♻️ — 🟥 élargir CHECK `checklist_type` (+`a_ramener`,
+      SQL déjà rédigé section STOP DB) — **S — P1** (= Phase 2.4). Évite les retours atelier.
+- [ ] **B2 — Photos de visite attachées au lead** (capture depuis le tél) ♻️ bucket `lead-photos` +
+      `leads.photo_urls` + URLs signées + pattern `ImageUploader` — Aucune DB (vérifier policy insert admin) — **M — P2**.
+- [ ] **B3 — « Je suis en route — j'arrive à HH:MM » 1-tap** ♻️ `message-templates` + `delai_appel_minutes`
+      (déjà en base) — Aucune DB — **S — P2**.
+- [ ] **B4 — Itinéraire de la journée multi-arrêts** ♻️ Maps `dir` waypoints + cockpit — Aucune DB — **S — P2**.
+- [ ] **B5 — Minuteur d'heures par intervention** (start/stop, cumul) ♻️ `interventions` — 🟥
+      `interventions.heures_reelles` (numeric) ou table de pointages — **M — P2**. Facturer les vraies heures.
+
+### Bloc C — Disponibilités & hygiène des leads
+- [ ] **C1 — Prochains créneaux libres + détection de conflit** (RDV **et** interventions bloquent le temps)
+      ♻️ requêtes existantes + `formatters` — Aucune DB — **M — P2**.
+- [ ] **C2 — Détection doublon de lead (par téléphone)** ♻️ `rdv-rapide`/form — Aucune DB — **S — P2** (= I.1).
+- [ ] **C3 — « Prochaine action » par lead** (Appeler/Relancer/RAS) ♻️ statut + dates — Aucune DB
+      (option 🟥 `leads.rappel_le` date) — **S — P2** (= I.3).
+- [ ] **C4 — Anti-doublon RDV / rollback** ♻️ `handleRdvSubmit` — Aucune DB — **S — P2** (= I.2, aussi un fix).
+
+### Bloc D — Ambitieux (à cadrer ensemble)
+- [ ] **D1 — Mode hors-ligne en lecture** (journée + fiches + checklist) + file de synchro ♻️ PWA/Workbox
+      déjà en place — 🆕 cache IndexedDB + file d'écritures — **aucune infra serveur** — **L — P2**.
+      Justif : caves / constructions neuves / rural sans réseau ; données aujourd'hui en `NetworkOnly`.
+- [ ] **D2 — Mini-devis chiffré sur place** (catalogue prix perso → total → PDF/partage) — 🟥 table
+      `prestations`/`materiaux` — **L — P3**. ⚠️ proche ligne rouge « facturation maison » (devis ≠ facture Peppol).
+- [ ] **D3 — Journal kilométrique par intervention** (déduction fiscale) — 🟥 `interventions.km` — **M — P3**.
+- [ ] **D4 — Prise de RDV self-service client** (créneaux) 🆕 page publique + dispos (s'appuie sur C1) — **L — P3**.
+      ⚠️ perte de contrôle de l'agenda pour un solo.
+
+**Ordre recommandé** : Bloc A + B1 (P1, fort levier, 4 petits ajouts DB) → B2-B5 + C1-C4 (P2, surtout sans DB) →
+D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en base.
+
 ## ❌ Hors-scope (acté)
 Facturation maison (Peppol B2B obligatoire en Belgique → outil externe certifié), stats vanity,
 notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle.
@@ -159,3 +205,9 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   liste filtrable, choix validé par Adrian). Build/typecheck/lint verts, poussés.
   **PHASE 1 100 % terminée.** Restent en attente du SQL d'Adrian : 2.4 + Phase 3 (relances, champ
   `devis_envoye_at`) + Phase 4 (suivi devis) + mémo audio.
+- 2026-06-17 — 3 bugs terrain corrigés et poussés (`redesign/admin-cockpit`) : scroll vers le formulaire
+  « Caler RDV » (`cc00f8c`), checklist idempotente + mémo non bloqué par notes vides (`ea1e94b`),
+  mémo Adrian aussi sur **modification** de RDV avec la nouvelle date (`61881f1`).
+- 2026-06-17 — **Proposition carte blanche** posée en **PHASE 5** (terrain & argent) : 17 idées priorisées
+  (A devis/encaissement, B terrain, C dispos/hygiène, D ambitieux). 🟡 **À valider avec Adrian avant tout code.**
+  Recommandation : Bloc A + B1 d'abord (P1). Hors-scope reconfirmé (Peppol maison, vanity, push, multi-user).
