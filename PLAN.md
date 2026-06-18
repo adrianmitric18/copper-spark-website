@@ -270,3 +270,11 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   (`bd93d72`, heuristique sans DB + `?rdv=1` pour Caler RDV 1-tap) et T6 coller le numéro depuis le
   presse-papier (`637a47d`). Build/typecheck/lint verts, **zéro changement DB**. Preview poussée.
   **Pas de merge sur `main` sans OK d'Adrian.**
+- 2026-06-18 — **Retouches messages** (`856ebfc`, même branche) demandées par Adrian, après revue
+  de diff (fix `b978cb6` : T6 ne propose plus une date collée comme numéro) : (1) emoji 📅 → 🗓️
+  dans la confirmation SMS/WhatsApp + le rappel J-1 ; (2) dernière ligne du SMS de confirmation
+  réécrite (« appelez-moi au {tel} ou répondez à ce message ») — WhatsApp inchangé ; (3) nouvelle
+  **confirmation courte** (SMS + WhatsApp) sur `RendezVousCard`, à côté de la complète, pour qu'Adrian
+  choisisse (`confirmationCourte`) ; (4) message « bien reçu » neutralisé (`smsCarteDeVisite` →
+  `smsBienRecu`, ne suppose plus un appel) + ajouté en réponse rapide SMS/WhatsApp sur la fiche lead.
+  Build/typecheck/lint verts, **zéro changement DB**. `/karen` : 9/10, 0 critique. Preview poussée.
