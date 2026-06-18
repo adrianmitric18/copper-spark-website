@@ -316,23 +316,33 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
   const lines = [
     `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique — content d'avoir échangé avec vous.`,
     `C'est noté de mon côté :`,
-    `📅 ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
+    `🗓️ ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.typeVisite) lines.push(`🔧 ${payload.typeVisite}`);
   if (payload.address) lines.push(`📍 ${payload.address}`);
-  lines.push(`Si quoi que ce soit change, appelez ou répondez au ${COMPANY.tel}, on s'arrange.`);
+  lines.push(`Si quoi que ce soit change, appelez-moi au ${COMPANY.tel} ou répondez à ce message, on s'arrange.`);
   lines.push(`À très bientôt ! ${COMPANY.ownerFirstName}`);
   return lines.join("\n");
 }
 
 /**
- * T5 — SMS "bien reçu" après un appel SANS RDV. Accusé de réception (le client
- * qui appelle a déjà le numéro, inutile de le redonner). Trace écrite + promesse
- * de rappel.
+ * Confirmation COURTE (SMS + WhatsApp), au choix d'Adrian quand le client a déjà
+ * donné date + adresse pendant l'appel : un simple "c'est noté" daté, sans
+ * programme ni adresse. Texte identique sur les deux supports.
  */
-export function smsCarteDeVisite(clientName: string): string {
+export function confirmationCourte(payload: ConfirmationRdvPayload): string {
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
+  return `Parfait ${prenom} 👋 Bien reçu, c'est noté de mon côté pour le ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}. À très bientôt ! ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
+}
+
+/**
+ * SMS/WhatsApp "bien reçu" neutre — accusé de réception envoyable à n'importe
+ * quel lead (appel OU message écrit), sans présumer du canal. Remplace l'ancien
+ * smsCarteDeVisite (qui supposait un appel). Trace écrite + promesse de suite.
+ */
+export function smsBienRecu(clientName: string): string {
   const prenom = clientName.trim().split(/\s+/)[0] || clientName.trim();
-  return `Bonjour ${prenom} 👋 Merci pour votre appel. C'est bien noté, je reviens vers vous rapidement. À bientôt, ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
+  return `Bonjour ${prenom} 👋 Bien reçu, merci ! Je reviens vers vous très vite pour la suite. À bientôt, ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
 }
 
 /**
@@ -354,7 +364,7 @@ export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): s
   const lines = [
     `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique — content d'avoir échangé avec vous.`,
     `C'est noté de mon côté :`,
-    `📅 ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
+    `🗓️ ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
   ];
   if (payload.typeVisite) lines.push(`🔧 ${payload.typeVisite}`);
   if (payload.address) lines.push(`📍 ${payload.address}`);

@@ -103,7 +103,7 @@ const rappelText = (r: RdvWithLead): string => {
   const lines = [
     `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique.`,
     `Petit rappel pour demain :`,
-    `📅 ${dateLong} à ${formatHeure(r.heure_rdv)}`,
+    `🗓️ ${dateLong} à ${formatHeure(r.heure_rdv)}`,
   ];
   if (r.type_visite) lines.push(`🔧 ${r.type_visite}`);
   if (adresse) lines.push(`📍 ${adresse}`);

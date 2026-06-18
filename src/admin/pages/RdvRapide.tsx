@@ -50,7 +50,7 @@ import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
-  smsCarteDeVisite,
+  smsBienRecu,
   emailPlaintextConfirmation,
   emailHtmlConfirmation,
   emailSubjectConfirmation,
@@ -907,8 +907,8 @@ interface LeadSuccessScreenProps {
 
 const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
   const telHref = `tel:${summary.phone.replace(/\s/g, "")}`;
-  // T5 — SMS "carte de visite" : le client enregistre le numéro d'Adrian.
-  const carteVisiteHref = buildSmsHref(summary.phone, smsCarteDeVisite(summary.name));
+  // T5 — SMS "bien reçu" : accusé de réception neutre après création du lead.
+  const carteVisiteHref = buildSmsHref(summary.phone, smsBienRecu(summary.name));
 
   return (
     <AdminShell mobileTitle="Lead créé">

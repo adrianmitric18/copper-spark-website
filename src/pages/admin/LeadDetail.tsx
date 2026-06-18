@@ -53,6 +53,7 @@ import {
   LEAD_STATUSES,
   leadSourceLabel,
 } from "@/lib/admin/types";
+import { smsBienRecu } from "@/lib/admin/message-templates";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import CollapsibleCard from "@/components/admin/CollapsibleCard";
@@ -75,7 +76,7 @@ const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = 
   { label: "Je vous rappelle", body: (n) => `Bonjour ${n}, je vous rappelle très vite au sujet de votre demande. Adrian — Le Cuivre Électrique` },
   { label: "Indispo cette semaine", body: (n) => `Bonjour ${n}, je suis complet cette semaine, mais je reviens vers vous pour caler une date au plus tôt. Adrian — Le Cuivre Électrique` },
   { label: "En route, j'arrive", body: (n) => `Bonjour ${n}, je suis en route, j'arrive d'ici peu. Adrian — Le Cuivre Électrique` },
-  { label: "Bien reçu", body: (n) => `Bonjour ${n}, bien reçu, merci ! Je traite votre demande et reviens vers vous rapidement. Adrian — Le Cuivre Électrique` },
+  { label: "Bien reçu", body: (n) => smsBienRecu(n) },
 ];
 
 // Phase 2.5 — dictée vocale (Web Speech API, gratuite, surtout utile sur
