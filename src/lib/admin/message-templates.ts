@@ -335,6 +335,16 @@ export function smsCarteDeVisite(clientName: string): string {
   return `Bonjour ${prenom} 👋 Merci pour votre appel. C'est bien noté, je reviens vers vous rapidement. À bientôt, ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
 }
 
+/**
+ * T7 — SMS de reprise de contact pour un lead « à rappeler » (sans RDV, en
+ * attente). Sert de filet quand Adrian ne peut pas appeler tout de suite :
+ * il propose de fixer un créneau et redonne son numéro.
+ */
+export function smsRappelLead(clientName: string): string {
+  const prenom = clientName.trim().split(/\s+/)[0] || clientName.trim();
+  return `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique. Je reviens vers vous au sujet de votre demande — dites-moi quand vous êtes joignable et on cale ça. ${COMPANY.tel}`;
+}
+
 // ---------------------------------------------------------------------------
 // WhatsApp — Confirmations
 // ---------------------------------------------------------------------------
