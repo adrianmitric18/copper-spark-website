@@ -128,6 +128,7 @@ export type Database = {
           code_postal: string | null
           commune: string | null
           created_at: string
+          devis_envoye_at: string | null
           email: string
           gdpr_consent: boolean
           id: string
@@ -150,6 +151,7 @@ export type Database = {
           code_postal?: string | null
           commune?: string | null
           created_at?: string
+          devis_envoye_at?: string | null
           email: string
           gdpr_consent: boolean
           id?: string
@@ -172,6 +174,7 @@ export type Database = {
           code_postal?: string | null
           commune?: string | null
           created_at?: string
+          devis_envoye_at?: string | null
           email?: string
           gdpr_consent?: boolean
           id?: string

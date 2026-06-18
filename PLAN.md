@@ -72,9 +72,14 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
       si non supporté. ✅ fait. **Filet « mémo audio » ⛔ STOP** : demande un bucket storage dédié
       (`lead-audio`) + policies → à valider (voir ci-dessous).
 
-## PHASE 3 — Relances devis ⛔ (DB)
-- [ ] **3.1 — STOP : champ `devis_envoye_at`** sur `leads` → je fournirai le SQL, Adrian applique.
-- [ ] **3.2 — Paliers J+3/7/14** ♻️ (templates déjà écrits) en 1 tap depuis « Aujourd'hui ».
+## PHASE 3 — Relances devis (DB) — ✅ livré (branche `feature/tier1-relances`)
+- [x] **3.1 — champ `devis_envoye_at`** sur `leads` ✅ SQL `ADD COLUMN devis_envoye_at date`
+      **appliqué + vérifié par Adrian le 2026-06-17** (1 ligne : date, YES). Colonne live confirmée
+      via l'API REST (200 [] sous RLS). `setLeadDevisEnvoye()` dans queries.ts ; stamp auto au
+      passage en « devis envoyé » + bouton manuel sur la fiche (carte Gestion).
+- [x] **3.2 — Paliers J+3/7/14** ♻️ en 1 tap depuis « Aujourd'hui » (carte « Relances devis »).
+      Réutilise les templates `…Relance1/2/3` + `buildSmsHref/Whatsapp/Mailto`. Seuils & sélection
+      de template vérifiés (test esbuild). **Reste : test E2E sur preview par Adrian (auth lien magique).**
 
 ## PHASE 4 — Suivi devis « argent en attente » ⛔ (DB)
 - [ ] **4.1 — STOP : champs `devis_montant` + `devis_statut`** (envoyé/accepté/refusé) → SQL fourni, Adrian applique.
@@ -256,6 +261,12 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
 - 2026-06-17 — **Proposition carte blanche** posée en **PHASE 5** (terrain & argent) : 17 idées priorisées
   (A devis/encaissement, B terrain, C dispos/hygiène, D ambitieux). 🟡 **À valider avec Adrian avant tout code.**
   Recommandation : Bloc A + B1 d'abord (P1). Hors-scope reconfirmé (Peppol maison, vanity, push, multi-user).
+- 2026-06-17 — Redesign `redesign/admin-cockpit` **mergé sur `main`** (`--no-ff`, commit `3fa9980`) et poussé
+  → nouveau cockpit en ligne. Le pull précédent n'avait rien ramené (merge jamais effectué) : vérifié strictement
+  avant/après. Branche `feature/tier1-relances` créée depuis main à jour.
+- 2026-06-17 — **Tier 1 #1 (Relances devis) livré** sur `feature/tier1-relances` (commit `9dd218e`). Phase 3.1/3.2
+  cochées. SQL `devis_envoye_at` appliqué+vérifié par Adrian. Vérifs faites : build/typecheck/lint, colonne live
+  via REST, logique paliers + templates (esbuild). **En attente : test E2E sur preview par Adrian, puis suite Tier 1.**
 - 2026-06-17 — **PHASE 6 — Intake TÉLÉPHONE (priorité #1)** posée. Cartographie du code : T3 (rappel J-1)
   déjà fait ; T1 (lead express) + T2 (confirmation SMS/WA depuis la fiche) sont les 2 trous réels et
   **ne demandent AUCUN changement DB** (placeholder email + `hasUsableEmail` existants). Carte blanche :
@@ -278,3 +289,8 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   choisisse (`confirmationCourte`) ; (4) message « bien reçu » neutralisé (`smsCarteDeVisite` →
   `smsBienRecu`, ne suppose plus un appel) + ajouté en réponse rapide SMS/WhatsApp sur la fiche lead.
   Build/typecheck/lint verts, **zéro changement DB**. `/karen` : 9/10, 0 critique. Preview poussée.
+- 2026-06-18 — PHASE 6 (`feature/leads-a-rappeler`) **mergée sur `main`** (`--no-ff`, commit `2032943`,
+  OK explicite d'Adrian) → en prod. `feature/tier1-relances` ensuite **mise à jour depuis `main`**
+  (`git merge main`) : conflits résolus dans `Aujourdhui.tsx` (imports icônes + message-templates +
+  memos `relanceLeads`/`leadsARappeler`) et `PLAN.md` — **les deux jeux de cartes conservés**
+  (Relances devis + Leads à rappeler + rappel J-1). Preview relances à jour. **Pas de merge `main` sans OK.**
