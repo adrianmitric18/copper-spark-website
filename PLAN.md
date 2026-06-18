@@ -1,7 +1,8 @@
 # PLAN.md — Redesign & extension de l'admin (Le Cuivre Électrique)
 
 > **Source de vérité unique.** En cas de doute, ce fichier tranche (pas la mémoire de conversation).
-> Branche de travail : `redesign/admin-cockpit`. **Jamais de merge sur `main` sans OK explicite d'Adrian.**
+> Branche de travail : `feat/intake-telephone` (PHASE 6, créée depuis `main` à jour ;
+> `redesign/admin-cockpit` déjà mergée dans `main`). **Jamais de merge sur `main` sans OK explicite d'Adrian.**
 
 ## 🎯 Objectif
 Outil admin **ultra rapide pour un électricien solo, pressé, sur son téléphone** (PWA Android),
@@ -142,6 +143,50 @@ Légende : ♻️ = réutilise l'existant (rapide) · 🆕 = demande du neuf · 
 **Ordre recommandé** : Bloc A + B1 (P1, fort levier, 4 petits ajouts DB) → B2-B5 + C1-C4 (P2, surtout sans DB) →
 D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en base.
 
+## PHASE 6 — 📞 Intake TÉLÉPHONE (PRIORITÉ #1, 2026-06-17) — 🟡 À VALIDER AVEC ADRIAN
+> Canal n°1 d'Adrian : la plupart des clients APPELLENT (souvent juste nom + tél + adresse,
+> pas d'email). Objectif : appel → lead → RDV → rappel → suivi, en mobile-first, 1-tap,
+> **zéro infra SMS payante**. **Aucun code tant que ce bloc n'est pas tranché.**
+>
+> ⚠️ Constat clé : une grande partie existe déjà → **T1 et T2 ne demandent AUCUN changement DB**
+> (placeholder email `@local.cuivre-electrique.com` + `hasUsableEmail` couvrent déjà les NOT NULL ;
+> `RdvRapide` insère déjà un lead sans email/sans adresse structurée en prod).
+
+- [x] **T1 — Lead express (appel sans RDV)** ♻️ — 🟢 aucune DB — **S — P1**. ✅ fait (`644b4b3`).
+      Trou : `ManualLeadDialog` exige email + adresse structurée + services + message ; `RdvRapide`
+      force une date/heure/type. Solution recommandée : **toggle « 📞 Juste un lead (pas encore de date) »**
+      dans `RdvRapide` → masque date/heure/type/durée/délai, ne crée que le lead. Requis = nom + tél +
+      commune ; email optionnel (placeholder réutilisé). Réutilise `createRdvRapide` (variante sans
+      INSERT `rendez_vous`) + `SuccessScreen`. Alternative : page « Lead express » séparée (plus de code).
+- [x] **T2 — Confirmation SMS/WhatsApp 1-tap depuis la FICHE lead** ♻️ — 🟢 aucune DB — **S — P1**. ✅ fait (`a28da2c`).
+      Trou : caler un RDV depuis `LeadDetail` pour un lead sans email → seulement un toast ; `RendezVousCard`
+      n'a aucun bouton SMS/WA, et « Réponses rapides » est générique (pas la date du RDV). Fix : ajouter
+      2 boutons **SMS/WhatsApp** dans `RendezVousCard`, pré-remplis avec la date/heure réelles via
+      `smsTemplateConfirmation`/`whatsappTemplateConfirmation` + `buildSmsHref`/`buildWhatsappHref`
+      (déjà utilisés par l'écran succès de `RdvRapide`). Mis en avant si `!hasUsableEmail`.
+- [x] **T3 — Rappel J-1 SMS/WhatsApp/Email 1-tap** ✅ **déjà fait** (= Phase 2.1, carte « Rappels demain »).
+      Reste un micro-écart cosmétique (texte rappel inline dans `Aujourdhui.tsx:82-92` au lieu de
+      `message-templates.ts`) — **S — P3**, pure cohérence, non urgent.
+- [x] **T4 — Anti-doublon par téléphone** ♻️ — 🟢 aucune DB — **S — P1** (= C2/I.1, **remonté P1**). ✅ fait (`9885984`).
+      Au blur du tél : bandeau « déjà {Nom} — ouvrir sa fiche ? » (informe sans bloquer). `findLeadsByPhone`.
+- [x] **T5 — SMS « carte de visite » post-1er appel** ♻️ — 🟢 aucune DB — **S — P2**. ✅ fait (`2044831`).
+      Bouton sur les 2 écrans succès : SMS 1-tap « c'est Adrian du Cuivre Électrique suite à notre appel… »
+      → le client enregistre le numéro + trace écrite. `smsCarteDeVisite` + `buildSmsHref`.
+- [x] **T6 — Coller le numéro depuis le presse-papier** ♻️ — 🟢 aucune DB — **S — P3**. ✅ fait (`637a47d`).
+      À l'ouverture de RDV rapide, si le presse-papier contient un numéro → bouton « Coller 0485… »
+      sous le champ tél. `navigator.clipboard.readText`, échec silencieux. Au collage : remplit +
+      relance l'anti-doublon (T4). Confort (dépend permissions navigateur).
+- [x] **T7 — Carte « Leads à rappeler » sur Aujourd'hui** ♻️ — 🟢 aucune DB — **S-M — P2**. ✅ fait (`bd93d72`).
+      File des appels à passer : leads actifs (nouveau/traité) sans RDV à venir, du plus ancien au
+      plus récent → Appeler / SMS / WhatsApp / Caler RDV 1-tap. Heuristique 100 % sans DB
+      (statut + absence de RDV + ancienneté). Distincte de la mini-liste « >48h » du héro
+      (celle-ci = file complète actionnable). « Caler RDV » ouvre le form via `?rdv=1` sur LeadDetail.
+      (= C3/I.3, recadré flux tél.) Option 🟥 `leads.rappel_le` non utilisée (pas de DB).
+
+**Ordre recommandé : T1 → T2 → T4** (3× P1, 3× 🟢 zéro DB, ~½ journée) → T5/T7 si validés.
+**Rien à appliquer en base pour démarrer.** Seul SQL optionnel du lot : `leads.rappel_le` (T7), et seulement
+si Adrian veut des rappels datés explicites.
+
 ## ❌ Hors-scope (acté)
 Facturation maison (Peppol B2B obligatoire en Belgique → outil externe certifié), stats vanity,
 notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle.
@@ -222,3 +267,30 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
 - 2026-06-17 — **Tier 1 #1 (Relances devis) livré** sur `feature/tier1-relances` (commit `9dd218e`). Phase 3.1/3.2
   cochées. SQL `devis_envoye_at` appliqué+vérifié par Adrian. Vérifs faites : build/typecheck/lint, colonne live
   via REST, logique paliers + templates (esbuild). **En attente : test E2E sur preview par Adrian, puis suite Tier 1.**
+- 2026-06-17 — **PHASE 6 — Intake TÉLÉPHONE (priorité #1)** posée. Cartographie du code : T3 (rappel J-1)
+  déjà fait ; T1 (lead express) + T2 (confirmation SMS/WA depuis la fiche) sont les 2 trous réels et
+  **ne demandent AUCUN changement DB** (placeholder email + `hasUsableEmail` existants). Carte blanche :
+  T4 anti-doublon tél (P1), T5 SMS carte de visite, T6 coller numéro, T7 carte « leads à rappeler ».
+  🟡 **À valider avec Adrian. Aucun code écrit.** Ordre proposé : T1 → T2 → T4.
+- 2026-06-17 — **PHASE 6 livrée** sur `feat/intake-telephone` : T1 lead express (`644b4b3`),
+  T2 confirmation SMS/WA datée sur la fiche (`a28da2c`), T4 anti-doublon téléphone (`9885984`),
+  T5 SMS carte de visite (`2044831`). Build/typecheck/lint verts, **zéro changement DB**.
+  Reste P2/P3 : T6 (coller numéro, optionnel), T7 (carte « leads à rappeler », heuristique). Preview poussée.
+- 2026-06-18 — **PHASE 6 finalisée** sur une **nouvelle branche `feature/leads-a-rappeler`** (créée
+  depuis `main` à jour ; `feat/intake-telephone` déjà mergée) : T7 carte « Leads à rappeler »
+  (`bd93d72`, heuristique sans DB + `?rdv=1` pour Caler RDV 1-tap) et T6 coller le numéro depuis le
+  presse-papier (`637a47d`). Build/typecheck/lint verts, **zéro changement DB**. Preview poussée.
+  **Pas de merge sur `main` sans OK d'Adrian.**
+- 2026-06-18 — **Retouches messages** (`856ebfc`, même branche) demandées par Adrian, après revue
+  de diff (fix `b978cb6` : T6 ne propose plus une date collée comme numéro) : (1) emoji 📅 → 🗓️
+  dans la confirmation SMS/WhatsApp + le rappel J-1 ; (2) dernière ligne du SMS de confirmation
+  réécrite (« appelez-moi au {tel} ou répondez à ce message ») — WhatsApp inchangé ; (3) nouvelle
+  **confirmation courte** (SMS + WhatsApp) sur `RendezVousCard`, à côté de la complète, pour qu'Adrian
+  choisisse (`confirmationCourte`) ; (4) message « bien reçu » neutralisé (`smsCarteDeVisite` →
+  `smsBienRecu`, ne suppose plus un appel) + ajouté en réponse rapide SMS/WhatsApp sur la fiche lead.
+  Build/typecheck/lint verts, **zéro changement DB**. `/karen` : 9/10, 0 critique. Preview poussée.
+- 2026-06-18 — PHASE 6 (`feature/leads-a-rappeler`) **mergée sur `main`** (`--no-ff`, commit `2032943`,
+  OK explicite d'Adrian) → en prod. `feature/tier1-relances` ensuite **mise à jour depuis `main`**
+  (`git merge main`) : conflits résolus dans `Aujourdhui.tsx` (imports icônes + message-templates +
+  memos `relanceLeads`/`leadsARappeler`) et `PLAN.md` — **les deux jeux de cartes conservés**
+  (Relances devis + Leads à rappeler + rappel J-1). Preview relances à jour. **Pas de merge `main` sans OK.**

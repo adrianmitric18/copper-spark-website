@@ -312,24 +312,47 @@ function shortenAddress(address: string): string {
 // ---------------------------------------------------------------------------
 
 export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
-  const dureeAvecAppel =
-    payload.delaiAppelMinutes && payload.delaiAppelMinutes > 0
-      ? `⏱️ ~${formatDuree(payload.dureeMinutes)} | J'appelle ${formatDuree(payload.delaiAppelMinutes)} avant`
-      : `⏱️ ~${formatDuree(payload.dureeMinutes)}`;
-
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
   const lines = [
-    `🔌 ${COMPANY.name}`,
-    `Bonjour ${payload.clientName}, ${config.confirmedLabel} :`,
-    `📅 ${formatDateLongNoYear(payload.dateIso)} - ${formatHeureFr(payload.heure)}`,
+    `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique — content d'avoir échangé avec vous.`,
+    `C'est noté de mon côté :`,
+    `🗓️ ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
   ];
-  if (payload.address) {
-    lines.push(`📍 ${shortenAddress(payload.address)}`);
-  }
-  lines.push(dureeAvecAppel);
-  lines.push(`🌐 ${COMPANY.site}`);
-  lines.push(`${COMPANY.owner} - ${COMPANY.tel}`);
+  if (payload.typeVisite) lines.push(`🔧 ${payload.typeVisite}`);
+  if (payload.address) lines.push(`📍 ${payload.address}`);
+  lines.push(`Si quoi que ce soit change, appelez-moi au ${COMPANY.tel} ou répondez à ce message, on s'arrange.`);
+  lines.push(`À très bientôt ! ${COMPANY.ownerFirstName}`);
   return lines.join("\n");
+}
+
+/**
+ * Confirmation COURTE (SMS + WhatsApp), au choix d'Adrian quand le client a déjà
+ * donné date + adresse pendant l'appel : un simple "c'est noté" daté, sans
+ * programme ni adresse. Texte identique sur les deux supports.
+ */
+export function confirmationCourte(payload: ConfirmationRdvPayload): string {
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
+  return `Parfait ${prenom} 👋 Bien reçu, c'est noté de mon côté pour le ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}. À très bientôt ! ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
+}
+
+/**
+ * SMS/WhatsApp "bien reçu" neutre — accusé de réception envoyable à n'importe
+ * quel lead (appel OU message écrit), sans présumer du canal. Remplace l'ancien
+ * smsCarteDeVisite (qui supposait un appel). Trace écrite + promesse de suite.
+ */
+export function smsBienRecu(clientName: string): string {
+  const prenom = clientName.trim().split(/\s+/)[0] || clientName.trim();
+  return `Bonjour ${prenom} 👋 Bien reçu, merci ! Je reviens vers vous très vite pour la suite. À bientôt, ${COMPANY.ownerFirstName} — ${COMPANY.name}`;
+}
+
+/**
+ * T7 — SMS de reprise de contact pour un lead « à rappeler » (sans RDV, en
+ * attente). Sert de filet quand Adrian ne peut pas appeler tout de suite :
+ * il propose de fixer un créneau et redonne son numéro.
+ */
+export function smsRappelLead(clientName: string): string {
+  const prenom = clientName.trim().split(/\s+/)[0] || clientName.trim();
+  return `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique. Je reviens vers vous au sujet de votre demande — dites-moi quand vous êtes joignable et on cale ça. ${COMPANY.tel}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -337,41 +360,18 @@ export function smsTemplateConfirmation(payload: ConfirmationRdvPayload): string
 // ---------------------------------------------------------------------------
 
 export function whatsappTemplateConfirmation(payload: ConfirmationRdvPayload): string {
-  const config = TYPE_CONFIGS[familleDeVisite(payload.typeVisite)];
-  const dateFr = formatDateLong(payload.dateIso);
-
-  const programme = config.programme.map((p) => `✓ ${p}`).join("\n");
-  const prerequis = config.prerequis.map((p) => `• ${p}`).join("\n");
-
-  const adresseBlock = payload.address ? `\n📍 *${payload.address}*` : "";
-  const phraseAppel = phraseAppelDelai(payload.delaiAppelMinutes);
-
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
   const lines = [
-    `⚡ *${COMPANY.name}*`,
-    "",
-    `Bonjour ${payload.clientName} 👋`,
-    "",
-    config.introLine,
-    "",
-    `📅 *${dateFr}*`,
-    `🕐 *${formatHeureFr(payload.heure)}*${adresseBlock}`,
-    `⏱️ *Durée estimée : ~${formatDuree(payload.dureeMinutes)}*`,
-    "",
-    `🔧 *Au programme :*`,
-    programme,
-    "",
-    `📋 *À prévoir :*`,
-    prerequis,
-    "",
+    `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique — content d'avoir échangé avec vous.`,
+    `C'est noté de mon côté :`,
+    `🗓️ ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}`,
   ];
-  if (phraseAppel) {
-    lines.push(phraseAppel);
-    lines.push("");
-  }
-  lines.push(`À bientôt,`);
-  lines.push(`${COMPANY.owner}`);
-  lines.push(`🌐 ${COMPANY.site}`);
-  lines.push(`📱 ${COMPANY.tel}`);
+  if (payload.typeVisite) lines.push(`🔧 ${payload.typeVisite}`);
+  if (payload.address) lines.push(`📍 ${payload.address}`);
+  lines.push(
+    `Si quoi que ce soit change, écrivez-moi ici ou appelez le ${COMPANY.tel} : on trouvera un autre créneau sans souci.`,
+  );
+  lines.push(`À très bientôt ! ${COMPANY.ownerFirstName}`);
   return lines.join("\n");
 }
 

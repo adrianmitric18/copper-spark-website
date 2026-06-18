@@ -16,6 +16,7 @@ import {
   Mail,
   Send,
   Copy,
+  Contact,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -35,16 +37,20 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminLoading from "@/components/admin/AdminLoading";
 import {
   createRdvRapide,
+  createLeadRapide,
+  findLeadsByPhone,
   TYPE_VISITES,
   dureeDefaut,
   delaiDefaut,
   DELAI_APPEL_PRESETS,
   type TypeVisite,
+  type LeadMatch,
 } from "@/lib/admin/rdv-rapide";
 import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
+  smsBienRecu,
   emailPlaintextConfirmation,
   emailHtmlConfirmation,
   emailSubjectConfirmation,
@@ -85,6 +91,20 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// T6 — détecte si le presse-papier contient (uniquement) un numéro de tél
+// exploitable. On reste strict : seul un contenu entièrement "numéro" est
+// proposé, pour ne jamais coller du texte parasite. Aligné sur le regex du
+// schema + un garde-fou sur le nombre de chiffres (8 à 15) + doit commencer
+// par + ou 0 (tous les numéros belges/intl) — évite de proposer une date
+// collée (« 12/06/2026 ») comme un téléphone, le « / » servant aux deux.
+const looksLikePhone = (raw: string): boolean => {
+  if (!raw) return false;
+  if (!/^[\d\s+().\-/]+$/.test(raw)) return false;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) return false;
+  return /^(\+|00|0)/.test(raw.trim());
+};
+
 interface RdvSummary {
   name: string;
   phone: string;
@@ -98,9 +118,58 @@ interface RdvSummary {
   leadId: string;
 }
 
+// T1 — résumé d'un lead express (sans RDV).
+interface LeadSummary {
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  leadId: string;
+}
+
+// L'écran de succès diffère selon qu'un RDV a été calé ou non.
+type SuccessState =
+  | { kind: "rdv"; data: RdvSummary }
+  | { kind: "lead"; data: LeadSummary };
+
 const RdvRapide = () => {
   const { user, ready } = useAdminGuard();
-  const [success, setSuccess] = useState<RdvSummary | null>(null);
+  const [success, setSuccess] = useState<SuccessState | null>(null);
+  // T1 — mode "lead express" : on masque les champs RDV et on ne crée que le lead.
+  const [sansRdv, setSansRdv] = useState(false);
+  // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
+  const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
+  // T6 — numéro détecté dans le presse-papier, proposé en collage 1 tap.
+  const [clipboardPhone, setClipboardPhone] = useState<string | null>(null);
+
+  const checkDuplicates = async (phone: string) => {
+    try {
+      setDuplicates(await findLeadsByPhone(phone));
+    } catch {
+      // L'anti-doublon ne doit jamais bloquer la saisie : on ignore l'erreur.
+      setDuplicates([]);
+    }
+  };
+
+  // T6 — à l'ouverture, on regarde si le presse-papier contient un numéro
+  // (ex: copié depuis le journal d'appels ou un SMS) pour proposer de le coller.
+  // Best-effort : échec silencieux si le navigateur refuse l'accès, n'a pas le
+  // focus, ou ne supporte pas l'API. Pur confort, jamais bloquant.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!navigator.clipboard?.readText) return;
+        const text = (await navigator.clipboard.readText()).trim();
+        if (!cancelled && looksLikePhone(text)) setClipboardPhone(text);
+      } catch {
+        // silencieux (permissions / pas de focus / non supporté)
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     document.title = "RDV rapide – Le Cuivre Admin";
@@ -129,6 +198,8 @@ const RdvRapide = () => {
   const [autoDuree, setAutoDuree] = useState(true);
   const [autoDelai, setAutoDelai] = useState(true);
   const typeVisiteWatch = form.watch("typeVisite");
+  // T6 — masque la suggestion de collage dès qu'un numéro est saisi.
+  const phoneValue = form.watch("phone");
   useEffect(() => {
     if (autoDuree && typeVisiteWatch) {
       form.setValue("dureeMinutes", dureeDefaut(typeVisiteWatch));
@@ -142,16 +213,19 @@ const RdvRapide = () => {
     mutationFn: createRdvRapide,
     onSuccess: (res, vars) => {
       setSuccess({
-        name: vars.name,
-        phone: vars.phone,
-        email: vars.email,
-        dateRdv: vars.dateRdv,
-        heureRdv: vars.heureRdv,
-        typeVisite: vars.typeVisite,
-        dureeMinutes: vars.dureeMinutes,
-        delaiAppelMinutes: vars.delaiAppelMinutes,
-        address: vars.address,
-        leadId: res.leadId,
+        kind: "rdv",
+        data: {
+          name: vars.name,
+          phone: vars.phone,
+          email: vars.email,
+          dateRdv: vars.dateRdv,
+          heureRdv: vars.heureRdv,
+          typeVisite: vars.typeVisite,
+          dureeMinutes: vars.dureeMinutes,
+          delaiAppelMinutes: vars.delaiAppelMinutes,
+          address: vars.address,
+          leadId: res.leadId,
+        },
       });
       toast.success("RDV créé", {
         description: `${vars.name} • ${vars.dateRdv} à ${vars.heureRdv}`,
@@ -162,7 +236,44 @@ const RdvRapide = () => {
     },
   });
 
+  // T1 — création d'un lead express (sans RDV).
+  const createLeadMut = useMutation({
+    mutationFn: createLeadRapide,
+    onSuccess: (res, vars) => {
+      setSuccess({
+        kind: "lead",
+        data: {
+          name: vars.name,
+          phone: vars.phone,
+          email: vars.email,
+          address: vars.address,
+          leadId: res.leadId,
+        },
+      });
+      toast.success("Lead créé", { description: vars.name });
+    },
+    onError: (e: Error) => {
+      toast.error("Échec de la création", { description: e.message });
+    },
+  });
+
   const onSubmit = (values: FormValues) => {
+    // T1 — mode lead express : on ignore les champs RDV.
+    if (sansRdv) {
+      // Adresse/commune requise dans ce mode (validation légère, schema partagé).
+      if (!values.address?.trim()) {
+        form.setError("address", { message: "Commune ou adresse requise" });
+        return;
+      }
+      createLeadMut.mutate({
+        name: values.name,
+        phone: values.phone,
+        email: values.email || undefined,
+        address: values.address,
+        notes: values.notes,
+      });
+      return;
+    }
     const delai =
       values.delaiAppelMinutes === "" || values.delaiAppelMinutes === undefined
         ? null
@@ -201,21 +312,43 @@ const RdvRapide = () => {
 
   if (!ready || !user) return <AdminLoading />;
 
-  if (success) {
-    return <SuccessScreen summary={success} onNew={resetForm} />;
+  if (success?.kind === "rdv") {
+    return <SuccessScreen summary={success.data} onNew={resetForm} />;
+  }
+  if (success?.kind === "lead") {
+    return <LeadSuccessScreen summary={success.data} onNew={resetForm} />;
   }
 
   return (
     <AdminShell mobileTitle="RDV rapide">
       <div className="p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] max-w-xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <Phone className="w-7 h-7 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">RDV rapide</h1>
             <p className="text-xs text-muted-foreground">
-              Création lead + RDV en un clic, 30 secondes max
+              {sansRdv
+                ? "Lead express : nom + tél + commune, en 10 secondes"
+                : "Création lead + RDV en un clic, 30 secondes max"}
             </p>
           </div>
+        </div>
+
+        {/* T1 — bascule "lead express" : crée juste le lead, sans date de RDV. */}
+        <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 mb-5">
+          <Switch
+            id="sans-rdv"
+            checked={sansRdv}
+            onCheckedChange={setSansRdv}
+            className="mt-0.5"
+          />
+          <Label htmlFor="sans-rdv" className="cursor-pointer leading-snug">
+            <span className="font-medium">📞 Juste un lead (pas encore de date)</span>
+            <span className="block text-xs font-normal text-muted-foreground mt-0.5">
+              Active si le client a appelé mais qu'aucun RDV n'est encore fixé. Tu
+              caleras la date plus tard depuis sa fiche.
+            </span>
+          </Label>
         </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -239,7 +372,9 @@ const RdvRapide = () => {
             icon={<Phone className="w-4 h-4" />}
           >
             <Input
-              {...form.register("phone")}
+              {...form.register("phone", {
+                onBlur: (e) => checkDuplicates(e.target.value),
+              })}
               type="tel"
               placeholder="Ex: 0485 12 34 56"
               autoComplete="tel"
@@ -247,6 +382,44 @@ const RdvRapide = () => {
               className="h-12 text-base"
             />
           </Field>
+
+          {/* T6 — collage 1 tap du numéro détecté dans le presse-papier. */}
+          {clipboardPhone && !phoneValue && (
+            <button
+              type="button"
+              onClick={() => {
+                form.setValue("phone", clipboardPhone, { shouldValidate: true });
+                checkDuplicates(clipboardPhone);
+                setClipboardPhone(null);
+              }}
+              className="-mt-1 inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/15"
+            >
+              <Copy className="w-4 h-4 shrink-0" />
+              Coller {clipboardPhone}
+            </button>
+          )}
+
+          {/* T4 — bandeau anti-doublon : informe sans bloquer (nouveau client possible). */}
+          {duplicates.length > 0 && (
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm space-y-2">
+              <p className="font-medium text-amber-700">
+                ⚠️ Ce numéro est déjà enregistré
+              </p>
+              <ul className="space-y-1.5">
+                {duplicates.map((d) => (
+                  <li key={d.id} className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{d.name}</span>
+                    <Button asChild size="sm" variant="outline" className="h-8 shrink-0">
+                      <Link to={`/admin/lead/${d.id}`}>Ouvrir la fiche</Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                Continue quand même si c'est un nouveau client.
+              </p>
+            </div>
+          )}
 
           <Field
             label="Email"
@@ -264,6 +437,9 @@ const RdvRapide = () => {
             />
           </Field>
 
+          {/* T1 — champs RDV masqués en mode lead express (sansRdv). */}
+          {!sansRdv && (
+            <>
           {/* Grid 1 col sous 380px (iPhone SE) pour éviter l'écrasement
               des inputs date/time. 2 cols dès 380px. */}
           <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
@@ -414,9 +590,13 @@ const RdvRapide = () => {
             />
           </Field>
 
+            </>
+          )}
+
           <Field
-            label="Adresse du chantier"
-            hint="Optionnel"
+            label={sansRdv ? "Commune / adresse *" : "Adresse du chantier"}
+            hint={sansRdv ? "Au minimum la commune" : "Optionnel"}
+            error={form.formState.errors.address?.message}
             icon={<MapPin className="w-4 h-4" />}
           >
             <Input
@@ -440,9 +620,9 @@ const RdvRapide = () => {
             type="submit"
             size="lg"
             className="w-full h-14 text-base font-semibold"
-            disabled={createMut.isPending}
+            disabled={createMut.isPending || createLeadMut.isPending}
           >
-            {createMut.isPending ? (
+            {createMut.isPending || createLeadMut.isPending ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Enregistrement…
@@ -450,7 +630,7 @@ const RdvRapide = () => {
             ) : (
               <>
                 <CheckCircle2 className="w-5 h-5" />
-                Confirmer le RDV
+                {sansRdv ? "Créer le lead" : "Confirmer le RDV"}
               </>
             )}
           </Button>
@@ -712,6 +892,114 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
               Voir la fiche lead
             </Link>
           </Button>
+        </div>
+      </div>
+    </AdminShell>
+  );
+};
+
+// T1 — écran de succès du lead express (sans RDV). Pas de Google Calendar ni de
+// confirmation datée : l'action utile est d'ouvrir la fiche pour caler un RDV.
+interface LeadSuccessScreenProps {
+  summary: LeadSummary;
+  onNew: () => void;
+}
+
+const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
+  const telHref = `tel:${summary.phone.replace(/\s/g, "")}`;
+  // T5 — SMS "bien reçu" : accusé de réception neutre après création du lead.
+  const carteVisiteHref = buildSmsHref(summary.phone, smsBienRecu(summary.name));
+
+  return (
+    <AdminShell mobileTitle="Lead créé">
+      <div className="p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] max-w-xl mx-auto">
+        <div className="flex items-center justify-center mb-6 mt-4">
+          <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center">
+            <CheckCircle2 className="w-9 h-9 text-primary" />
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-center mb-2">Lead enregistré</h1>
+        <p className="text-center text-muted-foreground mb-6">
+          Client ajouté au pipeline. Cale un RDV depuis sa fiche quand tu as une date.
+        </p>
+
+        <div className="bg-card border border-border rounded-xl p-4 mb-6 space-y-2">
+          <div className="flex justify-between items-baseline">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Client
+            </span>
+            <span className="font-semibold">{summary.name}</span>
+          </div>
+          <div className="flex justify-between items-baseline">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              Téléphone
+            </span>
+            <a href={telHref} className="font-mono text-sm text-primary hover:underline">
+              {summary.phone}
+            </a>
+          </div>
+          {summary.email && (
+            <div className="flex justify-between items-baseline gap-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">
+                Email
+              </span>
+              <a
+                href={`mailto:${summary.email}`}
+                className="text-right text-sm text-primary hover:underline truncate"
+              >
+                {summary.email}
+              </a>
+            </div>
+          )}
+          {summary.address && (
+            <div className="flex justify-between items-baseline gap-3">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground shrink-0">
+                Adresse
+              </span>
+              <span className="text-right text-sm">{summary.address}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <Button asChild size="lg" className="w-full h-14 text-base font-semibold">
+            <Link to={`/admin/lead/${summary.leadId}`}>
+              <CalendarIcon className="w-5 h-5" />
+              Voir la fiche & caler un RDV
+            </Link>
+          </Button>
+
+          {/* T5 — SMS "bien reçu" (accusé de réception après un appel sans RDV). */}
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full h-12 text-sm font-medium"
+          >
+            <a href={carteVisiteHref}>
+              <Contact className="w-5 h-5" />
+              Prévenir le client (bien reçu)
+            </a>
+          </Button>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
+            >
+              <a href={telHref}>
+                <Phone className="w-5 h-5" />
+                Appeler
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" onClick={onNew} className="h-14 text-sm font-semibold">
+              <Plus className="w-5 h-5" />
+              Nouveau lead
+            </Button>
+          </div>
         </div>
       </div>
     </AdminShell>
