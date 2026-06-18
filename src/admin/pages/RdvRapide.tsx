@@ -94,12 +94,15 @@ type FormValues = z.infer<typeof formSchema>;
 // T6 — détecte si le presse-papier contient (uniquement) un numéro de tél
 // exploitable. On reste strict : seul un contenu entièrement "numéro" est
 // proposé, pour ne jamais coller du texte parasite. Aligné sur le regex du
-// schema + un garde-fou sur le nombre de chiffres (8 à 15).
+// schema + un garde-fou sur le nombre de chiffres (8 à 15) + doit commencer
+// par + ou 0 (tous les numéros belges/intl) — évite de proposer une date
+// collée (« 12/06/2026 ») comme un téléphone, le « / » servant aux deux.
 const looksLikePhone = (raw: string): boolean => {
   if (!raw) return false;
   if (!/^[\d\s+().\-/]+$/.test(raw)) return false;
   const digits = raw.replace(/\D/g, "");
-  return digits.length >= 8 && digits.length <= 15;
+  if (digits.length < 8 || digits.length > 15) return false;
+  return /^(\+|00|0)/.test(raw.trim());
 };
 
 interface RdvSummary {
