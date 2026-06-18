@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -53,6 +53,7 @@ import {
   LEAD_STATUSES,
   leadSourceLabel,
 } from "@/lib/admin/types";
+import { smsBienRecu } from "@/lib/admin/message-templates";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import CollapsibleCard from "@/components/admin/CollapsibleCard";
@@ -75,7 +76,7 @@ const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = 
   { label: "Je vous rappelle", body: (n) => `Bonjour ${n}, je vous rappelle très vite au sujet de votre demande. Adrian — Le Cuivre Électrique` },
   { label: "Indispo cette semaine", body: (n) => `Bonjour ${n}, je suis complet cette semaine, mais je reviens vers vous pour caler une date au plus tôt. Adrian — Le Cuivre Électrique` },
   { label: "En route, j'arrive", body: (n) => `Bonjour ${n}, je suis en route, j'arrive d'ici peu. Adrian — Le Cuivre Électrique` },
-  { label: "Bien reçu", body: (n) => `Bonjour ${n}, bien reçu, merci ! Je traite votre demande et reviens vers vous rapidement. Adrian — Le Cuivre Électrique` },
+  { label: "Bien reçu", body: (n) => smsBienRecu(n) },
 ];
 
 // Phase 2.5 — dictée vocale (Web Speech API, gratuite, surtout utile sur
@@ -108,6 +109,7 @@ const dictationSupported = (): boolean => {
 
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, ready, loading: authLoading } = useAdminGuard();
   const [lead, setLead] = useState<Lead | null>(null);
@@ -192,6 +194,24 @@ const LeadDetail = () => {
       rdvSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [showForm]);
+
+  // T7 — arrivée depuis « Caler RDV » du cockpit (carte Leads à rappeler) :
+  // ?rdv=1 ouvre directement le formulaire. On n'ouvre que si le lead est
+  // chargé et n'a pas déjà de RDV actif (sinon on garde la carte RDV existante),
+  // puis on nettoie l'URL pour ne pas re-déclencher après une fermeture.
+  const rdvParamHandled = useRef(false);
+  useEffect(() => {
+    if (rdvParamHandled.current) return;
+    if (loading || !lead) return;
+    if (searchParams.get("rdv") !== "1") return;
+    rdvParamHandled.current = true;
+    if (!rdv) {
+      setEditing(false);
+      setShowForm(true);
+    }
+    searchParams.delete("rdv");
+    setSearchParams(searchParams, { replace: true });
+  }, [loading, lead, rdv, searchParams, setSearchParams]);
 
   const updateStatus = async (newStatus: string) => {
     if (!lead) return;

@@ -16,6 +16,8 @@ import {
   Smartphone,
   Mail,
   Loader2,
+  PhoneCall,
+  CalendarPlus,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +33,7 @@ import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
 import { type RendezVous } from "@/lib/rdv/constants";
-import { buildSmsHref, buildWhatsappHref, COMPANY } from "@/lib/admin/message-templates";
+import { buildSmsHref, buildWhatsappHref, smsRappelLead, COMPANY } from "@/lib/admin/message-templates";
 import { supabase } from "@/integrations/supabase/client";
 import AdminShell from "@/admin/layout/AdminShell";
 import { toast } from "sonner";
@@ -40,6 +42,12 @@ const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
 const ACTIVE_STATUSES = new Set(["nouveau", "traité", "devis envoyé"]);
+
+// T7 — « Leads à rappeler » : leads en attente d'un coup de fil. On exclut
+// « devis envoyé » (suivi par le flux relances devis) et garde les statuts qui
+// veulent dire « pas encore recontacté / sans suite ».
+const CALLBACK_STATUSES = new Set(["nouveau", "traité"]);
+const CALLBACK_LIMIT = 8;
 
 const isoDateLocal = (d: Date): string =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -95,7 +103,7 @@ const rappelText = (r: RdvWithLead): string => {
   const lines = [
     `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique.`,
     `Petit rappel pour demain :`,
-    `📅 ${dateLong} à ${formatHeure(r.heure_rdv)}`,
+    `🗓️ ${dateLong} à ${formatHeure(r.heure_rdv)}`,
   ];
   if (r.type_visite) lines.push(`🔧 ${r.type_visite}`);
   if (adresse) lines.push(`📍 ${adresse}`);
@@ -253,6 +261,25 @@ const Aujourdhui = () => {
           new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
       )
       .slice(0, 5);
+  }, [leads, upcomingByLead]);
+
+  // T7 — Liste de travail « Leads à rappeler » : tous les leads actifs sans RDV
+  // à venir, du plus ancien au plus récent (ne laisser personne traîner).
+  // Heuristique 100 % sans DB : statut + absence de RDV à venir + ancienneté.
+  // Plus large que la mini-liste « À relancer » du héro (>48h) : ici c'est la
+  // file complète des appels à passer, avec actions 1-tap.
+  const leadsARappeler = useMemo(() => {
+    return leads
+      .filter((l) => {
+        if (!CALLBACK_STATUSES.has(l.status)) return false;
+        if (upcomingByLead[l.id]) return false;
+        return Boolean(l.phone);
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+      .slice(0, CALLBACK_LIMIT);
   }, [leads, upcomingByLead]);
 
   // Chantiers programmés cette semaine (du jour à +7 jours, statut programme/en_cours
@@ -531,6 +558,86 @@ const Aujourdhui = () => {
                 </div>
               )}
             </Card>
+
+            {/* Leads à rappeler (T7) — file des appels à passer : leads actifs
+                sans RDV, du plus ancien au plus récent. Appeler / SMS / WhatsApp
+                / Caler RDV en 1 tap. Heuristique sans DB. */}
+            {leadsARappeler.length > 0 && (
+              <Card className="p-5 md:p-6 space-y-3">
+                <div className="flex items-center gap-2">
+                  <PhoneCall className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">
+                    Leads à rappeler ({leadsARappeler.length})
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Pas encore de RDV : un appel, un SMS, ou cale une date direct.
+                  Les plus anciens en premier.
+                </p>
+                <ul className="space-y-2">
+                  {leadsARappeler.map((l) => {
+                    const rappelMsg = smsRappelLead(l.name);
+                    return (
+                      <li
+                        key={l.id}
+                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
+                      >
+                        <Link
+                          to={`/admin/lead/${l.id}`}
+                          className="flex-1 min-w-[10rem] group"
+                        >
+                          <p className="font-medium text-sm truncate flex items-center gap-2 group-hover:text-primary transition-colors">
+                            {l.name}
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border"
+                            >
+                              {formatAge(ageInHours(l.created_at))}
+                            </Badge>
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {l.commune || "—"} · {l.status}
+                            {l.services?.[0] && ` · ${l.services[0]}`}
+                          </p>
+                        </Link>
+                        <Button asChild size="sm" className="min-h-[40px]">
+                          <a href={`tel:${l.phone}`} aria-label={`Appeler ${l.name}`}>
+                            <Phone className="w-4 h-4" /> Appeler
+                          </a>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                          <a href={buildSmsHref(l.phone, rappelMsg)} aria-label={`SMS à ${l.name}`}>
+                            <Smartphone className="w-4 h-4" /> SMS
+                          </a>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                        >
+                          <a
+                            href={buildWhatsappHref(l.phone, rappelMsg)}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`WhatsApp à ${l.name}`}
+                          >
+                            <MessageCircle className="w-4 h-4" /> WA
+                          </a>
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                          <Link
+                            to={`/admin/lead/${l.id}?rdv=1`}
+                            aria-label={`Caler un RDV avec ${l.name}`}
+                          >
+                            <CalendarPlus className="w-4 h-4" /> Caler RDV
+                          </Link>
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            )}
 
             {/* Rappels demain (Phase 2.1) — préviens les RDV du lendemain */}
             {tomorrowRdvs.length > 0 && (

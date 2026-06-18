@@ -50,7 +50,7 @@ import { buildGoogleCalendarUrl } from "@/lib/admin/google-calendar-link";
 import {
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
-  smsCarteDeVisite,
+  smsBienRecu,
   emailPlaintextConfirmation,
   emailHtmlConfirmation,
   emailSubjectConfirmation,
@@ -91,6 +91,20 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// T6 — détecte si le presse-papier contient (uniquement) un numéro de tél
+// exploitable. On reste strict : seul un contenu entièrement "numéro" est
+// proposé, pour ne jamais coller du texte parasite. Aligné sur le regex du
+// schema + un garde-fou sur le nombre de chiffres (8 à 15) + doit commencer
+// par + ou 0 (tous les numéros belges/intl) — évite de proposer une date
+// collée (« 12/06/2026 ») comme un téléphone, le « / » servant aux deux.
+const looksLikePhone = (raw: string): boolean => {
+  if (!raw) return false;
+  if (!/^[\d\s+().\-/]+$/.test(raw)) return false;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 8 || digits.length > 15) return false;
+  return /^(\+|00|0)/.test(raw.trim());
+};
+
 interface RdvSummary {
   name: string;
   phone: string;
@@ -125,6 +139,8 @@ const RdvRapide = () => {
   const [sansRdv, setSansRdv] = useState(false);
   // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
   const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
+  // T6 — numéro détecté dans le presse-papier, proposé en collage 1 tap.
+  const [clipboardPhone, setClipboardPhone] = useState<string | null>(null);
 
   const checkDuplicates = async (phone: string) => {
     try {
@@ -134,6 +150,26 @@ const RdvRapide = () => {
       setDuplicates([]);
     }
   };
+
+  // T6 — à l'ouverture, on regarde si le presse-papier contient un numéro
+  // (ex: copié depuis le journal d'appels ou un SMS) pour proposer de le coller.
+  // Best-effort : échec silencieux si le navigateur refuse l'accès, n'a pas le
+  // focus, ou ne supporte pas l'API. Pur confort, jamais bloquant.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!navigator.clipboard?.readText) return;
+        const text = (await navigator.clipboard.readText()).trim();
+        if (!cancelled && looksLikePhone(text)) setClipboardPhone(text);
+      } catch {
+        // silencieux (permissions / pas de focus / non supporté)
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     document.title = "RDV rapide – Le Cuivre Admin";
@@ -162,6 +198,8 @@ const RdvRapide = () => {
   const [autoDuree, setAutoDuree] = useState(true);
   const [autoDelai, setAutoDelai] = useState(true);
   const typeVisiteWatch = form.watch("typeVisite");
+  // T6 — masque la suggestion de collage dès qu'un numéro est saisi.
+  const phoneValue = form.watch("phone");
   useEffect(() => {
     if (autoDuree && typeVisiteWatch) {
       form.setValue("dureeMinutes", dureeDefaut(typeVisiteWatch));
@@ -344,6 +382,22 @@ const RdvRapide = () => {
               className="h-12 text-base"
             />
           </Field>
+
+          {/* T6 — collage 1 tap du numéro détecté dans le presse-papier. */}
+          {clipboardPhone && !phoneValue && (
+            <button
+              type="button"
+              onClick={() => {
+                form.setValue("phone", clipboardPhone, { shouldValidate: true });
+                checkDuplicates(clipboardPhone);
+                setClipboardPhone(null);
+              }}
+              className="-mt-1 inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/15"
+            >
+              <Copy className="w-4 h-4 shrink-0" />
+              Coller {clipboardPhone}
+            </button>
+          )}
 
           {/* T4 — bandeau anti-doublon : informe sans bloquer (nouveau client possible). */}
           {duplicates.length > 0 && (
@@ -853,8 +907,8 @@ interface LeadSuccessScreenProps {
 
 const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
   const telHref = `tel:${summary.phone.replace(/\s/g, "")}`;
-  // T5 — SMS "carte de visite" : le client enregistre le numéro d'Adrian.
-  const carteVisiteHref = buildSmsHref(summary.phone, smsCarteDeVisite(summary.name));
+  // T5 — SMS "bien reçu" : accusé de réception neutre après création du lead.
+  const carteVisiteHref = buildSmsHref(summary.phone, smsBienRecu(summary.name));
 
   return (
     <AdminShell mobileTitle="Lead créé">

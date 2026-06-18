@@ -167,11 +167,16 @@ D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en bas
 - [x] **T5 — SMS « carte de visite » post-1er appel** ♻️ — 🟢 aucune DB — **S — P2**. ✅ fait (`2044831`).
       Bouton sur les 2 écrans succès : SMS 1-tap « c'est Adrian du Cuivre Électrique suite à notre appel… »
       → le client enregistre le numéro + trace écrite. `smsCarteDeVisite` + `buildSmsHref`.
-- [ ] **T6 — Coller le numéro depuis le presse-papier** ♻️ — 🟢 aucune DB — **S — P3**.
-      À l'ouverture de Lead express, si le presse-papier contient un numéro → proposer « Coller 0485… ».
-      `navigator.clipboard.readText`, échec silencieux. Confort (dépend permissions navigateur).
-- [ ] **T7 — Carte « Leads à rappeler » sur Aujourd'hui** ♻️ — 🟢 aucune DB (option 🟥 `leads.rappel_le` date) — **S-M — P2**.
-      Liste les leads sans RDV + sans contact récent → Appeler/SMS/Caler RDV 1-tap. (= C3/I.3, recadré flux tél.)
+- [x] **T6 — Coller le numéro depuis le presse-papier** ♻️ — 🟢 aucune DB — **S — P3**. ✅ fait (`637a47d`).
+      À l'ouverture de RDV rapide, si le presse-papier contient un numéro → bouton « Coller 0485… »
+      sous le champ tél. `navigator.clipboard.readText`, échec silencieux. Au collage : remplit +
+      relance l'anti-doublon (T4). Confort (dépend permissions navigateur).
+- [x] **T7 — Carte « Leads à rappeler » sur Aujourd'hui** ♻️ — 🟢 aucune DB — **S-M — P2**. ✅ fait (`bd93d72`).
+      File des appels à passer : leads actifs (nouveau/traité) sans RDV à venir, du plus ancien au
+      plus récent → Appeler / SMS / WhatsApp / Caler RDV 1-tap. Heuristique 100 % sans DB
+      (statut + absence de RDV + ancienneté). Distincte de la mini-liste « >48h » du héro
+      (celle-ci = file complète actionnable). « Caler RDV » ouvre le form via `?rdv=1` sur LeadDetail.
+      (= C3/I.3, recadré flux tél.) Option 🟥 `leads.rappel_le` non utilisée (pas de DB).
 
 **Ordre recommandé : T1 → T2 → T4** (3× P1, 3× 🟢 zéro DB, ~½ journée) → T5/T7 si validés.
 **Rien à appliquer en base pour démarrer.** Seul SQL optionnel du lot : `leads.rappel_le` (T7), et seulement
@@ -260,3 +265,16 @@ bucket privé `lead-audio`, lecture/écriture réservées à l'admin connecté (
   T2 confirmation SMS/WA datée sur la fiche (`a28da2c`), T4 anti-doublon téléphone (`9885984`),
   T5 SMS carte de visite (`2044831`). Build/typecheck/lint verts, **zéro changement DB**.
   Reste P2/P3 : T6 (coller numéro, optionnel), T7 (carte « leads à rappeler », heuristique). Preview poussée.
+- 2026-06-18 — **PHASE 6 finalisée** sur une **nouvelle branche `feature/leads-a-rappeler`** (créée
+  depuis `main` à jour ; `feat/intake-telephone` déjà mergée) : T7 carte « Leads à rappeler »
+  (`bd93d72`, heuristique sans DB + `?rdv=1` pour Caler RDV 1-tap) et T6 coller le numéro depuis le
+  presse-papier (`637a47d`). Build/typecheck/lint verts, **zéro changement DB**. Preview poussée.
+  **Pas de merge sur `main` sans OK d'Adrian.**
+- 2026-06-18 — **Retouches messages** (`856ebfc`, même branche) demandées par Adrian, après revue
+  de diff (fix `b978cb6` : T6 ne propose plus une date collée comme numéro) : (1) emoji 📅 → 🗓️
+  dans la confirmation SMS/WhatsApp + le rappel J-1 ; (2) dernière ligne du SMS de confirmation
+  réécrite (« appelez-moi au {tel} ou répondez à ce message ») — WhatsApp inchangé ; (3) nouvelle
+  **confirmation courte** (SMS + WhatsApp) sur `RendezVousCard`, à côté de la complète, pour qu'Adrian
+  choisisse (`confirmationCourte`) ; (4) message « bien reçu » neutralisé (`smsCarteDeVisite` →
+  `smsBienRecu`, ne suppose plus un appel) + ajouté en réponse rapide SMS/WhatsApp sur la fiche lead.
+  Build/typecheck/lint verts, **zéro changement DB**. `/karen` : 9/10, 0 critique. Preview poussée.

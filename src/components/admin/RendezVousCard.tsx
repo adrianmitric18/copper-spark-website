@@ -15,6 +15,7 @@ import {
   buildWhatsappHref,
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
+  confirmationCourte,
 } from "@/lib/admin/message-templates";
 import type { TypeVisite, RendezVous } from "@/lib/rdv/constants";
 import type { LeadInfo } from "@/lib/rdv/emailjs";
@@ -64,6 +65,12 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
   const whatsappHref = buildWhatsappHref(
     lead.phone,
     whatsappTemplateConfirmation(confirmationPayload),
+  );
+  // Version courte (même date/heure) : Adrian choisit complète ou courte.
+  const smsCourteHref = buildSmsHref(lead.phone, confirmationCourte(confirmationPayload));
+  const whatsappCourteHref = buildWhatsappHref(
+    lead.phone,
+    confirmationCourte(confirmationPayload),
   );
 
   const gcalUrl = buildGoogleCalendarUrl({
@@ -133,9 +140,12 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
             ? "Prévenir aussi par message (optionnel)"
             : "📱 Pas d'email — préviens le client par message"}
         </p>
+
+        {/* Confirmation complète : détaillée (programme, adresse, délai d'appel). */}
+        <p className="text-[11px] text-muted-foreground">Complète (détaillée)</p>
         <div className="grid grid-cols-2 gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={smsHref} aria-label="Envoyer la confirmation par SMS">
+            <a href={smsHref} aria-label="Envoyer la confirmation complète par SMS">
               <MessageSquare className="w-4 h-4" /> SMS
             </a>
           </Button>
@@ -148,7 +158,31 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
               href={whatsappHref}
               target="_blank"
               rel="noreferrer"
-              aria-label="Envoyer la confirmation par WhatsApp"
+              aria-label="Envoyer la confirmation complète par WhatsApp"
+            >
+              <Send className="w-4 h-4" /> WhatsApp
+            </a>
+          </Button>
+        </div>
+
+        {/* Confirmation courte : quand le client a déjà date + adresse. */}
+        <p className="text-[11px] text-muted-foreground pt-1">Courte (date + heure)</p>
+        <div className="grid grid-cols-2 gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href={smsCourteHref} aria-label="Envoyer la confirmation courte par SMS">
+              <MessageSquare className="w-4 h-4" /> SMS
+            </a>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            className="bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+          >
+            <a
+              href={whatsappCourteHref}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Envoyer la confirmation courte par WhatsApp"
             >
               <Send className="w-4 h-4" /> WhatsApp
             </a>
