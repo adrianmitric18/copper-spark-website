@@ -174,6 +174,8 @@ interface FicheMessage {
   build: (ctx: MsgCtx, vars: Record<string, string>) => MessageOutput;
   // Affiché seulement si pertinent (sinon masqué). Absent = toujours affiché.
   show?: (ctx: MsgCtx) => boolean;
+  // Si vrai : taper SMS/WhatsApp stampe aussi devis_envoye_at (confort 1 geste).
+  stampDevis?: boolean;
 }
 
 const FICHE_MESSAGES: FicheMessage[] = [
@@ -221,29 +223,26 @@ const FICHE_MESSAGES: FicheMessage[] = [
     },
   },
   {
-    id: "envoi-devis",
-    title: "Envoi du devis",
-    moment: "Après la visite — avec le PDF",
+    id: "devis-envoye",
+    title: "Devis envoyé",
+    moment: "Après la visite — le devis part par email (Vertuoza)",
+    // Taper SMS/WA stampe aussi devis_envoye_at = aujourd'hui (voir handleDevisEnvoye).
+    stampDevis: true,
     build: (_ctx, vars) => {
-      const subject = fillTemplate("Votre devis — {{objet}}, Le Cuivre Électrique", vars);
-      const body = fillTemplate(
-        `Bonjour {{prénom}},
+      const txt = fillTemplate(
+        `Bonjour {{prénom}} 👋 C'est Adrian, du Cuivre Électrique. Merci pour votre accueil lors de ma visite !
 
-Merci pour votre accueil lors de ma visite. Vous trouverez en pièce jointe le devis pour {{objet}}.
+Je viens de vous envoyer votre devis pour {{objet}} par email 📧 — pensez à jeter un œil à votre boîte (et aux spams au cas où).
 
-Quelques points utiles :
-– Devis valable 15 jours.
-– Pour démarrer : acompte de 40 % à la signature ; la date d'intervention vous est confirmée dès réception.
-– Tout imprévu non visible aujourd'hui vous serait signalé avant toute intervention, jamais facturé sans votre accord.
+Quelques infos utiles :
+📅 Devis valable 15 jours
+💶 Pour démarrer : acompte de 40 % à la signature, et je vous confirme la date d'intervention dès réception
+⚡ Tout imprévu non visible aujourd'hui vous serait signalé avant toute intervention, jamais facturé sans votre accord
 
-Je reste à votre disposition pour la moindre question.
-
-Bien à vous,
-Adrian Mitric
-Le Cuivre Électrique`,
+Je reste dispo pour la moindre question. À bientôt ! Adrian`,
         vars,
       );
-      return { email: { subject, body } };
+      return { sms: txt, wa: txt };
     },
   },
   {
@@ -539,6 +538,28 @@ const LeadDetail = () => {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "mise à jour impossible";
       toast.error("Erreur : " + msg);
+    }
+  };
+
+  // Part 2 — taper « Devis envoyé » (SMS/WA) stampe la date d'envoi en 1 geste.
+  // Garde-fous : ne re-stampe pas si déjà fait (garde la 1re date), ne rétrograde
+  // jamais un statut « converti »/« perdu », et n'interrompt JAMAIS l'ouverture du
+  // message (fire-and-forget + try/catch). L'état local est mis à jour aussitôt.
+  const handleDevisEnvoye = () => {
+    try {
+      if (!lead) return;
+      if (lead.devis_envoye_at) return; // déjà stampé → on garde la première date
+      if (lead.status === "converti" || lead.status === "perdu") return; // pas de rétrogradation
+      const today = todayIso();
+      setLead({ ...lead, status: "devis envoyé", devis_envoye_at: today }); // visible tout de suite
+      setLeadDevisEnvoye(lead.id, today)
+        .then(() => toast.success("Devis marqué envoyé aujourd'hui"))
+        .catch((e: unknown) => {
+          const msg = e instanceof Error ? e.message : "écriture impossible";
+          toast.error("Date du devis non enregistrée : " + msg);
+        });
+    } catch {
+      // ne jamais bloquer l'ouverture du SMS/WhatsApp
     }
   };
 
@@ -1273,7 +1294,7 @@ const LeadDetail = () => {
       {/* Messages (incrément 1/3) — isolé dans un ErrorBoundary : si la carte
           plante (donnée inattendue), elle disparaît sans casser la fiche. */}
       <ErrorBoundary label="MessagesCard">
-        <MessagesCard lead={lead} rdv={rdv} />
+        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} />
       </ErrorBoundary>
 
       {/* Actions (repliable, fermée par défaut) */}
@@ -1388,7 +1409,15 @@ const LeadDetail = () => {
  * fautif masque seulement sa ligne, jamais toute la carte (et le boundary couvre
  * le reste). Chaque message expose ses canaux (SMS/WhatsApp et/ou Email).
  */
-const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => {
+const MessagesCard = ({
+  lead,
+  rdv,
+  onDevisEnvoye,
+}: {
+  lead: Lead;
+  rdv: RendezVous | null;
+  onDevisEnvoye: () => void;
+}) => {
   const ctx: MsgCtx = { lead, rdv };
   let messageVars: Record<string, string> = {};
   try {
@@ -1440,7 +1469,11 @@ const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => 
                     size="lg"
                     className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
                   >
-                    <a href={buildSmsHref(lead.phone, out.sms)} aria-label={`SMS : ${m.title}`}>
+                    <a
+                      href={buildSmsHref(lead.phone, out.sms)}
+                      onClick={m.stampDevis ? onDevisEnvoye : undefined}
+                      aria-label={`SMS : ${m.title}`}
+                    >
                       <Smartphone className="w-5 h-5" /> SMS
                     </a>
                   </Button>
@@ -1455,6 +1488,7 @@ const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => 
                       href={buildWhatsappHref(lead.phone, out.wa)}
                       target="_blank"
                       rel="noreferrer"
+                      onClick={m.stampDevis ? onDevisEnvoye : undefined}
                       aria-label={`WhatsApp : ${m.title}`}
                     >
                       <MessageCircle className="w-5 h-5" /> WhatsApp
