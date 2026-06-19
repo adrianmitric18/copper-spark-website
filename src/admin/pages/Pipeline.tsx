@@ -18,6 +18,7 @@ import { fetchLeadsWithUpcomingRdvs, updateLeadStatus } from "@/lib/admin/querie
 import {
   type Lead,
   leadSourceLabel,
+  leadStatusColor,
 } from "@/lib/admin/types";
 import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
@@ -36,11 +37,27 @@ const COLUMNS: { key: string; label: string; tint: string }[] = [
   { key: "perdu", label: "Perdu", tint: "border-muted bg-muted/30" },
 ];
 
-// Phase 1.4 — chips de filtre (liste filtrable mobile-first) : "Tous" + statuts.
+// Statuts "terminés" (archivés) : sortis de la liste active par défaut.
+const TERMINAL_STATUSES = new Set(["converti", "perdu"]);
+const isTerminal = (status: string): boolean => TERMINAL_STATUSES.has(status);
+
+// Colonnes actives (tout sauf terminés) — base des sous-filtres.
+const ACTIVE_COLUMNS = COLUMNS.filter((c) => !isTerminal(c.key));
+
+// Chips de filtre (réutilise le pattern Phase 1.4). Défaut = "Actifs" (exclut
+// converti/perdu) ; "Terminés" regroupe converti + perdu (archive consultable).
 const STATUS_CHIPS = [
-  { key: "all", label: "Tous" },
-  ...COLUMNS.map((c) => ({ key: c.key, label: c.label })),
+  { key: "active", label: "Actifs" },
+  ...ACTIVE_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
+  { key: "termines", label: "Terminés" },
 ];
+
+// Vrai si un lead correspond au filtre courant (statut exact, "active" ou "termines").
+const matchesStatusFilter = (status: string, filter: string): boolean => {
+  if (filter === "active") return !isTerminal(status);
+  if (filter === "termines") return isTerminal(status);
+  return status === filter;
+};
 
 const ageInHours = (createdAt: string): number =>
   Math.floor((Date.now() - new Date(createdAt).getTime()) / HOUR_MS);
@@ -67,6 +84,16 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-sm truncate">{lead.name}</p>
+            {/* Sur un lead terminé, on montre le statut (gagné/perdu) — visible
+                en clair dans l'onglet « Terminés ». */}
+            {isTerminal(lead.status) && (
+              <Badge
+                variant="outline"
+                className={`mt-1 text-[10px] px-1.5 py-0 ${leadStatusColor(lead.status)}`}
+              >
+                {lead.status}
+              </Badge>
+            )}
             {lead.commune && (
               <p className="text-xs text-muted-foreground truncate">{lead.commune}</p>
             )}
@@ -154,7 +181,9 @@ const Pipeline = () => {
   const { user, ready } = useAdminGuard();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // Défaut "active" : la liste principale n'affiche pas les leads terminés
+  // (converti/perdu) — ils restent accessibles via le chip "Terminés".
+  const [statusFilter, setStatusFilter] = useState<string>("active");
 
   useEffect(() => {
     document.title = "Leads – Le Cuivre Admin";
@@ -200,16 +229,13 @@ const Pipeline = () => {
     );
   }, [leads, search]);
 
-  // Phase 1.4 — liste plate filtrée par statut (chip) puis triée.
-  // Statuts actifs (nouveau/traité/devis) : plus anciens d'abord (urgence).
-  // "Tous" / converti / perdu : plus récents d'abord (historique).
+  // Liste plate filtrée par chip ("Actifs" / sous-statut / "Terminés") puis triée.
+  // Actifs : plus anciens d'abord (urgence). Terminés : plus récents d'abord (historique).
   const listed = useMemo(() => {
-    const arr =
-      statusFilter === "all"
-        ? filtered
-        : filtered.filter((l) => l.status === statusFilter);
-    const reverse =
-      statusFilter === "all" || statusFilter === "converti" || statusFilter === "perdu";
+    const arr = filtered.filter((l) => matchesStatusFilter(l.status, statusFilter));
+    // Terminés : historique → plus récents d'abord. Actifs / sous-statuts :
+    // plus anciens d'abord (l'urgence remonte en tête).
+    const reverse = statusFilter === "termines";
     return [...arr].sort((a, b) => {
       const da = new Date(a.created_at).getTime();
       const db = new Date(b.created_at).getTime();
@@ -299,10 +325,9 @@ const Pipeline = () => {
         {/* Filtres par statut (Phase 1.4 — liste filtrable, pouce, sans scroll horizontal du contenu) */}
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
           {STATUS_CHIPS.map((chip) => {
-            const count =
-              chip.key === "all"
-                ? filtered.length
-                : filtered.filter((l) => l.status === chip.key).length;
+            const count = filtered.filter((l) =>
+              matchesStatusFilter(l.status, chip.key),
+            ).length;
             const active = statusFilter === chip.key;
             return (
               <button
