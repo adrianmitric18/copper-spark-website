@@ -34,6 +34,8 @@ export const COMPANY = {
   email: "cuivre.electrique@gmail.com",
   site: "cuivre-electrique.com",
   siteUrl: "https://cuivre-electrique.com",
+  // Lien direct pour laisser un avis Google (même URL que Footer/HomeReviewsBanner).
+  reviewUrl: "https://g.page/r/CVLZZFVq3KkiEBM/review",
   vat: "BE 0805 376 944",
   brandColor: "#E85D04",
   darkColor: "#1F1F1F",
