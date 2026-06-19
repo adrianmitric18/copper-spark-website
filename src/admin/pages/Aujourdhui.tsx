@@ -160,6 +160,28 @@ const PALIER_BADGE: Record<RelancePalier, string> = {
   3: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
+// « À relancer » — date de référence de la DERNIÈRE ACTION :
+// - "devis envoyé" → la date d'envoi du devis (colonne `date`, ancrée midi local) ;
+//   c'est elle qui doit piloter ancienneté + relance, PAS la création.
+// - sinon (nouveau / traité) → created_at, seul repère dispo (pas d'`updated_at` en base).
+const staleRefMs = (l: Lead): number => {
+  if (l.status === "devis envoyé" && l.devis_envoye_at) {
+    const [y, m, d] = l.devis_envoye_at.split("-").map(Number);
+    return new Date(y, m - 1, d, 12).getTime();
+  }
+  return new Date(l.created_at).getTime();
+};
+
+// Heures (entières) écoulées depuis la dernière action — base du badge et du seuil.
+const staleAgeHours = (l: Lead): number =>
+  Math.floor((Date.now() - staleRefMs(l)) / HOUR_MS);
+
+// Seuil d'apparition dans « À relancer » : un devis envoyé n'est "à relancer"
+// qu'à partir de J+3 (72 h depuis l'envoi, aligné sur la cadence de relance) ;
+// les autres statuts à partir de 48 h sans action.
+const staleThresholdHours = (l: Lead): number =>
+  l.status === "devis envoyé" ? 72 : 48;
+
 const Aujourdhui = () => {
   const { user, ready } = useAdminGuard();
   const queryClient = useQueryClient();
@@ -301,13 +323,11 @@ const Aujourdhui = () => {
       .filter((l) => {
         if (!ACTIVE_STATUSES.has(l.status)) return false;
         if (upcomingByLead[l.id]) return false;
-        const hours = (Date.now() - new Date(l.created_at).getTime()) / HOUR_MS;
-        return hours >= 48;
+        // Ancienneté depuis la dernière action (devis_envoye_at pour un devis
+        // envoyé, sinon created_at) — plus depuis la création.
+        return staleAgeHours(l) >= staleThresholdHours(l);
       })
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      )
+      .sort((a, b) => staleRefMs(a) - staleRefMs(b))
       .slice(0, 5);
   }, [leads, upcomingByLead]);
 
@@ -595,7 +615,7 @@ const Aujourdhui = () => {
                                     variant="outline"
                                     className="text-[10px] px-1.5 py-0 bg-orange-500/15 text-orange-700 border-orange-500/30"
                                   >
-                                    {formatAge(ageInHours(l.created_at))}
+                                    {formatAge(staleAgeHours(l))}
                                   </Badge>
                                 </div>
                                 <p className="text-xs text-muted-foreground truncate">
