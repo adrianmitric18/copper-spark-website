@@ -54,7 +54,14 @@ import {
   LEAD_STATUSES,
   leadSourceLabel,
 } from "@/lib/admin/types";
-import { smsBienRecu } from "@/lib/admin/message-templates";
+import {
+  smsBienRecu,
+  buildSmsHref,
+  buildWhatsappHref,
+  smsTemplateRelance1,
+  whatsappTemplateRelance1,
+  type RelanceDevisPayload,
+} from "@/lib/admin/message-templates";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import CollapsibleCard from "@/components/admin/CollapsibleCard";
@@ -86,6 +93,71 @@ const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = 
   { label: "Indispo cette semaine", body: (n) => `Bonjour ${n}, je suis complet cette semaine, mais je reviens vers vous pour caler une date au plus tôt. Adrian — Le Cuivre Électrique` },
   { label: "En route, j'arrive", body: (n) => `Bonjour ${n}, je suis en route, j'arrive d'ici peu. Adrian — Le Cuivre Électrique` },
   { label: "Bien reçu", body: (n) => smsBienRecu(n) },
+];
+
+// ── Section « Messages » (incrément 1/3) ────────────────────────────────────
+// Catalogue de messages prêts à l'emploi, envoyables en 1 tap (SMS / WhatsApp).
+// Le corps peut contenir des {{variables}} remplies depuis la fiche (fillTemplate).
+// Réutilise les templates partagés (smsBienRecu, relances) de message-templates.
+// Les variables et messages s'enrichiront aux incréments 2/3 (pas celui-ci).
+
+// Remplace {{clé}} par sa valeur ; laisse {{clé}} tel quel si inconnue
+// (volontairement visible → repère une variable manquante en test).
+const fillTemplate = (tpl: string, vars: Record<string, string>): string =>
+  tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_m, k: string) => vars[k.trim()] ?? `{{${k.trim()}}}`);
+
+// Variables disponibles pour ce 1er incrément, depuis les données de la fiche.
+const buildMessageVars = (lead: Lead): Record<string, string> => ({
+  "prénom": firstNameOf(lead.name),
+  "objet": lead.services?.[0] || "votre projet",
+  "date_devis": lead.devis_envoye_at ? formatRdvDateShort(lead.devis_envoye_at) : "",
+});
+
+interface FicheMessage {
+  id: string;
+  title: string; // titre court, repérable au coup d'œil
+  moment: string; // quand l'utiliser
+  // Texte final (variables déjà remplies) pour chaque canal.
+  build: (lead: Lead, vars: Record<string, string>) => { sms: string; wa: string };
+  // Affiché seulement si pertinent (sinon masqué). Absent = toujours affiché.
+  show?: (lead: Lead) => boolean;
+}
+
+const FICHE_MESSAGES: FicheMessage[] = [
+  {
+    id: "recu-rappel-demain",
+    title: "Bien reçu — rappel demain",
+    moment: "Nouveau lead, le jour même",
+    build: (_lead, vars) => {
+      const txt = fillTemplate(
+        "Bonjour {{prénom}} 👋 C'est Adrian, du Cuivre Électrique. J'ai bien reçu votre demande, merci ! Je vous rappelle demain pour qu'on en parle 📞 À demain ! Adrian",
+        vars,
+      );
+      return { sms: txt, wa: txt };
+    },
+  },
+  {
+    id: "bien-recu",
+    title: "Bien reçu",
+    moment: "Accusé de réception",
+    build: (_lead, vars) => {
+      const txt = smsBienRecu(vars["prénom"]);
+      return { sms: txt, wa: txt };
+    },
+  },
+  {
+    id: "relance-devis",
+    title: "Relance devis",
+    moment: "Devis sans réponse",
+    show: (lead) => Boolean(lead.devis_envoye_at),
+    build: (lead, vars) => {
+      const payload: RelanceDevisPayload = {
+        clientName: vars["prénom"],
+        devisEnvoyeAt: lead.devis_envoye_at as string,
+      };
+      return { sms: smsTemplateRelance1(payload), wa: whatsappTemplateRelance1(payload) };
+    },
+  },
 ];
 
 // Phase 2.5 — dictée vocale (Web Speech API, gratuite, surtout utile sur
@@ -613,6 +685,8 @@ const LeadDetail = () => {
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
 
   const info = leadInfo()!;
+  // Variables pour la section « Messages » (incrément 1/3).
+  const messageVars = buildMessageVars(lead);
   const quickMessage = communicationMessage();
   const encodedBody = encodeURIComponent(quickMessage.body);
   const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
@@ -996,6 +1070,57 @@ const LeadDetail = () => {
               Enregistrer les notes
             </Button>
           </div>
+        </div>
+      </Card>
+
+      {/* Messages (incrément 1/3) — le bon message, pré-rempli, en 1 tap.
+          Pensé chantier/mobile : gros boutons au pouce, titre + moment pour
+          repérer au coup d'œil, SMS et WhatsApp côte à côte. */}
+      <Card className="p-4 md:p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold">Messages</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Le bon message, pré-rempli, en 1 tap (SMS ou WhatsApp).
+        </p>
+        <div className="space-y-3">
+          {FICHE_MESSAGES.filter((m) => !m.show || m.show(lead)).map((m) => {
+            const { sms, wa } = m.build(lead, messageVars);
+            return (
+              <div key={m.id} className="rounded-lg border bg-background p-3 space-y-2.5">
+                <div>
+                  <p className="font-semibold text-sm leading-tight">{m.title}</p>
+                  <p className="text-xs text-muted-foreground">{m.moment}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
+                  >
+                    <a href={buildSmsHref(lead.phone, sms)} aria-label={`SMS : ${m.title}`}>
+                      <Smartphone className="w-5 h-5" /> SMS
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="min-h-[48px] text-base bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                  >
+                    <a
+                      href={buildWhatsappHref(lead.phone, wa)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`WhatsApp : ${m.title}`}
+                    >
+                      <MessageCircle className="w-5 h-5" /> WhatsApp
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
