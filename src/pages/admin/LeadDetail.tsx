@@ -62,6 +62,7 @@ import {
   whatsappTemplateRelance1,
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
+  buildMailtoHref,
   COMPANY,
   type RelanceDevisPayload,
   type ConfirmationRdvPayload,
@@ -101,11 +102,13 @@ const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = 
   { label: "Bien reçu", body: (n) => smsBienRecu(n) },
 ];
 
-// ── Section « Messages » (incréments 1/3 + 2/3) ─────────────────────────────
-// Catalogue de messages prêts à l'emploi, envoyables en 1 tap (SMS / WhatsApp).
-// Le corps peut contenir des {{variables}} remplies depuis la fiche (fillTemplate).
-// Réutilise les templates partagés (smsBienRecu, relances, confirmation) de
-// message-templates. Contexte = lead + RDV actif lié (pour date/heure/adresse).
+// ── Section « Messages » (incréments 1/3 + 2/3 + 3/3) ───────────────────────
+// Catalogue de messages prêts à l'emploi, envoyables en 1 tap (SMS / WhatsApp /
+// Email selon le message). Le corps peut contenir des {{variables}} remplies
+// depuis la fiche (fillTemplate). Tout ce qui est entre [crochets] reste
+// LITTÉRAL : Adrian le complète au moment de l'envoi. Réutilise les templates
+// partagés (smsBienRecu, relances, confirmation) de message-templates.
+// Contexte = lead + RDV actif lié (pour date/heure/adresse).
 
 // Contexte de remplissage : la fiche + son RDV actif (null si aucun).
 interface MsgCtx {
@@ -113,10 +116,31 @@ interface MsgCtx {
   rdv: RendezVous | null;
 }
 
+// Sortie d'un message : un ou plusieurs canaux. SMS/WA = texte ; Email = objet
+// + corps (mailto). Un message n'expose que les canaux pertinents.
+interface MessageOutput {
+  sms?: string;
+  wa?: string;
+  email?: { subject: string; body: string };
+}
+
 // Remplace {{clé}} par sa valeur ; laisse {{clé}} tel quel si inconnue
 // (volontairement visible → repère une variable manquante en test).
+// Ne touche QU'aux {{accolades}} : les [crochets] passent tels quels.
 const fillTemplate = (tpl: string, vars: Record<string, string>): string =>
   tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_m, k: string) => vars[k.trim()] ?? `{{${k.trim()}}}`);
+
+// Email "utilisable" : réel, pas "Non fourni", pas le placeholder local du RDV
+// rapide. Sinon le mailto part sans destinataire (Adrian le saisit). Module-level
+// pour servir aussi MessagesCard.
+const hasUsableEmail = (email: string | null | undefined): boolean => {
+  if (!email) return false;
+  const e = email.trim().toLowerCase();
+  if (!e.includes("@")) return false;
+  if (e === "non fourni") return false;
+  if (e.endsWith("@local.cuivre-electrique.com")) return false;
+  return true;
+};
 
 // Adresse : champ libre `address` en priorité, sinon recomposée depuis les
 // champs structurés (rue/numéro/CP/commune). Vide si rien d'exploitable.
@@ -146,8 +170,8 @@ interface FicheMessage {
   id: string;
   title: string; // titre court, repérable au coup d'œil
   moment: string; // quand l'utiliser
-  // Texte final (variables déjà remplies) pour chaque canal.
-  build: (ctx: MsgCtx, vars: Record<string, string>) => { sms: string; wa: string };
+  // Texte final (variables déjà remplies) — canaux exposés selon le message.
+  build: (ctx: MsgCtx, vars: Record<string, string>) => MessageOutput;
   // Affiché seulement si pertinent (sinon masqué). Absent = toujours affiché.
   show?: (ctx: MsgCtx) => boolean;
 }
@@ -197,6 +221,45 @@ const FICHE_MESSAGES: FicheMessage[] = [
     },
   },
   {
+    id: "envoi-devis",
+    title: "Envoi du devis",
+    moment: "Après la visite — avec le PDF",
+    build: (_ctx, vars) => {
+      const subject = fillTemplate("Votre devis — {{objet}}, Le Cuivre Électrique", vars);
+      const body = fillTemplate(
+        `Bonjour {{prénom}},
+
+Merci pour votre accueil lors de ma visite. Vous trouverez en pièce jointe le devis pour {{objet}}.
+
+Quelques points utiles :
+– Devis valable 15 jours.
+– Pour démarrer : acompte de 40 % à la signature ; la date d'intervention vous est confirmée dès réception.
+– Tout imprévu non visible aujourd'hui vous serait signalé avant toute intervention, jamais facturé sans votre accord.
+
+Je reste à votre disposition pour la moindre question.
+
+Bien à vous,
+Adrian Mitric
+Le Cuivre Électrique`,
+        vars,
+      );
+      return { email: { subject, body } };
+    },
+  },
+  {
+    id: "relance-devis",
+    title: "Relance devis",
+    moment: "Devis sans réponse",
+    show: ({ lead }) => Boolean(lead.devis_envoye_at),
+    build: ({ lead }, vars) => {
+      const payload: RelanceDevisPayload = {
+        clientName: vars["prénom"],
+        devisEnvoyeAt: lead.devis_envoye_at as string,
+      };
+      return { sms: smsTemplateRelance1(payload), wa: whatsappTemplateRelance1(payload) };
+    },
+  },
+  {
     id: "demarrage-chantier",
     title: "Démarrage chantier",
     moment: "Acompte reçu, le chantier démarre",
@@ -220,16 +283,25 @@ Je m'occupe du reste. À très bientôt ! Adrian`,
     },
   },
   {
-    id: "relance-devis",
-    title: "Relance devis",
-    moment: "Devis sans réponse",
-    show: ({ lead }) => Boolean(lead.devis_envoye_at),
-    build: ({ lead }, vars) => {
-      const payload: RelanceDevisPayload = {
-        clientName: vars["prénom"],
-        devisEnvoyeAt: lead.devis_envoye_at as string,
-      };
-      return { sms: smsTemplateRelance1(payload), wa: whatsappTemplateRelance1(payload) };
+    id: "imprevu-chantier",
+    title: "Imprévu chantier",
+    moment: "Avant de faire le travail en plus",
+    build: (_ctx, vars) => {
+      const txt = fillTemplate(
+        `Bonjour {{prénom}} 👋 Petit point depuis le chantier, comme convenu.
+
+En avançant, je suis tombé sur [le problème — ex. une perte sur le circuit X] ⚡, pas visible au moment du devis. Rien d'alarmant, mais ça sort de ce qui était prévu, alors je préfère vous prévenir avant d'aller plus loin.
+
+Deux options :
+🔧 je le règle à l'heure ([tarif] €/h, ~[X] h)
+📝 ou je vous fais un petit devis complémentaire
+
+Je ne touche à rien sans votre feu vert — dites-moi ce qui vous arrange.
+
+À tout de suite ! Adrian`,
+        vars,
+      );
+      return { sms: txt, wa: txt };
     },
   },
   {
@@ -250,6 +322,49 @@ Et si vous séchez sur quoi écrire, un mot sur le travail ou le contact suffit.
 Si quelque chose ne vous a pas plu, dites-le moi à moi en premier 🙏 — je tiens à ce que vous soyez vraiment content.
 
 Merci de tout cœur ! Adrian`,
+        vars,
+      );
+      return { sms: txt, wa: txt };
+    },
+  },
+  {
+    id: "relance-paiement-gentil",
+    title: "Relance paiement — gentil",
+    moment: "1er rappel, sans reproche",
+    build: (_ctx, vars) => {
+      const txt = fillTemplate(
+        `Bonjour {{prénom}} 👋 C'est Adrian, du Cuivre Électrique.
+
+Un petit rappel tout simple : sauf erreur de ma part, la facture [n° facture] du [date facture] ([montant] €) n'a pas encore été réglée — sans doute un oubli, ça arrive 🙂
+
+Pour faire au plus simple :
+📱 scannez le QR sur la facture
+🏦 ou virement sur BE72 3632 3398 1016 (communication : [n° facture])
+
+Et si le paiement est déjà parti, ne tenez surtout pas compte de ce message !
+
+Bien à vous, Adrian`,
+        vars,
+      );
+      return { sms: txt, wa: txt };
+    },
+  },
+  {
+    id: "relance-paiement-ferme",
+    title: "Relance paiement — ferme",
+    moment: "2e relance, échéance dépassée",
+    build: (_ctx, vars) => {
+      const txt = fillTemplate(
+        `Bonjour {{prénom}}, c'est Adrian, du Cuivre Électrique.
+
+Je reviens vers vous au sujet de la facture [n° facture] ([montant] €), restée impayée malgré mon précédent rappel et désormais échue.
+
+Merci de procéder au règlement sous [délai] jours :
+🏦 BE72 3632 3398 1016 (communication : [n° facture])
+
+Sans nouvelle de votre part, je serai contraint d'appliquer les conditions prévues dans mes conditions générales de vente. Et si une difficulté se présente, parlons-en — je préfère toujours trouver une solution ensemble.
+
+Bien à vous, Adrian`,
         vars,
       );
       return { sms: txt, wa: txt };
@@ -511,19 +626,6 @@ const LeadDetail = () => {
   const leadInfo = (): LeadInfo | null => lead && {
     id: lead.id, name: lead.name, email: lead.email, phone: lead.phone,
     rue: lead.rue, numero: lead.numero, code_postal: lead.code_postal, commune: lead.commune,
-  };
-
-  // Phase 1.6 — un email est "utilisable" pour l'envoi auto seulement s'il est
-  // réel : pas vide, pas "Non fourni", pas le placeholder local généré par le
-  // RDV rapide (rdv-...@local.cuivre-electrique.com). Sinon on n'envoie pas
-  // (ça planterait à la validation) et on bascule sur SMS/WhatsApp.
-  const hasUsableEmail = (email: string | null | undefined): boolean => {
-    if (!email) return false;
-    const e = email.trim().toLowerCase();
-    if (!e.includes("@")) return false;
-    if (e === "non fourni") return false;
-    if (e.endsWith("@local.cuivre-electrique.com")) return false;
-    return true;
   };
 
   // Phase 2.5 — dictée vocale qui alimente les notes internes.
@@ -1280,10 +1382,11 @@ const LeadDetail = () => {
 };
 
 /**
- * Carte « Messages » (incréments 1/3 + 2/3) — isolée dans son propre composant
- * pour être enveloppée d'un ErrorBoundary côté LeadDetail. Défense en profondeur :
- * chaque message est construit dans un try/catch → un template fautif masque
- * seulement sa ligne, jamais toute la carte (et le boundary couvre le reste).
+ * Carte « Messages » (incréments 1/3 + 2/3 + 3/3) — isolée dans son propre
+ * composant pour être enveloppée d'un ErrorBoundary côté LeadDetail. Défense en
+ * profondeur : chaque message est construit dans un try/catch → un template
+ * fautif masque seulement sa ligne, jamais toute la carte (et le boundary couvre
+ * le reste). Chaque message expose ses canaux (SMS/WhatsApp et/ou Email).
  */
 const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => {
   const ctx: MsgCtx = { lead, rdv };
@@ -1294,17 +1397,21 @@ const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => 
     messageVars = {};
   }
 
+  // Destinataire email : seulement si réel (sinon mailto sans destinataire,
+  // Adrian le saisit). Évite d'écrire au placeholder local.
+  const emailTo = hasUsableEmail(lead.email) ? lead.email : undefined;
+
   const rows = FICHE_MESSAGES.map((m) => {
     try {
       if (m.show && !m.show(ctx)) return null;
-      const { sms, wa } = m.build(ctx, messageVars);
-      if (!sms && !wa) return null;
-      return { m, sms, wa };
+      const out = m.build(ctx, messageVars);
+      if (!out.sms && !out.wa && !out.email) return null;
+      return { m, out };
     } catch {
       // Message fautif (donnée inattendue) → on l'ignore, les autres restent.
       return null;
     }
-  }).filter((x): x is { m: FicheMessage; sms: string; wa: string } => x !== null);
+  }).filter((x): x is { m: FicheMessage; out: MessageOutput } => x !== null);
 
   if (rows.length === 0) return null;
 
@@ -1315,40 +1422,58 @@ const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => 
         <h2 className="text-lg font-semibold">Messages</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Le bon message, pré-rempli, en 1 tap (SMS ou WhatsApp).
+        Le bon message, pré-rempli, en 1 tap (SMS, WhatsApp ou Email).
       </p>
       <div className="space-y-3">
-        {rows.map(({ m, sms, wa }) => (
+        {rows.map(({ m, out }) => (
           <div key={m.id} className="rounded-lg border bg-background p-3 space-y-2.5">
             <div>
               <p className="font-semibold text-sm leading-tight">{m.title}</p>
               <p className="text-xs text-muted-foreground">{m.moment}</p>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                asChild
-                size="lg"
-                className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
-              >
-                <a href={buildSmsHref(lead.phone, sms)} aria-label={`SMS : ${m.title}`}>
-                  <Smartphone className="w-5 h-5" /> SMS
-                </a>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                className="min-h-[48px] text-base bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-              >
+
+            {(out.sms !== undefined || out.wa !== undefined) && (
+              <div className="grid grid-cols-2 gap-2">
+                {out.sms !== undefined && (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
+                  >
+                    <a href={buildSmsHref(lead.phone, out.sms)} aria-label={`SMS : ${m.title}`}>
+                      <Smartphone className="w-5 h-5" /> SMS
+                    </a>
+                  </Button>
+                )}
+                {out.wa !== undefined && (
+                  <Button
+                    asChild
+                    size="lg"
+                    className="min-h-[48px] text-base bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                  >
+                    <a
+                      href={buildWhatsappHref(lead.phone, out.wa)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`WhatsApp : ${m.title}`}
+                    >
+                      <MessageCircle className="w-5 h-5" /> WhatsApp
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {out.email && (
+              <Button asChild size="lg" variant="copper" className="w-full min-h-[48px] text-base">
                 <a
-                  href={buildWhatsappHref(lead.phone, wa)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`WhatsApp : ${m.title}`}
+                  href={buildMailtoHref(emailTo, out.email.subject, out.email.body)}
+                  aria-label={`Email : ${m.title}`}
                 >
-                  <MessageCircle className="w-5 h-5" /> WhatsApp
+                  <Mail className="w-5 h-5" /> Email
                 </a>
               </Button>
-            </div>
+            )}
           </div>
         ))}
       </div>
