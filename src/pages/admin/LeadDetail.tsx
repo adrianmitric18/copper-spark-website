@@ -38,7 +38,7 @@ import {
   sendRdvAnnulationEmail,
   type LeadInfo,
 } from "@/lib/rdv/emailjs";
-import type { RendezVous } from "@/lib/rdv/constants";
+import type { RendezVous, TypeVisite } from "@/lib/rdv/constants";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import {
   fetchLeadById,
@@ -60,8 +60,13 @@ import {
   buildWhatsappHref,
   smsTemplateRelance1,
   whatsappTemplateRelance1,
+  smsTemplateConfirmation,
+  whatsappTemplateConfirmation,
+  COMPANY,
   type RelanceDevisPayload,
+  type ConfirmationRdvPayload,
 } from "@/lib/admin/message-templates";
+import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import CollapsibleCard from "@/components/admin/CollapsibleCard";
@@ -96,22 +101,45 @@ const QUICK_REPLIES: { label: string; body: (firstName: string) => string }[] = 
   { label: "Bien reçu", body: (n) => smsBienRecu(n) },
 ];
 
-// ── Section « Messages » (incrément 1/3) ────────────────────────────────────
+// ── Section « Messages » (incréments 1/3 + 2/3) ─────────────────────────────
 // Catalogue de messages prêts à l'emploi, envoyables en 1 tap (SMS / WhatsApp).
 // Le corps peut contenir des {{variables}} remplies depuis la fiche (fillTemplate).
-// Réutilise les templates partagés (smsBienRecu, relances) de message-templates.
-// Les variables et messages s'enrichiront aux incréments 2/3 (pas celui-ci).
+// Réutilise les templates partagés (smsBienRecu, relances, confirmation) de
+// message-templates. Contexte = lead + RDV actif lié (pour date/heure/adresse).
+
+// Contexte de remplissage : la fiche + son RDV actif (null si aucun).
+interface MsgCtx {
+  lead: Lead;
+  rdv: RendezVous | null;
+}
 
 // Remplace {{clé}} par sa valeur ; laisse {{clé}} tel quel si inconnue
 // (volontairement visible → repère une variable manquante en test).
 const fillTemplate = (tpl: string, vars: Record<string, string>): string =>
   tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_m, k: string) => vars[k.trim()] ?? `{{${k.trim()}}}`);
 
-// Variables disponibles pour ce 1er incrément, depuis les données de la fiche.
-const buildMessageVars = (lead: Lead): Record<string, string> => ({
+// Adresse : champ libre `address` en priorité, sinon recomposée depuis les
+// champs structurés (rue/numéro/CP/commune). Vide si rien d'exploitable.
+const composeAddress = (lead: Lead): string => {
+  const struct = [
+    [lead.rue, lead.numero].filter(Boolean).join(" "),
+    [lead.code_postal, lead.commune].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return (lead.address?.trim() || struct || "").trim();
+};
+
+// Variables disponibles, depuis les données de la fiche + le RDV lié.
+// (date_intervention/heure restent vides s'il n'y a pas de RDV.)
+const buildMessageVars = ({ lead, rdv }: MsgCtx): Record<string, string> => ({
   "prénom": firstNameOf(lead.name),
   "objet": lead.services?.[0] || "votre projet",
   "date_devis": lead.devis_envoye_at ? formatRdvDateShort(lead.devis_envoye_at) : "",
+  "adresse": composeAddress(lead),
+  "date_intervention": rdv ? formatRdvDateShort(rdv.date_rdv) : "",
+  "heure": rdv ? formatHeure(rdv.heure_rdv) : "",
+  "lien_avis": COMPANY.reviewUrl,
 });
 
 interface FicheMessage {
@@ -119,9 +147,9 @@ interface FicheMessage {
   title: string; // titre court, repérable au coup d'œil
   moment: string; // quand l'utiliser
   // Texte final (variables déjà remplies) pour chaque canal.
-  build: (lead: Lead, vars: Record<string, string>) => { sms: string; wa: string };
+  build: (ctx: MsgCtx, vars: Record<string, string>) => { sms: string; wa: string };
   // Affiché seulement si pertinent (sinon masqué). Absent = toujours affiché.
-  show?: (lead: Lead) => boolean;
+  show?: (ctx: MsgCtx) => boolean;
 }
 
 const FICHE_MESSAGES: FicheMessage[] = [
@@ -129,7 +157,7 @@ const FICHE_MESSAGES: FicheMessage[] = [
     id: "recu-rappel-demain",
     title: "Bien reçu — rappel demain",
     moment: "Nouveau lead, le jour même",
-    build: (_lead, vars) => {
+    build: (_ctx, vars) => {
       const txt = fillTemplate(
         "Bonjour {{prénom}} 👋 C'est Adrian, du Cuivre Électrique. J'ai bien reçu votre demande, merci ! Je vous rappelle demain pour qu'on en parle 📞 À demain ! Adrian",
         vars,
@@ -141,8 +169,53 @@ const FICHE_MESSAGES: FicheMessage[] = [
     id: "bien-recu",
     title: "Bien reçu",
     moment: "Accusé de réception",
-    build: (_lead, vars) => {
+    build: (_ctx, vars) => {
       const txt = smsBienRecu(vars["prénom"]);
+      return { sms: txt, wa: txt };
+    },
+  },
+  {
+    id: "confirmation-rdv",
+    title: "Confirmation RDV",
+    moment: "Avant la visite / intervention",
+    show: ({ rdv }) => Boolean(rdv),
+    build: ({ lead, rdv }) => {
+      if (!rdv) return { sms: "", wa: "" };
+      const payload: ConfirmationRdvPayload = {
+        clientName: lead.name,
+        dateIso: rdv.date_rdv,
+        heure: rdv.heure_rdv.slice(0, 5),
+        typeVisite: rdv.type_visite as TypeVisite,
+        dureeMinutes: rdv.duree_minutes,
+        address: composeAddress(lead) || undefined,
+        delaiAppelMinutes: null,
+      };
+      return {
+        sms: smsTemplateConfirmation(payload),
+        wa: whatsappTemplateConfirmation(payload),
+      };
+    },
+  },
+  {
+    id: "demarrage-chantier",
+    title: "Démarrage chantier",
+    moment: "Acompte reçu, le chantier démarre",
+    show: ({ rdv }) => Boolean(rdv),
+    build: (_ctx, vars) => {
+      const txt = fillTemplate(
+        `Bonjour {{prénom}} 👋 C'est Adrian, du Cuivre Électrique.
+
+Bonne nouvelle : votre acompte est bien arrivé, merci à vous ! 🙏 Comme convenu au téléphone, je vous confirme la date qu'on a fixée ensemble :
+🗓️ {{date_intervention}} à partir de {{heure}}
+📍 {{adresse}}
+
+Pour que tout roule le jour J :
+🅿️ un accès dégagé et une place où me garer à proximité
+⚡ je devrai couper le courant par moments — pensez au frigo, au congélateur et au matériel sensible
+
+Je m'occupe du reste. À très bientôt ! Adrian`,
+        vars,
+      );
       return { sms: txt, wa: txt };
     },
   },
@@ -150,13 +223,36 @@ const FICHE_MESSAGES: FicheMessage[] = [
     id: "relance-devis",
     title: "Relance devis",
     moment: "Devis sans réponse",
-    show: (lead) => Boolean(lead.devis_envoye_at),
-    build: (lead, vars) => {
+    show: ({ lead }) => Boolean(lead.devis_envoye_at),
+    build: ({ lead }, vars) => {
       const payload: RelanceDevisPayload = {
         clientName: vars["prénom"],
         devisEnvoyeAt: lead.devis_envoye_at as string,
       };
       return { sms: smsTemplateRelance1(payload), wa: whatsappTemplateRelance1(payload) };
+    },
+  },
+  {
+    id: "avis-google",
+    title: "Avis Google",
+    moment: "Chantier fini",
+    build: (_ctx, vars) => {
+      const txt = fillTemplate(
+        `Bonjour {{prénom}} 👋 C'est Adrian. J'espère que tout fonctionne nickel depuis mon passage pour {{objet}}, et que vous êtes content du résultat 😊
+
+Si c'est le cas, j'aurais un petit service à vous demander — 2 minutes, pas plus. Pour un artisan indépendant, un avis Google a une vraie valeur : c'est votre confiance rendue visible, et la plus belle vitrine pour mon travail. ⭐
+
+👉 Le lien direct (ça ouvre la page, vous mettez les étoiles, c'est réglé) :
+{{lien_avis}}
+
+Et si vous séchez sur quoi écrire, un mot sur le travail ou le contact suffit.
+
+Si quelque chose ne vous a pas plu, dites-le moi à moi en premier 🙏 — je tiens à ce que vous soyez vraiment content.
+
+Merci de tout cœur ! Adrian`,
+        vars,
+      );
+      return { sms: txt, wa: txt };
     },
   },
 ];
@@ -1075,7 +1171,7 @@ const LeadDetail = () => {
       {/* Messages (incrément 1/3) — isolé dans un ErrorBoundary : si la carte
           plante (donnée inattendue), elle disparaît sans casser la fiche. */}
       <ErrorBoundary label="MessagesCard">
-        <MessagesCard lead={lead} />
+        <MessagesCard lead={lead} rdv={rdv} />
       </ErrorBoundary>
 
       {/* Actions (repliable, fermée par défaut) */}
@@ -1184,23 +1280,24 @@ const LeadDetail = () => {
 };
 
 /**
- * Carte « Messages » (incrément 1/3) — isolée dans son propre composant pour
- * être enveloppée d'un ErrorBoundary côté LeadDetail. Défense en profondeur :
+ * Carte « Messages » (incréments 1/3 + 2/3) — isolée dans son propre composant
+ * pour être enveloppée d'un ErrorBoundary côté LeadDetail. Défense en profondeur :
  * chaque message est construit dans un try/catch → un template fautif masque
  * seulement sa ligne, jamais toute la carte (et le boundary couvre le reste).
  */
-const MessagesCard = ({ lead }: { lead: Lead }) => {
+const MessagesCard = ({ lead, rdv }: { lead: Lead; rdv: RendezVous | null }) => {
+  const ctx: MsgCtx = { lead, rdv };
   let messageVars: Record<string, string> = {};
   try {
-    messageVars = buildMessageVars(lead);
+    messageVars = buildMessageVars(ctx);
   } catch {
     messageVars = {};
   }
 
   const rows = FICHE_MESSAGES.map((m) => {
     try {
-      if (m.show && !m.show(lead)) return null;
-      const { sms, wa } = m.build(lead, messageVars);
+      if (m.show && !m.show(ctx)) return null;
+      const { sms, wa } = m.build(ctx, messageVars);
       if (!sms && !wa) return null;
       return { m, sms, wa };
     } catch {
