@@ -183,11 +183,14 @@ function ensureEmailJsInitialized(): void {
   emailJsInitialized = true;
 
    
-  console.log("[EmailJS] init OK", {
-    serviceId: EMAILJS_SERVICE_ID,
-    publicKeySource: "hardcoded",
-    hasPublicKey: Boolean(EMAILJS_PUBLIC_KEY),
-  });
+  // Logs de debug réservés au dev (jamais en prod) — RGPD.
+  if (import.meta.env.DEV) {
+    console.log("[EmailJS] init OK", {
+      serviceId: EMAILJS_SERVICE_ID,
+      publicKeySource: "hardcoded",
+      hasPublicKey: Boolean(EMAILJS_PUBLIC_KEY),
+    });
+  }
 }
 
 function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string> {
@@ -237,13 +240,16 @@ function validatePayload(templateId: string, toEmail: string, params: Record<str
   });
 
   if (missing.length > 0) {
-     
-    console.error("[EmailJS] paramètres manquants", {
-      templateId,
-      toEmail,
-      missing,
-      params: fullParams,
-    });
+    // Détail (avec toEmail + params = PII) réservé au dev. En prod, le message
+    // d'erreur ne contient que l'ID de template + les noms de champs manquants.
+    if (import.meta.env.DEV) {
+      console.error("[EmailJS] paramètres manquants", {
+        templateId,
+        toEmail,
+        missing,
+        params: fullParams,
+      });
+    }
     throw new Error(`Paramètres EmailJS manquants pour ${templateId}: ${missing.join(", ")}`);
   }
 
@@ -276,13 +282,13 @@ async function sendOne({ templateId, toEmail, params }: SendArgs): Promise<void>
   validatePayload(templateId, toEmail, params);
 
    
-  console.log("=== EMAILJS ENVOI ===");
-   
-  console.log("Template ID:", templateId);
-   
-  console.log("Service ID:", EMAILJS_SERVICE_ID);
-   
-  console.log("Params:", JSON.stringify(templateParams, null, 2));
+  // Debug d'envoi (Params contient les PII client) — strictement dev, jamais prod.
+  if (import.meta.env.DEV) {
+    console.log("=== EMAILJS ENVOI ===");
+    console.log("Template ID:", templateId);
+    console.log("Service ID:", EMAILJS_SERVICE_ID);
+    console.log("Params:", JSON.stringify(templateParams, null, 2));
+  }
 
   if (DRY_RUN) {
     return;

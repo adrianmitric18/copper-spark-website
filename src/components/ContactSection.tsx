@@ -128,6 +128,9 @@ const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Anti-spam honeypot : champ caché qu'un humain ne voit/remplit jamais.
+  // Rempli => bot => rejet silencieux (cf. handleSubmit).
+  const [honeypot, setHoneypot] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sectionRef = useRef(null);
@@ -247,6 +250,17 @@ const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+
+    // Anti-spam : si le honeypot est rempli, c'est un bot. On simule un envoi
+    // réussi (UX identique : overlay + redirection /merci) SANS écrire en base
+    // ni envoyer d'email. Rejet 100 % silencieux.
+    if (honeypot.trim() !== "") {
+      const firstName = form.name.trim().split(/\s+/)[0] || "";
+      setSubmitSuccess({ name: firstName });
+      setTimeout(() => navigate("/merci"), 2400);
+      return;
+    }
+
     if (!validate()) {
       toast({ title: "Formulaire incomplet", description: "Corrigez les erreurs.", variant: "destructive" });
       return;
@@ -568,6 +582,25 @@ const ContactSection = () => {
             className="lg:col-span-3 order-1 lg:order-2 p-6 md:p-8 rounded-3xl bg-card border border-border/50 shadow-xl space-y-8"
             noValidate
           >
+            {/* Anti-spam honeypot — hors écran, hors tab, non annoncé aux lecteurs
+                d'écran. Un humain ne le remplit jamais ; un bot oui → rejet
+                silencieux côté handleSubmit. Pas de captcha / dépendance externe. */}
+            <div
+              aria-hidden="true"
+              className="absolute left-[-9999px] top-[-9999px] h-0 w-0 overflow-hidden"
+            >
+              <label htmlFor="company-website">Ne pas remplir ce champ</label>
+              <input
+                id="company-website"
+                type="text"
+                name="company-website"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
+
             {/* SECTION 1 — Coordonnées (assoupli 2026-05-22 : tél OU email) */}
             <div className="space-y-5">
               <h3 className="font-display text-lg font-semibold text-card-foreground border-b border-border/50 pb-2">
