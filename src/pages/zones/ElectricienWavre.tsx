@@ -32,8 +32,8 @@ const ElectricienWavre = () => (
   <ZonePageLayout
     slug="electricien-wavre"
     cityName="Wavre"
-    seoTitle="Électricien agréé à Wavre - RGIE, bornes, devis"
-    seoDescription="Électricien à Wavre : dépannage urgent, mise en conformité RGIE, bornes de recharge, installation et rénovation. Devis gratuit sous 24h."
+    seoTitle="Électricien agréé à Wavre - Installations, bornes, dépannage"
+    seoDescription="Électricien à Wavre : installation et rénovation électrique, bornes de recharge, dépannage, mise en conformité RGIE. Devis gratuit sous 48h."
     h1="Électricien à Wavre"
     intro="Le Cuivre Électrique intervient à Wavre et dans tous ses quartiers : centre-ville, Basse-Wavre, Bierges, Limal. Électricien de proximité pour particuliers et professionnels."
     faqs={faqs}

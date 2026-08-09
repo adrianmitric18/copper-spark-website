@@ -32,8 +32,8 @@ const ElectricienGenappe = () => (
   <ZonePageLayout
     slug="electricien-genappe"
     cityName="Genappe"
-    seoTitle="Électricien agréé à Genappe - RGIE, bornes, devis"
-    seoDescription="Électricien à Genappe : dépannage, mise en conformité RGIE, bornes de recharge, installation et rénovation électrique. Devis gratuit sous 24h."
+    seoTitle="Électricien agréé Genappe - Installations, bornes, dépannage"
+    seoDescription="Électricien à Genappe : installation et rénovation électrique, bornes de recharge, dépannage, mise en conformité RGIE. Devis gratuit sous 48h."
     h1="Électricien à Genappe"
     intro="Le Cuivre Électrique intervient à Genappe et dans ses villages : Bousval, Glabais, Houtain-le-Val, Loupoigne, Vieux-Genappe, Ways. Électricien de proximité dans le Brabant wallon."
     faqs={faqs}

@@ -238,7 +238,7 @@ const faqData: FaqItem[] = [
     category: "materiel",
     question: "Quelles marques de matériel utilisez-vous d'office ?",
     answer:
-      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Alfen et Hager. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
+      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Alfen (référence), Hager ou Wallbox. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
     answerNode: (
       <>
         <p>
@@ -254,7 +254,8 @@ const faqData: FaqItem[] = [
             <strong className="text-foreground">Prises et interrupteurs</strong> : Niko
           </li>
           <li>
-            <strong className="text-foreground">Bornes de recharge</strong> : Alfen et Hager
+            <strong className="text-foreground">Bornes de recharge</strong> : Alfen (référence),
+            Hager ou Wallbox
           </li>
           <li>
             <strong className="text-foreground">Onduleurs photovoltaïques</strong> : Huawei ou
@@ -351,13 +352,14 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Installez-vous des bornes de recharge pour voiture électrique ?",
     answer:
-      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos marques de référence sont Alfen et Hager. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
+      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Alfen est notre marque de référence ; nous installons aussi Hager, Wallbox et les autres marques du marché. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
     answerNode: (
       <>
         <p>
           Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les
-          particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nos
-          marques de référence sont Alfen et Hager.
+          particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Alfen
+          est notre marque de référence ; nous installons aussi Hager, Wallbox et les autres
+          marques du marché.
         </p>
         <p>
           Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons

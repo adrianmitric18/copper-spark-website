@@ -19,7 +19,7 @@ const faqs = [
   {
     question: "Toutes les voitures électriques sont-elles compatibles ?",
     answer:
-      "Oui : nos bornes Alfen et Hager utilisent le standard européen Type 2, compatible avec toutes les voitures électriques et hybrides rechargeables vendues en Europe (Tesla, Renault, Volkswagen, Hyundai, Kia, BMW, Audi, Peugeot, etc.).",
+      "Oui : les bornes que nous posons (Alfen, Hager, Wallbox et autres marques du marché) utilisent le standard européen Type 2, compatible avec toutes les voitures électriques et hybrides rechargeables vendues en Europe (Tesla, Renault, Volkswagen, Hyundai, Kia, BMW, Audi, Peugeot, etc.).",
   },
   {
     question: "Existe-t-il des primes en Wallonie pour l'installation d'une borne ?",
@@ -33,17 +33,18 @@ const BornesDeRecharge = () => {
     <ServicePageLayout
       slug="bornes-de-recharge"
       breadcrumbLabel="Bornes de recharge"
-      seoTitle="Installation de bornes de recharge en Brabant wallon — Alfen & Hager | Le Cuivre Électrique"
-      seoDescription="Installation professionnelle de bornes de recharge pour voiture électrique. Marques Alfen et Hager. Particuliers, entreprises et copropriétés. Brabant wallon, Wallonie, Bruxelles."
-      seoKeywords="borne de recharge, voiture électrique, Alfen, Hager, installation borne Brabant wallon, prime borne Wallonie, électricien Court-Saint-Étienne"
+      seoTitle="Borne de recharge Brabant wallon - Alfen, Hager, Wallbox"
+      seoDescription="Installation de bornes de recharge pour voiture électrique. Alfen en marque de référence, également Hager, Wallbox et les autres marques du marché. Devis gratuit."
+      seoKeywords="borne de recharge, voiture électrique, Alfen, Hager, Wallbox, installation borne Brabant wallon, prime borne Wallonie, électricien Court-Saint-Étienne"
       schemaServiceName="Installation de bornes de recharge pour véhicules électriques"
-      schemaServiceDescription="Installation de bornes de recharge Alfen et Hager pour particuliers, entreprises et copropriétés en Brabant wallon, Wallonie et Bruxelles."
+      schemaServiceDescription="Installation de bornes de recharge pour particuliers, entreprises et copropriétés en Brabant wallon, Wallonie et Bruxelles. Alfen en marque de référence, également Hager, Wallbox et les autres marques du marché."
       hero={{
         eyebrow: "Bornes de recharge",
-        h1: "Installation de bornes de recharge — Alfen & Hager",
+        h1: "Installation de bornes de recharge — Alfen, Hager, Wallbox",
         intro:
-          "Avec la montée en puissance des voitures électriques, disposer d'une borne fiable à domicile ou au travail devient incontournable. Nos marques de référence sont Alfen et Hager, mais nous restons ouverts à d'autres marques selon vos préférences et la compatibilité de votre installation.",
+          "Avec la montée en puissance des voitures électriques, disposer d'une borne fiable à domicile ou au travail devient incontournable. Alfen est notre marque de référence, celle que nous recommandons en premier. Nous installons également Hager, Wallbox et les autres marques du marché selon vos préférences et la compatibilité de votre installation.",
       }}
+      simulateurCta
       faqs={faqs}
     >
       <p className="text-foreground text-lg leading-relaxed mb-10">
@@ -71,24 +72,31 @@ const BornesDeRecharge = () => {
       </ul>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
-        Nos marques : Alfen et Hager
+        Nos marques : Alfen en référence, Hager et Wallbox
       </h2>
-      <p className="text-muted-foreground leading-relaxed mb-4">
-        Nos marques de référence sont <strong>Alfen</strong> et{" "}
-        <strong>Hager</strong> pour leur fiabilité éprouvée et leur durabilité
-        reconnue. Nous restons ouverts à installer d'autres marques si vous en
-        avez déjà une ou si vous en préférez une en particulier, sous réserve
-        qu'elle soit compatible avec votre installation et respecte les normes
+      <p className="text-muted-foreground leading-relaxed mb-6">
+        <strong>Alfen</strong> est la marque que nous recommandons en premier,
+        pour sa fiabilité éprouvée, son suivi logiciel et sa gestion dynamique de
+        la charge. Nous installons aussi <strong>Hager</strong> et{" "}
+        <strong>Wallbox</strong>, ainsi que les autres marques du marché si vous
+        en possédez déjà une ou en préférez une en particulier — sous réserve
+        qu'elle soit compatible avec votre installation et conforme aux normes
         en vigueur.
       </p>
-      <div className="grid md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-card border border-border/60 rounded-2xl p-6">
-          <h3 className="font-display text-xl font-bold text-foreground mb-3">
-            Alfen
-          </h3>
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {/* Alfen se distingue visuellement : bordure cuivre + badge. Le reste
+            de la grille reste neutre pour que la hiérarchie soit lisible. */}
+        <div className="bg-card border-2 border-primary/60 rounded-2xl p-6 shadow-sm shadow-primary/10">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="font-display text-xl font-bold text-foreground">Alfen</h3>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-primary border border-primary/40 bg-primary/10 rounded-full px-2 py-0.5">
+              Recommandée
+            </span>
+          </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Bornes hautes performances, monitoring intelligent, gestion dynamique
-            de la charge, idéal pour usage exigeant et solutions multi-bornes.
+            Notre référence. Bornes hautes performances, monitoring intelligent,
+            gestion dynamique de la charge — idéal pour un usage exigeant et les
+            solutions multi-bornes.
           </p>
         </div>
         <div className="bg-card border border-border/60 rounded-2xl p-6">

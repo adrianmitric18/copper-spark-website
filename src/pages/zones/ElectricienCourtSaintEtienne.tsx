@@ -32,8 +32,8 @@ const ElectricienCourtSaintEtienne = () => (
   <ZonePageLayout
     slug="electricien-court-saint-etienne"
     cityName="Court-Saint-Étienne"
-    seoTitle="Électricien agréé Court-Saint-Étienne - RGIE, bornes"
-    seoDescription="Électricien à Court-Saint-Étienne : dépannage, mise en conformité RGIE, bornes de recharge, installation électrique. Devis gratuit sous 24h."
+    seoTitle="Électricien Court-St-Étienne - Rénovation, bornes, dépannage"
+    seoDescription="Électricien à Court-Saint-Étienne : installation et rénovation électrique, bornes de recharge, dépannage, mise en conformité RGIE. Devis gratuit sous 48h."
     h1="Électricien à Court-Saint-Étienne"
     intro="Le Cuivre Électrique est implanté au cœur de Court-Saint-Étienne. Électricien indépendant, nous sommes votre interlocuteur de proximité pour tous vos projets électriques."
     faqs={faqs}
