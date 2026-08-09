@@ -6,10 +6,9 @@ import { useDisplayRating } from "@/hooks/useDisplayRating";
 
 const HomeReviewsBanner = () => {
   const { trackEvent } = useAnalyticsEvents();
-  // Source unique d'affichage : Google (manuel) puis fallback testimonials.
+  // Source unique d'affichage : Google (manuel), fallback testimonials, puis
+  // valeur de secours statique — le bandeau est donc toujours rendu.
   const { data: rating } = useDisplayRating();
-
-  if (!rating) return null;
 
   return (
     <section className="py-12 md:py-16 bg-muted/30">

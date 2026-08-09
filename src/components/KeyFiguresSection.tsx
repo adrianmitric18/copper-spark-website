@@ -76,7 +76,8 @@ const Figure = ({ value, suffix, label, description, isVisible, delay }: FigureP
 const KeyFiguresSection = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  // Source unique d'affichage : Google (manuel) puis fallback testimonials.
+  // Source unique d'affichage : Google (manuel), fallback testimonials, puis
+  // valeur de secours statique — jamais undefined.
   const { data: rating } = useDisplayRating();
 
   useEffect(() => {
@@ -90,13 +91,12 @@ const KeyFiguresSection = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Compteurs animés. Note Google fallback à 4.94 si la fetch n'est pas
-  // encore arrivée — la valeur réelle Supabase écrase dès que dispo.
+  // Compteurs animés. La valeur de secours est portée par useDisplayRating
+  // (FALLBACK_RATING) : `rating` est toujours défini, la vraie valeur Supabase
+  // remplace la valeur de secours dès qu'elle arrive.
   // 2026-06-05 — Chiffre "20+ Chantiers" retiré du barème (allègement home).
   // const chantiersCount = useCountUp(20, isVisible);
-  const ratingValue = rating?.ratingValue ?? 4.94;
-  const reviewCount = rating?.reviewCount ?? 16;
-  const ratingAnimated = useCountUp(ratingValue, isVisible, 2);
+  const ratingAnimated = useCountUp(rating.ratingValue, isVisible, 2);
 
   return (
     <section ref={sectionRef} className="py-20 md:py-28 bg-background">
@@ -123,7 +123,7 @@ const KeyFiguresSection = () => {
             value={ratingAnimated}
             suffix="/5"
             label="Note Google"
-            description={`Sur ${reviewCount}+ avis Google vérifiés.`}
+            description={`Sur ${rating.reviewCount}+ avis Google vérifiés.`}
             isVisible={isVisible}
             delay={120}
           />

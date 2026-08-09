@@ -124,15 +124,57 @@ const StructuredData = (props: StructuredDataProps) => {
           "sameAs": [
             "https://wa.me/32485755227"
           ],
+          // Chaque offre pointe vers sa page service dédiée : Google relie le
+          // catalogue aux URL réelles plutôt qu'à de simples libellés.
           "hasOfferCatalog": {
             "@type": "OfferCatalog",
             "name": "Services électriques",
             "itemListElement": [
-              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Installation électrique complète Bruxelles" } },
-              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Mise en conformité RGIE Belgique" } },
-              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Dépannage électrique urgent 24h/24" } },
-              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Borne de recharge véhicule électrique" } },
-              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Panneaux photovoltaïques Bruxelles Wallonie" } }
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Installation électrique et rénovation",
+                  "description": "Installation électrique complète neuve ou en rénovation : tableau, câblage, appareillage.",
+                  "url": "https://cuivre-electrique.com/services/installation-electrique-renovation"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Mise en conformité RGIE",
+                  "description": "Diagnostic, travaux de mise aux normes et accompagnement jusqu'au certificat de conformité.",
+                  "url": "https://cuivre-electrique.com/services/mise-en-conformite-rgie"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Dépannage électrique urgent 24h/24",
+                  "description": "Intervention rapide 7j/7 pour panne, court-circuit ou disjoncteur qui saute.",
+                  "url": "https://cuivre-electrique.com/services/depannage-urgent"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Borne de recharge véhicule électrique",
+                  "description": "Étude et installation de bornes de recharge pour particuliers, entreprises et copropriétés.",
+                  "url": "https://cuivre-electrique.com/services/bornes-de-recharge"
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Panneaux photovoltaïques",
+                  "description": "Étude personnalisée, pose et raccordement d'installations photovoltaïques.",
+                  "url": "https://cuivre-electrique.com/services/panneaux-photovoltaiques"
+                }
+              }
             ]
           }
         };

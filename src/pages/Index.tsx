@@ -1,8 +1,11 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import ReassuranceSection from "@/components/ReassuranceSection";
-// 2026-06-05 — Allègement home : section "Nos services" retirée (page /services dédiée existe déjà).
-// import ServicesSection from "@/components/ServicesSection";
+// 2026-06-05 — Allègement home : ancienne ServicesSection (grille de cartes) retirée.
+// 2026-08-09 — Maillage interne rétabli avec HomeServicesSection (liste éditoriale
+// sobre) : la home captait 96/117 clics du site sans transmettre de lien aux pages
+// services. L'ancienne ServicesSection reste en place mais n'est plus utilisée ici.
+import HomeServicesSection from "@/components/HomeServicesSection";
 // 2026-06-05 — Doublon "Zones d'intervention" : on garde InternalLinks (maillage SEO),
 // ZoneSection (bloc visuel sans liens) retiré.
 // import ZoneSection from "@/components/ZoneSection";
@@ -30,8 +33,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <ReassuranceSection />
-        {/* 2026-06-05 — "Nos services" retiré de la home (page /services dédiée). */}
-        {/* <ServicesSection /> */}
+        <HomeServicesSection />
         {/* 2026-06-05 — Doublon zones : ZoneSection retiré, on garde InternalLinks ci-dessous. */}
         {/* <ZoneSection /> */}
         <KeyFiguresSection />

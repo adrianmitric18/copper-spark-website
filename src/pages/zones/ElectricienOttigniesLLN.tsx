@@ -32,8 +32,8 @@ const ElectricienOttigniesLLN = () => (
   <ZonePageLayout
     slug="electricien-ottignies-louvain-la-neuve"
     cityName="Ottignies-Louvain-la-Neuve"
-    seoTitle="Électricien à Ottignies-Louvain-la-Neuve — Le Cuivre Électrique"
-    seoDescription="Électricien à Ottignies-LLN : installation, rénovation, dépannage, mise en conformité RGIE. Intervention rapide. Devis gratuit."
+    seoTitle="Électricien RGIE Ottignies-LLN - Bornes, dépannage 24h"
+    seoDescription="Électricien à Ottignies-Louvain-la-Neuve : dépannage, mise en conformité RGIE, bornes de recharge, rénovation électrique. Devis gratuit sous 24h."
     h1="Électricien à Ottignies-Louvain-la-Neuve"
     intro="Le Cuivre Électrique intervient à Ottignies-Louvain-la-Neuve et dans tous ses quartiers : centre d'Ottignies, Louvain-la-Neuve, Limelette, Céroux-Mousty."
     faqs={faqs}
