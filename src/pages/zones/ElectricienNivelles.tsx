@@ -32,7 +32,7 @@ const ElectricienNivelles = () => (
   <ZonePageLayout
     slug="electricien-nivelles"
     cityName="Nivelles"
-    seoTitle="Électricien RGIE à Nivelles - Dépannage, bornes, devis"
+    seoTitle="Électricien agréé à Nivelles - RGIE, bornes, devis"
     seoDescription="Électricien à Nivelles : dépannage urgent, mise en conformité RGIE, bornes de recharge, panneaux photovoltaïques. Devis gratuit sous 24h."
     h1="Électricien à Nivelles"
     intro="Le Cuivre Électrique intervient à Nivelles et dans ses quartiers : centre-ville, Baulers, Bornival, Monstreux, Thines. Votre électricien de proximité dans le Brabant wallon."
