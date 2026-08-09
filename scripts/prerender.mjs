@@ -22,7 +22,8 @@
 //    d'un HTML déjà rendu (double rendu en cascade).
 // 3. Chaque route est visitée, on attend que React ait rendu, on déroule la
 //    page pour déclencher les animations au scroll, puis on écrit le DOM dans
-//    dist/<route>/index.html.
+//    dist/<route>.html (et non dist/<route>/index.html — voir la note sur la
+//    redirection 308 de Cloudflare au moment de l'écriture).
 // 4. Cloudflare Pages sert nativement ces fichiers et retombe sur le shell SPA
 //    pour toute route non pré-rendue (/realisations/:slug, /admin, /merci).
 //
@@ -407,9 +408,18 @@ async function renderRoute(route) {
     }
     html = `<!DOCTYPE html>\n${html}`;
 
-    const outDir = route === "/" ? DIST : join(DIST, route);
-    await mkdir(outDir, { recursive: true });
-    await writeFile(join(outDir, "index.html"), html, "utf8");
+    // On écrit dist/<route>.html et NON dist/<route>/index.html.
+    //
+    // Vérifié en production le 2026-08-09 : avec un index.html de répertoire,
+    // Cloudflare Pages canonicalise l'URL en y ajoutant un slash final et
+    // renvoie un 308 de /electricien-wavre vers /electricien-wavre/. Or c'est
+    // la forme SANS slash qui est indexée, listée dans le sitemap et posée en
+    // canonical — chaque URL du sitemap se serait donc mise à rediriger, ce que
+    // l'en-tête de generate-sitemap.mjs interdit explicitement.
+    // Servi depuis <route>.html, Pages répond 200 directement sur /electricien-wavre.
+    const outFile = route === "/" ? join(DIST, "index.html") : join(DIST, `${route}.html`);
+    await mkdir(dirname(outFile), { recursive: true });
+    await writeFile(outFile, html, "utf8");
 
     return { route, ok: true, bytes: Buffer.byteLength(html), preloads: chunks.size, ...report, html: undefined };
   } finally {
