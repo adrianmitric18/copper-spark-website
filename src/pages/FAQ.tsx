@@ -331,6 +331,32 @@ const faqData: FaqItem[] = [
   },
   {
     category: "specialites",
+    question: "Je vends ma maison, que faire si le contrôle électrique est négatif ?",
+    answer:
+      "Ce n'est pas bloquant pour la vente : l'acheteur dispose de 18 mois après l'acte pour faire réaliser la mise en conformité. En pratique, un dossier réglé avant la vente vous évite des négociations à la baisse, l'acheteur chiffrant presque toujours les travaux au-delà de leur coût réel. Achat ou vente d'un bien dans le Brabant wallon : nous traitons les demandes RGIE urgentes pour compromis et actes notariés sous 48-72h, avec un dossier complet (plans et corrections) pour que votre vente ne soit pas bloquée.",
+    answerNode: (
+      <>
+        <p>
+          Ce n'est pas bloquant pour la vente : l'acheteur dispose de{" "}
+          <strong>18 mois après l'acte</strong> pour faire réaliser la mise en
+          conformité.
+        </p>
+        <p>
+          En pratique, un dossier réglé avant la vente vous évite des
+          négociations à la baisse — l'acheteur chiffre presque toujours les
+          travaux bien au-delà de leur coût réel.
+        </p>
+        <p>
+          Achat ou vente d'un bien dans le Brabant wallon ? Nous traitons les
+          demandes RGIE urgentes pour compromis et actes notariés{" "}
+          <strong>sous 48-72h</strong>, avec un dossier complet (plans et
+          corrections) pour que votre vente ne soit pas bloquée.
+        </p>
+      </>
+    ),
+  },
+  {
+    category: "specialites",
     question: "Travaillez-vous avec un organisme de contrôle agréé ?",
     answer:
       "Oui. Nous collaborons régulièrement avec les organismes de contrôle agréés en Belgique (Vinçotte, AIB-Vinçotte, BTV, etc.) et nous pouvons coordonner le passage du contrôleur après les travaux pour faciliter l'obtention de votre certificat de conformité. Cela vous évite les démarches administratives fastidieuses : nous nous occupons de tout de A à Z.",
@@ -427,7 +453,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Combien coûte l'installation d'une borne de recharge ?",
     answer:
-      "Le prix dépend de la marque, de la puissance, de la longueur de câble entre tableau et borne, et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Une borne Hager ou Alfen avec pose simple démarre à quelques centaines d'euros HTVA hors matériel. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
+      "Le prix dépend de la marque, de la puissance, de la longueur de câble entre tableau et borne, et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
     answerNode: (
       <>
         <p>
@@ -436,8 +462,10 @@ const faqData: FaqItem[] = [
           (renforcement de tableau, tranchée éventuelle).
         </p>
         <p>
-          Une borne Hager ou Alfen avec pose simple démarre à quelques
-          centaines d'euros HTVA hors matériel. Le devis est gratuit après
+          Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez
+          en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et
+          main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un
+          terrassement sortent de cette fourchette. Le devis est gratuit après
           visite technique sur place et détaille chaque poste séparément.
         </p>
       </>

@@ -17,6 +17,7 @@ const navItems = [
   { label: "Accueil", href: "/" },
   { label: "À propos", href: "/a-propos" },
   // "Services" handled separately as dropdown
+  { label: "Estimer mon prix", href: "/simulateur" },
   { label: "Réalisations", href: "/realisations" },
   { label: "Avis", href: "/avis" },
   { label: "FAQ", href: "/faq" },

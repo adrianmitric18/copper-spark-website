@@ -73,6 +73,7 @@ export const leadStatusColor = (status: string): string => {
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {
   formulaire_site: "Site web",
+  simulateur: "Simulateur",
   telephone: "Téléphone",
   whatsapp: "WhatsApp",
   facebook: "Facebook",

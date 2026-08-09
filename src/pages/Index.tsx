@@ -6,6 +6,7 @@ import ReassuranceSection from "@/components/ReassuranceSection";
 // sobre) : la home captait 96/117 clics du site sans transmettre de lien aux pages
 // services. L'ancienne ServicesSection reste en place mais n'est plus utilisée ici.
 import HomeServicesSection from "@/components/HomeServicesSection";
+import SimulateurBanner from "@/components/simulateur/SimulateurBanner";
 // 2026-06-05 — Doublon "Zones d'intervention" : on garde InternalLinks (maillage SEO),
 // ZoneSection (bloc visuel sans liens) retiré.
 // import ZoneSection from "@/components/ZoneSection";
@@ -34,6 +35,7 @@ const Index = () => {
         <HeroSection />
         <ReassuranceSection />
         <HomeServicesSection />
+        <SimulateurBanner />
         {/* 2026-06-05 — Doublon zones : ZoneSection retiré, on garde InternalLinks ci-dessous. */}
         {/* <ZoneSection /> */}
         <KeyFiguresSection />

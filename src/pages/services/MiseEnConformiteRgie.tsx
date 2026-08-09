@@ -1,4 +1,5 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
+import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 
 const faqs = [
   {
@@ -15,6 +16,11 @@ const faqs = [
     question: "Que se passe-t-il si mon installation n'est pas conforme ?",
     answer:
       "L'organisme délivre un rapport de non-conformité avec la liste précise des points à corriger. Vous disposez généralement de 12 à 18 mois pour effectuer les travaux et obtenir un nouveau contrôle. Nous prenons en charge la totalité du processus pour vous éviter les allers-retours.",
+  },
+  {
+    question: "Je vends ma maison, que faire si le contrôle électrique est négatif ?",
+    answer:
+      "Ce n'est pas bloquant pour la vente : l'acheteur dispose de 18 mois après l'acte pour faire réaliser la mise en conformité. En pratique, un dossier réglé avant la vente vous évite des négociations à la baisse, l'acheteur chiffrant presque toujours les travaux au-delà de leur coût réel. Nous gérons les plans, les corrections et le nouveau passage de l'organisme en délais courts, y compris pour un compromis déjà signé.",
   },
   {
     question: "Faut-il tout refaire à neuf ?",
@@ -39,6 +45,7 @@ const MiseEnConformiteRgie = () => {
         intro:
           "Vente, location, fin du certificat 25 ans ? Nous prenons en charge l'intégralité du processus : diagnostic complet, travaux correctifs et accompagnement jusqu'au certificat de conformité délivré par un organisme agréé.",
       }}
+      simulateurCta
       faqs={faqs}
     >
       <p className="text-foreground text-lg leading-relaxed mb-10">
@@ -48,6 +55,8 @@ const MiseEnConformiteRgie = () => {
         dans plusieurs situations clés — et c'est aussi la garantie d'une
         installation sûre pour les occupants.
       </p>
+
+      <SimulateurCTA contexte="rgie" />
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Quand est-ce obligatoire ?
@@ -122,10 +131,21 @@ const MiseEnConformiteRgie = () => {
         technique (schémas unifilaires, schémas de position) et du suivi jusqu'à
         l'obtention du certificat.
       </p>
-      <p className="text-muted-foreground leading-relaxed">
+      <p className="text-muted-foreground leading-relaxed mb-10">
         Pour les ventes immobilières en cours, nous travaillons en délais courts
         afin de ne pas bloquer la signature de votre acte chez le notaire.
       </p>
+
+      <aside className="rounded-3xl border-2 border-primary/40 bg-primary/[0.05] p-6 md:p-8 mb-6">
+        <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-3">
+          Achat ou vente d'un bien dans le Brabant wallon ?
+        </h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Demandes RGIE urgentes pour compromis et actes notariés traitées sous
+          48-72h. Dossier complet — plans et corrections — pour que votre vente ne
+          soit pas bloquée.
+        </p>
+      </aside>
     </ServicePageLayout>
   );
 };

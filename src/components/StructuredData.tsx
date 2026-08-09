@@ -104,6 +104,12 @@ const StructuredData = (props: StructuredDataProps) => {
             { "@type": "City", "name": "Nivelles" },
             { "@type": "City", "name": "Waterloo" },
             { "@type": "City", "name": "Genappe" },
+            // Communes citées dans la phrase de couverture du pied de page —
+            // les deux listes doivent rester alignées.
+            { "@type": "City", "name": "Mont-Saint-Guibert" },
+            { "@type": "City", "name": "Chastre" },
+            { "@type": "City", "name": "Grez-Doiceau" },
+            { "@type": "City", "name": "Chaumont-Gistoux" },
             { "@type": "City", "name": "Rixensart" },
             { "@type": "City", "name": "Lasne" },
             { "@type": "City", "name": "Braine-l'Alleud" },

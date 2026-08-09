@@ -20,6 +20,7 @@ const DepannageUrgent = lazy(() => import("./pages/services/DepannageUrgent"));
 const MiseEnConformiteRgie = lazy(() => import("./pages/services/MiseEnConformiteRgie"));
 const BornesDeRecharge = lazy(() => import("./pages/services/BornesDeRecharge"));
 const PanneauxPhotovoltaiques = lazy(() => import("./pages/services/PanneauxPhotovoltaiques"));
+const Simulateur = lazy(() => import("./pages/Simulateur"));
 const Realisations = lazy(() => import("./pages/Realisations"));
 const ChantierDetail = lazy(() => import("./pages/realisations/ChantierDetail"));
 const Avis = lazy(() => import("./pages/Avis"));
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/services/mise-en-conformite-rgie" element={<MiseEnConformiteRgie />} />
             <Route path="/services/bornes-de-recharge" element={<BornesDeRecharge />} />
             <Route path="/services/panneaux-photovoltaiques" element={<PanneauxPhotovoltaiques />} />
+            <Route path="/simulateur" element={<Simulateur />} />
             <Route path="/realisations" element={<Realisations />} />
             {/* Redirections 301 (client-side) des anciennes pages catégories
                 vers la grille filtrée par tag. Place ces routes AVANT le

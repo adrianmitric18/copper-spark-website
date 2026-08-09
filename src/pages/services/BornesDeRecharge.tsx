@@ -1,4 +1,5 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
+import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 
 const faqs = [
   {
@@ -9,7 +10,7 @@ const faqs = [
   {
     question: "Quel est le coût d'installation d'une borne ?",
     answer:
-      "Le prix dépend de la marque, de la puissance, de la longueur de câble et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Une borne Hager ou Alfen + pose simple démarre à quelques centaines d'euros HTVA, hors matériel. Nous remettons un devis détaillé après visite technique gratuite.",
+      "Le prix dépend de la marque, de la puissance, de la longueur de câble et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Nous remettons un devis détaillé après visite technique gratuite.",
   },
   {
     question: "Combien de temps pour recharger ma voiture ?",
@@ -53,6 +54,8 @@ const BornesDeRecharge = () => {
         de recharge la plus adaptée à votre véhicule, votre budget et la
         configuration de votre installation électrique.
       </p>
+
+      <SimulateurCTA contexte="borne" />
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Pour qui ?
@@ -108,7 +111,36 @@ const BornesDeRecharge = () => {
             voitures, intégration soignée dans les installations résidentielles.
           </p>
         </div>
+        <div className="bg-card border border-border/60 rounded-2xl p-6">
+          <h3 className="font-display text-xl font-bold text-foreground mb-3">
+            Wallbox
+          </h3>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Design compact et pilotage mobile soigné, bon rapport
+            prix/fonctionnalités pour un usage domestique.
+          </p>
+        </div>
       </div>
+      <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+        Vous avez déjà une borne d'une autre marque, ou une préférence
+        particulière ? Nous l'installons également, après vérification de sa
+        compatibilité avec votre installation.
+      </p>
+
+      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
+        Sociétés et indépendants : split-billing et remboursement employeur
+      </h2>
+      <p className="text-muted-foreground leading-relaxed mb-4">
+        Les bornes connectées, <strong>Alfen en tête</strong>, gèrent le{" "}
+        <strong>split-billing</strong> : l'électricité consommée pour recharger
+        le véhicule est comptabilisée séparément de celle du ménage. Votre
+        employeur peut ainsi vous rembourser précisément ce que la recharge a
+        coûté, sur base d'un relevé fiable plutôt que d'un forfait.
+      </p>
+      <p className="text-muted-foreground leading-relaxed mb-6">
+        Facturation adaptée pour les sociétés et indépendants : TVA déductible,
+        et attestation pour votre comptable fournie avec la facture.
+      </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Puissances disponibles

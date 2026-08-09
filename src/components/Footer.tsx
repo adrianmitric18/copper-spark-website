@@ -194,6 +194,24 @@ const Footer = () => {
             {" — "}
             <Link to="/electricien-genappe" className="hover:text-copper-deep transition-colors">Genappe</Link>
           </p>
+
+          {/* Phrase de couverture locale. Les communes qui ont une page dédiée
+              sont des liens ; les autres restent en texte simple — créer un lien
+              vers une page inexistante n'apporterait rien. Cette liste doit
+              rester alignée sur areaServed du JSON-LD (StructuredData.tsx). */}
+          <p className="mt-4 text-sm text-muted-foreground text-center leading-relaxed">
+            Intervention rapide pour dépannage, bornes de recharge et mise en
+            conformité RGIE à{" "}
+            <Link to="/electricien-court-saint-etienne" className="hover:text-copper-deep transition-colors">
+              Court-Saint-Étienne
+            </Link>
+            , Mont-Saint-Guibert, Chastre,{" "}
+            <Link to="/electricien-genappe" className="hover:text-copper-deep transition-colors">
+              Genappe
+            </Link>
+            , Grez-Doiceau, Rixensart, Chaumont-Gistoux et dans tout le Brabant
+            wallon.
+          </p>
         </div>
 
         {/* Bottom bar */}

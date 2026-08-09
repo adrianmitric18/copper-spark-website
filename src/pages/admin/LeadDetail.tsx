@@ -20,6 +20,7 @@ import RendezVousCard from "@/components/admin/RendezVousCard";
 import ChecklistVisite from "@/components/admin/ChecklistVisite";
 import InterventionDialog from "@/components/admin/InterventionDialog";
 import InterventionCard from "@/components/admin/InterventionCard";
+import SimulateurPayloadCard from "@/components/admin/SimulateurPayloadCard";
 import InterventionSuccessScreen from "@/components/admin/InterventionSuccessScreen";
 import InterventionAnnulationDialog from "@/components/admin/InterventionAnnulationDialog";
 import {
@@ -1032,7 +1033,16 @@ const LeadDetail = () => {
           <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
           <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground">Source :</span>
-            <Badge variant="secondary">{leadSourceLabel(lead.source)}</Badge>
+            <Badge
+              variant="secondary"
+              className={
+                lead.source === "simulateur"
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : undefined
+              }
+            >
+              {leadSourceLabel(lead.source)}
+            </Badge>
           </div>
         </div>
         <div>
@@ -1046,6 +1056,9 @@ const LeadDetail = () => {
           <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message}</div>
         </div>
       </CollapsibleCard>
+
+      {/* Réponses du simulateur de prix (leads source = simulateur) */}
+      {lead.source === "simulateur" && <SimulateurPayloadCard payload={lead.payload} />}
 
       {/* Checklist visite */}
       <ChecklistVisite

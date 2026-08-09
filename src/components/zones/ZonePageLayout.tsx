@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Phone, ArrowRight, MapPin } from "lucide-react";
+import { Phone, ArrowRight, MapPin, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -126,6 +126,33 @@ const ZonePageLayout = ({
           <div className="container mx-auto">
             <div className="max-w-4xl mx-auto prose-service">
               {children}
+            </div>
+          </div>
+        </section>
+
+        {/* Accès au simulateur, contextualisé sur la commune */}
+        <section className="pb-4">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-4xl rounded-3xl border border-primary/30 bg-card px-6 py-6 md:px-8">
+              <div className="flex flex-col md:flex-row md:items-center gap-5">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
+                  <Calculator className="h-5 w-5 text-primary" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-lg md:text-xl font-bold text-foreground mb-1">
+                    Un projet de borne ou de mise en conformité à {cityName} ?
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Obtenez une fourchette de prix en 4 questions.
+                  </p>
+                </div>
+                <Button variant="copper" asChild className="shrink-0 w-full md:w-auto">
+                  <Link to="/simulateur">
+                    Estimer mon prix
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>

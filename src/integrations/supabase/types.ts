@@ -136,6 +136,7 @@ export type Database = {
           name: string
           notes: string | null
           notes_internes: string | null
+          payload: Json | null
           numero: string | null
           phone: string
           photo_urls: string[] | null
@@ -159,6 +160,7 @@ export type Database = {
           name: string
           notes?: string | null
           notes_internes?: string | null
+          payload?: Json | null
           numero?: string | null
           phone: string
           photo_urls?: string[] | null
@@ -182,6 +184,7 @@ export type Database = {
           name?: string
           notes?: string | null
           notes_internes?: string | null
+          payload?: Json | null
           numero?: string | null
           phone?: string
           photo_urls?: string[] | null

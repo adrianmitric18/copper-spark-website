@@ -35,6 +35,56 @@ const sections = [
     ),
   },
   {
+    title: "2 bis. Simulateur de prix",
+    body: (
+      <>
+        <p className="mb-4">
+          Le simulateur accessible sur{" "}
+          <strong className="text-foreground">/simulateur</strong> est un outil
+          d'estimation. Le calcul de la fourchette se fait{" "}
+          <strong className="text-foreground">entièrement dans votre navigateur</strong> :
+          tant que vous ne validez pas le formulaire, aucune de vos réponses ne
+          nous est transmise.
+        </p>
+        <ul className="list-disc list-inside space-y-2 mb-4">
+          <li>
+            <strong className="text-foreground">Données collectées :</strong> nom et
+            prénom, numéro de GSM (obligatoire), adresse email (facultative), vos
+            réponses aux quatre questions, la fourchette qui vous a été affichée,
+            et la photo de tableau électrique si vous choisissez d'en joindre une
+          </li>
+          <li>
+            <strong className="text-foreground">Finalité :</strong> vous recontacter
+            au sujet de cette demande d'estimation et préparer un devis — base
+            légale : mesures précontractuelles (RGPD art. 6.1.b)
+          </li>
+          <li>
+            <strong className="text-foreground">Durée de conservation :</strong> 12
+            mois en l'absence de suite, alignée sur les demandes de devis. Au-delà,
+            la demande est supprimée
+          </li>
+          <li>
+            <strong className="text-foreground">Photo du tableau :</strong> stockée
+            de façon privée, jamais publiée, jamais accessible publiquement, et
+            consultable uniquement par Le Cuivre Électrique
+          </li>
+        </ul>
+        <p>
+          Vos données ne sont ni revendues, ni transmises à des plateformes de
+          mise en relation. Vous pouvez demander leur suppression à tout moment en
+          écrivant à{" "}
+          <a
+            href="mailto:contact@cuivre-electrique.com"
+            className="text-primary hover:underline"
+          >
+            contact@cuivre-electrique.com
+          </a>
+          , sans avoir à vous justifier.
+        </p>
+      </>
+    ),
+  },
+  {
     title: "3. Finalités et bases légales",
     body: (
       <ul className="list-disc list-inside space-y-3">

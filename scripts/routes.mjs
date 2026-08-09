@@ -37,6 +37,7 @@ export const SITEMAP_ROUTES = [
   { path: "/electricien-genappe", changefreq: "monthly", priority: 0.8, sourceFile: "src/pages/zones/ElectricienGenappe.tsx" },
 
   // Pages secondaires
+  { path: "/simulateur", changefreq: "monthly", priority: 0.9, sourceFile: "src/pages/Simulateur.tsx" },
   { path: "/contact", changefreq: "monthly", priority: 0.95, sourceFile: "src/pages/Contact.tsx" },
   { path: "/avis", changefreq: "weekly", priority: 0.85, sourceFile: "src/pages/Avis.tsx" },
   { path: "/realisations", changefreq: "weekly", priority: 0.85, sourceFile: "src/pages/Realisations.tsx" },

@@ -40,6 +40,12 @@ export interface ServicePageProps {
     h1: string;
     intro: string;
   };
+  /**
+   * Affiche un accès discret au simulateur juste sous les boutons du hero,
+   * donc au-dessus de la ligne de flottaison sur mobile. Réservé aux pages
+   * couvertes par le simulateur (bornes de recharge, mise en conformité RGIE).
+   */
+  simulateurCta?: boolean;
   /** Free body content (sections) */
   children: ReactNode;
   faqs: ServiceFAQ[];
@@ -54,6 +60,7 @@ const ServicePageLayout = ({
   schemaServiceName,
   schemaServiceDescription,
   hero,
+  simulateurCta = false,
   children,
   faqs,
 }: ServicePageProps) => {
@@ -153,6 +160,19 @@ const ServicePageLayout = ({
                   </a>
                 </Button>
               </div>
+
+              {simulateurCta && (
+                <p className="mt-5 text-sm text-muted-foreground">
+                  Ou{" "}
+                  <Link
+                    to="/simulateur"
+                    className="font-semibold text-primary underline underline-offset-4 hover:no-underline"
+                  >
+                    estimez votre prix en 1 minute
+                  </Link>{" "}
+                  — 4 questions, sans engagement.
+                </p>
+              )}
 
               <a
                 href="#contenu"
