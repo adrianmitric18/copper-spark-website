@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap.mjs && vite build",
+    "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
     "build:dev": "node scripts/generate-sitemap.mjs && vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "sitemap": "node scripts/generate-sitemap.mjs",
+    "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -91,6 +92,7 @@
     "globals": "^15.15.0",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
+    "puppeteer": "^25.5.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",

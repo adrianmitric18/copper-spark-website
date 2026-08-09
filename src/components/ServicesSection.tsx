@@ -158,7 +158,10 @@ const ServicesSection = () => {
           >
             Nos Services
           </motion.span>
-          <motion.h2
+          {/* 2026-08-09 — h1 et non h2 : ce composant n'est plus utilisé que par
+              /services (la home a sa propre HomeServicesSection), et cette page
+              n'avait aucun titre principal. Le style est inchangé. */}
+          <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -166,7 +169,7 @@ const ServicesSection = () => {
           >
             Expertise électrique{" "}
             <span className="text-gradient-copper">en Brabant wallon & Wallonie</span>
-          </motion.h2>
+          </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}

@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Chromium téléchargé par Puppeteer pour le pré-rendu (cf. .puppeteerrc.cjs).
+# Volontairement dans le projet et non dans ~/.cache : Cloudflare Pages ne
+# conserve pas le home directory entre `npm install` et `npm run build`.
+.cache/
+
 # Lighthouse audit reports (generated locally, not versioned)
 lh-*.json
 
