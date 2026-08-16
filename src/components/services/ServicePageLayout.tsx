@@ -43,9 +43,10 @@ export interface ServicePageProps {
   /**
    * Affiche un accès discret au simulateur juste sous les boutons du hero,
    * donc au-dessus de la ligne de flottaison sur mobile. Réservé aux pages
-   * couvertes par le simulateur (bornes de recharge, mise en conformité RGIE).
+   * couvertes par le simulateur. La valeur pré-sélectionne le besoin : depuis
+   * la page RGIE, le parcours ne parle jamais de borne de recharge.
    */
-  simulateurCta?: boolean;
+  simulateurCta?: "borne" | "rgie";
   /** Free body content (sections) */
   children: ReactNode;
   faqs: ServiceFAQ[];
@@ -60,7 +61,7 @@ const ServicePageLayout = ({
   schemaServiceName,
   schemaServiceDescription,
   hero,
-  simulateurCta = false,
+  simulateurCta,
   children,
   faqs,
 }: ServicePageProps) => {
@@ -165,12 +166,15 @@ const ServicePageLayout = ({
                 <p className="mt-5 text-sm text-muted-foreground">
                   Ou{" "}
                   <Link
-                    to="/simulateur"
+                    to={`/simulateur?besoin=${simulateurCta}`}
                     className="font-semibold text-primary underline underline-offset-4 hover:no-underline"
                   >
-                    estimez votre prix en 1 minute
+                    {simulateurCta === "borne"
+                      ? "estimez le prix de votre borne en 1 minute"
+                      : "estimez le prix de votre mise en conformité en 1 minute"}
                   </Link>{" "}
-                  — 4 questions, sans engagement.
+                  — {simulateurCta === "borne" ? "3 questions" : "2 questions"}, sans
+                  engagement.
                 </p>
               )}
 

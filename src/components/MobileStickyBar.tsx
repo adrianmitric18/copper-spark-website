@@ -23,6 +23,19 @@ import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 const variante = (): "A" | "B" => "B";
 const VARIANTE = variante();
 
+/**
+ * Pré-sélection du besoin selon la page où la barre est affichée.
+ *
+ * Depuis une page service couverte par le simulateur, le visiteur a déjà dit ce
+ * qu'il cherchait : lui reposer la question à l'étape 1 — et, sur la page RGIE,
+ * lui parler de borne de recharge — serait incohérent. Partout ailleurs, le
+ * lien reste générique.
+ */
+const BESOIN_PAR_PAGE: Record<string, string> = {
+  "/services/bornes-de-recharge": "borne",
+  "/services/mise-en-conformite-rgie": "rgie",
+};
+
 const MobileStickyBar = () => {
   const { trackEvent } = useAnalyticsEvents();
   const { pathname } = useLocation();
@@ -32,6 +45,9 @@ const MobileStickyBar = () => {
 
   // Sur le simulateur lui-même, inutile de proposer d'y aller.
   const surSimulateur = pathname.startsWith("/simulateur");
+
+  const besoin = BESOIN_PAR_PAGE[pathname];
+  const lienVersSimulateur = besoin ? `/simulateur?besoin=${besoin}` : "/simulateur";
 
   const lienAppel = (
     <a
@@ -59,8 +75,13 @@ const MobileStickyBar = () => {
 
   const lienSimulateur = (
     <Link
-      to="/simulateur"
-      onClick={() => trackEvent("simu_ouverture", { source_section: "mobile_sticky_bar" })}
+      to={lienVersSimulateur}
+      onClick={() =>
+        trackEvent("simu_ouverture", {
+          source_section: "mobile_sticky_bar",
+          besoin_prefill: besoin ?? "aucun",
+        })
+      }
       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-primary/50 bg-primary/[0.06] text-copper-deep font-semibold text-sm active:scale-95 transition-transform"
     >
       <Calculator className="w-4 h-4 shrink-0" />
@@ -72,12 +93,21 @@ const MobileStickyBar = () => {
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border safe-area-bottom">
       {VARIANTE === "B" && !surSimulateur && (
         <Link
-          to="/simulateur"
-          onClick={() => trackEvent("simu_ouverture", { source_section: "mobile_sticky_banner" })}
+          to={lienVersSimulateur}
+          onClick={() =>
+            trackEvent("simu_ouverture", {
+              source_section: "mobile_sticky_banner",
+              besoin_prefill: besoin ?? "aucun",
+            })
+          }
           className="flex items-center justify-center gap-2 bg-primary/[0.08] border-b border-primary/20 py-2 text-xs font-semibold text-copper-deep active:opacity-80"
         >
           <Calculator className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          Estimez votre prix en 1 minute
+          {besoin === "borne"
+            ? "Estimez le prix de votre borne en 1 minute"
+            : besoin === "rgie"
+              ? "Estimez le prix de votre mise en conformité"
+              : "Estimez votre prix en 1 minute"}
         </Link>
       )}
 

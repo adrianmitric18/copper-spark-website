@@ -16,6 +16,7 @@ import {
   SURCOUT_DISTANCE,
   USAGES_COMPLEXES,
   type Besoin,
+  type ContexteRgie,
   type Distance,
   type Installation,
   type Usage,
@@ -26,7 +27,14 @@ export interface ReponsesSimulateur {
   /** Renseignée seulement si le besoin inclut une borne. */
   distance?: Distance;
   installation: Installation;
+  /**
+   * Usage. Sur le parcours « RGIE seul », la question d'usage n'est pas posée
+   * (elle parle de véhicule) : la valeur est déduite de `contexteRgie` via
+   * USAGE_PAR_CONTEXTE_RGIE.
+   */
   usage: Usage;
+  /** Motif de la mise en conformité. Renseigné uniquement sur le parcours RGIE seul. */
+  contexteRgie?: ContexteRgie;
 }
 
 export interface Fourchette {

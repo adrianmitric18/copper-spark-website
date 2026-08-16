@@ -77,7 +77,16 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
         {texte(p.installation_label) && (
           <Ligne label="Installation" valeur={texte(p.installation_label)!} />
         )}
-        {texte(p.usage_label) && <Ligne label="Usage" valeur={texte(p.usage_label)!} />}
+        {/* Parcours RGIE seul : la question d'usage n'est pas posée, c'est le
+            motif de la mise en conformité qui la remplace. */}
+        {texte(p.contexte_rgie_label) ? (
+          <Ligne
+            label="Motif de la mise en conformité"
+            valeur={texte(p.contexte_rgie_label)!}
+          />
+        ) : (
+          texte(p.usage_label) && <Ligne label="Usage" valeur={texte(p.usage_label)!} />
+        )}
       </div>
 
       {complexe ? (

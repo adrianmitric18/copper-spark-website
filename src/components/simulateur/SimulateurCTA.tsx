@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
  * Encart d'accès au simulateur, posé sur les pages services concernées
  * (bornes de recharge et mise en conformité RGIE). Volontairement absent de
  * la home pour l'instant.
+ *
+ * Le lien porte `?besoin=…` : depuis une page service, le visiteur a déjà dit
+ * ce qu'il cherchait, lui reposer la question serait une étape pour rien. Le
+ * décompte de questions annoncé ici doit donc rester celui du parcours
+ * réellement ouvert — trois pour la borne, deux pour la conformité.
  */
 const SimulateurCTA = ({ contexte }: { contexte: "borne" | "rgie" }) => (
   <aside className="my-12 rounded-3xl border-2 border-primary/40 bg-primary/[0.05] p-6 md:p-8">
@@ -15,16 +20,18 @@ const SimulateurCTA = ({ contexte }: { contexte: "borne" | "rgie" }) => (
       </span>
       <div className="min-w-0 flex-1">
         <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
-          Estimez votre prix en 45 secondes
+          {contexte === "borne"
+            ? "Estimez le prix de votre borne en 45 secondes"
+            : "Estimez le prix de votre mise en conformité en 45 secondes"}
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           {contexte === "borne"
-            ? "Quatre questions sur votre installation et l'emplacement de la borne, et vous obtenez une fourchette indicative."
-            : "Quatre questions sur votre installation, et vous obtenez une fourchette indicative pour votre mise en conformité."}
+            ? "Trois questions sur votre installation et l'emplacement de la borne, et vous obtenez une fourchette indicative."
+            : "Deux questions sur votre installation et le motif du contrôle, et vous obtenez une fourchette indicative pour votre mise en conformité."}
         </p>
       </div>
       <Button variant="copper" size="lg" asChild className="shrink-0 w-full md:w-auto">
-        <Link to="/simulateur">
+        <Link to={`/simulateur?besoin=${contexte}`}>
           Lancer le simulateur
           <ArrowRight className="ml-2 h-4 w-4" />
         </Link>

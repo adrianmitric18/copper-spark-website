@@ -13,10 +13,12 @@ import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BESOINS,
+  CONTEXTES_RGIE,
   DISTANCES,
   INSTALLATIONS,
   USAGES,
   UPLOAD,
+  nettoyerGsm,
   type Besoin,
 } from "./config";
 import { formatFourchette, type Estimation, type ReponsesSimulateur } from "./calcul";
@@ -55,6 +57,12 @@ export interface ContexteEnvoi {
   dureeMs: number;
   /** true si la durée est anormalement courte (probable automate). */
   suspect: boolean;
+  /**
+   * Signale l'étape en cours, pour que le bouton dise ce qu'il est en train de
+   * faire. Le transfert d'une photo est la partie longue sur mobile : sans
+   * indication, l'attente ressemble à un plantage.
+   */
+  onProgres?: (phase: "photo" | "enregistrement") => void;
 }
 
 export interface ResultatEnvoi {
@@ -69,7 +77,9 @@ export interface ResultatEnvoi {
  * évite les doublons dans l'admin.
  */
 export function normaliserGsm(input: string): string {
-  const brut = input.replace(/[\s.\-/()]/g, "");
+  // Même nettoyage que la validation côté écran : ce qui a été accepté à la
+  // saisie doit être stockable, quel que soit le formatage d'origine.
+  const brut = nettoyerGsm(input);
   const sansPrefixe = brut.replace(/^(\+32|0032|0)/, "");
   return `+32${sansPrefixe}`;
 }
@@ -80,7 +90,7 @@ async function uploadPhoto(photo: File): Promise<string> {
   if (file.size > UPLOAD.seuilCompressionMo * 1024 * 1024) {
     try {
       file = await imageCompression(file, {
-        maxSizeMB: UPLOAD.seuilCompressionMo,
+        maxSizeMB: UPLOAD.cibleCompressionMo,
         maxWidthOrHeight: UPLOAD.maxWidthOrHeight,
         useWebWorker: true,
       });
@@ -110,7 +120,15 @@ export function resumerSimulation(
     lignes.push(`Distance borne / tableau : ${libelle(DISTANCES, reponses.distance)}`);
   }
   lignes.push(`Installation électrique : ${libelle(INSTALLATIONS, reponses.installation)}`);
-  lignes.push(`Usage : ${libelle(USAGES, reponses.usage)}`);
+
+  // Parcours RGIE seul : la question d'usage n'a pas été posée. Afficher
+  // « Usage : ma voiture personnelle » sur une mise en conformité induirait
+  // Adrian en erreur au moment du rappel.
+  if (reponses.contexteRgie) {
+    lignes.push(`Motif de la mise en conformité : ${libelle(CONTEXTES_RGIE, reponses.contexteRgie)}`);
+  } else {
+    lignes.push(`Usage : ${libelle(USAGES, reponses.usage)}`);
+  }
 
   if (estimation.complexe) {
     lignes.push("Estimation : projet complexe, métré technique sur place requis");
@@ -133,12 +151,14 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
   let photoPath: string | null = null;
   let photoOk = true;
   if (photo) {
+    ctx.onProgres?.("photo");
     try {
       photoPath = await uploadPhoto(photo);
     } catch {
       photoOk = false;
     }
   }
+  ctx.onProgres?.("enregistrement");
 
   const resume = resumerSimulation(reponses, estimation);
   const telephone = normaliserGsm(coordonnees.telephone);
@@ -153,6 +173,10 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
     installation_label: libelle(INSTALLATIONS, reponses.installation),
     usage: reponses.usage,
     usage_label: libelle(USAGES, reponses.usage),
+    contexte_rgie: reponses.contexteRgie ?? null,
+    contexte_rgie_label: reponses.contexteRgie
+      ? libelle(CONTEXTES_RGIE, reponses.contexteRgie)
+      : null,
     complexe: estimation.complexe,
     raisons_complexe: estimation.raisonsComplexe,
     fourchette_borne: estimation.borne ?? null,
@@ -174,8 +198,8 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
   try {
     const { error } = await supabase.from("leads").insert({
       name: coordonnees.nom.trim(),
-      // La colonne est NOT NULL et l'email est facultatif ici : chaîne vide
-      // explicitement autorisée par la policy de la branche simulateur.
+      // Obligatoire depuis 2026-08-16, côté client comme côté policy RLS :
+      // l'accusé de réception avec l'estimation détaillée doit toujours partir.
       email,
       phone: telephone,
       // Le simulateur ne demande pas d'adresse (parcours < 45 s).
@@ -225,11 +249,15 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
     // Format international sans « + » ni séparateur (ex. 32470123456), pour
     // construire https://wa.me/{{phone_wa}} dans le template EmailJS.
     phone_wa: telephone.replace(/\D/g, ""),
-    from_email: email || "Non fourni",
+    from_email: email,
     besoin: libelle(BESOINS, reponses.besoin),
     distance: reponses.distance ? libelle(DISTANCES, reponses.distance) : "Sans objet",
     installation: libelle(INSTALLATIONS, reponses.installation),
-    usage: libelle(USAGES, reponses.usage),
+    // Sur le parcours RGIE seul, cette ligne porte le motif de la mise en
+    // conformité — la question d'usage (véhicule) n'y est pas posée.
+    usage: reponses.contexteRgie
+      ? libelle(CONTEXTES_RGIE, reponses.contexteRgie)
+      : libelle(USAGES, reponses.usage),
     fourchette: fourchetteTexte,
     complexe: estimation.complexe ? "OUI — métré technique requis" : "Non",
     resume,
@@ -254,7 +282,9 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
         publicKey: EMAILJS_PUBLIC_KEY,
       }),
     ];
-    // L'accusé de réception ne part que si le visiteur a laissé un email.
+    // L'email est obligatoire depuis 2026-08-16 : la garde ne sert plus qu'à
+    // ne jamais appeler EmailJS avec un destinataire vide si la validation
+    // client venait à être contournée.
     if (email) {
       envois.push(
         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_SIMULATEUR_CLIENT, clientParams, {

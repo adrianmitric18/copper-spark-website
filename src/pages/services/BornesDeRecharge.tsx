@@ -45,7 +45,7 @@ const BornesDeRecharge = () => {
         intro:
           "Avec la montée en puissance des voitures électriques, disposer d'une borne fiable à domicile ou au travail devient incontournable. Alfen est notre marque de référence, celle que nous recommandons en premier. Nous installons également Hager, Wallbox et les autres marques du marché selon vos préférences et la compatibilité de votre installation.",
       }}
-      simulateurCta
+      simulateurCta="borne"
       faqs={faqs}
     >
       <p className="text-foreground text-lg leading-relaxed mb-10">

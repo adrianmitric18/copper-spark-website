@@ -45,7 +45,7 @@ const MiseEnConformiteRgie = () => {
         intro:
           "Vente, location, fin du certificat 25 ans ? Nous prenons en charge l'intégralité du processus : diagnostic complet, travaux correctifs et accompagnement jusqu'au certificat de conformité délivré par un organisme agréé.",
       }}
-      simulateurCta
+      simulateurCta="rgie"
       faqs={faqs}
     >
       <p className="text-foreground text-lg leading-relaxed mb-10">

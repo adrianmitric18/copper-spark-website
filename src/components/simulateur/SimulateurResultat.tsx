@@ -10,11 +10,11 @@
  * tableau sur WhatsApp avec le résumé pré-rempli.
  */
 
-import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { CONTACT, MENTIONS } from "@/lib/simulateur/config";
+import { CONTACT, DEPANNAGE, MENTIONS } from "@/lib/simulateur/config";
 import { formatFourchette, type Estimation, type ReponsesSimulateur } from "@/lib/simulateur/calcul";
 import { resumerSimulation } from "@/lib/simulateur/submit";
 import { MentionBox } from "./SimulateurUI";
@@ -160,15 +160,19 @@ export const EcranResultat = ({ reponses, estimation, prenom }: Props) => {
     (m) => m !== MENTIONS.organismeNonInclus,
   );
 
+  // La déduction fiscale et le split-billing parlent tous deux de la borne :
+  // sur une mise en conformité seule, ils n'ont rien à faire là. Seule la
+  // mention de facturation société vaut pour les deux chantiers.
   const mentionsRepliees = [
     ...(estimation.mentions.includes(MENTIONS.organismeNonInclus)
       ? [MENTIONS.organismeNonInclus]
       : []),
     ...(societe
       ? [
-          MENTIONS.deductionSociete,
+          ...(estimation.borne
+            ? [MENTIONS.deductionSociete, MENTIONS.splitBilling]
+            : []),
           MENTIONS.facturationSociete,
-          ...(estimation.borne ? [MENTIONS.splitBilling] : []),
         ]
       : []),
   ];
@@ -273,6 +277,123 @@ export const EcranResultat = ({ reponses, estimation, prenom }: Props) => {
         contexte="simulateur_resultat"
         libelleAppel="Appeler pour valider ce tarif"
       />
+    </motion.div>
+  );
+};
+
+// =====================================================================
+//  Dépannage — grille tarifaire, aucune simulation
+// =====================================================================
+
+/**
+ * Sortie directe de l'étape 1. Aucune question n'est posée, aucun lead n'est
+ * enregistré : une panne en cours se règle par téléphone, pas par formulaire.
+ * On affiche donc les tarifs et les deux boutons, dans le même habillage que
+ * l'écran de résultat pour ne pas donner l'impression d'une page d'erreur.
+ */
+export const EcranDepannage = () => {
+  const { trackEvent } = useAnalyticsEvents();
+
+  const lienWhatsApp = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(
+    DEPANNAGE.messageWhatsApp,
+  )}`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
+          <Wrench className="h-5 w-5 text-primary" />
+        </span>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+            Dépannage
+          </p>
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
+            Nos tarifs de dépannage
+          </h2>
+        </div>
+      </div>
+
+      <p className="text-lg text-foreground leading-relaxed">{DEPANNAGE.accroche}</p>
+
+      {/* Grille tarifaire — même carte anthracite que la fourchette du résultat,
+          couleurs fixes pour un rendu identique en clair et en sombre. */}
+      <div
+        className="rounded-3xl border-2 border-primary/60 p-6 md:p-8 shadow-xl shadow-primary/20"
+        style={{
+          background: "linear-gradient(155deg, #262626 0%, #1F1F1F 55%, #171717 100%)",
+        }}
+      >
+        <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#E86830]">
+          Tarifs hors TVA
+        </p>
+        <ul className="divide-y divide-white/10">
+          {DEPANNAGE.lignes.map((ligne) => (
+            <li
+              key={ligne.libelle}
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-4 first:pt-0 last:pb-0"
+            >
+              <div className="min-w-0">
+                <p className="font-display text-base md:text-lg font-bold text-white">
+                  {ligne.libelle}
+                </p>
+                <p className="mt-0.5 text-sm leading-relaxed text-white/60">
+                  {ligne.detail}
+                </p>
+              </div>
+              <p className="font-display text-xl md:text-2xl font-black shrink-0 text-white">
+                {ligne.montant}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <MentionBox accent>{DEPANNAGE.mentionTva}</MentionBox>
+      <MentionBox>{DEPANNAGE.mentionMateriel}</MentionBox>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        {/* Appel en premier et en gros : c'est l'action utile quand il n'y a
+            plus de courant. */}
+        <Button
+          variant="copper"
+          size="lg"
+          asChild
+          className="flex-1 h-auto min-h-14 whitespace-normal py-4 text-center leading-snug text-lg font-bold"
+        >
+          <a
+            href={`tel:${CONTACT.telephone}`}
+            data-analytics="call_click"
+            onClick={() => trackEvent("call_click", { source_section: "simulateur_depannage" })}
+          >
+            <Phone className="w-5 h-5 mr-2 shrink-0" />
+            Appeler le {CONTACT.telephoneAffiche}
+          </a>
+        </Button>
+        <Button
+          size="lg"
+          asChild
+          className="flex-1 h-auto min-h-14 whitespace-normal py-4 text-center leading-snug bg-[#1F1F1F] text-white hover:bg-[#2E2E2E] border border-white/10"
+        >
+          <a
+            href={lienWhatsApp}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-analytics="whatsapp_click"
+            onClick={() => trackEvent("whatsapp_click", { source_section: "simulateur_depannage" })}
+          >
+            <MessageCircle className="w-5 h-5 mr-2 shrink-0" />
+            Décrire ma panne sur WhatsApp
+          </a>
+        </Button>
+      </div>
+
+      <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
     </motion.div>
   );
 };
