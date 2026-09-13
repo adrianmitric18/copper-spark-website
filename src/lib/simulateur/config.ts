@@ -340,6 +340,14 @@ export const ALERTE_SECURITE = {
     "Sinon, et seulement si vous pouvez le faire sans danger, coupez le disjoncteur général — le gros interrupteur en haut de votre tableau électrique — et n'y retouchez pas.",
   precision:
     "Ne rebranchez rien, ne tentez pas de le réarmer. Appelez-nous ensuite : on vous dit quoi faire en attendant.",
+  /**
+   * Le 112 doit être un BOUTON, en premier et en rouge, pas une phrase.
+   * Corriger l'ordre des mots sans corriger l'ordre des gestes ne servait à
+   * rien : sur un téléphone, dans la panique, on tape ce qui est gros et
+   * coloré, pas ce qui est écrit.
+   */
+  boutonUrgence: "Appeler le 112",
+  boutonNous: "Appeler Le Cuivre Électrique",
 } as const;
 
 // =====================================================================
@@ -457,8 +465,12 @@ export const ECRAN_DEPANNAGE = {
   eyebrow: "Dépannage",
   titre: "Nos tarifs de dépannage",
   securiteQuestion: "Odeur de brûlé, étincelles ou fumée ?",
-  securiteAide: "Si c'est le cas, on s'arrête là et on vous dit quoi faire tout de suite.",
-  securiteOui: "Oui",
+  // La sous-ligne porte la consigne, pas le comportement du simulateur : celui
+  // qui sent le brûlé se moque de savoir que le parcours s'interrompt.
+  securiteAide: "Si c'est le cas, ne touchez à rien : on vous dit quoi faire tout de suite.",
+  // Libellé autoporteur : « Oui » seul ne dit rien à un lecteur d'écran, sur
+  // l'écran précisément où l'erreur de clic compte le plus.
+  securiteOui: "Oui, c'est le cas",
   securiteNon: "Non",
   intituleMontant: "Intervention à partir de",
   detailMontant: "Déplacement et première heure compris.",
@@ -547,7 +559,7 @@ export const RGIE_FORFAIT = {
    * absolu que le forfait ne couvre pas.
    */
   secondPassage:
-    "Si un second passage de l'organisme est nécessaire après les travaux de mise en conformité, sa redevance est refacturée au prix coûtant.",
+    "Si un second passage de l'organisme est nécessaire après les travaux de mise en conformité, sa redevance vous est refacturée par nos soins, au prix coûtant, sans marge.",
   /**
    * Glose du seul mot technique du parcours. Le libellé ci-dessus est
    * intouchable (validé mot pour mot), on l'explique donc juste après.
@@ -633,8 +645,14 @@ export const MENTIONS = {
     "Votre demande est traitée par un électricien local basé à Court-Saint-Étienne, pas par une plateforme.",
   rgpdCapture:
     "En validant, vous acceptez d'être recontacté par Le Cuivre Électrique au sujet de votre demande. Vos données ne sont jamais revendues.",
+  /**
+   * Version courte, réservée à l'écran dépannage : deux phrases de fiscalité
+   * sur l'écran de quelqu'un qui n'a plus de courant, c'était une de trop. Les
+   * parcours borne et RGIE gardent leurs mentions complètes — là, le visiteur
+   * a le temps de lire.
+   */
   depannageTva:
-    "Prix hors TVA — 6 % pour un logement privé de plus de 10 ans, 21 % sinon. Le taux applicable est confirmé avec vous : il dépend de l'affectation du bien.",
+    "Prix hors TVA. Le taux — 6 % ou 21 % — dépend de l'âge et de l'usage de votre logement ; il est confirmé avec vous avant l'intervention.",
   depannageMateriel:
     "Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.",
   // La réserve de disponibilité de nuit vaut pour TOUTES les zones, pas

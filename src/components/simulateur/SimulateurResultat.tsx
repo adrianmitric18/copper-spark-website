@@ -591,21 +591,42 @@ export const EcranAlerteSecurite = () => {
         <p className="mt-3 leading-relaxed text-white/70">{ALERTE_SECURITE.precision}</p>
       </div>
 
-      <Button
-        variant="copper"
-        size="lg"
-        asChild
-        className="w-full h-auto min-h-16 whitespace-normal py-5 text-center text-xl font-black leading-snug"
-      >
-        <a
-          href={`tel:${CONTACT.telephone}`}
-          data-analytics="call_click"
-          onClick={() => trackEvent("call_click", { source_section: "simulateur_alerte" })}
+      {/* Le 112 d'abord, en rouge et en premier dans l'ordre de tabulation.
+          L'appel à l'entreprise vient après, visuellement secondaire : sur un
+          téléphone, dans la panique, c'est le bouton le plus gros qui est
+          tapé, pas la phrase la plus importante. */}
+      <div className="space-y-3">
+        <Button
+          variant="destructive"
+          size="lg"
+          asChild
+          className="w-full h-auto min-h-16 whitespace-normal py-5 text-center text-xl font-black leading-snug"
         >
-          <Phone className="w-6 h-6 mr-3 shrink-0" />
-          Appeler le {CONTACT.telephoneAffiche}
-        </a>
-      </Button>
+          <a
+            href="tel:112"
+            onClick={() => trackEvent("urgence_112_click", { source_section: "simulateur_alerte" })}
+          >
+            <Phone className="w-6 h-6 mr-3 shrink-0" />
+            {ALERTE_SECURITE.boutonUrgence}
+          </a>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="lg"
+          asChild
+          className="w-full h-auto min-h-14 whitespace-normal py-4 text-center text-base font-bold leading-snug"
+        >
+          <a
+            href={`tel:${CONTACT.telephone}`}
+            data-analytics="call_click"
+            onClick={() => trackEvent("call_click", { source_section: "simulateur_alerte" })}
+          >
+            <Phone className="w-5 h-5 mr-2 shrink-0" />
+            {ALERTE_SECURITE.boutonNous} — {CONTACT.telephoneAffiche}
+          </a>
+        </Button>
+      </div>
 
       <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
     </motion.div>
