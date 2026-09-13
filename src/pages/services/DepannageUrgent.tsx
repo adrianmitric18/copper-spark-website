@@ -22,7 +22,7 @@ const faqs = [
   {
     question: "Intervenez-vous la nuit et le week-end ?",
     answer:
-      "Oui, notre service de dépannage est disponible 24h/24 et 7j/7. Le bureau est ouvert du lundi au samedi de 7h à 19h (fermé le dimanche) ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences.",
+      "Oui, week-ends compris. Le bureau est ouvert du lundi au samedi de 7h à 19h (fermé le dimanche) ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences. Les interventions de nuit se font sous réserve de disponibilité, confirmée par téléphone au moment de votre appel.",
   },
 ];
 
@@ -39,7 +39,7 @@ const DepannageUrgent = () => {
       schemaServiceDescription="Service de dépannage électrique d'urgence disponible 24h/24 et 7j/7 dans tout le Brabant wallon, en Wallonie et à Bruxelles."
       hero={{
         eyebrow: "Dépannage urgent",
-        h1: "Dépannage électrique urgent — 24h/24, 7j/7",
+        h1: "Dépannage électrique urgent — jour, soirée et week-end",
         intro:
           "Une panne électrique ne peut pas attendre. Adrian intervient rapidement dans le Brabant wallon, en Wallonie et à Bruxelles pour rétablir votre installation en toute sécurité, jour et nuit, week-ends compris.",
       }}

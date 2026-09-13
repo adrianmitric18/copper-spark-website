@@ -577,14 +577,18 @@ export const EcranAlerteSecurite = () => {
         </div>
       </div>
 
+      {/* Les secours d'abord, et en premier dans l'ordre de lecture : cet écran
+          se déclenche sur « fumée, étincelles, odeur de brûlé ». Le geste au
+          tableau vient après, et seulement s'il est sans danger. */}
       <div
         className="rounded-3xl border-2 border-destructive/60 p-7 md:p-9 shadow-xl shadow-destructive/20"
         style={{ background: FOND_ANTHRACITE }}
       >
-        <p className="font-display text-xl md:text-2xl font-bold leading-snug text-white">
-          {ALERTE_SECURITE.consigne}
+        <p className="font-display text-xl md:text-2xl font-black leading-snug text-white">
+          {ALERTE_SECURITE.urgence}
         </p>
-        <p className="mt-4 leading-relaxed text-white/70">{ALERTE_SECURITE.precision}</p>
+        <p className="mt-5 leading-relaxed text-white/85">{ALERTE_SECURITE.consigne}</p>
+        <p className="mt-3 leading-relaxed text-white/70">{ALERTE_SECURITE.precision}</p>
       </div>
 
       <Button

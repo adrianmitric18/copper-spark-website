@@ -323,13 +323,23 @@ export const SECURITE: ChoixSimple<Securite>[] = [
   { value: "rien", icone: "recente", label: "Non, rien de tout ça" },
 ];
 
-/** Écran d'alerte : aucune question, aucun formulaire, aucun prix. */
+/**
+ * Écran d'alerte : aucune question, aucun formulaire, aucun prix.
+ *
+ * L'ordre des consignes n'est pas négociable et n'est pas un choix de
+ * rédaction. Cet écran se déclenche sur « fumée, étincelles, odeur de brûlé » :
+ * les secours passent AVANT tout, et le geste au tableau — qui envoie quelqu'un
+ * vers l'endroit qui brûle peut-être — est conditionné. La version précédente
+ * demandait d'aller au tableau sans mentionner le 112, et contredisait la FAQ
+ * de /services/depannage-urgent, qui dit l'inverse depuis toujours.
+ */
 export const ALERTE_SECURITE = {
-  titre: "Coupez le courant tout de suite",
+  titre: "Mettez-vous en sécurité d'abord",
+  urgence: "S'il y a de la fumée ou des flammes : sortez et appelez le 112.",
   consigne:
-    "Coupez le disjoncteur général — le gros interrupteur en haut de votre tableau électrique — et n'y retouchez pas.",
+    "Sinon, et seulement si vous pouvez le faire sans danger, coupez le disjoncteur général — le gros interrupteur en haut de votre tableau électrique — et n'y retouchez pas.",
   precision:
-    "Ne rebranchez rien, ne tentez pas de le réarmer. Appelez-nous maintenant : on vous dit quoi faire en attendant.",
+    "Ne rebranchez rien, ne tentez pas de le réarmer. Appelez-nous ensuite : on vous dit quoi faire en attendant.",
 } as const;
 
 // =====================================================================
@@ -530,6 +540,15 @@ export const RGIE_FORFAIT = {
   precision:
     "La redevance de l'organisme agréé est comprise : vous ne recevez aucune facture séparée de l'organisme de contrôle.",
   /**
+   * Le forfait couvre le PREMIER passage. Sur une installation ancienne, la
+   * non-conformité est le cas courant : travaux, puis second passage. Celui-là
+   * est refacturé au prix coûtant (règle existante du devis Meunier, arbitrée
+   * par Adrian le 2026-09-13). Sans cette clause, la phrase ci-dessus est un
+   * absolu que le forfait ne couvre pas.
+   */
+  secondPassage:
+    "Si un second passage de l'organisme est nécessaire après les travaux de mise en conformité, sa redevance est refacturée au prix coûtant.",
+  /**
    * Glose du seul mot technique du parcours. Le libellé ci-dessus est
    * intouchable (validé mot pour mot), on l'explique donc juste après.
    */
@@ -564,7 +583,7 @@ export const DEPANNAGE = {
     nuit: "Première heure de nuit",
     rdv: "Première heure de main-d'œuvre",
   } as Record<Moment, string>,
-  detailPremiereHeure: "Toute heure entamée est due, celle-ci comme les suivantes.",
+  detailPremiereHeure: "Toute heure entamée est due.",
   detailDeplacement: "Forfait annoncé et accepté avant que nous prenions la route.",
 } as const;
 
@@ -618,14 +637,16 @@ export const MENTIONS = {
     "Prix hors TVA — 6 % pour un logement privé de plus de 10 ans, 21 % sinon. Le taux applicable est confirmé avec vous : il dépend de l'affectation du bien.",
   depannageMateriel:
     "Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.",
-  depannageHeuresSuivantes:
-    "Chaque heure entamée ensuite est due au même tarif horaire.",
-  depannageNuitZone3:
-    "Intervention de nuit sur cette zone sous réserve de confirmation de disponibilité par téléphone.",
+  // La réserve de disponibilité de nuit vaut pour TOUTES les zones, pas
+  // seulement la plus lointaine (arbitrage du 2026-09-13) : un artisan seul ne
+  // peut pas garantir un départ à 3 h du matin, où que ce soit.
+  depannageNuit:
+    "Intervention de nuit sous réserve de disponibilité, confirmée par téléphone.",
   depannageHorsZone:
     "Votre commune est en dehors de notre secteur habituel : le déplacement est confirmé par téléphone, avant tout départ.",
-  depannagePasDeFormulaire:
-    "Pas de formulaire pour une panne : vous appelez, on vous répond.",
+  // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
+  // et l'argument n'en avait pas besoin.
+  depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",
 } as const;
 
 /** Message WhatsApp pré-rempli depuis l'écran dépannage. */

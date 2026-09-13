@@ -70,7 +70,7 @@ const VARIANTES: Record<Parcours | "defaut", Variante> = {
     intro:
       "Le prix de l'intervention s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
     reassurances: [
-      { icon: Clock, texte: "Intervention 24h/24, 7j/7" },
+      { icon: Clock, texte: "Jour, soirée et week-end — nuit sur disponibilité" },
       { icon: Receipt, texte: "Forfait annoncé avant le départ" },
       { icon: MapPin, texte: "Électricien basé à Court-Saint-Étienne" },
     ],

@@ -377,7 +377,7 @@ function devisRgie(r: Reponses): Devis {
 
   const mentions: string[] = [
     RGIE_FORFAIT.libelle,
-    RGIE_FORFAIT.precision,
+    `${RGIE_FORFAIT.precision} ${RGIE_FORFAIT.secondPassage}`,
     RGIE_FORFAIT.glose,
     mentionTva(r),
   ];
@@ -445,12 +445,15 @@ function devisDepannage(r: Reponses): Devis {
       statut: "surDevis",
     });
   } else {
+    // Commune pas encore choisie : la ligne affiche la fourchette réelle, pas
+    // le montant le plus bas. Annoncer « 25 € » à quelqu'un qui n'a pas dit où
+    // il habite, c'est le chiffre qui double sous ses yeux au clic suivant.
     const montants = deplacementsConnus();
     lignes.push({
       libelle: "Déplacement",
-      detail: `${montants.join(" €, ")} € selon votre commune.`,
+      detail: "Selon votre commune.",
       statut: "chiffre",
-      montant: fixe(Math.min(...montants)),
+      montant: { min: Math.min(...montants), max: Math.max(...montants) },
     });
   }
 
@@ -465,17 +468,24 @@ function devisDepannage(r: Reponses): Devis {
   // Hors secteur : pas de total. On n'affiche pas un « à partir de » qui
   // passerait sous silence la moitié de la facture.
   const horsSecteur = zone?.montant === null;
-  const total = horsSecteur ? undefined : somme(lignes);
+  const brut = horsSecteur ? undefined : somme(lignes);
+  // Commune pas encore choisie : le titre annonce un plancher, donc un seul
+  // montant. La fourchette du déplacement reste lisible sur sa ligne.
+  const total = brut && !zone ? { min: brut.min, max: brut.min } : brut;
 
+  // Le tarif des heures suivantes est chiffré, une seule fois : l'écran
+  // affichait « au même tarif horaire » sans que le taux horaire apparaisse
+  // nulle part, et la première heure disait déjà la même chose.
   const mentions: string[] = [
-    MENTIONS.depannageHeuresSuivantes,
+    `Chaque heure entamée ensuite : ${euros(DEPANNAGE.mainOeuvre.journee)} (${euros(
+      DEPANNAGE.mainOeuvre.nuit,
+    )} la nuit).`,
     MENTIONS.depannageTva,
     MENTIONS.depannageMateriel,
   ];
   if (horsSecteur) mentions.unshift(MENTIONS.depannageHorsZone);
-  if (r.zone === "zone3" && moment === "nuit") {
-    mentions.unshift(MENTIONS.depannageNuitZone3);
-  }
+  // Réserve de disponibilité : toutes zones confondues.
+  if (moment === "nuit") mentions.unshift(MENTIONS.depannageNuit);
 
   return {
     parcours: "depannage",
