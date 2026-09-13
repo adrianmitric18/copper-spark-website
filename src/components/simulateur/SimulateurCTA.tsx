@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NB_QUESTIONS } from "@/lib/simulateur/config";
 
 /**
  * Encart d'accès au simulateur, posé sur les pages services concernées
@@ -9,8 +10,8 @@ import { Button } from "@/components/ui/button";
  *
  * Le lien porte `?besoin=…` : depuis une page service, le visiteur a déjà dit
  * ce qu'il cherchait, lui reposer la question serait une étape pour rien. Le
- * décompte de questions annoncé ici doit donc rester celui du parcours
- * réellement ouvert — trois pour la borne, deux pour la conformité.
+ * décompte de questions annoncé ici vient de `NB_QUESTIONS`, dérivé des
+ * parcours eux-mêmes : il ne peut pas se désaligner du parcours réel.
  */
 const SimulateurCTA = ({ contexte }: { contexte: "borne" | "rgie" }) => (
   <aside className="my-12 rounded-3xl border-2 border-primary/40 bg-primary/[0.05] p-6 md:p-8">
@@ -21,13 +22,13 @@ const SimulateurCTA = ({ contexte }: { contexte: "borne" | "rgie" }) => (
       <div className="min-w-0 flex-1">
         <h2 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
           {contexte === "borne"
-            ? "Estimez le prix de votre borne en 45 secondes"
-            : "Estimez le prix de votre mise en conformité en 45 secondes"}
+            ? "Estimez le prix de votre borne en moins d'une minute"
+            : "Estimez le prix de votre mise en conformité en moins d'une minute"}
         </h2>
         <p className="text-muted-foreground leading-relaxed">
           {contexte === "borne"
-            ? "Trois questions sur votre installation et l'emplacement de la borne, et vous obtenez une fourchette indicative."
-            : "Deux questions sur votre installation et le motif du contrôle, et vous obtenez une fourchette indicative pour votre mise en conformité."}
+            ? `${NB_QUESTIONS.borne} questions sur votre installation et l'emplacement de la borne, et vous obtenez un devis indicatif détaillé poste par poste.`
+            : `${NB_QUESTIONS.rgie} questions sur votre installation et le motif du contrôle, et vous obtenez un devis indicatif détaillé pour votre mise en conformité.`}
         </p>
       </div>
       <Button variant="copper" size="lg" asChild className="shrink-0 w-full md:w-auto">

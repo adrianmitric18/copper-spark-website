@@ -10,7 +10,7 @@ const faqs = [
   {
     question: "Quel est le coût d'installation d'une borne ?",
     answer:
-      "Le prix dépend de la marque, de la puissance, de la longueur de câble et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Nous remettons un devis détaillé après visite technique gratuite.",
+      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Alfen fournie et posée, comptez en ordre de grandeur entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris — beaucoup de devis sortent ces deux derniers postes de leur total pour paraître moins chers. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Prix indiqués avec la TVA à 6 %, celle des logements de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Nous remettons un devis détaillé après visite technique gratuite.",
   },
   {
     question: "Combien de temps pour recharger ma voiture ?",

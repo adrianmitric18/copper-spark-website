@@ -1,46 +1,62 @@
 /**
- * Simulateur de prix — enregistrement du lead.
+ * Simulateur de prix v2 — enregistrement du lead.
  *
  * Reprend exactement le flux du formulaire de contact (ContactSection) :
  * upload photo -> insert Supabase -> deux emails EmailJS. Chaque étape est
  * isolée : une photo qui ne part pas, ou un email qui échoue, ne doit jamais
  * faire perdre le lead. On ne remonte une erreur au visiteur que si TOUT a
  * échoué.
+ *
+ * Le parcours dépannage n'appelle jamais ce module : il n'enregistre aucun
+ * lead, il affiche des prix puis un bouton d'appel (arbitrage du 2026-09-13).
  */
 
 import emailjs from "@emailjs/browser";
 import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  BESOINS,
+  AGES_LOGEMENT,
+  CHOIX_PARCOURS,
   CONTEXTES_RGIE,
   DISTANCES,
-  INSTALLATIONS,
-  USAGES,
+  ETATS_TABLEAU,
+  FOURNISSEURS,
+  MOMENTS,
+  NOMBRES_TABLEAUX,
+  PREFERENCES_RAPPEL,
   UPLOAD,
+  USAGES,
+  USAGE_PAR_CONTEXTE_RGIE,
+  ZONES,
   nettoyerGsm,
-  type Besoin,
+  type Parcours,
+  type Usage,
 } from "./config";
-import { formatFourchette, type Estimation, type ReponsesSimulateur } from "./calcul";
+import { formatFourchette, formatLigne, type Devis, type Reponses } from "./calcul";
 
-// Même service EmailJS que le formulaire de contact ; deux nouveaux templates
-// dédiés au simulateur (à créer côté compte EmailJS — variables documentées
-// dans le README de ce dossier).
+// Même service EmailJS que le formulaire de contact ; deux templates dédiés au
+// simulateur (variables documentées dans le README de ce dossier).
 const EMAILJS_SERVICE_ID = "service_ybjga5v";
 const EMAILJS_PUBLIC_KEY = "8rgPz2Ls3kaYeRHY_";
 export const EMAILJS_TEMPLATE_SIMULATEUR_ADRIAN = "template_simu_adrian";
 export const EMAILJS_TEMPLATE_SIMULATEUR_CLIENT = "template_simu_client";
 
-const SERVICES_PAR_BESOIN: Record<Besoin, string[]> = {
+const SERVICES_PAR_PARCOURS: Record<Parcours, string[]> = {
   borne: ["Borne de recharge voiture électrique"],
   rgie: ["Mise en conformité RGIE"],
-  combine: ["Borne de recharge voiture électrique", "Mise en conformité RGIE"],
+  // Jamais utilisé en pratique (le dépannage n'enregistre pas de lead), mais la
+  // policy RLS exige un tableau non vide : autant qu'il soit juste.
+  depannage: ["Dépannage électrique"],
 };
 
-const libelle = <T extends string>(
-  liste: { value: T; label: string }[],
-  value: T | undefined,
-): string => liste.find((c) => c.value === value)?.label ?? "Non précisé";
+const libelle = (
+  liste: readonly { value: string; label: string }[],
+  value: string | undefined,
+): string => (value ? (liste.find((c) => c.value === value)?.label ?? value) : "Non précisé");
+
+/** Usage effectif : sur le parcours RGIE, il est déduit du motif. */
+export const usageEffectif = (r: Reponses): Usage | undefined =>
+  r.usage ?? (r.contexteRgie ? USAGE_PAR_CONTEXTE_RGIE[r.contexteRgie] : undefined);
 
 export interface CoordonneesSimulateur {
   nom: string;
@@ -49,8 +65,8 @@ export interface CoordonneesSimulateur {
 }
 
 export interface ContexteEnvoi {
-  reponses: ReponsesSimulateur;
-  estimation: Estimation;
+  reponses: Reponses;
+  devis: Devis;
   coordonnees: CoordonneesSimulateur;
   photo: File | null;
   /** Millisecondes écoulées entre l'ouverture du simulateur et l'envoi. */
@@ -109,43 +125,72 @@ async function uploadPhoto(photo: File): Promise<string> {
   return path;
 }
 
-/** Résumé texte des réponses, réutilisé dans l'email, le message DB et WhatsApp. */
-export function resumerSimulation(
-  reponses: ReponsesSimulateur,
-  estimation: Estimation,
-): string {
-  const lignes = [`Besoin : ${libelle(BESOINS, reponses.besoin)}`];
+/**
+ * Résumé texte des réponses et du devis, réutilisé dans l'email, le message
+ * enregistré en base et le message WhatsApp pré-rempli.
+ *
+ * Chaque parcours n'écrit que ses propres lignes : afficher « Usage : ma
+ * voiture personnelle » sur une mise en conformité induirait Adrian en erreur
+ * au moment du rappel.
+ */
+export function resumerSimulation(reponses: Reponses, devis: Devis): string {
+  const r = reponses;
+  const lignes: string[] = [`Parcours : ${libelle(CHOIX_PARCOURS, r.parcours)}`];
 
-  if (reponses.distance) {
-    lignes.push(`Distance borne / tableau : ${libelle(DISTANCES, reponses.distance)}`);
+  if (r.parcours === "borne") {
+    lignes.push(`Fourniture de la borne : ${libelle(FOURNISSEURS, r.fournisseur)}`);
+    if (r.modeleBorne?.trim()) {
+      lignes.push(`Modèle indiqué par le client : ${r.modeleBorne.trim()}`);
+    }
+    lignes.push(`Distance borne / tableau : ${libelle(DISTANCES, r.distance)}`);
+    lignes.push(`État du tableau : ${libelle(ETATS_TABLEAU, r.tableau)}`);
+    lignes.push(`Âge du logement : ${libelle(AGES_LOGEMENT, r.age)}`);
+    lignes.push(`Usage : ${libelle(USAGES, r.usage)}`);
   }
-  lignes.push(`Installation électrique : ${libelle(INSTALLATIONS, reponses.installation)}`);
 
-  // Parcours RGIE seul : la question d'usage n'a pas été posée. Afficher
-  // « Usage : ma voiture personnelle » sur une mise en conformité induirait
-  // Adrian en erreur au moment du rappel.
-  if (reponses.contexteRgie) {
-    lignes.push(`Motif de la mise en conformité : ${libelle(CONTEXTES_RGIE, reponses.contexteRgie)}`);
-  } else {
-    lignes.push(`Usage : ${libelle(USAGES, reponses.usage)}`);
+  if (r.parcours === "rgie") {
+    lignes.push(`Motif de la mise en conformité : ${libelle(CONTEXTES_RGIE, r.contexteRgie)}`);
+    lignes.push(`Nombre de tableaux : ${libelle(NOMBRES_TABLEAUX, r.nombreTableaux)}`);
+    lignes.push(`État de l'installation : ${libelle(ETATS_TABLEAU, r.tableau)}`);
+    lignes.push(`Âge du logement : ${libelle(AGES_LOGEMENT, r.age)}`);
   }
 
-  if (estimation.complexe) {
-    lignes.push("Estimation : projet complexe, métré technique sur place requis");
-    estimation.raisonsComplexe.forEach((r) => lignes.push(`  · ${r}`));
+  if (r.parcours === "depannage") {
+    lignes.push(`Moment souhaité : ${libelle(MOMENTS, r.moment)}`);
+    lignes.push(`Zone de déplacement : ${libelle(ZONES, r.zone)}`);
+  }
+
+  if (r.preferenceRappel) {
+    lignes.push(`Préférence : ${libelle(PREFERENCES_RAPPEL, r.preferenceRappel)}`);
+  }
+
+  lignes.push("");
+
+  if (devis.complexe) {
+    lignes.push("Estimation : aucun prix affiché, visite gratuite proposée");
+    devis.raisonsComplexe.forEach((raison) => lignes.push(`  · ${raison}`));
   } else {
-    if (estimation.borne) lignes.push(`Borne de recharge : ${formatFourchette(estimation.borne)}`);
-    if (estimation.rgie) lignes.push(`Mise en conformité RGIE : ${formatFourchette(estimation.rgie)}`);
-    if (estimation.total && estimation.borne && estimation.rgie) {
-      lignes.push(`Estimation globale : ${formatFourchette(estimation.total)}`);
+    lignes.push("Devis indicatif affiché :");
+    devis.lignes.forEach((l) => lignes.push(`  · ${l.libelle} : ${formatLigne(l)}`));
+    if (devis.total) {
+      lignes.push(`  = ${devis.intituleTotal} : ${formatFourchette(devis.total)}`);
+    }
+    if (devis.aConfirmer) {
+      lignes.push("  (postes « à confirmer » non compris dans ce total)");
     }
   }
 
   return lignes.join("\n");
 }
 
+/** Fourchette affichée, en une ligne, pour l'email et l'admin. */
+const totalAffiche = (devis: Devis): string => {
+  if (devis.complexe) return "Aucun prix affiché — visite gratuite proposée";
+  return devis.total ? formatFourchette(devis.total) : "Non calculée";
+};
+
 export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnvoi> {
-  const { reponses, estimation, coordonnees, photo } = ctx;
+  const { reponses: r, devis, coordonnees, photo } = ctx;
 
   // 1. Photo (facultative) --------------------------------------------------
   let photoPath: string | null = null;
@@ -160,33 +205,52 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
   }
   ctx.onProgres?.("enregistrement");
 
-  const resume = resumerSimulation(reponses, estimation);
+  const resume = resumerSimulation(r, devis);
   const telephone = normaliserGsm(coordonnees.telephone);
   const email = coordonnees.email.trim();
+  const usage = usageEffectif(r);
 
   const payload = {
-    besoin: reponses.besoin,
-    besoin_label: libelle(BESOINS, reponses.besoin),
-    distance: reponses.distance ?? null,
-    distance_label: reponses.distance ? libelle(DISTANCES, reponses.distance) : null,
-    installation: reponses.installation,
-    installation_label: libelle(INSTALLATIONS, reponses.installation),
-    usage: reponses.usage,
-    usage_label: libelle(USAGES, reponses.usage),
-    contexte_rgie: reponses.contexteRgie ?? null,
-    contexte_rgie_label: reponses.contexteRgie
-      ? libelle(CONTEXTES_RGIE, reponses.contexteRgie)
+    version: 2,
+    parcours: r.parcours,
+    parcours_label: libelle(CHOIX_PARCOURS, r.parcours),
+
+    fournisseur: r.fournisseur ?? null,
+    fournisseur_label: r.fournisseur ? libelle(FOURNISSEURS, r.fournisseur) : null,
+    modele_borne: r.modeleBorne?.trim() || null,
+    distance: r.distance ?? null,
+    distance_label: r.distance ? libelle(DISTANCES, r.distance) : null,
+    tableau: r.tableau ?? null,
+    tableau_label: r.tableau ? libelle(ETATS_TABLEAU, r.tableau) : null,
+    age_logement: r.age ?? null,
+    age_logement_label: r.age ? libelle(AGES_LOGEMENT, r.age) : null,
+    usage: usage ?? null,
+    usage_label: usage ? libelle(USAGES, usage) : null,
+    contexte_rgie: r.contexteRgie ?? null,
+    contexte_rgie_label: r.contexteRgie ? libelle(CONTEXTES_RGIE, r.contexteRgie) : null,
+    nombre_tableaux: r.nombreTableaux ?? null,
+    nombre_tableaux_label: r.nombreTableaux
+      ? libelle(NOMBRES_TABLEAUX, r.nombreTableaux)
       : null,
-    complexe: estimation.complexe,
-    raisons_complexe: estimation.raisonsComplexe,
-    fourchette_borne: estimation.borne ?? null,
-    fourchette_rgie: estimation.rgie ?? null,
-    fourchette_totale: estimation.total ?? null,
-    fourchette_affichee: estimation.complexe
-      ? "Métré technique requis"
-      : estimation.total
-        ? formatFourchette(estimation.total)
-        : null,
+    preference_rappel: r.preferenceRappel ?? null,
+    preference_rappel_label: r.preferenceRappel
+      ? libelle(PREFERENCES_RAPPEL, r.preferenceRappel)
+      : null,
+
+    complexe: devis.complexe,
+    raisons_complexe: devis.raisonsComplexe,
+    // Le devis tel qu'il a été affiché : c'est la seule version qui compte le
+    // jour où le client rappelle en disant « votre site m'annonçait… ».
+    lignes_devis: devis.lignes.map((l) => ({
+      libelle: l.libelle,
+      statut: l.statut,
+      min: l.montant?.min ?? null,
+      max: l.montant?.max ?? null,
+    })),
+    total: devis.total ?? null,
+    total_affiche: totalAffiche(devis),
+    postes_a_confirmer: devis.aConfirmer,
+
     photo_path: photoPath,
     duree_ms: ctx.dureeMs,
     soumission_suspecte: ctx.suspect,
@@ -202,11 +266,15 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
       // l'accusé de réception avec l'estimation détaillée doit toujours partir.
       email,
       phone: telephone,
-      // Le simulateur ne demande pas d'adresse (parcours < 45 s).
+      // Le simulateur ne demande pas d'adresse (parcours court).
       address: "",
-      client_type: reponses.usage === "societe" ? "Professionnel" : "Particulier",
-      services: SERVICES_PAR_BESOIN[reponses.besoin],
+      client_type: usage === "societe" ? "Professionnel" : "Particulier",
+      services: SERVICES_PAR_PARCOURS[r.parcours],
       message: resume,
+      // NE JAMAIS changer cette valeur : la policy RLS d'insertion publique
+      // bascule sur la branche « formulaire de contact » (adresse, rue, numéro,
+      // code postal et commune obligatoires) pour toute autre source, et tous
+      // les leads du simulateur seraient rejetés.
       source: "simulateur",
       photo_urls: photoPath ? [photoPath] : null,
       gdpr_consent: true,
@@ -237,12 +305,10 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
     }
   }
 
-  const fourchetteTexte = estimation.complexe
-    ? "Projet complexe — métré technique sur place"
-    : estimation.total
-      ? formatFourchette(estimation.total)
-      : "Non calculée";
+  const fourchetteTexte = totalAffiche(devis);
 
+  // Les noms de variables sont ceux des deux templates EmailJS existants : ne
+  // pas les renommer sans refaire les templates côté compte EmailJS.
   const adrianParams = {
     from_name: coordonnees.nom.trim(),
     phone: telephone,
@@ -250,16 +316,16 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
     // construire https://wa.me/{{phone_wa}} dans le template EmailJS.
     phone_wa: telephone.replace(/\D/g, ""),
     from_email: email,
-    besoin: libelle(BESOINS, reponses.besoin),
-    distance: reponses.distance ? libelle(DISTANCES, reponses.distance) : "Sans objet",
-    installation: libelle(INSTALLATIONS, reponses.installation),
-    // Sur le parcours RGIE seul, cette ligne porte le motif de la mise en
-    // conformité — la question d'usage (véhicule) n'y est pas posée.
-    usage: reponses.contexteRgie
-      ? libelle(CONTEXTES_RGIE, reponses.contexteRgie)
-      : libelle(USAGES, reponses.usage),
+    besoin: libelle(CHOIX_PARCOURS, r.parcours),
+    distance: r.distance ? libelle(DISTANCES, r.distance) : "Sans objet",
+    installation: r.tableau ? libelle(ETATS_TABLEAU, r.tableau) : "Non précisé",
+    // Sur le parcours RGIE, cette ligne porte le motif de la mise en conformité
+    // — la question d'usage (véhicule) n'y est pas posée.
+    usage: r.contexteRgie
+      ? libelle(CONTEXTES_RGIE, r.contexteRgie)
+      : libelle(USAGES, r.usage),
     fourchette: fourchetteTexte,
-    complexe: estimation.complexe ? "OUI — métré technique requis" : "Non",
+    complexe: devis.complexe ? "OUI — visite gratuite proposée" : "Non",
     resume,
     photo: lienPhoto,
     suspect: ctx.suspect ? `OUI (envoi en ${Math.round(ctx.dureeMs / 1000)} s)` : "Non",
@@ -270,7 +336,7 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
   const clientParams = {
     to_email: email,
     from_name: coordonnees.nom.trim(),
-    besoin: libelle(BESOINS, reponses.besoin),
+    besoin: libelle(CHOIX_PARCOURS, r.parcours),
     fourchette: fourchetteTexte,
     resume,
   };

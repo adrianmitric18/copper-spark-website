@@ -1,146 +1,122 @@
-# Simulateur de prix — mise en service
+# Simulateur de prix v2 — mise en service
 
-## 1. Migration Supabase (obligatoire avant la mise en ligne)
+Version 2 du 2026-09-13 : **trois parcours totalement dédiés** (borne, RGIE,
+dépannage) et un **mini-devis indicatif par poste** à la place de la fourchette
+unique. Le parcours « les deux » a été supprimé.
 
-Tant que la migration n'est pas appliquée, **aucun lead simulateur ne sera
-enregistré** : la colonne `payload` n'existe pas et la policy d'insertion refuse
-les leads sans adresse.
+## 1. Migration Supabase
+
+**Aucune migration n'est nécessaire pour la v2.** Le payload est une colonne
+`jsonb` libre : les nouveaux champs y entrent sans changement de schéma.
+
+Les deux migrations de la v1 restent indispensables :
 
 ```
 supabase/migrations/20260809120000_simulateur_leads.sql
-```
-
-Elle fait trois choses :
-
-1. ajoute la colonne `payload jsonb` à `leads` ;
-2. réécrit la policy d'insertion publique en deux branches — les leads
-   `source = 'simulateur'` n'ont pas besoin d'adresse, mais le **GSM belge est
-   validé par expression régulière côté base** ;
-3. ajoute un index sur `source`.
-
-Puis, dans l'ordre :
-
-```
 supabase/migrations/20260816120000_simulateur_email_obligatoire.sql
 ```
 
-Elle remplace la policy d'insertion pour **exiger un email valide** sur la
-branche simulateur (la chaîne vide n'est plus acceptée). La regex de la policy
-réplique `REGEX_EMAIL` de `config.ts` : modifier l'une impose de modifier
-l'autre. Tant qu'elle n'est pas appliquée, le parcours fonctionne quand même —
-le client valide déjà l'email — mais la base reste permissive.
+⚠️ **`source` doit rester `'simulateur'`.** La policy d'insertion publique a deux
+branches : `source = 'simulateur'` (pas d'adresse, GSM belge et email validés en
+base) et **toutes les autres sources**, qui exigent rue, numéro, code postal et
+commune. Marquer le parcours autrement (`simulateur_depannage`, par exemple)
+ferait échouer silencieusement chaque insertion. Le parcours vit dans le
+payload, jamais dans `source`.
 
-Les photos vont dans le bucket `lead-photos` existant, sous le préfixe
-`simulateur/`. Ce bucket a déjà les bonnes policies : écriture anonyme,
-**lecture interdite au public**, lecture réservée à l'admin authentifié.
+La taille du payload est plafonnée à 8 Ko par la policy
+(`pg_column_size(payload) <= 8192`). Le devis par lignes reste très en dessous ;
+en ajouter beaucoup d'autres demanderait de vérifier ce point.
 
-Après application, régénérer les types si tu veux rester aligné :
+## 2. Les deux templates EmailJS
 
-```
-npx supabase gen types typescript --project-id <id> > src/integrations/supabase/types.ts
-```
-
-(la colonne `payload` a déjà été ajoutée à la main dans le fichier de types).
-
-## 2. Les deux templates EmailJS à créer
-
-Service déjà utilisé : `service_ybjga5v`. Les identifiants attendus par le code
-sont définis dans `submit.ts` :
+**Inchangés.** Aucun nom de variable n'a bougé entre la v1 et la v2 : le détail
+du devis par poste passe par `{{resume}}`, déjà multiligne. Rien à refaire côté
+compte EmailJS.
 
 | Constante | ID attendu |
 |---|---|
 | `EMAILJS_TEMPLATE_SIMULATEUR_ADRIAN` | `template_simu_adrian` |
 | `EMAILJS_TEMPLATE_SIMULATEUR_CLIENT` | `template_simu_client` |
 
-Si tu préfères d'autres identifiants, change-les dans `submit.ts` — c'est le
-seul endroit où ils apparaissent.
+Variables du template interne : `{{from_name}}`, `{{phone}}`, `{{phone_wa}}`,
+`{{from_email}}`, `{{besoin}}` (le parcours), `{{distance}}`,
+`{{installation}}` (état du tableau), `{{usage}}` (ou le motif RGIE),
+`{{fourchette}}` (total affiché), `{{complexe}}`, `{{resume}}`, `{{photo}}`,
+`{{suspect}}`, `{{db_status}}`, `{{date}}`.
 
-### Template 1 — notification interne (`template_simu_adrian`)
+Template client : `{{to_email}}`, `{{from_name}}`, `{{besoin}}`,
+`{{fourchette}}`, `{{resume}}`.
 
-Destinataire : ton adresse. Variables disponibles :
+## 3. Les trois parcours
 
-| Variable | Contenu |
-|---|---|
-| `{{from_name}}` | Nom et prénom saisis |
-| `{{phone}}` | GSM normalisé (`+324XXXXXXXX`) |
-| `{{from_email}}` | Email (obligatoire depuis le 2026-08-16) |
-| `{{besoin}}` | Borne / RGIE / Projet combiné |
-| `{{distance}}` | Distance borne-tableau, ou « Sans objet » |
-| `{{installation}}` | État déclaré de l'installation |
-| `{{usage}}` | Société, personnel ou copropriété — **sur le parcours RGIE seul, porte le motif de la mise en conformité** (vente, échéance, travaux, bien professionnel) |
-| `{{fourchette}}` | Fourchette affichée au client |
-| `{{complexe}}` | « OUI — métré technique requis » ou « Non » |
-| `{{resume}}` | Résumé multiligne de toutes les réponses |
-| `{{photo}}` | Lien signé 7 jours vers la photo, ou « Aucune photo transmise » |
-| `{{suspect}}` | « OUI (envoi en N s) » si soumission anormalement rapide |
-| `{{db_status}}` | « Enregistré » ou « ECHEC BASE — lead à ré-encoder à la main » |
-| `{{date}}` | Date et heure de la simulation |
+| URL | Parcours | Questions | Capture | Lead |
+|---|---|---|---|---|
+| `/simulateur` | étape 1 (3 choix) puis le parcours choisi | — | — | — |
+| `/simulateur?besoin=borne` | fourniture → distance → tableau → âge → usage | 5 | oui | oui |
+| `/simulateur?besoin=rgie` | motif → nombre de tableaux → installation → âge | 4 | oui | oui |
+| `/simulateur?besoin=depannage` | sécurité → moment → zone | 3 | **non** | **non** |
+| `/simulateur?besoin=combine` | redirigé vers le parcours borne | — | — | — |
 
-⚠️ `{{resume}}` et `{{photo}}` contiennent des sauts de ligne et du HTML :
-utilise un template **HTML** et insère `{{{resume}}}` en triple accolade si ton
-éditeur échappe le contenu, ou remplace les retours à la ligne par `<br>` dans
-la mise en page du template.
+Le **dépannage ne capture rien** : ni nom, ni téléphone, ni email, et il
+n'enregistre aucun lead (arbitrage d'Adrian du 2026-09-13). Il affiche le prix
+puis les boutons d'appel et WhatsApp. Sa première question peut le faire sortir
+immédiatement sur l'**écran d'alerte sécurité** (odeur de brûlé, étincelles,
+fumée) : consigne de coupure du disjoncteur général, bouton d'appel géant, et
+rien d'autre — surtout pas un formulaire.
 
-### Template 2 — accusé de réception client (`template_simu_client`)
+Les questions ne vivent pas dans le composant : elles sont décrites par
+`QUESTIONS` et `SEQUENCES` dans `config.ts`, et rendues par un écran générique.
+Ajouter, retirer ou réordonner une question ne demande aucune ligne de React.
 
-Destinataire : `{{to_email}}`. **Toujours envoyé** : l'email est obligatoire
-dans le parcours depuis le 2026-08-16.
-
-| Variable | Contenu |
-|---|---|
-| `{{to_email}}` | Email du prospect (destinataire) |
-| `{{from_name}}` | Son nom |
-| `{{besoin}}` | Ce qu'il a demandé |
-| `{{fourchette}}` | Son estimation |
-| `{{resume}}` | Le détail de ses réponses |
-
-Texte suggéré : rappeler l'estimation, préciser qu'elle est **indicative** et
-confirmée après visite ou photos, et annoncer un recontact rapide.
-
-## 3. Points d'entrée et pré-sélection
-
-Le besoin peut être pré-sélectionné par la page d'origine, via `?besoin=…`.
-L'étape 1 est alors sautée.
-
-| URL | Parcours ouvert | Posé depuis |
-|---|---|---|
-| `/simulateur` | Étape 1 (4 choix) puis 3 questions | Home, menu, pages villes, barre mobile |
-| `/simulateur?besoin=borne` | Distance → installation → usage (3 questions) | `/services/bornes-de-recharge` |
-| `/simulateur?besoin=rgie` | Installation → motif (2 questions) | `/services/mise-en-conformite-rgie` |
-| `/simulateur?besoin=combine` | Comme `borne` | (aucun lien pour l'instant) |
-| `/simulateur?besoin=depannage` | Grille tarifaire, aucune question | (aucun lien : accessible par l'étape 1) |
-
-Le **parcours RGIE ne pose aucune question de borne** : ni la distance borne /
-tableau, ni l'usage du véhicule. La question d'usage y est remplacée par le
-motif de la mise en conformité (`CONTEXTES_RGIE`), projeté sur un `Usage` par
-`USAGE_PAR_CONTEXTE_RGIE` pour le calcul et le marquage Particulier /
-Professionnel.
-
-Le **dépannage** n'est pas un besoin simulable : il ne déclenche ni calcul, ni
-enregistrement de lead, ni email. Il affiche `DEPANNAGE` (grille tarifaire) puis
-les boutons appel et WhatsApp, et émet `simu_depannage_vu`.
-
-Le libellé annoncé sur chaque page d'origine (« 3 questions », « 2 questions »)
-doit rester aligné sur la longueur réelle du parcours ouvert — c'est-à-dire sur
-`sequence` dans `SimulateurWizard.tsx`.
+Le nombre de questions annoncé sur les pages d'origine vient de `NB_QUESTIONS`,
+**dérivé de `SEQUENCES`** : il ne peut plus se désaligner du parcours réel
+(c'était un piège de la v1).
 
 ## 4. Où modifier les tarifs
 
-Tout est dans `config.ts`, nulle part ailleurs :
+Tout est dans `config.ts`, nulle part ailleurs. **Tous les montants borne et
+RGIE sont saisis TTC, TVA 6 %** (logement de plus de 10 ans) : le cas 21 % est
+dérivé par `FACTEUR_TVA_21`, jamais saisi à la main, pour qu'il n'y ait qu'une
+seule liste de chiffres à valider.
 
-- `BORNE.base` — base d'une borne posée (1 800 € TTC)
-- `SURCOUT_DISTANCE` — surcoût par distance (+250 € en 5-15 m)
-- `BORNE.majorationIncertitude` — élargissement du haut de fourchette (15 %)
-- `BORNE.majorationStandard` — élargissement appliqué dans tous les autres cas
-  (10 %). À 0, l'écran afficherait « à partir de X € » au lieu d'une fourchette.
+| Constante | Contenu | Validé le |
+|---|---|---|
+| `BORNE.alfen` | Alfen fournie et posée, 2 650 – 3 000 € | 2026-09-13 |
+| `BORNE.poseSeule` | Pose seule, borne du client, 950 – 1 300 € | 2026-09-13 |
+| `BORNE.liaison` | Liaison tableau ↔ borne (+250 € à quelques mètres) | v1 |
+| `TABLEAUX_A_CONFIRMER` | États de tableau dont l'adaptation n'est pas chiffrée en ligne | 2026-09-13 |
+| `RGIE_FORFAIT` | Forfait 550 €, libellé exact d'Adrian + précision organisme | 2026-09-13 |
+| `RGIE_TRAVAUX` | Travaux par état d'installation (500–1 200 / 500–2 000 / 800–3 000 / 500–3 000) | 2026-09-13 |
+| `ZONES` | Zones de déplacement dépannage (25 / 35 / 50 € HTVA, hors zone = sur devis) | 2026-09-13 |
+| `DEPANNAGE.mainOeuvre` | 50 €/h jour, soirée et week-end ; 100 €/h nuit urgente | 2026-09-13 |
+| `MENTIONS` | Tous les textes légaux et avertissements | — |
 
-⚠️ Ces montants sont affichés au public. Ils doivent rester cohérents avec les
-réponses « Combien coûte l'installation d'une borne ? » de `/faq` et de
-`/services/bornes-de-recharge`, qui annoncent la même fourchette.
-- `BORNE.plafond` — plafond absolu (3 000 €)
-- `RGIE_FOURCHETTES` — fourchette RGIE selon l'état de l'installation
-- `RGIE_FORFAIT` — forfait fixe schémas + organisme (550 €)
-- `DEPANNAGE` — grille dépannage affichée telle quelle, **hors TVA** (50 €/h
-  jour et soirée, 100 €/h urgence de nuit, déplacement dès 25 €). Aucun calcul :
-  ce que tu écris ici est ce que le visiteur lit.
-- `MENTIONS` — tous les textes légaux et avertissements
+⚠️ Ces montants sont affichés au public. Ils doivent rester cohérents avec :
+
+- `/faq` — « Combien coûte l'installation d'une borne de recharge ? »
+- `/services/bornes-de-recharge` — « Quel est le coût d'installation d'une borne ? »
+
+Les deux ont été alignés sur 2 650 – 3 000 € le 2026-09-13. Toute modification
+de `BORNE.alfen` ou `BORNE.poseSeule` doit y être reportée le même jour.
+
+## 5. Deux règles de fond, à ne pas réapprendre
+
+1. **Le dossier technique et le passage de l'organisme agréé sont COMPRIS** dans
+   les fourchettes borne, et c'est dit à l'écran. Les deux fourchettes sont
+   calées sur des chantiers réels qui les incluaient (Alfen posée à 2 834 € TTC
+   avec un poste dossier + contrôle de 300 € ; pose seule à 998 € TTC avec
+   environ 285 €). C'est l'**inverse** de la règle du brief d'origine
+   (2026-08-09) : le changement est assumé et c'est un argument commercial.
+2. **Un poste « à confirmer » n'entre jamais dans le total.** Le total affiché
+   est la somme des seules lignes chiffrées, et l'écran le dit. Ne jamais
+   « boucher » un poste inconnu par une estimation pour faire un total plus
+   rond.
+
+## 6. Événements GA4
+
+Les noms de la v1 sont conservés (les renommer casserait l'historique), avec un
+paramètre `parcours` en plus :
+
+`simu_step_1` … `simu_step_N` · `simu_capture_vu` · `simu_resultat_vu` ·
+`simu_depannage_vu` · `simu_alerte_securite_vu` · `simu_lead_envoye` (avec
+`preference_rappel`) · `simu_cas_complexe` · `form_submit`.

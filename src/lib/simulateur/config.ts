@@ -1,32 +1,38 @@
 /**
- * Simulateur de prix — TOUTES les valeurs modifiables sont ici.
+ * Simulateur de prix v2 — TOUTES les valeurs modifiables sont ici.
  *
  * Adrian doit pouvoir ajuster un tarif sans toucher au reste du code : aucun
  * montant, aucun libellé de choix ne doit vivre ailleurs que dans ce fichier.
  *
- * Deux règles absolues, héritées du brief :
+ * Règles absolues, arbitrées par Adrian le 2026-09-13 :
  *   1. Aucune mention du photovoltaïque nulle part dans le simulateur.
- *   2. Le passage de l'organisme agréé n'est JAMAIS présenté comme inclus dans
- *      la fourchette « borne de recharge ».
+ *   2. Trois parcours totalement dédiés : borne, RGIE, dépannage. Le parcours
+ *      « les deux » a été supprimé (voir PARCOURS_OBSOLETES).
+ *   3. Le dossier technique et le passage de l'organisme agréé sont COMPRIS
+ *      dans les fourchettes borne — c'est un argument commercial, et les
+ *      fourchettes sont calées sur des chantiers réels qui les incluaient.
+ *      (Inverse de la règle d'origine du brief 2026-08-09 : assumé.)
+ *   4. Aucun prix ferme, aucun métrage affiché, aucun jargon.
+ *   5. Le dépannage n'enregistre aucun lead : prix affichés, puis appel.
  */
 
 // =====================================================================
-//  Besoins (étape 1)
+//  Parcours
 // =====================================================================
 
-export type Besoin = "borne" | "rgie" | "combine";
+export type Parcours = "borne" | "rgie" | "depannage";
+
+/** Valeurs acceptées dans `/simulateur?besoin=…` (pré-sélection par la page d'origine). */
+export const PARCOURS: Parcours[] = ["borne", "rgie", "depannage"];
 
 /**
- * Choix réellement proposés à l'étape 1.
- *
- * `depannage` n'est PAS un besoin simulable : une panne ne se chiffre pas à
- * l'avance. Il sort du parcours et affiche directement la grille tarifaire de
- * dépannage. Il est donc exclu de `Besoin`, qui reste le domaine du calcul.
+ * Anciennes valeurs d'URL encore en circulation (liens externes, favoris,
+ * résultats de recherche). Elles ne doivent jamais tomber sur l'étape 1 d'un
+ * parcours qui n'existe plus : `combine` part sur la borne.
  */
-export type ChoixEtape1 = Besoin | "depannage";
-
-/** Valeurs acceptées dans `/simulateur?besoin=…` (pré-sélection depuis une page d'origine). */
-export const CHOIX_ETAPE_1: ChoixEtape1[] = ["borne", "rgie", "combine", "depannage"];
+export const PARCOURS_OBSOLETES: Record<string, Parcours> = {
+  combine: "borne",
+};
 
 /**
  * Clé d'icône. La correspondance clé -> composant Lucide se fait dans l'UI
@@ -35,7 +41,6 @@ export const CHOIX_ETAPE_1: ChoixEtape1[] = ["borne", "rgie", "combine", "depann
 export type IconeChoix =
   | "borne"
   | "conformite"
-  | "combine"
   | "depannage"
   | "proche"
   | "allee"
@@ -49,7 +54,16 @@ export type IconeChoix =
   | "immeuble"
   | "vente"
   | "certificat"
-  | "travaux";
+  | "travaux"
+  | "maison"
+  | "neuf"
+  | "tableau"
+  | "tableaux"
+  | "danger"
+  | "jour"
+  | "nuit"
+  | "agenda"
+  | "zone";
 
 export interface ChoixSimple<T extends string> {
   value: T;
@@ -58,7 +72,7 @@ export interface ChoixSimple<T extends string> {
   icone: IconeChoix;
 }
 
-export const BESOINS: ChoixSimple<ChoixEtape1>[] = [
+export const CHOIX_PARCOURS: ChoixSimple<Parcours>[] = [
   {
     value: "borne",
     icone: "borne",
@@ -73,12 +87,6 @@ export const BESOINS: ChoixSimple<ChoixEtape1>[] = [
       "Le contrôle officiel (RGIE) est obligatoire pour vendre, et après de gros travaux.",
   },
   {
-    value: "combine",
-    icone: "combine",
-    label: "Les deux",
-    description: "Une borne et la mise en ordre de l'électricité, en même temps.",
-  },
-  {
     value: "depannage",
     icone: "depannage",
     label: "Un dépannage ou une panne",
@@ -87,27 +95,83 @@ export const BESOINS: ChoixSimple<ChoixEtape1>[] = [
 ];
 
 // =====================================================================
-//  Distance borne ↔ tableau (étape 2, uniquement si borne)
+//  TVA
+// =====================================================================
+
+/**
+ * Tous les montants borne et RGIE de ce fichier sont exprimés TTC, TVA 6 %
+ * (logement de plus de 10 ans) — c'est de très loin le cas le plus fréquent.
+ *
+ * Le cas 21 % est DÉRIVÉ, jamais saisi à la main : une seule liste de chiffres
+ * à valider, et les deux colonnes ne peuvent pas diverger.
+ */
+export const FACTEUR_TVA_21 = 1.21 / 1.06;
+
+export type AgeLogement = "plus10" | "moins10" | "inconnu";
+
+export const AGES_LOGEMENT: ChoixSimple<AgeLogement>[] = [
+  {
+    value: "plus10",
+    icone: "maison",
+    label: "Oui, plus de 10 ans",
+    description: "La TVA est alors de 6 %.",
+  },
+  {
+    value: "moins10",
+    icone: "neuf",
+    label: "Non, moins de 10 ans ou neuf",
+    description: "La TVA est alors de 21 %.",
+  },
+  {
+    value: "inconnu",
+    icone: "inconnu",
+    label: "Je ne sais pas",
+    description: "On affiche le cas le plus courant, et on vérifie ensemble.",
+  },
+];
+
+// =====================================================================
+//  Parcours BORNE — question 1 : qui fournit la borne
+// =====================================================================
+
+export type Fournisseur = "alfen" | "client";
+
+export const FOURNISSEURS: ChoixSimple<Fournisseur>[] = [
+  {
+    value: "alfen",
+    icone: "borne",
+    label: "Vous la fournissez et vous la posez",
+    description: "Une Alfen, la marque que nous installons au quotidien.",
+  },
+  {
+    value: "client",
+    icone: "travaux",
+    label: "J'ai déjà ma borne, ou je l'achète moi-même",
+    description: "Nous nous occupons de la pose et du raccordement.",
+  },
+];
+
+/** Champ texte libre affiché quand le visiteur fournit sa propre borne. */
+export const CHAMP_MODELE_BORNE = {
+  label: "Sa marque et son modèle, si vous les connaissez",
+  placeholder: "Par exemple : Wallbox Pulsar Plus",
+  maxLength: 120,
+  mentions: [
+    "Le modèle exact sera vérifié (fiche technique) avant confirmation du prix.",
+    "Sous réserve de la présence d'une protection différentielle 6 mA DC intégrée à la borne. À défaut, une protection spécifique est ajoutée en supplément.",
+  ],
+} as const;
+
+// =====================================================================
+//  Parcours BORNE — question 2 : distance borne / tableau
 // =====================================================================
 
 export type Distance = "proche" | "moyenne" | "longue" | "inconnue";
 
 export const DISTANCES: ChoixSimple<Distance>[] = [
-  {
-    value: "proche",
-    icone: "proche",
-    label: "Tout près (même pièce ou mur voisin)",
-  },
-  {
-    value: "moyenne",
-    icone: "allee",
-    label: "À quelques mètres (allée, carport)",
-  },
-  {
-    value: "longue",
-    icone: "creuser",
-    label: "Loin, ou il faudra creuser",
-  },
+  { value: "proche", icone: "proche", label: "Tout près : même pièce, ou mur voisin" },
+  { value: "moyenne", icone: "allee", label: "À quelques mètres : allée, carport" },
+  { value: "longue", icone: "creuser", label: "Loin, ou il faudra creuser" },
   {
     value: "inconnue",
     icone: "inconnu",
@@ -116,71 +180,46 @@ export const DISTANCES: ChoixSimple<Distance>[] = [
   },
 ];
 
-/**
- * Surcoût ajouté à la base, en euros.
- *
- * Un intervalle et non un montant unique : quand le visiteur ne sait pas,
- * on ne devine pas à sa place, la fourchette couvre honnêtement les deux
- * situations possibles (tout près, ou quelques mètres).
- */
-export const SURCOUT_DISTANCE: Record<Distance, { min: number; max: number }> = {
-  proche: { min: 0, max: 0 },
-  moyenne: { min: 250, max: 250 },
-  inconnue: { min: 0, max: 250 },
-  longue: { min: 0, max: 0 }, // non utilisé : bascule en cas complexe
-};
-
-/** Distances qui déclenchent un cas complexe (aucune fourchette affichée). */
+/** Distances qui sortent du champ du simulateur (aucun prix affiché). */
 export const DISTANCES_COMPLEXES: Distance[] = ["longue"];
 
 // =====================================================================
-//  État de l'installation (étape 3)
+//  État du tableau / de l'installation (borne ET RGIE)
 // =====================================================================
-
-export type Installation = "recente" | "standard" | "ancienne" | "inconnue";
 
 // Aucun terme technique ici : ni « monophasé », ni « triphasé », ni
 // « différentiel ». Le visiteur décrit ce qu'il voit, pas ce qu'il ignore.
-export const INSTALLATIONS: ChoixSimple<Installation>[] = [
+export type EtatTableau = "recent" | "classique" | "ancien" | "inconnu";
+
+export const ETATS_TABLEAU: ChoixSimple<EtatTableau>[] = [
+  { value: "recent", icone: "recente", label: "Récent, ou refait il y a moins de 10 ans" },
   {
-    value: "recente",
-    icone: "recente",
-    label: "Récente ou refaite il y a moins de 10 ans",
-  },
-  {
-    value: "standard",
+    value: "classique",
     icone: "classique",
     label: "Classique",
-    description: "Elle fonctionne bien, sans être toute neuve.",
+    description: "Il fonctionne bien, sans être tout neuf.",
   },
   {
-    value: "ancienne",
+    value: "ancien",
     icone: "ancienne",
-    label: "Ancienne (vieux fusibles, maison pas rénovée)",
+    label: "Ancien : vieux fusibles, maison pas rénovée",
   },
   {
-    value: "inconnue",
+    value: "inconnu",
     icone: "inconnu",
     label: "Je ne sais pas",
     description: "Pas de souci, on vérifiera ensemble.",
   },
 ];
 
-/** États qui élargissent la fourchette haute (incertitude technique). */
-export const INSTALLATIONS_INCERTAINES: Installation[] = ["ancienne", "inconnue"];
-
 // =====================================================================
-//  Usage (étape 4)
+//  Parcours BORNE — question 5 : usage
 // =====================================================================
 
-export type Usage = "societe" | "personnel" | "copropriete";
+export type Usage = "personnel" | "societe" | "copropriete";
 
 export const USAGES: ChoixSimple<Usage>[] = [
-  {
-    value: "personnel",
-    icone: "voiture",
-    label: "Ma voiture personnelle",
-  },
+  { value: "personnel", icone: "voiture", label: "Ma voiture personnelle" },
   {
     value: "societe",
     icone: "societe",
@@ -190,25 +229,18 @@ export const USAGES: ChoixSimple<Usage>[] = [
   {
     value: "copropriete",
     icone: "immeuble",
-    label: "Une copropriété ou plusieurs bornes",
+    label: "Une copropriété, ou plusieurs bornes",
     description: "Immeuble, parking partagé, ou plus d'une borne à poser.",
   },
 ];
 
-/** Usages qui déclenchent un cas complexe (aucune fourchette affichée). */
+/** Usages qui sortent du champ du simulateur (aucun prix affiché). */
 export const USAGES_COMPLEXES: Usage[] = ["copropriete"];
 
 // =====================================================================
-//  Contexte de la mise en conformité (parcours RGIE seul)
+//  Parcours RGIE — question 1 : motif
 // =====================================================================
 
-/**
- * Le parcours « RGIE seul » ne pose aucune question de borne : ni la distance
- * borne / tableau, ni l'usage du véhicule. À la place de la question d'usage,
- * on demande le motif de la mise en conformité — c'est ce qui intéresse
- * réellement Adrian pour rappeler (une vente a une échéance notariale, pas une
- * remise en ordre de confort).
- */
 export type ContexteRgie = "vente" | "certificat" | "travaux" | "professionnel";
 
 export const CONTEXTES_RGIE: ChoixSimple<ContexteRgie>[] = [
@@ -239,13 +271,9 @@ export const CONTEXTES_RGIE: ChoixSimple<ContexteRgie>[] = [
 ];
 
 /**
- * Usage déduit du contexte RGIE.
- *
- * Le calcul et l'enregistrement du lead raisonnent sur `Usage` ; plutôt que
- * d'ouvrir un second axe dans le moteur de calcul, on projette le contexte sur
- * l'usage correspondant. Seul « bien professionnel » change quelque chose :
- * le lead est marqué Professionnel et les mentions de facturation société
- * s'affichent.
+ * Usage déduit du motif : le parcours RGIE ne pose aucune question de véhicule.
+ * Seul « bien professionnel » change quelque chose (lead marqué Professionnel,
+ * mention de facturation société).
  */
 export const USAGE_PAR_CONTEXTE_RGIE: Record<ContexteRgie, Usage> = {
   vente: "personnel",
@@ -255,97 +283,230 @@ export const USAGE_PAR_CONTEXTE_RGIE: Record<ContexteRgie, Usage> = {
 };
 
 // =====================================================================
-//  Tarifs — borne de recharge
+//  Parcours RGIE — question 2 : nombre de tableaux
 // =====================================================================
+
+export type NombreTableaux = "un" | "plusieurs" | "inconnu";
+
+export const NOMBRES_TABLEAUX: ChoixSimple<NombreTableaux>[] = [
+  { value: "un", icone: "tableau", label: "Un seul" },
+  {
+    value: "plusieurs",
+    icone: "tableaux",
+    label: "Plusieurs",
+    description: "Bâtiment divisé, annexe, ou compteurs séparés.",
+  },
+  {
+    value: "inconnu",
+    icone: "inconnu",
+    label: "Je ne sais pas",
+    description: "On vérifiera lors du relevé.",
+  },
+];
+
+/** Configurations qui sortent du forfait (aucun prix affiché). */
+export const TABLEAUX_COMPLEXES: NombreTableaux[] = ["plusieurs"];
+
+// =====================================================================
+//  Parcours DÉPANNAGE — question 1 : sécurité
+// =====================================================================
+
+export type Securite = "danger" | "rien";
+
+export const SECURITE: ChoixSimple<Securite>[] = [
+  {
+    value: "danger",
+    icone: "danger",
+    label: "Oui",
+    description: "Odeur de brûlé, étincelles, fumée, ou un câble qui a chauffé.",
+  },
+  { value: "rien", icone: "recente", label: "Non, rien de tout ça" },
+];
+
+/** Écran d'alerte : aucune question, aucun formulaire, aucun prix. */
+export const ALERTE_SECURITE = {
+  titre: "Coupez le courant tout de suite",
+  consigne:
+    "Coupez le disjoncteur général — le gros interrupteur en haut de votre tableau électrique — et n'y retouchez pas.",
+  precision:
+    "Ne rebranchez rien, ne tentez pas de le réarmer. Appelez-nous maintenant : on vous dit quoi faire en attendant.",
+} as const;
+
+// =====================================================================
+//  Parcours DÉPANNAGE — question 2 : quand intervenir
+// =====================================================================
+
+export type Moment = "journee" | "nuit" | "rdv";
+
+export const MOMENTS: ChoixSimple<Moment>[] = [
+  {
+    value: "journee",
+    icone: "jour",
+    label: "Dès que possible, en journée ou en soirée",
+    description: "Week-end compris, au même tarif.",
+  },
+  { value: "nuit", icone: "nuit", label: "Cette nuit, c'est une urgence" },
+  {
+    value: "rdv",
+    icone: "agenda",
+    label: "Ça peut attendre, on convient d'un rendez-vous",
+  },
+];
+
+// =====================================================================
+//  Parcours DÉPANNAGE — question 3 : zone de déplacement
+// =====================================================================
+
+export type Zone = "zone1" | "zone2" | "zone3" | "hors";
+
+/**
+ * Zones calculées au kilomètre depuis Court-Saint-Étienne, mais affichées par
+ * liste de communes : personne ne sait à combien de kilomètres il habite, tout
+ * le monde sait dans quelle commune il vit.
+ */
+export interface ZoneDeplacement {
+  value: Zone;
+  label: string;
+  /** Montant du déplacement, HORS TVA. `null` = sur devis. */
+  montant: number | null;
+  communes: string[];
+}
+
+export const ZONES: ZoneDeplacement[] = [
+  {
+    value: "zone1",
+    label: "Zone 1",
+    montant: 25,
+    communes: [
+      "Court-Saint-Étienne",
+      "Ottignies-Louvain-la-Neuve",
+      "Mont-Saint-Guibert",
+      "Céroux-Mousty",
+      "Genappe",
+      "Chastre",
+      "Bousval",
+    ],
+  },
+  {
+    value: "zone2",
+    label: "Zone 2",
+    montant: 35,
+    communes: [
+      "Wavre",
+      "Rixensart",
+      "Lasne",
+      "Villers-la-Ville",
+      "Walhain",
+      "Nivelles",
+      "Grez-Doiceau",
+      "Waterloo",
+    ],
+  },
+  {
+    value: "zone3",
+    label: "Zone 3",
+    montant: 50,
+    communes: ["Bruxelles", "Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
+  },
+  {
+    value: "hors",
+    label: "Ma commune n'est pas dans la liste",
+    montant: null,
+    communes: [],
+  },
+];
+
+// =====================================================================
+//  Tarifs — BORNE (TTC, TVA 6 %)
+// =====================================================================
+
+export interface Fourchette {
+  min: number;
+  max: number;
+}
 
 export const BORNE = {
   /**
-   * Base d'une borne posée, TTC.
-   * 2026-08-09 : relevé de 1 400 à 1 800 € après vérification des coûts réels
-   * — la borne seule coûte déjà ~1 200 € HTVA à l'achat, un total posé à
-   * 1 400 € TTC n'était pas tenable.
+   * Borne Alfen fournie ET posée.
+   * Calée sur des chantiers réels : une Alfen posée facturée 2 834 € TTC,
+   * poste dossier + contrôle de 300 € compris dedans.
    */
-  base: 1800,
+  alfen: { min: 2650, max: 3000 } as Fourchette,
   /**
-   * Majoration appliquée au haut de fourchette quand l'installation est
-   * incertaine (état ancien ou inconnu).
+   * Pose seule, borne fournie par le client.
+   * Calée sur un chantier réel à 998 € TTC, poste dossier + contrôle d'environ
+   * 285 € compris dedans.
    */
-  majorationIncertitude: 0.15,
+  poseSeule: { min: 950, max: 1300 } as Fourchette,
   /**
-   * Majoration appliquée au haut de fourchette dans TOUS les autres cas.
-   * À 0.1, une vraie fourchette est affichée même sans incertitude technique
-   * (à 0, l'écran afficherait « à partir de X € », le simulateur ne donnant
-   * jamais de prix ferme).
+   * Liaison entre le tableau et la borne.
+   * « Tout près » est compris dans la base. « Je ne sais pas » couvre
+   * honnêtement les deux cas plausibles plutôt que de trancher à la place du
+   * visiteur.
    */
-  majorationStandard: 0.1,
-  /** Plafond absolu du haut de fourchette, TTC. */
-  plafond: 3000,
+  liaison: {
+    proche: { min: 0, max: 0 },
+    moyenne: { min: 250, max: 250 },
+    inconnue: { min: 0, max: 250 },
+    longue: { min: 0, max: 0 }, // non utilisé : bascule en cas complexe
+  } as Record<Distance, Fourchette>,
 } as const;
 
+/**
+ * États de tableau pour lesquels l'adaptation éventuelle ne peut pas être
+ * chiffrée en ligne. Sur les autres, la ligne s'affiche « comprise ».
+ */
+export const TABLEAUX_A_CONFIRMER: EtatTableau[] = ["classique", "ancien", "inconnu"];
+
 // =====================================================================
-//  Tarifs — mise en conformité RGIE
+//  Tarifs — RGIE
 // =====================================================================
 
 /**
- * Fourchettes RGIE selon l'état déclaré de l'installation.
- *
- * Le brief fixe l'enveloppe globale (500 à 3 000 €) ; la graduation ci-dessous
- * répartit cette enveloppe selon la réponse de l'étape 3, pour ne pas afficher
- * un écart de 1 à 6 qui n'aiderait personne. Chiffres à ajuster librement.
+ * Forfait fixe, affiché 550 € quel que soit le taux de TVA : le libellé
+ * ci-dessous est celui d'Adrian, mot pour mot, et il porte le montant.
  */
-export const RGIE_FOURCHETTES: Record<Installation, { min: number; max: number }> = {
-  recente: { min: 500, max: 1200 },
-  standard: { min: 500, max: 2000 },
-  ancienne: { min: 800, max: 3000 },
-  // « Je ne sais pas » : on part du bas de la fourchette standard et on laisse
-  // le haut ouvert. Ne jamais bloquer le visiteur, ne jamais lui promettre un
-  // prix bas qu'on ne pourrait pas tenir.
-  inconnue: { min: 500, max: 3000 },
-};
-
-/** Forfait fixe annoncé à part, jamais fondu dans la fourchette. */
 export const RGIE_FORFAIT = {
   montant: 550,
   libelle:
-    "S'ajoute un forfait fixe de 550 € : les plans de votre installation, et le passage de l'organisme officiel qui délivre le certificat.",
+    "Forfait 550 € pour une maison standard avec un seul tableau électrique : relevé technique complet sur place + rédaction des plans (unifilaire et position) + coordination et présence lors du contrôle de l'organisme agréé.",
+  /**
+   * Le libellé d'Adrian dit « coordination et présence », pas « redevance
+   * comprise » : sans cette précision, le client suppose que la facture de
+   * l'organisme arrive en plus. Elle ne vient pas en plus.
+   */
+  precision: "Le passage de l'organisme agréé est compris dans ce forfait.",
 } as const;
 
+/**
+ * Travaux de mise en conformité, TTC TVA 6 %, forfait NON compris.
+ * Fourchettes validées par Adrian le 2026-09-13.
+ */
+export const RGIE_TRAVAUX: Record<EtatTableau, Fourchette> = {
+  recent: { min: 500, max: 1200 },
+  classique: { min: 500, max: 2000 },
+  ancien: { min: 800, max: 3000 },
+  // « Je ne sais pas » : bas de la fourchette standard, haut laissé ouvert.
+  // Ne jamais bloquer le visiteur, ne jamais lui promettre un prix bas qu'on
+  // ne pourrait pas tenir.
+  inconnu: { min: 500, max: 3000 },
+};
+
 // =====================================================================
-//  Tarifs — dépannage (aucun calcul, grille affichée telle quelle)
+//  Tarifs — DÉPANNAGE (HORS TVA)
 // =====================================================================
 
-/**
- * Une panne ne se simule pas : on ne sait ni ce qui a lâché, ni combien de
- * temps il faudra. L'entrée « dépannage » de l'étape 1 court-circuite donc le
- * parcours et affiche cette grille, puis les deux seules actions utiles :
- * appeler, ou envoyer un message WhatsApp.
- */
 export const DEPANNAGE = {
-  accroche:
-    "Une panne ne s'estime pas en ligne : elle se règle au téléphone, puis sur place. Voici nos tarifs, sans détour.",
-  lignes: [
-    {
-      libelle: "Journée et soirée",
-      detail: "Le tarif horaire courant, week-end compris.",
-      montant: "50 €/h",
-    },
-    {
-      libelle: "Urgence de nuit",
-      detail: "Intervention en pleine nuit, 7 j/7.",
-      montant: "100 €/h",
-    },
-    {
-      libelle: "Déplacement",
-      detail: "Forfait annoncé et accepté avant que nous prenions la route.",
-      montant: "dès 25 €",
-    },
-  ],
-  mentionTva:
-    "Tarifs hors TVA. TVA en sus : 6 % pour un logement de plus de 10 ans, 21 % sinon.",
-  mentionMateriel:
-    "Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.",
-  messageWhatsApp:
-    "Bonjour, j'ai un problème électrique et je souhaite un dépannage. Voici ma situation :",
+  /** Main-d'œuvre horaire, hors TVA. Toute heure entamée est due. */
+  mainOeuvre: { journee: 50, nuit: 100, rdv: 50 } as Record<Moment, number>,
+  /** Libellé de la ligne main-d'œuvre selon le moment choisi. */
+  libelleMainOeuvre: {
+    journee: "Première heure de main-d'œuvre",
+    nuit: "Première heure de nuit",
+    rdv: "Première heure de main-d'œuvre",
+  } as Record<Moment, string>,
+  detailPremiereHeure: "Toute heure entamée est due, celle-ci comme les suivantes.",
+  detailDeplacement: "Forfait annoncé et accepté avant que nous prenions la route.",
 } as const;
 
 // =====================================================================
@@ -355,24 +516,166 @@ export const DEPANNAGE = {
 export const MENTIONS = {
   estimationIndicative:
     "Estimation indicative — le devis définitif est confirmé par un électricien basé à Court-Saint-Étienne après visite ou photos.",
-  tvaReduite:
-    "TVA réduite à 6% sur la main-d'œuvre et le matériel pour votre logement de plus de 10 ans.",
+  aConfirmer:
+    "Les postes marqués « à confirmer » se chiffrent sur photo de votre tableau, ou lors de la visite. Ils ne sont pas compris dans le total ci-dessus.",
+  dossierCompris:
+    "Le dossier technique et le passage de l'organisme agréé sont compris dans ce prix. Beaucoup de devis les sortent de leur total pour paraître moins chers.",
+  tvaReduite: "TVA de 6 % appliquée : votre logement a plus de 10 ans.",
+  tvaNormale: "TVA de 21 % appliquée : votre logement a moins de 10 ans.",
+  tvaInconnue:
+    "Prix affichés avec la TVA à 6 %, celle des logements de plus de 10 ans. Pour un logement plus récent, la TVA est de 21 %.",
   deductionSociete:
     "Sociétés & indépendants : déduction fiscale possible pour une borne intelligente.",
   facturationSociete:
     "Facturation adaptée pour les sociétés et indépendants : TVA déductible, attestation pour votre comptable.",
   splitBilling:
     "Les bornes connectées, Alfen en tête, gèrent le split-billing : l'électricité que vous consommez pour recharger est comptabilisée à part et peut vous être remboursée par votre employeur.",
-  organismeNonInclus:
-    "Le passage de l'organisme de contrôle officiel n'est pas compris dans cette fourchette.",
-  estimationGlobale: "Estimation globale indicative pour les deux chantiers réunis.",
+  gestionDynamique:
+    "La répartition automatique de la puissance entre votre maison et votre voiture est activable au passage au compteur digital.",
   casComplexe:
-    "Votre projet mérite une visite gratuite sur place, pour mesurer et vous donner un prix juste.",
+    "Votre projet mérite une visite gratuite sur place, pour tout mesurer et vous donner un prix juste.",
   electricienLocal:
     "Votre demande est traitée par un électricien local basé à Court-Saint-Étienne, pas par une plateforme.",
   rgpdCapture:
     "En validant, vous acceptez d'être recontacté par Le Cuivre Électrique au sujet de votre demande. Vos données ne sont jamais revendues.",
+  depannageTva: "Prix hors TVA — 6 % si votre logement a plus de 10 ans, sinon 21 %.",
+  depannageMateriel:
+    "Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.",
+  depannageHeuresSuivantes:
+    "Chaque heure entamée ensuite est due au même tarif horaire.",
+  depannageNuitZone3:
+    "Intervention de nuit sur cette zone sous réserve de confirmation de disponibilité par téléphone.",
+  depannageHorsZone:
+    "Votre commune est en dehors de notre secteur habituel : le déplacement est confirmé par téléphone, avant tout départ.",
+  depannagePasDeFormulaire:
+    "Pas de formulaire pour une panne : vous appelez, on vous répond.",
 } as const;
+
+/** Message WhatsApp pré-rempli depuis l'écran dépannage. */
+export const MESSAGE_WHATSAPP_DEPANNAGE =
+  "Bonjour, j'ai un problème électrique et je souhaite un dépannage. Voici ma situation :";
+
+// =====================================================================
+//  Les questions, écran par écran
+// =====================================================================
+
+export type IdQuestion =
+  // Parcours borne
+  | "fournisseur"
+  | "distance"
+  | "usage"
+  // Parcours borne ET RGIE
+  | "tableau"
+  | "age"
+  // Parcours RGIE
+  | "motif"
+  | "tableaux"
+  // Parcours dépannage
+  | "securite"
+  | "moment"
+  | "zone";
+
+export interface DefinitionQuestion {
+  titre: string;
+  sousTitre?: string;
+  options: ChoixSimple<string>[];
+  /**
+   * Valeur qui ouvre un champ texte libre sous les réponses. Tant qu'elle est
+   * sélectionnée, l'écran n'avance plus tout seul : le visiteur doit pouvoir
+   * taper avant de valider.
+   */
+  champLibreSi?: string;
+}
+
+/**
+ * Les zones de déplacement passent par les mêmes cartes que les autres
+ * réponses : le prix dans le titre, la liste des communes en description.
+ */
+const OPTIONS_ZONES: ChoixSimple<Zone>[] = ZONES.map((z) => ({
+  value: z.value,
+  icone: z.montant === null ? "inconnu" : "zone",
+  label:
+    z.montant === null ? z.label : `${z.label} — déplacement ${z.montant} € hors TVA`,
+  description:
+    z.montant === null
+      ? "Le montant du déplacement est confirmé par téléphone, avant tout départ."
+      : z.communes.join(" · "),
+}));
+
+export const QUESTIONS: Record<IdQuestion, DefinitionQuestion> = {
+  fournisseur: {
+    titre: "Qui fournit la borne ?",
+    sousTitre: "Les deux sont possibles, le prix n'est simplement pas le même.",
+    options: FOURNISSEURS,
+    champLibreSi: "client",
+  },
+  distance: {
+    titre: "Où sera placée la borne par rapport à votre tableau électrique ?",
+    sousTitre:
+      "Le tableau, c'est le coffret avec les fusibles ou les disjoncteurs, souvent au garage, à la cave ou dans la buanderie.",
+    options: DISTANCES,
+  },
+  tableau: {
+    titre: "Votre tableau électrique, il ressemble à quoi ?",
+    sousTitre: "Une idée générale suffit, on vérifiera ensemble.",
+    options: ETATS_TABLEAU,
+  },
+  age: {
+    titre: "Votre logement a plus de 10 ans ?",
+    sousTitre: "C'est ce qui détermine la TVA sur votre facture.",
+    options: AGES_LOGEMENT,
+  },
+  usage: {
+    titre: "Cette borne, c'est pour…",
+    sousTitre: "Cela change les avantages fiscaux auxquels vous avez droit.",
+    options: USAGES,
+  },
+  motif: {
+    titre: "Cette mise en conformité, c'est pour quoi ?",
+    sousTitre: "Cela nous dit surtout s'il y a une échéance à tenir.",
+    options: CONTEXTES_RGIE,
+  },
+  tableaux: {
+    titre: "Combien de tableaux électriques y a-t-il dans le bâtiment ?",
+    sousTitre: "Le forfait vaut pour une maison avec un seul tableau.",
+    options: NOMBRES_TABLEAUX,
+  },
+  securite: {
+    titre: "Avant tout : est-ce que ça sent le brûlé, y a-t-il des étincelles ou de la fumée ?",
+    sousTitre: "Si c'est le cas, on s'arrête là et on vous dit quoi faire tout de suite.",
+    options: SECURITE,
+  },
+  moment: {
+    titre: "Quand faut-il intervenir ?",
+    options: MOMENTS,
+  },
+  zone: {
+    titre: "Vous êtes dans quelle commune ?",
+    sousTitre: "Le déplacement est un forfait, annoncé avant que nous prenions la route.",
+    options: OPTIONS_ZONES,
+  },
+};
+
+/** Les questions posées, dans l'ordre, parcours par parcours. */
+export const SEQUENCES: Record<Parcours, IdQuestion[]> = {
+  borne: ["fournisseur", "distance", "tableau", "age", "usage"],
+  rgie: ["motif", "tableaux", "tableau", "age"],
+  depannage: ["securite", "moment", "zone"],
+};
+
+/**
+ * Nombre de questions réellement posées, par parcours.
+ *
+ * DÉRIVÉ de `SEQUENCES`, jamais saisi : les pages d'origine
+ * (ServicePageLayout, ZonePageLayout, SimulateurBanner, page /simulateur)
+ * annoncent ce chiffre au visiteur, et le laisser vivre en dur dans chaque
+ * composant l'a déjà fait dériver une fois.
+ */
+export const NB_QUESTIONS: Record<Parcours, number> = {
+  borne: SEQUENCES.borne.length,
+  rgie: SEQUENCES.rgie.length,
+  depannage: SEQUENCES.depannage.length,
+};
 
 // =====================================================================
 //  Contact
@@ -383,6 +686,17 @@ export const CONTACT = {
   telephoneAffiche: "0485 75 52 27",
   whatsapp: "32485755227",
 } as const;
+
+// =====================================================================
+//  Préférence de rappel (écran de capture)
+// =====================================================================
+
+export type PreferenceRappel = "rappel" | "prix";
+
+export const PREFERENCES_RAPPEL: { value: PreferenceRappel; label: string }[] = [
+  { value: "rappel", label: "Je veux être rappelé pour en parler" },
+  { value: "prix", label: "Je veux juste voir les prix pour l'instant" },
+];
 
 // =====================================================================
 //  Anti-spam & upload

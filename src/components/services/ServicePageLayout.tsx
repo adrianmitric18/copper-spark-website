@@ -18,6 +18,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { NB_QUESTIONS } from "@/lib/simulateur/config";
 
 export interface ServiceFAQ {
   question: string;
@@ -173,8 +174,7 @@ const ServicePageLayout = ({
                       ? "estimez le prix de votre borne en 1 minute"
                       : "estimez le prix de votre mise en conformité en 1 minute"}
                   </Link>{" "}
-                  — {simulateurCta === "borne" ? "3 questions" : "2 questions"}, sans
-                  engagement.
+                  — {NB_QUESTIONS[simulateurCta]} questions, sans engagement.
                 </p>
               )}
 

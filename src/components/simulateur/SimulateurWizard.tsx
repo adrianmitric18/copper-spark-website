@@ -1,16 +1,21 @@
 /**
- * Simulateur de prix — parcours complet.
+ * Simulateur de prix v2 — trois parcours dédiés.
  *
- * Une question par écran, avancement automatique au clic sur les premières
- * (le parcours doit tenir sous 45 secondes), puis un écran de capture avant le
- * résultat.
+ * Une question par écran, avancement automatique au clic, puis un mini-devis
+ * indicatif par poste. Les questions ne vivent pas ici : elles sont décrites
+ * dans `config.ts` (QUESTIONS + SEQUENCES) et rendues par le même écran
+ * générique. Ajouter ou retirer une question ne demande donc aucune ligne de
+ * composant.
  *
- * Trois entrées possibles, selon la page d'origine :
- *   - /simulateur                  → le besoin est demandé à l'étape 1 ;
+ *   - /simulateur                  → le parcours est demandé à l'étape 1 ;
  *   - /simulateur?besoin=borne     → parcours borne direct (étape 1 sautée) ;
- *   - /simulateur?besoin=rgie      → parcours conformité direct, sans aucune
- *                                    question de borne ;
- *   - /simulateur?besoin=depannage → sortie immédiate sur la grille tarifaire.
+ *   - /simulateur?besoin=rgie      → parcours conformité direct ;
+ *   - /simulateur?besoin=depannage → parcours dépannage direct.
+ *
+ * Deux différences structurelles avec les autres parcours, côté dépannage :
+ * il ne demande aucune coordonnée et n'enregistre aucun lead (arbitrage du
+ * 2026-09-13), et sa première question peut le faire sortir immédiatement sur
+ * l'écran d'alerte sécurité.
  *
  * Le calcul est intégralement local (voir lib/simulateur/calcul.ts) : le
  * réseau n'est sollicité qu'au moment de l'envoi, une fois les coordonnées
@@ -20,7 +25,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Loader2, Lock, ImagePlus, X, Star } from "lucide-react";
+import { Loader2, Lock, ImagePlus, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,89 +33,76 @@ import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { useDisplayRating } from "@/hooks/useDisplayRating";
 import LogoIcon from "@/components/LogoIcon";
 import {
-  BESOINS,
-  CHOIX_ETAPE_1,
-  CONTEXTES_RGIE,
-  MENTIONS,
+  CHAMP_MODELE_BORNE,
+  CHOIX_PARCOURS,
   CLE_SESSION_ENVOI,
   DELAI_SUSPECT_MS,
-  DISTANCES,
-  INSTALLATIONS,
+  MENTIONS,
+  NB_QUESTIONS,
+  PARCOURS,
+  PARCOURS_OBSOLETES,
+  PREFERENCES_RAPPEL,
+  QUESTIONS,
   REGEX_EMAIL,
   REGEX_GSM_BELGE,
+  SEQUENCES,
   UPLOAD,
-  USAGES,
-  USAGE_PAR_CONTEXTE_RGIE,
   nettoyerGsm,
   saisirGsm,
-  type Besoin,
-  type ChoixEtape1,
-  type ContexteRgie,
+  type AgeLogement,
   type Distance,
-  type Installation,
+  type EtatTableau,
+  type Fournisseur,
+  type IdQuestion,
+  type Moment,
+  type NombreTableaux,
+  type Parcours,
+  type PreferenceRappel,
+  type Securite,
   type Usage,
+  type ContexteRgie,
+  type Zone,
 } from "@/lib/simulateur/config";
-import {
-  calculerEstimation,
-  formatFourchette,
-  type ReponsesSimulateur,
-} from "@/lib/simulateur/calcul";
+import { calculerDevis, formatFourchette, type Reponses } from "@/lib/simulateur/calcul";
 import { envoyerSimulation } from "@/lib/simulateur/submit";
 import { ChoiceCard, MentionBox, ProgressBar, StepShell } from "./SimulateurUI";
-import { EcranComplexe, EcranDepannage, EcranResultat } from "./SimulateurResultat";
+import { EcranAlerteSecurite, EcranComplexe, EcranDevis } from "./SimulateurResultat";
 
-type Etape =
-  | "besoin"
-  | "distance"
-  | "installation"
-  | "usage"
-  | "contexte"
-  | "capture"
-  | "resultat"
-  | "depannage";
+type Etape = "parcours" | IdQuestion | "capture" | "resultat" | "alerte";
 
-const besoinInclutBorne = (b: Besoin | null) => b === "borne" || b === "combine";
+/** Seul le dépannage se termine sans demander de coordonnées. */
+const DEMANDE_COORDONNEES: Record<Parcours, boolean> = {
+  borne: true,
+  rgie: true,
+  depannage: false,
+};
 
 /**
- * Un événement GA4 par écran atteint, pour repérer où le parcours décroche.
- * useAnalyticsEvents applique déjà le consent mode et le filtrage des bots.
+ * Dénominateur de la barre de progression tant que le parcours n'est pas connu.
  *
- * `contexte` partage le palier de `usage` : c'est la même position dans le
- * parcours (dernière question), simplement reformulée pour la conformité.
+ * Calé sur le parcours le plus long : avec un dénominateur plus petit, la
+ * progression pourrait décroître au moment où le vrai parcours est choisi.
  */
-const EVENEMENT_PAR_ETAPE: Record<Etape, string> = {
-  besoin: "simu_step_1",
-  distance: "simu_step_2",
-  installation: "simu_step_3",
-  usage: "simu_step_4",
-  contexte: "simu_step_4",
-  capture: "simu_capture_vu",
-  resultat: "simu_resultat_vu",
-  depannage: "simu_depannage_vu",
+const JALONS_MAX = 1 + Math.max(...Object.values(NB_QUESTIONS)) + 1;
+
+/**
+ * Lit et valide `?besoin=…`.
+ *
+ * Les anciennes valeurs encore en circulation (`combine`, supprimé le
+ * 2026-09-13) sont redirigées plutôt qu'ignorées : un lien partagé ne doit pas
+ * retomber sur l'étape 1 sans explication.
+ */
+const lirePrefill = (valeur: string | null): Parcours | null => {
+  if (!valeur) return null;
+  return PARCOURS.find((p) => p === valeur) ?? PARCOURS_OBSOLETES[valeur] ?? null;
 };
 
-/** Lit et valide `?besoin=…`. Toute autre valeur est ignorée. */
-const lirePrefill = (valeur: string | null): ChoixEtape1 | null =>
-  CHOIX_ETAPE_1.find((c) => c === valeur) ?? null;
-
-/** Premier écran affiché, selon la pré-sélection éventuelle. */
-const etapeInitiale = (prefill: ChoixEtape1 | null): Etape => {
-  if (prefill === "depannage") return "depannage";
-  if (prefill === "rgie") return "installation";
-  if (prefill) return "distance";
-  return "besoin";
-};
-
-interface Props {
-  /**
-   * Signale à la page si l'écran affiché relève encore de la simulation ou de
-   * la branche dépannage, pour que l'intro ne promette pas « 4 questions »
-   * au-dessus d'une grille tarifaire.
-   */
-  onEcranChange?: (ecran: "simulation" | "depannage") => void;
-}
-
-const SimulateurWizard = ({ onEcranChange }: Props) => {
+const SimulateurWizard = ({
+  onParcoursChange,
+}: {
+  /** Signale à la page quel parcours est affiché, pour adapter son intro. */
+  onParcoursChange?: (parcours: Parcours | null) => void;
+}) => {
   const { trackEvent } = useAnalyticsEvents();
   // Note Google affichée en preuve sociale sur l'écran de capture.
   const { data: rating } = useDisplayRating();
@@ -120,19 +112,13 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
   // Pré-sélection par page d'origine. Lue une seule fois : changer l'URL en
   // cours de parcours ne doit pas réinitialiser les réponses déjà données.
   const [params] = useSearchParams();
-  const prefillRef = useRef<ChoixEtape1 | null>(lirePrefill(params.get("besoin")));
+  const prefillRef = useRef<Parcours | null>(lirePrefill(params.get("besoin")));
   const prefill = prefillRef.current;
-  /** Vrai quand l'étape 1 est sautée (pré-sélection d'un besoin simulable). */
-  const besoinPrefill = prefill !== null && prefill !== "depannage";
 
-  const [etape, setEtape] = useState<Etape>(() => etapeInitiale(prefill));
-  const [besoin, setBesoin] = useState<Besoin | null>(
-    besoinPrefill ? (prefill as Besoin) : null,
-  );
-  const [distance, setDistance] = useState<Distance | null>(null);
-  const [installation, setInstallation] = useState<Installation | null>(null);
-  const [usage, setUsage] = useState<Usage | null>(null);
-  const [contexteRgie, setContexteRgie] = useState<ContexteRgie | null>(null);
+  const [parcours, setParcours] = useState<Parcours | null>(prefill);
+  const [reponsesQ, setReponsesQ] = useState<Partial<Record<IdQuestion, string>>>({});
+  const [modeleBorne, setModeleBorne] = useState("");
+  const [preferenceRappel, setPreferenceRappel] = useState<PreferenceRappel>("rappel");
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoErreur, setPhotoErreur] = useState<string | null>(null);
@@ -149,77 +135,90 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
   const [phaseEnvoi, setPhaseEnvoi] = useState<"photo" | "enregistrement" | null>(null);
   const [envoiErreur, setEnvoiErreur] = useState<string | null>(null);
 
-  /**
-   * Étapes réellement traversées.
-   *
-   * Le parcours RGIE seul ne pose AUCUNE question de borne : ni la distance
-   * borne / tableau, ni l'usage du véhicule. À la place de l'usage, on demande
-   * le motif de la mise en conformité (vente, échéance du certificat, travaux,
-   * bien professionnel).
-   */
+  /** Étapes réellement traversées, dans l'ordre. */
   const sequence: Etape[] = useMemo(() => {
-    const questions: Etape[] =
-      besoin === "rgie"
-        ? ["installation", "contexte"]
-        : ["distance", "installation", "usage"];
-    return besoinPrefill
+    if (!parcours) return ["parcours"];
+    const questions: Etape[] = [...SEQUENCES[parcours]];
+    const avecCapture: Etape[] = DEMANDE_COORDONNEES[parcours]
       ? [...questions, "capture"]
-      : ["besoin", ...questions, "capture"];
-  }, [besoin, besoinPrefill]);
+      : questions;
+    return prefill ? avecCapture : ["parcours", ...avecCapture];
+  }, [parcours, prefill]);
+
+  const [etape, setEtape] = useState<Etape>(() =>
+    prefill ? SEQUENCES[prefill][0] : "parcours",
+  );
 
   const indexEtape = sequence.indexOf(etape);
-
-  /**
-   * Progression.
-   *
-   * Le dénominateur est la longueur réelle du parcours dès que le besoin est
-   * connu — ce qui est immédiat quand il est pré-sélectionné. Tant qu'il ne
-   * l'est pas (écran 1 du parcours complet), on retient 4 jalons : un
-   * dénominateur calculé sur la séquence provisoire afficherait 20 % puis
-   * sauterait en arrière sur le parcours RGIE. Avec ce repli, la progression
-   * n'est jamais décroissante, quel que soit le chemin.
-   */
-  const jalons = besoin ? sequence.length : 4;
+  const jalons = parcours ? sequence.length : JALONS_MAX;
   const pourcentage =
     etape === "capture"
       ? 100
       : Math.min(100, Math.round(((indexEtape + 1) / jalons) * 100));
 
-  /** Usage effectif : déduit du contexte sur le parcours RGIE seul. */
-  const usageEffectif: Usage | null =
-    besoin === "rgie" ? (contexteRgie ? USAGE_PAR_CONTEXTE_RGIE[contexteRgie] : null) : usage;
+  /** Dernière question du parcours : c'est elle qui porte le bloc photo. */
+  const derniereQuestion = parcours ? SEQUENCES[parcours][SEQUENCES[parcours].length - 1] : null;
 
-  const reponses: ReponsesSimulateur | null = useMemo(() => {
-    if (!besoin || !installation || !usageEffectif) return null;
+  // --- Réponses et devis ----------------------------------------------------
+  const reponses: Reponses | null = useMemo(() => {
+    if (!parcours) return null;
+    const q = reponsesQ;
     return {
-      besoin,
-      distance: besoinInclutBorne(besoin) ? (distance ?? undefined) : undefined,
-      installation,
-      usage: usageEffectif,
-      contexteRgie: besoin === "rgie" ? (contexteRgie ?? undefined) : undefined,
+      parcours,
+      fournisseur: q.fournisseur as Fournisseur | undefined,
+      modeleBorne: q.fournisseur === "client" ? modeleBorne : undefined,
+      distance: q.distance as Distance | undefined,
+      tableau: q.tableau as EtatTableau | undefined,
+      age: q.age as AgeLogement | undefined,
+      usage: q.usage as Usage | undefined,
+      contexteRgie: q.motif as ContexteRgie | undefined,
+      nombreTableaux: q.tableaux as NombreTableaux | undefined,
+      securite: q.securite as Securite | undefined,
+      moment: q.moment as Moment | undefined,
+      zone: q.zone as Zone | undefined,
+      preferenceRappel,
     };
-  }, [besoin, distance, installation, usageEffectif, contexteRgie]);
+  }, [parcours, reponsesQ, modeleBorne, preferenceRappel]);
 
-  const estimation = useMemo(
-    () => (reponses ? calculerEstimation(reponses) : null),
-    [reponses],
+  /** Vrai quand toutes les questions du parcours ont une réponse. */
+  const parcoursComplet = useMemo(
+    () => (parcours ? SEQUENCES[parcours].every((id) => !!reponsesQ[id]) : false),
+    [parcours, reponsesQ],
   );
 
-  // Premier écran : l'entrée dans le parcours doit être comptée elle aussi,
-  // sinon le taux de complétion n'a pas de dénominateur. `besoin_prefill` dit
-  // depuis quelle page d'origine le visiteur arrive.
+  const devis = useMemo(
+    () => (reponses && parcoursComplet ? calculerDevis(reponses) : null),
+    [reponses, parcoursComplet],
+  );
+
+  // --- Analytics ------------------------------------------------------------
+  /**
+   * Un événement par écran atteint, pour repérer où le parcours décroche. Les
+   * noms `simu_step_N` sont conservés depuis la v1 : les renommer casserait
+   * l'historique GA4. Le paramètre `parcours` distingue les trois tunnels.
+   */
+  const evenementPour = (cible: Etape): string => {
+    if (cible === "capture") return "simu_capture_vu";
+    if (cible === "alerte") return "simu_alerte_securite_vu";
+    if (cible === "resultat") {
+      return parcours === "depannage" ? "simu_depannage_vu" : "simu_resultat_vu";
+    }
+    const position = sequence.indexOf(cible);
+    return `simu_step_${position >= 0 ? position + 1 : 1}`;
+  };
+
   useEffect(() => {
     const depuis = { source_section: "simulateur", besoin_prefill: prefill ?? "aucun" };
     trackEvent("simu_step_1", depuis);
     // Étape 1 sautée : l'écran réellement affiché doit être compté lui aussi,
     // sans quoi le premier palier du tunnel serait vide sur ces entrées.
-    if (prefill) trackEvent(EVENEMENT_PAR_ETAPE[etapeInitiale(prefill)], depuis);
+    if (prefill) trackEvent("simu_step_1", { ...depuis, parcours: prefill });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    onEcranChange?.(etape === "depannage" ? "depannage" : "simulation");
-  }, [etape, onEcranChange]);
+    onParcoursChange?.(parcours);
+  }, [parcours, onParcoursChange]);
 
   const remonter = () => {
     hautRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -251,41 +250,32 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
    * capture, revient en arrière, et l'entrée d'historique porte toujours
    * `simuEtape: "capture"` — alors que l'état React, lui, est reparti de zéro.
    * Restaurer l'écran tel quel donnerait un formulaire mort : bouton sans
-   * effet, aucune estimation derrière.
+   * effet, aucun devis derrière.
    */
-  const etatRef = useRef({ besoin, distance, installation, usage, contexteRgie });
-  etatRef.current = { besoin, distance, installation, usage, contexteRgie };
+  const etatRef = useRef({ parcours, reponsesQ });
+  etatRef.current = { parcours, reponsesQ };
 
   const peutAfficher = (e: Etape): boolean => {
     const s = etatRef.current;
-    switch (e) {
-      case "besoin":
-      case "depannage":
-        return true;
-      case "distance":
-        return s.besoin !== null;
-      case "installation":
-        return s.besoin !== null && (s.besoin === "rgie" || s.distance !== null);
-      case "usage":
-      case "contexte":
-        return s.installation !== null;
-      case "capture":
-      case "resultat":
-        return (
-          s.installation !== null &&
-          (s.besoin === "rgie" ? s.contexteRgie !== null : s.usage !== null)
-        );
-      default:
-        return false;
+    if (e === "parcours" || e === "alerte") return true;
+    if (!s.parcours) return false;
+    const questions = SEQUENCES[s.parcours];
+    if (e === "capture" || e === "resultat") {
+      return questions.every((id) => !!s.reponsesQ[id]);
     }
+    const position = questions.indexOf(e as IdQuestion);
+    if (position < 0) return false;
+    // Toutes les questions qui précèdent doivent avoir été répondues.
+    return questions.slice(0, position).every((id) => !!s.reponsesQ[id]);
   };
 
   useEffect(() => {
     const auRetour = (ev: PopStateEvent) => {
       const cible = (ev.state as { simuEtape?: Etape } | null)?.simuEtape;
-      // Pas d'étape dans l'état (entrée d'origine de la page), ou écran devenu
-      // inatteignable : on repart du premier écran du parcours.
-      setEtape(cible && peutAfficher(cible) ? cible : etapeInitiale(prefillRef.current));
+      const repli: Etape = prefillRef.current
+        ? SEQUENCES[prefillRef.current][0]
+        : "parcours";
+      setEtape(cible && peutAfficher(cible) ? cible : repli);
       remonter();
     };
     window.addEventListener("popstate", auRetour);
@@ -296,7 +286,10 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
     setEtape(suivante);
     empilerEtape(suivante);
     remonter();
-    trackEvent(EVENEMENT_PAR_ETAPE[suivante], { source_section: "simulateur" });
+    trackEvent(evenementPour(suivante), {
+      source_section: "simulateur",
+      parcours: parcours ?? "inconnu",
+    });
   };
 
   /**
@@ -360,11 +353,32 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
   /** Pas de bouton « Retour » sur le premier écran du parcours. */
   const retourOuPas = indexEtape > 0 ? retour : undefined;
 
-  /** Écran qui suit l'étape 1, selon le besoin choisi. */
-  const premiereQuestion = (choix: Besoin): Etape =>
-    choix === "rgie" ? "installation" : "distance";
+  // --- Réponse à une question ----------------------------------------------
+  const repondre = (id: IdQuestion, valeur: string) => {
+    setReponsesQ((prec) => ({ ...prec, [id]: valeur }));
 
-  // --- Photo (dernière question) -------------------------------------------
+    // Sortie immédiate : une odeur de brûlé ne se chiffre pas.
+    if (id === "securite" && valeur === "danger") {
+      aller("alerte");
+      return;
+    }
+
+    // Une réponse qui ouvre un champ texte n'avance pas toute seule : il faut
+    // laisser le temps de taper.
+    if (QUESTIONS[id].champLibreSi === valeur) return;
+
+    if (id === derniereQuestion) {
+      // Les parcours qui demandent des coordonnées affichent d'abord le bloc
+      // photo et un bouton « Continuer » ; le dépannage va droit au devis.
+      if (parcours && !DEMANDE_COORDONNEES[parcours]) aller("resultat");
+      return;
+    }
+
+    const suivante = sequence[sequence.indexOf(id) + 1];
+    if (suivante) aller(suivante);
+  };
+
+  // --- Photo (dernière question des parcours avec capture) ------------------
   const choisirPhoto = (file: File | null) => {
     setPhotoErreur(null);
     if (!file) {
@@ -382,10 +396,6 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
     setPhoto(file);
   };
 
-  /**
-   * Bloc photo + bouton « Continuer », commun à la dernière question des deux
-   * parcours (usage pour la borne, contexte pour la conformité).
-   */
   const blocPhotoEtSuite = (pret: boolean) => (
     <>
       <div className="mt-8 rounded-2xl border border-dashed border-border p-5">
@@ -472,12 +482,12 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
       return;
     }
 
-    if (!valider() || !estimation || !reponses) return;
+    if (!valider() || !devis || !reponses) return;
 
     const dureeMs = Date.now() - debutRef.current;
 
     // Une seule soumission par session : on n'écrit pas deux fois, mais on
-    // n'empêche pas le visiteur de revoir son estimation.
+    // n'empêche pas le visiteur de revoir son devis.
     let dejaEnvoye = false;
     try {
       dejaEnvoye = sessionStorage.getItem(CLE_SESSION_ENVOI) === "1";
@@ -494,7 +504,7 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
     setPhaseEnvoi(photo ? "photo" : "enregistrement");
     const resultat = await envoyerSimulation({
       reponses,
-      estimation,
+      devis,
       coordonnees: { nom, telephone, email },
       photo,
       dureeMs,
@@ -520,10 +530,11 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
     trackEvent("form_submit", { source_section: "simulateur" });
     trackEvent("simu_lead_envoye", {
       source_section: "simulateur",
-      besoin: reponses.besoin,
-      complexe: estimation.complexe,
+      parcours: reponses.parcours,
+      complexe: devis.complexe,
+      preference_rappel: reponses.preferenceRappel ?? "non_precise",
     });
-    if (estimation.complexe) {
+    if (devis.complexe) {
       trackEvent("simu_cas_complexe", { source_section: "simulateur" });
     }
     aller("resultat");
@@ -533,45 +544,110 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
 
   // Aperçu flouté affiché derrière le formulaire de capture.
   const apercuFloute =
-    estimation && !estimation.complexe && estimation.total
-      ? formatFourchette(estimation.total)
-      : "Métré technique gratuit";
+    devis && !devis.complexe && devis.total
+      ? formatFourchette(devis.total)
+      : "Visite gratuite";
+
+  // --- Rendu générique d'une question --------------------------------------
+  const ecranQuestion = (id: IdQuestion) => {
+    const q = QUESTIONS[id];
+    const valeur = reponsesQ[id];
+    const champLibreOuvert = !!q.champLibreSi && valeur === q.champLibreSi;
+    const derniere = id === derniereQuestion;
+
+    return (
+      <StepShell key={id} titre={q.titre} sousTitre={q.sousTitre} onRetour={retourOuPas}>
+        <div className="space-y-3">
+          {q.options.map((c, i) => (
+            <ChoiceCard
+              key={c.value}
+              icone={c.icone}
+              index={i}
+              label={c.label}
+              description={c.description}
+              selectionne={valeur === c.value}
+              onClick={() => repondre(id, c.value)}
+            />
+          ))}
+        </div>
+
+        {/* Champ texte libre — aujourd'hui : la marque et le modèle de la borne
+            que le client fournit lui-même. */}
+        {champLibreOuvert && (
+          <div className="mt-6 rounded-2xl border border-border/60 bg-card p-5">
+            <Label htmlFor="simu-modele">{CHAMP_MODELE_BORNE.label}</Label>
+            <Input
+              id="simu-modele"
+              value={modeleBorne}
+              onChange={(ev) => setModeleBorne(ev.target.value)}
+              onFocus={auFocusChamp}
+              maxLength={CHAMP_MODELE_BORNE.maxLength}
+              placeholder={CHAMP_MODELE_BORNE.placeholder}
+              className="mt-1.5"
+            />
+            <div className="mt-4 space-y-2">
+              {CHAMP_MODELE_BORNE.mentions.map((m) => (
+                <p key={m} className="text-xs leading-relaxed text-muted-foreground">
+                  {m}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Dernière question d'un parcours avec capture : photo + Continuer.
+            Une réponse ouvrant un champ texte a aussi besoin d'un bouton, sinon
+            rien ne fait avancer l'écran. */}
+        {derniere && parcours && DEMANDE_COORDONNEES[parcours] ? (
+          blocPhotoEtSuite(!!valeur)
+        ) : champLibreOuvert ? (
+          <Button
+            variant="copper"
+            size="lg"
+            className="mt-8 w-full"
+            onClick={() => {
+              const suivante = sequence[sequence.indexOf(id) + 1];
+              if (suivante) aller(suivante);
+            }}
+          >
+            Continuer
+          </Button>
+        ) : null}
+      </StepShell>
+    );
+  };
+
+  const questionCourante = parcours && SEQUENCES[parcours].includes(etape as IdQuestion)
+    ? (etape as IdQuestion)
+    : null;
 
   return (
     <div ref={hautRef} className="mx-auto w-full max-w-2xl scroll-mt-28">
-      {etape !== "resultat" && etape !== "depannage" && (
-        <ProgressBar pourcentage={pourcentage} />
-      )}
+      {etape !== "resultat" && etape !== "alerte" && <ProgressBar pourcentage={pourcentage} />}
 
       <AnimatePresence mode="wait">
-        {/* --- Étape 1 : besoin ------------------------------------------- */}
-        {etape === "besoin" && (
+        {/* --- Étape 1 : le parcours -------------------------------------- */}
+        {etape === "parcours" && (
           <StepShell
-            key="besoin"
+            key="parcours"
             titre="Qu'est-ce qui vous amène ?"
             sousTitre="Choisissez ce qui correspond le mieux. Vous pourrez préciser après."
           >
             <div className="space-y-3">
-              {BESOINS.map((c, i) => (
+              {CHOIX_PARCOURS.map((c, i) => (
                 <ChoiceCard
                   key={c.value}
                   icone={c.icone}
                   index={i}
                   label={c.label}
                   description={c.description}
-                  selectionne={besoin === c.value}
+                  selectionne={parcours === c.value}
                   onClick={() => {
-                    // Le dépannage ne lance aucune simulation : il n'y a rien à
-                    // chiffrer à l'avance sur une panne en cours.
-                    if (c.value === "depannage") {
-                      setBesoin(null);
-                      aller("depannage");
-                      return;
-                    }
-                    setBesoin(c.value);
-                    if (!besoinInclutBorne(c.value)) setDistance(null);
-                    if (c.value !== "rgie") setContexteRgie(null);
-                    aller(premiereQuestion(c.value));
+                    setParcours(c.value);
+                    // Repartir à zéro : changer d'avis à l'étape 1 ne doit pas
+                    // traîner les réponses d'un autre parcours.
+                    setReponsesQ({});
+                    aller(SEQUENCES[c.value][0]);
                   }}
                 />
               ))}
@@ -579,110 +655,14 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
           </StepShell>
         )}
 
-        {/* --- Distance borne / tableau (parcours borne uniquement) -------- */}
-        {etape === "distance" && (
-          <StepShell
-            key="distance"
-            titre="Où sera placée la borne par rapport à votre tableau électrique ?"
-            sousTitre="Le tableau, c'est le coffret avec les fusibles ou les disjoncteurs, souvent au garage, à la cave ou dans la buanderie."
-            onRetour={retourOuPas}
-          >
-            <div className="space-y-3">
-              {DISTANCES.map((c, i) => (
-                <ChoiceCard
-                  key={c.value}
-                  icone={c.icone}
-                  index={i}
-                  label={c.label}
-                  description={c.description}
-                  selectionne={distance === c.value}
-                  onClick={() => {
-                    setDistance(c.value);
-                    aller("installation");
-                  }}
-                />
-              ))}
-            </div>
-          </StepShell>
-        )}
+        {/* --- Les questions du parcours ---------------------------------- */}
+        {questionCourante && ecranQuestion(questionCourante)}
 
-        {/* --- État de l'installation (tous les parcours) ------------------ */}
-        {etape === "installation" && (
-          <StepShell
-            key="installation"
-            titre="Votre installation électrique, elle ressemble à quoi ?"
-            sousTitre="Une idée générale suffit, on vérifiera ensemble."
-            onRetour={retourOuPas}
-          >
-            <div className="space-y-3">
-              {INSTALLATIONS.map((c, i) => (
-                <ChoiceCard
-                  key={c.value}
-                  icone={c.icone}
-                  index={i}
-                  label={c.label}
-                  description={c.description}
-                  selectionne={installation === c.value}
-                  onClick={() => {
-                    setInstallation(c.value);
-                    aller(besoin === "rgie" ? "contexte" : "usage");
-                  }}
-                />
-              ))}
-            </div>
-          </StepShell>
-        )}
-
-        {/* --- Usage du véhicule (parcours borne et combiné) --------------- */}
-        {etape === "usage" && (
-          <StepShell
-            key="usage"
-            titre={besoinInclutBorne(besoin) ? "Cette borne, c'est pour..." : "Ce projet, c'est pour..."}
-            sousTitre="Cela change les avantages fiscaux auxquels vous avez droit."
-            onRetour={retourOuPas}
-          >
-            <div className="space-y-3">
-              {USAGES.map((c, i) => (
-                <ChoiceCard
-                  key={c.value}
-                  icone={c.icone}
-                  index={i}
-                  label={c.label}
-                  description={c.description}
-                  selectionne={usage === c.value}
-                  onClick={() => setUsage(c.value)}
-                />
-              ))}
-            </div>
-
-            {blocPhotoEtSuite(!!usage)}
-          </StepShell>
-        )}
-
-        {/* --- Motif de la conformité (parcours RGIE seul) ----------------- */}
-        {etape === "contexte" && (
-          <StepShell
-            key="contexte"
-            titre="Cette mise en conformité, c'est pour quoi ?"
-            sousTitre="Cela nous dit surtout s'il y a une échéance à tenir."
-            onRetour={retourOuPas}
-          >
-            <div className="space-y-3">
-              {CONTEXTES_RGIE.map((c, i) => (
-                <ChoiceCard
-                  key={c.value}
-                  icone={c.icone}
-                  index={i}
-                  label={c.label}
-                  description={c.description}
-                  selectionne={contexteRgie === c.value}
-                  onClick={() => setContexteRgie(c.value)}
-                />
-              ))}
-            </div>
-
-            {blocPhotoEtSuite(!!contexteRgie)}
-          </StepShell>
+        {/* --- Alerte sécurité -------------------------------------------- */}
+        {etape === "alerte" && (
+          <motion.div key="alerte">
+            <EcranAlerteSecurite />
+          </motion.div>
         )}
 
         {/* --- Écran de capture ------------------------------------------- */}
@@ -832,6 +812,43 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
                 )}
               </div>
 
+              {/* Préférence de rappel. Deux boutons plutôt qu'une case à
+                  cocher : « je veux juste voir les prix » doit être un choix
+                  assumé et visible, pas une option qu'on décoche. Il ne change
+                  rien à ce qui s'affiche ensuite, il dit à Adrian qui rappeler
+                  en premier. */}
+              <fieldset className="rounded-xl border border-border/60 bg-muted/30 p-4">
+                <legend className="px-1 text-sm font-medium text-foreground">
+                  Vous préférez…
+                </legend>
+                <div className="mt-2 space-y-2">
+                  {PREFERENCES_RAPPEL.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setPreferenceRappel(p.value)}
+                      aria-pressed={preferenceRappel === p.value}
+                      className={`flex w-full items-center gap-3 rounded-lg border px-3.5 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        preferenceRappel === p.value
+                          ? "border-primary bg-primary/[0.07] text-foreground"
+                          : "border-border/70 bg-card text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {/* Pastille de sélection en CSS, sans emoji. */}
+                      <span
+                        aria-hidden="true"
+                        className={`h-3 w-3 shrink-0 rounded-full border-2 transition-colors ${
+                          preferenceRappel === p.value
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                        }`}
+                      />
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
               {/* Honeypot — hors écran, hors tabulation, masqué aux lecteurs d'écran */}
               <div aria-hidden="true" className="absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden">
                 <label htmlFor="simu-societe-site">Ne pas remplir</label>
@@ -882,39 +899,13 @@ const SimulateurWizard = ({ onEcranChange }: Props) => {
           </StepShell>
         )}
 
-        {/* --- Dépannage : grille tarifaire, pas de simulation -------------- */}
-        {etape === "depannage" && (
-          <motion.div key="depannage">
-            {/* Retour possible seulement si l'étape 1 a bien été affichée. */}
-            {!prefill && (
-              <button
-                type="button"
-                onClick={() => revenirA("besoin")}
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Retour
-              </button>
-            )}
-            <EcranDepannage />
-          </motion.div>
-        )}
-
-        {/* --- Résultat ---------------------------------------------------- */}
-        {etape === "resultat" && estimation && reponses && (
+        {/* --- Le mini-devis ---------------------------------------------- */}
+        {etape === "resultat" && devis && reponses && (
           <motion.div key="resultat">
-            {estimation.complexe ? (
-              <EcranComplexe
-                reponses={reponses}
-                estimation={estimation}
-                prenom={prenom}
-              />
+            {devis.complexe ? (
+              <EcranComplexe reponses={reponses} devis={devis} prenom={prenom} />
             ) : (
-              <EcranResultat
-                reponses={reponses}
-                estimation={estimation}
-                prenom={prenom}
-              />
+              <EcranDevis reponses={reponses} devis={devis} prenom={prenom} />
             )}
 
             {photo && (
