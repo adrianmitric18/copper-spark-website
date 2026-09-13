@@ -346,6 +346,7 @@ export const MOMENTS: ChoixSimple<Moment>[] = [
     description: "Week-end compris, au même tarif.",
   },
   { value: "nuit", icone: "nuit", label: "Cette nuit, c'est une urgence" },
+  // (labels courts pour les sélecteurs compacts : voir MOMENTS_COURTS)
   {
     value: "rdv",
     icone: "agenda",
@@ -370,6 +371,16 @@ export interface ZoneDeplacement {
   /** Montant du déplacement, HORS TVA. `null` = sur devis. */
   montant: number | null;
   communes: string[];
+}
+
+/**
+ * Zones affichées par liste de communes, mais le visiteur, lui, choisit SA
+ * commune : c'est la seule chose qu'il sait avec certitude. Les zones restent
+ * la structure tarifaire, les communes en sont l'interface.
+ */
+export interface CommuneZone {
+  commune: string;
+  zone: Zone;
 }
 
 export const ZONES: ZoneDeplacement[] = [
@@ -415,6 +426,44 @@ export const ZONES: ZoneDeplacement[] = [
     communes: [],
   },
 ];
+
+/** Toutes les communes couvertes, par ordre alphabétique, avec leur zone. */
+export const COMMUNES: CommuneZone[] = ZONES.flatMap((z) =>
+  z.communes.map((commune) => ({ commune, zone: z.value })),
+).sort((a, b) => a.commune.localeCompare(b.commune, "fr"));
+
+// =====================================================================
+//  Écran dépannage — un seul écran, le prix d'abord
+// =====================================================================
+
+/**
+ * Le parcours dépannage ne pose plus trois questions successives : quelqu'un
+ * dont l'installation vient de lâcher n'a pas la patience de trois écrans avant
+ * de voir un prix (retour d'Adrian après test, 2026-09-13). Tout tient sur un
+ * écran : le contrôle de sécurité en haut, le prix plancher immédiatement
+ * lisible, puis deux sélecteurs qui l'affinent en direct.
+ */
+export const ECRAN_DEPANNAGE = {
+  eyebrow: "Dépannage",
+  titre: "Nos tarifs de dépannage",
+  securiteQuestion: "Odeur de brûlé, étincelles ou fumée ?",
+  securiteAide: "Si c'est le cas, on s'arrête là et on vous dit quoi faire tout de suite.",
+  securiteOui: "Oui",
+  securiteNon: "Non",
+  intituleMontant: "Intervention à partir de",
+  detailMontant: "Déplacement et première heure compris.",
+  invitePrecision: "Choisissez votre commune pour le montant exact.",
+  labelCommune: "Votre commune",
+  optionHorsListe: "Ma commune n'est pas dans la liste",
+  labelMoment: "Quand faut-il intervenir ?",
+} as const;
+
+/** Libellés courts, pour les boutons du sélecteur de l'écran dépannage. */
+export const MOMENTS_COURTS: Record<Moment, string> = {
+  journee: "Journée ou soirée",
+  nuit: "Cette nuit, urgence",
+  rdv: "Sur rendez-vous",
+};
 
 // =====================================================================
 //  Tarifs — BORNE (TTC, TVA 6 %)
@@ -471,11 +520,21 @@ export const RGIE_FORFAIT = {
   libelle:
     "Forfait 550 € pour une maison standard avec un seul tableau électrique : relevé technique complet sur place + rédaction des plans (unifilaire et position) + coordination et présence lors du contrôle de l'organisme agréé.",
   /**
-   * Le libellé d'Adrian dit « coordination et présence », pas « redevance
-   * comprise » : sans cette précision, le client suppose que la facture de
-   * l'organisme arrive en plus. Elle ne vient pas en plus.
+   * Le libellé d'Adrian dit « coordination et présence », ce qui décrit le
+   * travail fait PENDANT un contrôle — un lecteur en déduit naturellement que
+   * la facture de l'organisme arrive en plus. Elle n'arrive pas : la redevance
+   * est refacturée au coût et intégrée au forfait. Formulation validée le
+   * 2026-09-13, à ne pas édulcorer : c'est elle qui évite le litige au
+   * téléphone.
    */
-  precision: "Le passage de l'organisme agréé est compris dans ce forfait.",
+  precision:
+    "La redevance de l'organisme agréé est comprise : vous ne recevez aucune facture séparée de l'organisme de contrôle.",
+  /**
+   * Glose du seul mot technique du parcours. Le libellé ci-dessus est
+   * intouchable (validé mot pour mot), on l'explique donc juste après.
+   */
+  glose:
+    "Les plans, ce sont le schéma qui montre comment votre installation est câblée, et celui qui situe prises et points lumineux dans le logement.",
 } as const;
 
 /**
@@ -518,12 +577,29 @@ export const MENTIONS = {
     "Estimation indicative — le devis définitif est confirmé par un électricien basé à Court-Saint-Étienne après visite ou photos.",
   aConfirmer:
     "Les postes marqués « à confirmer » se chiffrent sur photo de votre tableau, ou lors de la visite. Ils ne sont pas compris dans le total ci-dessus.",
+  // Formulation retravaillée le 2026-09-13 : la version précédente affirmait
+  // que « beaucoup de devis » sortent ces postes de leur total « pour paraître
+  // moins chers ». Invérifiable, et ça prête une intention trompeuse à des
+  // confrères identifiables à 20 km. Même argument, sous forme de vérification
+  // que le client peut faire lui-même.
   dossierCompris:
-    "Le dossier technique et le passage de l'organisme agréé sont compris dans ce prix. Beaucoup de devis les sortent de leur total pour paraître moins chers.",
-  tvaReduite: "TVA de 6 % appliquée : votre logement a plus de 10 ans.",
+    "Le dossier technique et le passage de l'organisme agréé sont compris dans ce prix. Pensez à comparer ce point sur les autres devis que vous recevrez : ces deux postes n'y sont pas toujours compris.",
+  // L'ancienneté de 10 ans n'est pas la seule condition du taux réduit belge :
+  // le bien doit aussi être affecté au logement privé. Sans cette précision, on
+  // annonce 6 % à quelqu'un qui en paiera 21.
+  tvaReduite: "TVA de 6 % appliquée : votre logement privé a plus de 10 ans.",
   tvaNormale: "TVA de 21 % appliquée : votre logement a moins de 10 ans.",
   tvaInconnue:
-    "Prix affichés avec la TVA à 6 %, celle des logements de plus de 10 ans. Pour un logement plus récent, la TVA est de 21 %.",
+    "Prix affichés avec la TVA à 6 %, celle des logements privés de plus de 10 ans. Pour un logement plus récent, la TVA est de 21 %.",
+  /**
+   * Bien professionnel ou voiture de société : on n'affiche aucun taux ferme.
+   * Le taux dépend du bâtiment, pas du client — un indépendant dans son
+   * logement privé de plus de 10 ans garde le 6 %, et une société assujettie
+   * avec un numéro de TVA actif bascule en autoliquidation. Annoncer 21 %
+   * serait faux dans les deux cas.
+   */
+  tvaProfessionnel:
+    "Le taux de TVA applicable est confirmé avec vous : il dépend de l'affectation du bien.",
   deductionSociete:
     "Sociétés & indépendants : déduction fiscale possible pour une borne intelligente.",
   facturationSociete:
@@ -538,7 +614,8 @@ export const MENTIONS = {
     "Votre demande est traitée par un électricien local basé à Court-Saint-Étienne, pas par une plateforme.",
   rgpdCapture:
     "En validant, vous acceptez d'être recontacté par Le Cuivre Électrique au sujet de votre demande. Vos données ne sont jamais revendues.",
-  depannageTva: "Prix hors TVA — 6 % si votre logement a plus de 10 ans, sinon 21 %.",
+  depannageTva:
+    "Prix hors TVA — 6 % pour un logement privé de plus de 10 ans, 21 % sinon. Le taux applicable est confirmé avec vous : il dépend de l'affectation du bien.",
   depannageMateriel:
     "Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.",
   depannageHeuresSuivantes:
@@ -559,6 +636,10 @@ export const MESSAGE_WHATSAPP_DEPANNAGE =
 //  Les questions, écran par écran
 // =====================================================================
 
+/**
+ * Questions posées écran par écran. Le parcours dépannage n'en a aucune : il
+ * tient sur un écran unique, décrit par `ECRAN_DEPANNAGE`.
+ */
 export type IdQuestion =
   // Parcours borne
   | "fournisseur"
@@ -569,16 +650,14 @@ export type IdQuestion =
   | "age"
   // Parcours RGIE
   | "motif"
-  | "tableaux"
-  // Parcours dépannage
-  | "securite"
-  | "moment"
-  | "zone";
+  | "tableaux";
 
 export interface DefinitionQuestion {
   titre: string;
   sousTitre?: string;
   options: ChoixSimple<string>[];
+  /** Précision affichée sous les réponses, quelle que soit la réponse choisie. */
+  note?: string;
   /**
    * Valeur qui ouvre un champ texte libre sous les réponses. Tant qu'elle est
    * sélectionnée, l'écran n'avance plus tout seul : le visiteur doit pouvoir
@@ -587,26 +666,14 @@ export interface DefinitionQuestion {
   champLibreSi?: string;
 }
 
-/**
- * Les zones de déplacement passent par les mêmes cartes que les autres
- * réponses : le prix dans le titre, la liste des communes en description.
- */
-const OPTIONS_ZONES: ChoixSimple<Zone>[] = ZONES.map((z) => ({
-  value: z.value,
-  icone: z.montant === null ? "inconnu" : "zone",
-  label:
-    z.montant === null ? z.label : `${z.label} — déplacement ${z.montant} € hors TVA`,
-  description:
-    z.montant === null
-      ? "Le montant du déplacement est confirmé par téléphone, avant tout départ."
-      : z.communes.join(" · "),
-}));
-
 export const QUESTIONS: Record<IdQuestion, DefinitionQuestion> = {
   fournisseur: {
     titre: "Qui fournit la borne ?",
     sousTitre: "Les deux sont possibles, le prix n'est simplement pas le même.",
     options: FOURNISSEURS,
+    // La page service met Hager et Wallbox en avant : ne pas le rappeler ici
+    // laisserait croire qu'on ne pose qu'une seule marque.
+    note: "Nous installons également Hager, Wallbox et les autres marques du marché. Dans ce cas, choisissez « j'ai déjà ma borne » et indiquez le modèle : nous chiffrons la pose ici, et la borne à part.",
     champLibreSi: "client",
   },
   distance: {
@@ -640,27 +707,18 @@ export const QUESTIONS: Record<IdQuestion, DefinitionQuestion> = {
     sousTitre: "Le forfait vaut pour une maison avec un seul tableau.",
     options: NOMBRES_TABLEAUX,
   },
-  securite: {
-    titre: "Avant tout : est-ce que ça sent le brûlé, y a-t-il des étincelles ou de la fumée ?",
-    sousTitre: "Si c'est le cas, on s'arrête là et on vous dit quoi faire tout de suite.",
-    options: SECURITE,
-  },
-  moment: {
-    titre: "Quand faut-il intervenir ?",
-    options: MOMENTS,
-  },
-  zone: {
-    titre: "Vous êtes dans quelle commune ?",
-    sousTitre: "Le déplacement est un forfait, annoncé avant que nous prenions la route.",
-    options: OPTIONS_ZONES,
-  },
 };
 
-/** Les questions posées, dans l'ordre, parcours par parcours. */
+/**
+ * Les questions posées, dans l'ordre, parcours par parcours.
+ *
+ * Le dépannage n'en a aucune : tout tient sur un écran unique où le prix est
+ * lisible avant le moindre clic (voir `ECRAN_DEPANNAGE`).
+ */
 export const SEQUENCES: Record<Parcours, IdQuestion[]> = {
   borne: ["fournisseur", "distance", "tableau", "age", "usage"],
   rgie: ["motif", "tableaux", "tableau", "age"],
-  depannage: ["securite", "moment", "zone"],
+  depannage: [],
 };
 
 /**

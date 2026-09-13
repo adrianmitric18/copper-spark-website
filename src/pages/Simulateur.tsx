@@ -67,7 +67,8 @@ const VARIANTES: Record<Parcours | "defaut", Variante> = {
     eyebrow: "Dépannage",
     titre: "Une panne ?",
     accent: "Nos tarifs, sans détour",
-    intro: `${NB_QUESTIONS.depannage} questions, et vous savez ce que coûte l'intervention : déplacement et main-d'œuvre, sans formulaire à remplir.`,
+    intro:
+      "Le prix de l'intervention s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
     reassurances: [
       { icon: Clock, texte: "Intervention 24h/24, 7j/7" },
       { icon: Receipt, texte: "Forfait annoncé avant le départ" },

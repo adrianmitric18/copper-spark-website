@@ -37,7 +37,7 @@ const LIEN_SIMULATEUR: Record<Parcours, { texte: string; suffixe: string }> = {
   },
   depannage: {
     texte: "voyez ce que coûte l'intervention avant d'appeler",
-    suffixe: `${NB_QUESTIONS.depannage} questions, sans formulaire.`,
+    suffixe: "prix affiché tout de suite, sans formulaire.",
   },
 };
 

@@ -12,10 +12,12 @@
  *   - /simulateur?besoin=rgie      → parcours conformité direct ;
  *   - /simulateur?besoin=depannage → parcours dépannage direct.
  *
- * Deux différences structurelles avec les autres parcours, côté dépannage :
- * il ne demande aucune coordonnée et n'enregistre aucun lead (arbitrage du
- * 2026-09-13), et sa première question peut le faire sortir immédiatement sur
- * l'écran d'alerte sécurité.
+ * Le dépannage est à part : il ne pose aucune question en séquence, ne demande
+ * aucune coordonnée et n'enregistre aucun lead (arbitrages du 2026-09-13). Tout
+ * y tient sur un écran unique — contrôle de sécurité, prix plancher lisible
+ * sans le moindre clic, puis deux sélecteurs qui l'affinent en direct — parce
+ * que quelqu'un dont l'installation vient de lâcher n'enchaîne pas trois écrans
+ * avant de voir un prix.
  *
  * Le calcul est intégralement local (voir lib/simulateur/calcul.ts) : le
  * réseau n'est sollicité qu'au moment de l'envoi, une fois les coordonnées
@@ -25,7 +27,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Lock, ImagePlus, X, Star } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, ImagePlus, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,21 +56,32 @@ import {
   type EtatTableau,
   type Fournisseur,
   type IdQuestion,
-  type Moment,
   type NombreTableaux,
   type Parcours,
   type PreferenceRappel,
-  type Securite,
   type Usage,
   type ContexteRgie,
-  type Zone,
 } from "@/lib/simulateur/config";
 import { calculerDevis, formatFourchette, type Reponses } from "@/lib/simulateur/calcul";
 import { envoyerSimulation } from "@/lib/simulateur/submit";
 import { ChoiceCard, MentionBox, ProgressBar, StepShell } from "./SimulateurUI";
-import { EcranAlerteSecurite, EcranComplexe, EcranDevis } from "./SimulateurResultat";
+import {
+  EcranAlerteSecurite,
+  EcranComplexe,
+  EcranDepannage,
+  EcranDevis,
+} from "./SimulateurResultat";
 
-type Etape = "parcours" | IdQuestion | "capture" | "resultat" | "alerte";
+type Etape = "parcours" | IdQuestion | "depannage" | "capture" | "resultat" | "alerte";
+
+/**
+ * Premier écran d'un parcours.
+ *
+ * Le dépannage n'a pas de question : il ouvre directement sur son écran
+ * unique, où le prix est lisible avant le moindre clic.
+ */
+const premierEcran = (p: Parcours): Etape =>
+  p === "depannage" ? "depannage" : SEQUENCES[p][0];
 
 /** Seul le dépannage se termine sans demander de coordonnées. */
 const DEMANDE_COORDONNEES: Record<Parcours, boolean> = {
@@ -138,15 +151,15 @@ const SimulateurWizard = ({
   /** Étapes réellement traversées, dans l'ordre. */
   const sequence: Etape[] = useMemo(() => {
     if (!parcours) return ["parcours"];
-    const questions: Etape[] = [...SEQUENCES[parcours]];
-    const avecCapture: Etape[] = DEMANDE_COORDONNEES[parcours]
-      ? [...questions, "capture"]
-      : questions;
-    return prefill ? avecCapture : ["parcours", ...avecCapture];
+    const ecrans: Etape[] =
+      parcours === "depannage"
+        ? ["depannage"]
+        : [...SEQUENCES[parcours], "capture"];
+    return prefill ? ecrans : ["parcours", ...ecrans];
   }, [parcours, prefill]);
 
   const [etape, setEtape] = useState<Etape>(() =>
-    prefill ? SEQUENCES[prefill][0] : "parcours",
+    prefill ? premierEcran(prefill) : "parcours",
   );
 
   const indexEtape = sequence.indexOf(etape);
@@ -173,12 +186,9 @@ const SimulateurWizard = ({
       usage: q.usage as Usage | undefined,
       contexteRgie: q.motif as ContexteRgie | undefined,
       nombreTableaux: q.tableaux as NombreTableaux | undefined,
-      securite: q.securite as Securite | undefined,
-      moment: q.moment as Moment | undefined,
-      zone: q.zone as Zone | undefined,
-      // Le dépannage ne pose jamais la question : la laisser à sa valeur par
-      // défaut ferait apparaître « Préférence : je veux être rappelé » dans le
-      // message WhatsApp d'une panne, alors que personne ne l'a demandé.
+      // Le dépannage ne passe pas par ici : son écran unique porte lui-même son
+      // état (commune et moment), et il ne demande aucune coordonnée — d'où la
+      // préférence de rappel laissée vide.
       preferenceRappel: DEMANDE_COORDONNEES[parcours] ? preferenceRappel : undefined,
     };
   }, [parcours, reponsesQ, modeleBorne, preferenceRappel]);
@@ -203,9 +213,10 @@ const SimulateurWizard = ({
   const evenementPour = (cible: Etape, p: Parcours | null): string => {
     if (cible === "capture") return "simu_capture_vu";
     if (cible === "alerte") return "simu_alerte_securite_vu";
-    if (cible === "resultat") {
-      return p === "depannage" ? "simu_depannage_vu" : "simu_resultat_vu";
-    }
+    // Le dépannage tient sur un écran : une seule vue, un seul événement. Les
+    // deux sélecteurs émettent les leurs depuis l'écran lui-même.
+    if (cible === "depannage") return "simu_depannage_vu";
+    if (cible === "resultat") return "simu_resultat_vu";
     // La position est recalculée depuis le parcours passé en argument, et non
     // depuis `sequence` : au clic de l'étape 1, l'état React n'a pas encore été
     // réappliqué, et `sequence` vaudrait encore ["parcours"]. Le tunnel
@@ -275,7 +286,7 @@ const SimulateurWizard = ({
 
   const peutAfficher = (e: Etape): boolean => {
     const s = etatRef.current;
-    if (e === "parcours" || e === "alerte") return true;
+    if (e === "parcours" || e === "alerte" || e === "depannage") return true;
     if (!s.parcours) return false;
     const questions = SEQUENCES[s.parcours];
     if (e === "capture" || e === "resultat") {
@@ -291,7 +302,7 @@ const SimulateurWizard = ({
     const auRetour = (ev: PopStateEvent) => {
       const cible = (ev.state as { simuEtape?: Etape } | null)?.simuEtape;
       const repli: Etape = prefillRef.current
-        ? SEQUENCES[prefillRef.current][0]
+        ? premierEcran(prefillRef.current)
         : "parcours";
       setEtape(cible && peutAfficher(cible) ? cible : repli);
       remonter();
@@ -380,22 +391,13 @@ const SimulateurWizard = ({
   const repondre = (id: IdQuestion, valeur: string) => {
     setReponsesQ((prec) => ({ ...prec, [id]: valeur }));
 
-    // Sortie immédiate : une odeur de brûlé ne se chiffre pas.
-    if (id === "securite" && valeur === "danger") {
-      aller("alerte");
-      return;
-    }
-
     // Une réponse qui ouvre un champ texte n'avance pas toute seule : il faut
     // laisser le temps de taper.
     if (QUESTIONS[id].champLibreSi === valeur) return;
 
-    if (id === derniereQuestion) {
-      // Les parcours qui demandent des coordonnées affichent d'abord le bloc
-      // photo et un bouton « Continuer » ; le dépannage va droit au devis.
-      if (parcours && !DEMANDE_COORDONNEES[parcours]) aller("resultat");
-      return;
-    }
+    // Dernière question : l'écran porte le bloc photo et son bouton
+    // « Continuer », on n'avance donc pas au clic sur la réponse.
+    if (id === derniereQuestion) return;
 
     const suivante = sequence[sequence.indexOf(id) + 1];
     if (suivante) aller(suivante);
@@ -594,6 +596,12 @@ const SimulateurWizard = ({
           ))}
         </div>
 
+        {/* Précision affichée quelle que soit la réponse (les autres marques
+            posées, sur la question de fourniture de la borne). */}
+        {q.note && (
+          <p className="mt-5 text-sm leading-relaxed text-muted-foreground">{q.note}</p>
+        )}
+
         {/* Champ texte libre — aujourd'hui : la marque et le modèle de la borne
             que le client fournit lui-même. */}
         {champLibreOuvert && (
@@ -646,7 +654,11 @@ const SimulateurWizard = ({
 
   return (
     <div ref={hautRef} className="mx-auto w-full max-w-2xl scroll-mt-28">
-      {etape !== "resultat" && etape !== "alerte" && <ProgressBar pourcentage={pourcentage} />}
+      {/* Ni sur le résultat, ni sur l'alerte, ni sur le dépannage : ce dernier
+          tient sur un écran, il n'y a aucune progression à montrer. */}
+      {etape !== "resultat" && etape !== "alerte" && etape !== "depannage" && (
+        <ProgressBar pourcentage={pourcentage} />
+      )}
 
       <AnimatePresence mode="wait">
         {/* --- Étape 1 : le parcours -------------------------------------- */}
@@ -670,7 +682,7 @@ const SimulateurWizard = ({
                     // Repartir à zéro : changer d'avis à l'étape 1 ne doit pas
                     // traîner les réponses d'un autre parcours.
                     setReponsesQ({});
-                    aller(SEQUENCES[c.value][0], c.value);
+                    aller(premierEcran(c.value), c.value);
                   }}
                 />
               ))}
@@ -680,6 +692,23 @@ const SimulateurWizard = ({
 
         {/* --- Les questions du parcours ---------------------------------- */}
         {questionCourante && ecranQuestion(questionCourante)}
+
+        {/* --- Dépannage : un seul écran ---------------------------------- */}
+        {etape === "depannage" && (
+          <motion.div key="depannage">
+            {retourOuPas && (
+              <button
+                type="button"
+                onClick={retourOuPas}
+                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour
+              </button>
+            )}
+            <EcranDepannage onAlerte={() => aller("alerte")} />
+          </motion.div>
+        )}
 
         {/* --- Alerte sécurité -------------------------------------------- */}
         {etape === "alerte" && (

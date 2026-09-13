@@ -30,7 +30,8 @@ const TEXTES: Record<Parcours, { titre: string; corps: string; bouton: string }>
   },
   depannage: {
     titre: "Voyez ce que coûte l'intervention avant d'appeler",
-    corps: `${NB_QUESTIONS.depannage} questions : ce qui se passe, quand il faut venir et dans quelle commune vous êtes. Vous obtenez le déplacement et la main-d'œuvre, sans formulaire à remplir.`,
+    corps:
+      "Le prix s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
     bouton: "Voir les tarifs",
   },
 };

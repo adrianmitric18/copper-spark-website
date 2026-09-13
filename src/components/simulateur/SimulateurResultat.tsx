@@ -12,18 +12,28 @@
  * doit jamais être gonflé par un chiffre qu'on n'a pas.
  */
 
+import { useState } from "react";
 import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown, Wrench, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import {
   ALERTE_SECURITE,
+  COMMUNES,
   CONTACT,
+  DEPANNAGE,
+  ECRAN_DEPANNAGE,
   MENTIONS,
   MESSAGE_WHATSAPP_DEPANNAGE,
-  type Parcours,
+  MOMENTS,
+  MOMENTS_COURTS,
+  type Moment,
+  type Zone,
 } from "@/lib/simulateur/config";
 import {
+  calculerDevis,
+  formatEuros,
   formatFourchette,
   formatLigne,
   type Devis,
@@ -159,25 +169,41 @@ const Poste = ({ ligne }: { ligne: LigneDevis }) => {
   );
 };
 
-const EN_TETE: Record<Parcours, { eyebrow: string; titre: (p: string) => string }> = {
-  borne: {
-    eyebrow: "Votre estimation",
-    titre: (p) => (p ? `Voici votre estimation, ${p}` : "Voici votre estimation"),
-  },
-  rgie: {
-    eyebrow: "Votre estimation",
-    titre: (p) => (p ? `Voici votre estimation, ${p}` : "Voici votre estimation"),
-  },
-  depannage: {
-    eyebrow: "Dépannage",
-    titre: () => "Voici ce que coûte l'intervention",
-  },
-};
+/**
+ * Bloc de prix, partagé par l'écran de résultat et l'écran dépannage.
+ *
+ * Carte anthracite profonde, montant en blanc. Couleurs fixes et non tokens de
+ * thème : ce bloc doit être identique en clair et en sombre.
+ *
+ * Ce que le total EXCLUT est porté par l'intitulé, au-dessus du montant — une
+ * réserve écrite en petit sous un grand chiffre ne se lit pas.
+ */
+const CarteMontant = ({
+  intitule,
+  montant,
+  sousTitre,
+}: {
+  intitule: string;
+  montant: string;
+  sousTitre?: string;
+}) => (
+  <div
+    className="rounded-3xl border-2 border-primary/60 p-7 md:p-9 text-center shadow-xl shadow-primary/20"
+    style={{ background: FOND_ANTHRACITE }}
+  >
+    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#E86830]">
+      {intitule}
+    </p>
+    <p className="font-display text-[2.125rem] md:text-5xl font-black leading-tight text-white">
+      {montant}
+    </p>
+    {sousTitre && (
+      <p className="mt-3 text-sm leading-relaxed text-white/70">{sousTitre}</p>
+    )}
+  </div>
+);
 
 export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
-  const depannage = devis.parcours === "depannage";
-  const entete = EN_TETE[devis.parcours];
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -187,18 +213,14 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
     >
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
-          {depannage ? (
-            <Wrench className="h-5 w-5 text-primary" />
-          ) : (
-            <CheckCircle2 className="h-5 w-5 text-primary" />
-          )}
+          <CheckCircle2 className="h-5 w-5 text-primary" />
         </span>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-            {entete.eyebrow}
+            Votre estimation
           </p>
           <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
-            {entete.titre(prenom)}
+            {prenom ? `Voici votre estimation, ${prenom}` : "Voici votre estimation"}
           </h2>
         </div>
       </div>
@@ -216,26 +238,12 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
         </ul>
       </div>
 
-      {/* Total — carte anthracite profonde, montant en blanc. Couleurs fixes et
-          non tokens de thème : ce bloc doit être identique en clair et en
-          sombre. */}
       {devis.total && (
-        <div
-          className="rounded-3xl border-2 border-primary/60 p-7 md:p-9 text-center shadow-xl shadow-primary/20"
-          style={{ background: FOND_ANTHRACITE }}
-        >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#E86830]">
-            {devis.intituleTotal}
-          </p>
-          <p className="font-display text-[2.125rem] md:text-5xl font-black leading-tight text-white">
-            {formatFourchette(devis.total)}
-          </p>
-          {devis.aConfirmer && (
-            <p className="mt-3 text-sm leading-relaxed text-white/70">
-              Hors postes « à confirmer » ci-dessus.
-            </p>
-          )}
-        </div>
+        <CarteMontant
+          intitule={devis.intituleTotal}
+          montant={formatFourchette(devis.total)}
+          sousTitre={devis.sousTitreTotal}
+        />
       )}
 
       {/* Première mention en encadré cuivre : c'est celle qui change ce que le
@@ -274,19 +282,208 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
       <Actions
         reponses={reponses}
         devis={devis}
-        gros={depannage}
-        contexte={depannage ? "simulateur_depannage" : "simulateur_resultat"}
-        libelleAppel={
-          depannage ? `Appeler le ${CONTACT.telephoneAffiche}` : "Appeler pour valider ce tarif"
+        contexte="simulateur_resultat"
+        libelleAppel="Appeler pour valider ce tarif"
+        libelleWhatsApp="Envoyer la photo de mon tableau sur WhatsApp"
+      />
+
+      <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
+    </motion.div>
+  );
+};
+
+// =====================================================================
+//  Dépannage — un seul écran, le prix avant tout clic
+// =====================================================================
+
+/**
+ * Le parcours dépannage tient sur un écran.
+ *
+ * Trois écrans successifs avant de voir un prix, c'était deux de trop pour
+ * quelqu'un dont l'installation vient de lâcher (retour d'Adrian après test de
+ * la preview). L'ordre est donc : contrôle de sécurité, prix plancher lisible
+ * immédiatement, puis deux sélecteurs qui affinent le montant en direct — sans
+ * jamais changer de page. Les boutons d'appel restent sous le prix en
+ * permanence.
+ *
+ * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée.
+ */
+export const EcranDepannage = ({ onAlerte }: { onAlerte: () => void }) => {
+  const { trackEvent } = useAnalyticsEvents();
+  const [commune, setCommune] = useState("");
+  const [moment, setMoment] = useState<Moment>("journee");
+
+  // « » = commune pas encore choisie : le devis affiche alors le plancher.
+  const zone: Zone | undefined =
+    commune === ""
+      ? undefined
+      : commune === "hors"
+        ? "hors"
+        : COMMUNES.find((c) => c.commune === commune)?.zone;
+
+  const reponses: Reponses = { parcours: "depannage", securite: "rien", moment, zone };
+  const devis = calculerDevis(reponses);
+
+  const choisirCommune = (valeur: string) => {
+    setCommune(valeur);
+    trackEvent("simu_depannage_zone", {
+      source_section: "simulateur_depannage",
+      zone: valeur === "" ? "aucune" : (COMMUNES.find((c) => c.commune === valeur)?.zone ?? "hors"),
+    });
+  };
+
+  const choisirMoment = (valeur: Moment) => {
+    setMoment(valeur);
+    trackEvent("simu_depannage_moment", {
+      source_section: "simulateur_depannage",
+      moment: valeur,
+    });
+  };
+
+  const champ =
+    "mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:text-sm";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
+          <Wrench className="h-5 w-5 text-primary" />
+        </span>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
+            {ECRAN_DEPANNAGE.eyebrow}
+          </p>
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
+            {ECRAN_DEPANNAGE.titre}
+          </h2>
+        </div>
+      </div>
+
+      {/* Contrôle de sécurité, en tête d'écran. Une seule affordance : le
+          « non » se traduit par ne rien cliquer, ce qui évite un clic à tout le
+          monde pour un cas rare. */}
+      <div className="rounded-2xl border-2 border-destructive/40 bg-destructive/[0.06] p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-display font-bold text-foreground">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+              {ECRAN_DEPANNAGE.securiteQuestion}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {ECRAN_DEPANNAGE.securiteAide}
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={onAlerte}
+            className="shrink-0 whitespace-normal"
+          >
+            {ECRAN_DEPANNAGE.securiteOui}
+          </Button>
+        </div>
+      </div>
+
+      {/* Le prix, avant le moindre clic. */}
+      <CarteMontant
+        intitule={devis.total ? devis.intituleTotal : "Main-d'œuvre"}
+        montant={
+          devis.total
+            ? formatFourchette(devis.total)
+            : `${formatEuros(DEPANNAGE.mainOeuvre[moment])} / h`
         }
-        libelleWhatsApp={
-          depannage
-            ? "Décrire ma panne sur WhatsApp"
-            : "Envoyer la photo de mon tableau sur WhatsApp"
+        sousTitre={
+          devis.total
+            ? devis.sousTitreTotal
+            : "hors TVA — déplacement confirmé par téléphone"
         }
       />
 
-      {depannage && <MentionBox>{MENTIONS.depannagePasDeFormulaire}</MentionBox>}
+      <div className="rounded-3xl border border-border/60 bg-card p-5 md:p-7">
+        <ul className="divide-y divide-border/60">
+          {devis.lignes.map((ligne) => (
+            <Poste key={ligne.libelle} ligne={ligne} />
+          ))}
+        </ul>
+
+        {/* Les deux sélecteurs : le montant se met à jour au-dessus, sans
+            changer d'écran. */}
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="depannage-commune">{ECRAN_DEPANNAGE.labelCommune}</Label>
+            <select
+              id="depannage-commune"
+              value={commune}
+              onChange={(ev) => choisirCommune(ev.target.value)}
+              className={champ}
+            >
+              <option value="">{ECRAN_DEPANNAGE.invitePrecision}</option>
+              {COMMUNES.map((c) => (
+                <option key={c.commune} value={c.commune}>
+                  {c.commune}
+                </option>
+              ))}
+              <option value="hors">{ECRAN_DEPANNAGE.optionHorsListe}</option>
+            </select>
+          </div>
+
+          <div>
+            <span className="text-sm font-medium text-foreground">
+              {ECRAN_DEPANNAGE.labelMoment}
+            </span>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {MOMENTS.map((m) => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => choisirMoment(m.value)}
+                  aria-pressed={moment === m.value}
+                  className={`flex items-center gap-2.5 rounded-lg border px-3.5 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    moment === m.value
+                      ? "border-primary bg-primary/[0.07] text-foreground"
+                      : "border-border/70 bg-card text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {/* Pastille de sélection en CSS, sans emoji. */}
+                  <span
+                    aria-hidden="true"
+                    className={`h-3 w-3 shrink-0 rounded-full border-2 transition-colors ${
+                      moment === m.value ? "border-primary bg-primary" : "border-border"
+                    }`}
+                  />
+                  {MOMENTS_COURTS[m.value]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Appeler reste sous le prix, en permanence : c'est l'action utile quand
+          il n'y a plus de courant. */}
+      <Actions
+        reponses={reponses}
+        devis={devis}
+        gros
+        contexte="simulateur_depannage"
+        libelleAppel={`Appeler le ${CONTACT.telephoneAffiche}`}
+        libelleWhatsApp="Décrire ma panne sur WhatsApp"
+      />
+
+      {devis.mentions.slice(0, 1).map((m) => (
+        <MentionBox key={m} accent>
+          {m}
+        </MentionBox>
+      ))}
+      {devis.mentions.slice(1).map((m) => (
+        <MentionBox key={m}>{m}</MentionBox>
+      ))}
+
+      <MentionBox>{MENTIONS.depannagePasDeFormulaire}</MentionBox>
       <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
     </motion.div>
   );

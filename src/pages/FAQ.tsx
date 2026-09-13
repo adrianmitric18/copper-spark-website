@@ -453,7 +453,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Combien coûte l'installation d'une borne de recharge ?",
     answer:
-      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Alfen fournie et posée, comptez en ordre de grandeur entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris — beaucoup de devis sortent ces deux derniers postes de leur total pour paraître moins chers. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Prix indiqués avec la TVA à 6 %, celle des logements de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
+      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Alfen fournie et posée, comptez en ordre de grandeur entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris. Pensez à comparer ce point sur les autres devis que vous recevrez : ces deux postes n'y sont pas toujours compris. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les autres marques du marché : dans ce cas, la borne est chiffrée à part, selon le modèle choisi. Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
     answerNode: (
       <>
         <p>
@@ -463,13 +463,18 @@ const faqData: FaqItem[] = [
         <p>
           Pour une borne Alfen fournie et posée, comptez en ordre de grandeur
           entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique
-          et passage de l'organisme agréé compris — beaucoup de devis sortent
-          ces deux derniers postes de leur total pour paraître moins chers. Si
-          vous fournissez vous-même votre borne, la pose seule se situe entre
-          950 et 1 300 € TTC.
+          et passage de l'organisme agréé compris. Pensez à comparer ce point
+          sur les autres devis que vous recevrez : ces deux postes n'y sont pas
+          toujours compris.
         </p>
         <p>
-          Prix indiqués avec la TVA à 6 %, celle des logements de plus de
+          Si vous fournissez vous-même votre borne, la pose seule se situe entre
+          950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les
+          autres marques du marché : dans ce cas, la borne est chiffrée à part,
+          selon le modèle choisi.
+        </p>
+        <p>
+          Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de
           10 ans. Les chantiers nécessitant une tranchée ou un terrassement
           sortent de cette fourchette. Le devis est gratuit après visite
           technique sur place et détaille chaque poste séparément.

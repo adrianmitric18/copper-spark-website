@@ -93,6 +93,11 @@ export interface LigneDevis {
   statut: StatutLigne;
   /** Renseigné uniquement quand `statut === "chiffre"`. */
   montant?: Fourchette;
+  /**
+   * Nom court repris dans l'intitulé du total quand la ligne est « à
+   * confirmer » : « Total des postes chiffrés, hors adaptation du tableau ».
+   */
+  nomCourt?: string;
 }
 
 export interface Devis {
@@ -104,8 +109,10 @@ export interface Devis {
   lignes: LigneDevis[];
   /** Somme des seules lignes chiffrées. */
   total?: Fourchette;
-  /** Intitulé affiché au-dessus du total. */
+  /** Intitulé affiché au-dessus du total. Porte lui-même ce que le total exclut. */
   intituleTotal: string;
+  /** Complément affiché sous le total (le taux de TVA, en général). */
+  sousTitreTotal?: string;
   /** true si au moins une ligne reste à confirmer. */
   aConfirmer: boolean;
   /** Mentions toujours visibles sous le devis. */
@@ -159,16 +166,55 @@ const casComplexe = (parcours: Parcours, raisons: string[]): Devis => ({
   mentionsRepliees: [],
 });
 
-/** Intitulé du total selon la TVA réellement appliquée. */
-const intituleTtc = (age: AgeLogement | undefined): string =>
-  age === "moins10"
-    ? "Total indicatif, TVA 21 % comprise"
-    : "Total indicatif, TVA 6 % comprise";
+/**
+ * Bien professionnel ou voiture de société : aucun taux n'est affiché ferme.
+ * Le taux dépend de l'affectation du bâtiment, pas de la qualité du client.
+ */
+const estProfessionnel = (r: Reponses): boolean =>
+  r.usage === "societe" || r.contexteRgie === "professionnel";
+
+/**
+ * Taux affiché à côté du total.
+ *
+ * Sur un bien professionnel on ne peut pas affirmer le taux, mais le montant a
+ * bien été calculé à un taux précis : on dit lequel, plutôt que d'annoncer une
+ * « TVA comprise » dont personne ne connaît la valeur. Le client peut ainsi
+ * anticiper l'écart si le taux définitif diffère.
+ */
+const taux = (r: Reponses): string => {
+  const pourcent = r.age === "moins10" ? "21" : "6";
+  return estProfessionnel(r)
+    ? `calculé avec la TVA à ${pourcent} %`
+    : `TVA ${pourcent} % comprise`;
+};
+
+/**
+ * Intitulé du total.
+ *
+ * Quand des postes restent à confirmer, la réserve est portée par l'intitulé
+ * LUI-MÊME, au-dessus du montant — pas par une note sous le montant. Le chiffre
+ * en gros caractères est celui que le visiteur retient : il ne doit jamais
+ * pouvoir être lu comme un total complet alors qu'il ne l'est pas.
+ */
+const intituleTotal = (r: Reponses, lignes: LigneDevis[]): string => {
+  const aConfirmer = lignes
+    .filter((l) => l.statut === "aConfirmer" && l.nomCourt)
+    .map((l) => l.nomCourt as string);
+
+  if (aConfirmer.length === 0) return `Total indicatif, ${taux(r)}`;
+
+  const liste =
+    aConfirmer.length === 1
+      ? aConfirmer[0]
+      : `${aConfirmer.slice(0, -1).join(", ")} et ${aConfirmer[aConfirmer.length - 1]}`;
+  return `Total des postes chiffrés, hors ${liste}`;
+};
 
 /** Mention de TVA correspondante. */
-const mentionTva = (age: AgeLogement | undefined): string => {
-  if (age === "moins10") return MENTIONS.tvaNormale;
-  if (age === "plus10") return MENTIONS.tvaReduite;
+const mentionTva = (r: Reponses): string => {
+  if (estProfessionnel(r)) return MENTIONS.tvaProfessionnel;
+  if (r.age === "moins10") return MENTIONS.tvaNormale;
+  if (r.age === "plus10") return MENTIONS.tvaReduite;
   return MENTIONS.tvaInconnue;
 };
 
@@ -236,6 +282,7 @@ function devisBorne(r: Reponses): Devis {
       libelle: "Adaptation de votre tableau électrique",
       detail: "Se chiffre sur photo de votre tableau, ou lors de la visite.",
       statut: "aConfirmer",
+      nomCourt: "adaptation du tableau",
     });
   } else if (r.tableau) {
     lignes.push({
@@ -252,6 +299,10 @@ function devisBorne(r: Reponses): Devis {
       libelle: "Protection différentielle 6 mA DC, si votre borne n'en a pas",
       detail: "Vérifié sur la fiche technique de votre borne avant confirmation du prix.",
       statut: "aConfirmer",
+      // Le terme normatif reste sur la ligne du devis, où il est expliqué.
+      // Dans l'intitulé du total — la ligne que tout le monde lit — il devient
+      // du jargon inutile.
+      nomCourt: "protection de la borne",
     });
   }
 
@@ -264,7 +315,7 @@ function devisBorne(r: Reponses): Devis {
 
   const aConfirmer = lignes.some((l) => l.statut === "aConfirmer");
 
-  const mentions: string[] = [MENTIONS.dossierCompris, mentionTva(r.age)];
+  const mentions: string[] = [MENTIONS.dossierCompris, mentionTva(r)];
   if (aConfirmer) mentions.push(MENTIONS.aConfirmer);
   mentions.push(MENTIONS.estimationIndicative);
 
@@ -283,7 +334,10 @@ function devisBorne(r: Reponses): Devis {
     raisonsComplexe: [],
     lignes,
     total: somme(lignes),
-    intituleTotal: intituleTtc(r.age),
+    intituleTotal: intituleTotal(r, lignes),
+    // Le taux ne disparaît pas : il passe sous le montant quand l'intitulé est
+    // occupé par la réserve.
+    sousTitreTotal: aConfirmer ? taux(r) : undefined,
     aConfirmer,
     mentions,
     mentionsRepliees,
@@ -324,7 +378,8 @@ function devisRgie(r: Reponses): Devis {
   const mentions: string[] = [
     RGIE_FORFAIT.libelle,
     RGIE_FORFAIT.precision,
-    mentionTva(r.age),
+    RGIE_FORFAIT.glose,
+    mentionTva(r),
   ];
   if (r.nombreTableaux === "inconnu") {
     mentions.push(
@@ -342,7 +397,7 @@ function devisRgie(r: Reponses): Devis {
     raisonsComplexe: [],
     lignes,
     total: somme(lignes),
-    intituleTotal: intituleTtc(r.age),
+    intituleTotal: intituleTotal(r, lignes),
     aConfirmer: false,
     mentions,
     mentionsRepliees,
@@ -356,12 +411,26 @@ function devisRgie(r: Reponses): Devis {
 export const zoneParValeur = (zone: Zone | undefined) =>
   ZONES.find((z) => z.value === zone);
 
+/** Montants de déplacement réellement facturés (hors « sur devis »). */
+const deplacementsConnus = (): number[] =>
+  ZONES.map((z) => z.montant).filter((m): m is number => m !== null);
+
+/**
+ * Prix plancher absolu d'une intervention : la zone la moins chère plus
+ * l'heure la moins chère. C'est le montant affiché tant que le visiteur n'a pas
+ * choisi sa commune — dérivé des tarifs, jamais écrit en dur.
+ */
+export const plancherDepannage = (): number =>
+  Math.min(...deplacementsConnus()) + Math.min(...Object.values(DEPANNAGE.mainOeuvre));
+
 function devisDepannage(r: Reponses): Devis {
   const lignes: LigneDevis[] = [];
   const zone = zoneParValeur(r.zone);
   const moment: Moment = r.moment ?? "journee";
 
-  // 1. Déplacement.
+  // 1. Déplacement. Trois états : commune connue, commune hors secteur, et
+  //    commune pas encore choisie — ce dernier cas affiche le plancher, pour
+  //    qu'un prix soit lisible avant le moindre clic.
   if (zone && zone.montant !== null) {
     lignes.push({
       libelle: `Déplacement — ${zone.label}`,
@@ -369,11 +438,19 @@ function devisDepannage(r: Reponses): Devis {
       statut: "chiffre",
       montant: fixe(zone.montant),
     });
-  } else {
+  } else if (zone) {
     lignes.push({
       libelle: "Déplacement",
       detail: "Confirmé par téléphone avant tout départ.",
       statut: "surDevis",
+    });
+  } else {
+    const montants = deplacementsConnus();
+    lignes.push({
+      libelle: "Déplacement",
+      detail: `${montants.join(" €, ")} € selon votre commune.`,
+      statut: "chiffre",
+      montant: fixe(Math.min(...montants)),
     });
   }
 
@@ -385,17 +462,17 @@ function devisDepannage(r: Reponses): Devis {
     montant: fixe(DEPANNAGE.mainOeuvre[moment]),
   });
 
-  // Le total n'a de sens que si le déplacement est connu : sinon on n'affiche
-  // pas un « à partir de » qui passerait sous silence la moitié de la facture.
-  const horsZone = !zone || zone.montant === null;
-  const total = horsZone ? undefined : somme(lignes);
+  // Hors secteur : pas de total. On n'affiche pas un « à partir de » qui
+  // passerait sous silence la moitié de la facture.
+  const horsSecteur = zone?.montant === null;
+  const total = horsSecteur ? undefined : somme(lignes);
 
   const mentions: string[] = [
     MENTIONS.depannageHeuresSuivantes,
     MENTIONS.depannageTva,
     MENTIONS.depannageMateriel,
   ];
-  if (horsZone) mentions.unshift(MENTIONS.depannageHorsZone);
+  if (horsSecteur) mentions.unshift(MENTIONS.depannageHorsZone);
   if (r.zone === "zone3" && moment === "nuit") {
     mentions.unshift(MENTIONS.depannageNuitZone3);
   }
@@ -406,7 +483,8 @@ function devisDepannage(r: Reponses): Devis {
     raisonsComplexe: [],
     lignes,
     total,
-    intituleTotal: "À partir de, hors TVA",
+    intituleTotal: "Intervention à partir de",
+    sousTitreTotal: "hors TVA — déplacement et première heure compris",
     aConfirmer: false,
     mentions,
     mentionsRepliees: [],
