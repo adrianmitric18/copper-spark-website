@@ -18,7 +18,28 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { NB_QUESTIONS } from "@/lib/simulateur/config";
+import { NB_QUESTIONS, type Parcours } from "@/lib/simulateur/config";
+
+/**
+ * Lien discret vers le parcours du simulateur correspondant à la page, sous les
+ * boutons du hero. Le dépannage ne promet ni estimation ni gratuité : ce qu'on
+ * y affiche est le prix d'une intervention payante, et il n'y a aucun
+ * formulaire à remplir.
+ */
+const LIEN_SIMULATEUR: Record<Parcours, { texte: string; suffixe: string }> = {
+  borne: {
+    texte: "estimez le prix de votre borne en 1 minute",
+    suffixe: `${NB_QUESTIONS.borne} questions, sans engagement.`,
+  },
+  rgie: {
+    texte: "estimez le prix de votre mise en conformité en 1 minute",
+    suffixe: `${NB_QUESTIONS.rgie} questions, sans engagement.`,
+  },
+  depannage: {
+    texte: "voyez ce que coûte l'intervention avant d'appeler",
+    suffixe: `${NB_QUESTIONS.depannage} questions, sans formulaire.`,
+  },
+};
 
 export interface ServiceFAQ {
   question: string;
@@ -47,7 +68,7 @@ export interface ServicePageProps {
    * couvertes par le simulateur. La valeur pré-sélectionne le besoin : depuis
    * la page RGIE, le parcours ne parle jamais de borne de recharge.
    */
-  simulateurCta?: "borne" | "rgie";
+  simulateurCta?: Parcours;
   /** Free body content (sections) */
   children: ReactNode;
   faqs: ServiceFAQ[];
@@ -170,11 +191,9 @@ const ServicePageLayout = ({
                     to={`/simulateur?besoin=${simulateurCta}`}
                     className="font-semibold text-primary underline underline-offset-4 hover:no-underline"
                   >
-                    {simulateurCta === "borne"
-                      ? "estimez le prix de votre borne en 1 minute"
-                      : "estimez le prix de votre mise en conformité en 1 minute"}
+                    {LIEN_SIMULATEUR[simulateurCta].texte}
                   </Link>{" "}
-                  — {NB_QUESTIONS[simulateurCta]} questions, sans engagement.
+                  — {LIEN_SIMULATEUR[simulateurCta].suffixe}
                 </p>
               )}
 

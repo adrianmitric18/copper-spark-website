@@ -1,4 +1,5 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
+import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 
@@ -42,6 +43,7 @@ const DepannageUrgent = () => {
         intro:
           "Une panne électrique ne peut pas attendre. Adrian intervient rapidement dans le Brabant wallon, en Wallonie et à Bruxelles pour rétablir votre installation en toute sécurité, jour et nuit, week-ends compris.",
       }}
+      simulateurCta="depannage"
       faqs={faqs}
     >
       {/* Bloc urgence */}
@@ -80,6 +82,12 @@ const DepannageUrgent = () => {
           </div>
         </div>
       </div>
+
+      {/* Le simulateur vient APRÈS le bloc d'urgence, jamais avant : quelqu'un
+          dont l'installation est en panne doit tomber sur le numéro en premier.
+          Ce parcours-ci s'adresse à celui qui veut connaître le tarif avant
+          d'appeler. */}
+      <SimulateurCTA contexte="depannage" />
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Types de pannes traitées

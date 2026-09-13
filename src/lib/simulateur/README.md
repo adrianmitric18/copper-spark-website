@@ -55,7 +55,14 @@ Template client : `{{to_email}}`, `{{from_name}}`, `{{besoin}}`,
 | `/simulateur?besoin=borne` | fourniture → distance → tableau → âge → usage | 5 | oui | oui |
 | `/simulateur?besoin=rgie` | motif → nombre de tableaux → installation → âge | 4 | oui | oui |
 | `/simulateur?besoin=depannage` | sécurité → moment → zone | 3 | **non** | **non** |
+
 | `/simulateur?besoin=combine` | redirigé vers le parcours borne | — | — | — |
+
+Chacun des trois parcours a son entrée sur la page service correspondante
+(`SimulateurCTA` + lien du hero via `simulateurCta`), et la barre mobile
+(`BESOIN_PAR_PAGE`) y renvoie aussi. Sur `/services/depannage-urgent`, l'encart
+est posé **après** le bloc d'urgence : quelqu'un en panne doit tomber sur le
+numéro d'abord.
 
 Le **dépannage ne capture rien** : ni nom, ni téléphone, ni email, et il
 n'enregistre aucun lead (arbitrage d'Adrian du 2026-09-13). Il affiche le prix
