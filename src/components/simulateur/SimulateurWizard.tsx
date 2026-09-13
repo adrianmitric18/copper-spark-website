@@ -176,7 +176,10 @@ const SimulateurWizard = ({
       securite: q.securite as Securite | undefined,
       moment: q.moment as Moment | undefined,
       zone: q.zone as Zone | undefined,
-      preferenceRappel,
+      // Le dépannage ne pose jamais la question : la laisser à sa valeur par
+      // défaut ferait apparaître « Préférence : je veux être rappelé » dans le
+      // message WhatsApp d'une panne, alors que personne ne l'a demandé.
+      preferenceRappel: DEMANDE_COORDONNEES[parcours] ? preferenceRappel : undefined,
     };
   }, [parcours, reponsesQ, modeleBorne, preferenceRappel]);
 
@@ -197,22 +200,37 @@ const SimulateurWizard = ({
    * noms `simu_step_N` sont conservés depuis la v1 : les renommer casserait
    * l'historique GA4. Le paramètre `parcours` distingue les trois tunnels.
    */
-  const evenementPour = (cible: Etape): string => {
+  const evenementPour = (cible: Etape, p: Parcours | null): string => {
     if (cible === "capture") return "simu_capture_vu";
     if (cible === "alerte") return "simu_alerte_securite_vu";
     if (cible === "resultat") {
-      return parcours === "depannage" ? "simu_depannage_vu" : "simu_resultat_vu";
+      return p === "depannage" ? "simu_depannage_vu" : "simu_resultat_vu";
     }
-    const position = sequence.indexOf(cible);
-    return `simu_step_${position >= 0 ? position + 1 : 1}`;
+    // La position est recalculée depuis le parcours passé en argument, et non
+    // depuis `sequence` : au clic de l'étape 1, l'état React n'a pas encore été
+    // réappliqué, et `sequence` vaudrait encore ["parcours"]. Le tunnel
+    // enregistrait alors deux `simu_step_1` de suite, et jamais de step 2.
+    const questions = p ? SEQUENCES[p] : [];
+    const decalage = prefill ? 0 : 1; // l'étape 1 occupe le premier palier
+    const position = questions.indexOf(cible as IdQuestion);
+    return `simu_step_${position >= 0 ? position + 1 + decalage : 1}`;
   };
 
+  /**
+   * Premier écran affiché, compté une seule fois.
+   *
+   * Sans pré-sélection, le palier 1 est l'étape « qu'est-ce qui vous amène ? ».
+   * Avec pré-sélection, cette étape est sautée : le palier 1 est alors la
+   * première question du parcours. Dans les deux cas un seul `simu_step_1`
+   * part, sinon le dénominateur du tunnel serait compté deux fois sur les
+   * entrées pré-sélectionnées.
+   */
   useEffect(() => {
-    const depuis = { source_section: "simulateur", besoin_prefill: prefill ?? "aucun" };
-    trackEvent("simu_step_1", depuis);
-    // Étape 1 sautée : l'écran réellement affiché doit être compté lui aussi,
-    // sans quoi le premier palier du tunnel serait vide sur ces entrées.
-    if (prefill) trackEvent("simu_step_1", { ...depuis, parcours: prefill });
+    trackEvent("simu_step_1", {
+      source_section: "simulateur",
+      besoin_prefill: prefill ?? "aucun",
+      parcours: prefill ?? "inconnu",
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -282,13 +300,18 @@ const SimulateurWizard = ({
     return () => window.removeEventListener("popstate", auRetour);
   }, []);
 
-  const aller = (suivante: Etape) => {
+  /**
+   * `parcoursForce` sert au clic de l'étape 1 : `setParcours` n'a pas encore
+   * pris effet dans ce rendu, et l'événement partirait sans parcours.
+   */
+  const aller = (suivante: Etape, parcoursForce?: Parcours) => {
+    const p = parcoursForce ?? parcours;
     setEtape(suivante);
     empilerEtape(suivante);
     remonter();
-    trackEvent(evenementPour(suivante), {
+    trackEvent(evenementPour(suivante, p), {
       source_section: "simulateur",
-      parcours: parcours ?? "inconnu",
+      parcours: p ?? "inconnu",
     });
   };
 
@@ -647,7 +670,7 @@ const SimulateurWizard = ({
                     // Repartir à zéro : changer d'avis à l'étape 1 ne doit pas
                     // traîner les réponses d'un autre parcours.
                     setReponsesQ({});
-                    aller(SEQUENCES[c.value][0]);
+                    aller(SEQUENCES[c.value][0], c.value);
                   }}
                 />
               ))}
