@@ -420,6 +420,24 @@ const deplacementsConnus = (): number[] =>
 export const plancherDepannage = (): number =>
   Math.min(...deplacementsConnus()) + Math.min(...Object.values(DEPANNAGE.mainOeuvre));
 
+/**
+ * Ordre de grandeur d'une intervention réelle, en journée.
+ *
+ * Le plancher est le minimum absolu (déplacement + 1 h) ; un dépannage courant
+ * dure une à deux heures. Sans cette phrase, le visiteur retient 75 € et
+ * découvre 125 € sur la facture — le calcul lui était laissé. Entièrement
+ * dérivée des constantes : aucun montant écrit en dur.
+ */
+export const fourchetteCourantePhrase = (): string => {
+  const deplacement = Math.min(...deplacementsConnus());
+  const heure = DEPANNAGE.mainOeuvre.journee;
+  const bas = deplacement + heure;
+  const haut = deplacement + heure * DEPANNAGE.dureeCouranteHeures;
+  return `Un dépannage courant dure une à ${DEPANNAGE.dureeCouranteTexte} heures, soit ${euros(
+    bas,
+  )} à ${euros(haut)} hors TVA en journée.`;
+};
+
 function devisDepannage(r: Reponses): Devis {
   const lignes: LigneDevis[] = [];
   const zone = zoneParValeur(r.zone);
@@ -480,7 +498,13 @@ function devisDepannage(r: Reponses): Devis {
     MENTIONS.depannageTva,
     MENTIONS.depannageMateriel,
   ];
-  if (horsSecteur) mentions.unshift(MENTIONS.depannageHorsZone);
+  if (horsSecteur) {
+    mentions.unshift(
+      r.zone === "sansForfait"
+        ? MENTIONS.depannageBruxelles
+        : MENTIONS.depannageHorsZone,
+    );
+  }
   // Réserve de disponibilité : toutes zones confondues.
   if (moment === "nuit") mentions.unshift(MENTIONS.depannageNuit);
 

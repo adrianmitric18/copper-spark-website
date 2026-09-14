@@ -726,17 +726,24 @@ const SimulateurWizard = ({
                 </span>
               </div>
 
-              <div className="space-y-1.5">
-                <span className="flex" aria-hidden="true">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                  ))}
-                </span>
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">{rating.ratingValueFormatted}/5</span> sur
-                  Google · {rating.reviewCount} avis
-                </p>
-              </div>
+              {/* La note n'est affichée QUE lorsque la source a répondu. La
+                  valeur de secours reste un filet (elle évite un bloc vide
+                  ailleurs sur le site), mais sur cet écran — celui où le
+                  visiteur décide de laisser ses coordonnées — un chiffre non
+                  vérifié serait un argument commercial non prouvé. */}
+              {!rating.isFallback && (
+                <div className="space-y-1.5">
+                  <span className="flex" aria-hidden="true">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </span>
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">{rating.ratingValueFormatted}/5</span> sur
+                    Google · {rating.reviewCount} avis
+                  </p>
+                </div>
+              )}
 
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Réponse rapide par un électricien basé à Court-Saint-Étienne, pas une

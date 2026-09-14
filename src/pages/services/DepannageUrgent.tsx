@@ -54,8 +54,17 @@ const DepannageUrgent = () => {
             <p className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
               Panne en cours ? Appelez maintenant
             </p>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-3">
               Réponse immédiate, intervention rapide.
+            </p>
+            {/* Seule consigne de sécurité du parcours dépannage, et elle vit
+                ici — pas dans le simulateur, qui ne donne que des prix. Reprend
+                mot pour mot la FAQ plus bas sur cette page. Sans elle, un
+                visiteur qui sent le brûlé traverse page → simulateur → appel
+                sans croiser aucun avertissement. */}
+            <p className="mb-4 font-semibold text-foreground">
+              Odeur de brûlé, fumée ou étincelles ? Quittez la pièce et appelez
+              les pompiers (112) avant de nous joindre.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a

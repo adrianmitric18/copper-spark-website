@@ -332,7 +332,13 @@ export const MOMENTS: ChoixSimple<Moment>[] = [
 //  Parcours DÉPANNAGE — question 3 : zone de déplacement
 // =====================================================================
 
-export type Zone = "zone1" | "zone2" | "zone3" | "hors";
+/**
+ * `hors` = hors secteur habituel. `sansForfait` = dans le secteur, mais le
+ * déplacement n'est pas forfaitisable (Bruxelles et ses 19 communes) : les
+ * deux mènent à « sur devis », mais ne se disent pas de la même façon au
+ * visiteur.
+ */
+export type Zone = "zone1" | "zone2" | "zone3" | "hors" | "sansForfait";
 
 /**
  * Zones calculées au kilomètre depuis Court-Saint-Étienne, mais affichées par
@@ -391,7 +397,13 @@ export const ZONES: ZoneDeplacement[] = [
     value: "zone3",
     label: "Zone 3",
     montant: 50,
-    communes: ["Bruxelles", "Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
+    communes: ["Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
+  },
+  {
+    value: "sansForfait",
+    label: "Bruxelles",
+    montant: null,
+    communes: [],
   },
   {
     value: "hors",
@@ -401,10 +413,24 @@ export const ZONES: ZoneDeplacement[] = [
   },
 ];
 
-/** Toutes les communes couvertes, par ordre alphabétique, avec leur zone. */
-export const COMMUNES: CommuneZone[] = ZONES.flatMap((z) =>
-  z.communes.map((commune) => ({ commune, zone: z.value })),
-).sort((a, b) => a.commune.localeCompare(b.commune, "fr"));
+/**
+ * Entrées du sélecteur qui ne sont pas des communes au sens strict et dont le
+ * déplacement ne peut pas être forfaitisé.
+ *
+ * Bruxelles couvre 19 communes, de 25 à 40 km de Court-Saint-Étienne : un
+ * forfait unique à 50 € y serait sous-facturé au nord et affiché ferme sur un
+ * écran lu vite (arbitrage du 2026-09-14). La main-d'œuvre, elle, reste
+ * annoncée normalement.
+ */
+export const COMMUNES_SANS_FORFAIT: CommuneZone[] = [
+  { commune: "Bruxelles (selon la commune)", zone: "sansForfait" },
+];
+
+/** Toutes les entrées du sélecteur de commune, par ordre alphabétique. */
+export const COMMUNES: CommuneZone[] = [
+  ...ZONES.flatMap((z) => z.communes.map((commune) => ({ commune, zone: z.value }))),
+  ...COMMUNES_SANS_FORFAIT,
+].sort((a, b) => a.commune.localeCompare(b.commune, "fr"));
 
 // =====================================================================
 //  Écran dépannage — un seul écran, le prix d'abord
@@ -423,7 +449,9 @@ export const COMMUNES: CommuneZone[] = ZONES.flatMap((z) =>
  */
 export const ECRAN_DEPANNAGE = {
   eyebrow: "Dépannage",
-  titre: "Nos tarifs de dépannage",
+  // « Nos tarifs » annonçait une grille — c'est ce qu'affichait la v1. L'écran
+  // chiffre désormais un cas, pas un catalogue.
+  titre: "Ce que coûte votre dépannage",
   intituleMontant: "Intervention à partir de",
   detailMontant: "Déplacement et première heure compris.",
   invitePrecision: "Choisissez votre commune pour le montant exact.",
@@ -491,8 +519,11 @@ export const TABLEAUX_A_CONFIRMER: EtatTableau[] = ["classique", "ancien", "inco
  */
 export const RGIE_FORFAIT = {
   montant: 550,
+  // « maison standard » était un critère subjectif opposable : le client le
+  // lisait comme un engagement, Adrian pouvait le refuser sur son appréciation.
+  // « une habitation avec un seul tableau électrique » est vérifiable.
   libelle:
-    "Forfait 550 € pour une maison standard avec un seul tableau électrique : relevé technique complet sur place + rédaction des plans (unifilaire et position) + coordination et présence lors du contrôle de l'organisme agréé.",
+    "Forfait 550 € pour une habitation avec un seul tableau électrique : relevé technique complet sur place + rédaction des plans (unifilaire et position) + coordination et présence lors du contrôle de l'organisme agréé.",
   /**
    * Le libellé d'Adrian dit « coordination et présence », ce qui décrit le
    * travail fait PENDANT un contrôle — un lecteur en déduit naturellement que
@@ -549,6 +580,14 @@ export const DEPANNAGE = {
   } as Record<Moment, string>,
   detailPremiereHeure: "Toute heure entamée est due.",
   detailDeplacement: "Forfait annoncé et accepté avant que nous prenions la route.",
+  /**
+   * Durée d'un dépannage courant, validée par Adrian le 2026-09-14. Sert à
+   * afficher un ordre de grandeur réel à côté du plancher : celui-ci est le
+   * minimum absolu, pas ce que coûte une intervention typique.
+   */
+  dureeCouranteHeures: 2,
+  /** Le même nombre, en toutes lettres, pour la phrase affichée. */
+  dureeCouranteTexte: "deux",
 } as const;
 
 // =====================================================================
@@ -618,6 +657,10 @@ export const MENTIONS = {
     "Intervention de nuit sous réserve de disponibilité, confirmée par téléphone.",
   depannageHorsZone:
     "Votre commune est en dehors de notre secteur habituel : le déplacement est confirmé par téléphone, avant tout départ.",
+  // Bruxelles est bien desservie — c'est l'étendue de la région (19 communes,
+  // de 25 à 40 km) qui interdit un forfait unique, pas la distance.
+  depannageBruxelles:
+    "Bruxelles compte 19 communes, à des distances très différentes : le déplacement est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
   // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
   // et l'argument n'en avait pas besoin.
   depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",

@@ -34,6 +34,7 @@ import {
   formatEuros,
   formatFourchette,
   formatLigne,
+  fourchetteCourantePhrase,
   type Devis,
   type LigneDevis,
   type Reponses,
@@ -377,6 +378,11 @@ export const EcranDepannage = () => {
             : "hors TVA — déplacement confirmé par téléphone"
         }
       />
+
+      {/* Le plancher est le minimum absolu : sans ordre de grandeur réel à
+          côté, le visiteur retient 75 € et fait lui-même le calcul des heures
+          suivantes. Phrase dérivée des constantes de tarif. */}
+      <MentionBox>{fourchetteCourantePhrase()}</MentionBox>
 
       <div className="rounded-3xl border border-border/60 bg-card p-5 md:p-7">
         <ul className="divide-y divide-border/60">
