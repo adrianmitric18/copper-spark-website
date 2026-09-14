@@ -65,14 +65,9 @@ import {
 import { calculerDevis, formatFourchette, type Reponses } from "@/lib/simulateur/calcul";
 import { envoyerSimulation } from "@/lib/simulateur/submit";
 import { ChoiceCard, MentionBox, ProgressBar, StepShell } from "./SimulateurUI";
-import {
-  EcranAlerteSecurite,
-  EcranComplexe,
-  EcranDepannage,
-  EcranDevis,
-} from "./SimulateurResultat";
+import { EcranComplexe, EcranDepannage, EcranDevis } from "./SimulateurResultat";
 
-type Etape = "parcours" | IdQuestion | "depannage" | "capture" | "resultat" | "alerte";
+type Etape = "parcours" | IdQuestion | "depannage" | "capture" | "resultat";
 
 /**
  * Premier écran d'un parcours.
@@ -212,7 +207,6 @@ const SimulateurWizard = ({
    */
   const evenementPour = (cible: Etape, p: Parcours | null): string => {
     if (cible === "capture") return "simu_capture_vu";
-    if (cible === "alerte") return "simu_alerte_securite_vu";
     // Le dépannage tient sur un écran : une seule vue, un seul événement. Les
     // deux sélecteurs émettent les leurs depuis l'écran lui-même.
     if (cible === "depannage") return "simu_depannage_vu";
@@ -286,7 +280,7 @@ const SimulateurWizard = ({
 
   const peutAfficher = (e: Etape): boolean => {
     const s = etatRef.current;
-    if (e === "parcours" || e === "alerte" || e === "depannage") return true;
+    if (e === "parcours" || e === "depannage") return true;
     if (!s.parcours) return false;
     const questions = SEQUENCES[s.parcours];
     if (e === "capture" || e === "resultat") {
@@ -571,7 +565,7 @@ const SimulateurWizard = ({
   const apercuFloute =
     devis && !devis.complexe && devis.total
       ? formatFourchette(devis.total)
-      : "Visite gratuite";
+      : "Visite sur place";
 
   // --- Rendu générique d'une question --------------------------------------
   const ecranQuestion = (id: IdQuestion) => {
@@ -654,9 +648,9 @@ const SimulateurWizard = ({
 
   return (
     <div ref={hautRef} className="mx-auto w-full max-w-2xl scroll-mt-28">
-      {/* Ni sur le résultat, ni sur l'alerte, ni sur le dépannage : ce dernier
-          tient sur un écran, il n'y a aucune progression à montrer. */}
-      {etape !== "resultat" && etape !== "alerte" && etape !== "depannage" && (
+      {/* Ni sur le résultat, ni sur le dépannage : ce dernier tient sur un
+          écran, il n'y a aucune progression à montrer. */}
+      {etape !== "resultat" && etape !== "depannage" && (
         <ProgressBar pourcentage={pourcentage} />
       )}
 
@@ -706,14 +700,7 @@ const SimulateurWizard = ({
                 Retour
               </button>
             )}
-            <EcranDepannage onAlerte={() => aller("alerte")} />
-          </motion.div>
-        )}
-
-        {/* --- Alerte sécurité -------------------------------------------- */}
-        {etape === "alerte" && (
-          <motion.div key="alerte">
-            <EcranAlerteSecurite />
+            <EcranDepannage />
           </motion.div>
         )}
 

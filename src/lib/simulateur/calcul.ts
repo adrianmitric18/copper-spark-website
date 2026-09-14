@@ -14,7 +14,6 @@
  */
 
 import {
-  ALERTE_SECURITE,
   BORNE,
   DEPANNAGE,
   DISTANCES_COMPLEXES,
@@ -36,7 +35,6 @@ import {
   type NombreTableaux,
   type Parcours,
   type PreferenceRappel,
-  type Securite,
   type Usage,
   type Zone,
 } from "./config";
@@ -65,7 +63,6 @@ export interface Reponses {
   nombreTableaux?: NombreTableaux;
 
   // --- Parcours dépannage ---
-  securite?: Securite;
   moment?: Moment;
   zone?: Zone;
 
@@ -515,9 +512,6 @@ export function calculerDevis(reponses: Reponses): Devis {
       return devisDepannage(reponses);
   }
 }
-
-/** Réexporté pour l'écran d'alerte, qui n'a ni devis ni calcul. */
-export { ALERTE_SECURITE };
 
 // =====================================================================
 //  Formatage

@@ -2,24 +2,22 @@
  * Simulateur de prix v2 — écrans finaux.
  *
  * Trois sorties possibles :
- *   - le mini-devis indicatif par poste (borne, RGIE, dépannage) ;
+ *   - le mini-devis indicatif par poste (borne, RGIE) ;
+ *   - l'écran dépannage, purement tarifaire ;
  *   - le cas complexe, où l'on n'affiche AUCUN chiffre et où l'on propose une
- *     visite gratuite ;
- *   - l'alerte sécurité, qui coupe tout : une consigne, un bouton d'appel, rien
- *     d'autre.
+ *     visite sur place.
  *
  * Un poste « à confirmer » n'entre jamais dans le total affiché : le total ne
  * doit jamais être gonflé par un chiffre qu'on n'a pas.
  */
 
 import { useState } from "react";
-import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown, Wrench, AlertTriangle } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import {
-  ALERTE_SECURITE,
   COMMUNES,
   CONTACT,
   DEPANNAGE,
@@ -70,7 +68,7 @@ const Actions = ({
   contexte: string;
   libelleAppel: string;
   libelleWhatsApp: string;
-  /** Écrans où l'appel est l'action utile : dépannage, alerte sécurité. */
+  /** Écran où l'appel est l'action utile : le dépannage. */
   gros?: boolean;
 }) => {
   const { trackEvent } = useAnalyticsEvents();
@@ -297,18 +295,19 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
 // =====================================================================
 
 /**
- * Le parcours dépannage tient sur un écran.
+ * Le parcours dépannage tient sur un écran, purement tarifaire.
  *
- * Trois écrans successifs avant de voir un prix, c'était deux de trop pour
- * quelqu'un dont l'installation vient de lâcher (retour d'Adrian après test de
- * la preview). L'ordre est donc : contrôle de sécurité, prix plancher lisible
- * immédiatement, puis deux sélecteurs qui affinent le montant en direct — sans
- * jamais changer de page. Les boutons d'appel restent sous le prix en
- * permanence.
+ * Le prix plancher est lisible avant le moindre clic, puis deux sélecteurs
+ * l'affinent en direct — sans jamais changer de page. Les boutons d'appel
+ * restent sous le prix en permanence.
  *
- * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée.
+ * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée, et
+ * AUCUNE consigne de sécurité n'est donnée (décision d'Adrian du 2026-09-14) :
+ * le simulateur est un outil de prix. Les consignes en cas de fumée ou d'odeur
+ * de brûlé vivent dans la FAQ de /services/depannage-urgent, seule source sur
+ * le sujet — ne pas les réintroduire ici sans en reparler à Adrian.
  */
-export const EcranDepannage = ({ onAlerte }: { onAlerte: () => void }) => {
+export const EcranDepannage = () => {
   const { trackEvent } = useAnalyticsEvents();
   const [commune, setCommune] = useState("");
   const [moment, setMoment] = useState<Moment>("journee");
@@ -321,7 +320,7 @@ export const EcranDepannage = ({ onAlerte }: { onAlerte: () => void }) => {
         ? "hors"
         : COMMUNES.find((c) => c.commune === commune)?.zone;
 
-  const reponses: Reponses = { parcours: "depannage", securite: "rien", moment, zone };
+  const reponses: Reponses = { parcours: "depannage", moment, zone };
   const devis = calculerDevis(reponses);
 
   const choisirCommune = (valeur: string) => {
@@ -361,30 +360,6 @@ export const EcranDepannage = ({ onAlerte }: { onAlerte: () => void }) => {
           <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
             {ECRAN_DEPANNAGE.titre}
           </h2>
-        </div>
-      </div>
-
-      {/* Contrôle de sécurité, en tête d'écran. Une seule affordance : le
-          « non » se traduit par ne rien cliquer, ce qui évite un clic à tout le
-          monde pour un cas rare. */}
-      <div className="rounded-2xl border-2 border-destructive/40 bg-destructive/[0.06] p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="flex items-center gap-2 font-display font-bold text-foreground">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
-              {ECRAN_DEPANNAGE.securiteQuestion}
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {ECRAN_DEPANNAGE.securiteAide}
-            </p>
-          </div>
-          <Button
-            variant="destructive"
-            onClick={onAlerte}
-            className="shrink-0 whitespace-normal"
-          >
-            {ECRAN_DEPANNAGE.securiteOui}
-          </Button>
         </div>
       </div>
 
@@ -527,9 +502,15 @@ export const EcranComplexe = ({ reponses, devis, prenom }: Props) => (
       </ul>
     )}
 
+    {/* « Gratuits » sans réserve contredisait /faq, qui prévoit des frais de
+        déplacement possibles sur les diagnostics approfondis et les trajets
+        très éloignés — c'est-à-dire exactement les chantiers qui atterrissent
+        sur cet écran. La formulation reprend celle de la FAQ. */}
     <MentionBox>
       Donner une fourchette sur ce type de chantier sans l'avoir vu reviendrait à
-      avancer un chiffre au hasard. Le déplacement et la visite sont gratuits.
+      avancer un chiffre au hasard. La visite et le devis sont gratuits ; sur un
+      déplacement très éloigné, des frais peuvent s'appliquer — ils sont
+      annoncés à l'avance et déduits si les travaux sont acceptés.
     </MentionBox>
 
     <Actions
@@ -543,92 +524,3 @@ export const EcranComplexe = ({ reponses, devis, prenom }: Props) => (
     <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
   </motion.div>
 );
-
-// =====================================================================
-//  Alerte sécurité — aucune question, aucun formulaire, aucun prix
-// =====================================================================
-
-/**
- * Sortie immédiate du parcours dépannage. Une odeur de brûlé ou des étincelles
- * ne se chiffrent pas : on donne la consigne qui protège, puis le numéro. Rien
- * d'autre ne doit apparaître sur cet écran — surtout pas un formulaire.
- */
-export const EcranAlerteSecurite = () => {
-  const { trackEvent } = useAnalyticsEvents();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/40">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-        </span>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-destructive">
-            Sécurité
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
-            {ALERTE_SECURITE.titre}
-          </h2>
-        </div>
-      </div>
-
-      {/* Les secours d'abord, et en premier dans l'ordre de lecture : cet écran
-          se déclenche sur « fumée, étincelles, odeur de brûlé ». Le geste au
-          tableau vient après, et seulement s'il est sans danger. */}
-      <div
-        className="rounded-3xl border-2 border-destructive/60 p-7 md:p-9 shadow-xl shadow-destructive/20"
-        style={{ background: FOND_ANTHRACITE }}
-      >
-        <p className="font-display text-xl md:text-2xl font-black leading-snug text-white">
-          {ALERTE_SECURITE.urgence}
-        </p>
-        <p className="mt-5 leading-relaxed text-white/85">{ALERTE_SECURITE.consigne}</p>
-        <p className="mt-3 leading-relaxed text-white/70">{ALERTE_SECURITE.precision}</p>
-      </div>
-
-      {/* Le 112 d'abord, en rouge et en premier dans l'ordre de tabulation.
-          L'appel à l'entreprise vient après, visuellement secondaire : sur un
-          téléphone, dans la panique, c'est le bouton le plus gros qui est
-          tapé, pas la phrase la plus importante. */}
-      <div className="space-y-3">
-        <Button
-          variant="destructive"
-          size="lg"
-          asChild
-          className="w-full h-auto min-h-16 whitespace-normal py-5 text-center text-xl font-black leading-snug"
-        >
-          <a
-            href="tel:112"
-            onClick={() => trackEvent("urgence_112_click", { source_section: "simulateur_alerte" })}
-          >
-            <Phone className="w-6 h-6 mr-3 shrink-0" />
-            {ALERTE_SECURITE.boutonUrgence}
-          </a>
-        </Button>
-
-        <Button
-          variant="outline"
-          size="lg"
-          asChild
-          className="w-full h-auto min-h-14 whitespace-normal py-4 text-center text-base font-bold leading-snug"
-        >
-          <a
-            href={`tel:${CONTACT.telephone}`}
-            data-analytics="call_click"
-            onClick={() => trackEvent("call_click", { source_section: "simulateur_alerte" })}
-          >
-            <Phone className="w-5 h-5 mr-2 shrink-0" />
-            {ALERTE_SECURITE.boutonNous} — {CONTACT.telephoneAffiche}
-          </a>
-        </Button>
-      </div>
-
-      <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
-    </motion.div>
-  );
-};

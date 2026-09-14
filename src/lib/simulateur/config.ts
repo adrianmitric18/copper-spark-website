@@ -59,7 +59,6 @@ export type IconeChoix =
   | "neuf"
   | "tableau"
   | "tableaux"
-  | "danger"
   | "jour"
   | "nuit"
   | "agenda"
@@ -308,50 +307,7 @@ export const NOMBRES_TABLEAUX: ChoixSimple<NombreTableaux>[] = [
 export const TABLEAUX_COMPLEXES: NombreTableaux[] = ["plusieurs"];
 
 // =====================================================================
-//  Parcours DÉPANNAGE — question 1 : sécurité
-// =====================================================================
-
-export type Securite = "danger" | "rien";
-
-export const SECURITE: ChoixSimple<Securite>[] = [
-  {
-    value: "danger",
-    icone: "danger",
-    label: "Oui",
-    description: "Odeur de brûlé, étincelles, fumée, ou un câble qui a chauffé.",
-  },
-  { value: "rien", icone: "recente", label: "Non, rien de tout ça" },
-];
-
-/**
- * Écran d'alerte : aucune question, aucun formulaire, aucun prix.
- *
- * L'ordre des consignes n'est pas négociable et n'est pas un choix de
- * rédaction. Cet écran se déclenche sur « fumée, étincelles, odeur de brûlé » :
- * les secours passent AVANT tout, et le geste au tableau — qui envoie quelqu'un
- * vers l'endroit qui brûle peut-être — est conditionné. La version précédente
- * demandait d'aller au tableau sans mentionner le 112, et contredisait la FAQ
- * de /services/depannage-urgent, qui dit l'inverse depuis toujours.
- */
-export const ALERTE_SECURITE = {
-  titre: "Mettez-vous en sécurité d'abord",
-  urgence: "S'il y a de la fumée ou des flammes : sortez et appelez le 112.",
-  consigne:
-    "Sinon, et seulement si vous pouvez le faire sans danger, coupez le disjoncteur général — le gros interrupteur en haut de votre tableau électrique — et n'y retouchez pas.",
-  precision:
-    "Ne rebranchez rien, ne tentez pas de le réarmer. Appelez-nous ensuite : on vous dit quoi faire en attendant.",
-  /**
-   * Le 112 doit être un BOUTON, en premier et en rouge, pas une phrase.
-   * Corriger l'ordre des mots sans corriger l'ordre des gestes ne servait à
-   * rien : sur un téléphone, dans la panique, on tape ce qui est gros et
-   * coloré, pas ce qui est écrit.
-   */
-  boutonUrgence: "Appeler le 112",
-  boutonNous: "Appeler Le Cuivre Électrique",
-} as const;
-
-// =====================================================================
-//  Parcours DÉPANNAGE — question 2 : quand intervenir
+//  Parcours DÉPANNAGE — quand intervenir
 // =====================================================================
 
 export type Moment = "journee" | "nuit" | "rdv";
@@ -455,23 +411,19 @@ export const COMMUNES: CommuneZone[] = ZONES.flatMap((z) =>
 // =====================================================================
 
 /**
- * Le parcours dépannage ne pose plus trois questions successives : quelqu'un
- * dont l'installation vient de lâcher n'a pas la patience de trois écrans avant
- * de voir un prix (retour d'Adrian après test, 2026-09-13). Tout tient sur un
- * écran : le contrôle de sécurité en haut, le prix plancher immédiatement
- * lisible, puis deux sélecteurs qui l'affinent en direct.
+ * Écran dépannage : purement tarifaire.
+ *
+ * Deux décisions successives d'Adrian l'ont amené là. D'abord la compaction :
+ * trois écrans avant de voir un prix, c'était deux de trop pour quelqu'un dont
+ * l'installation vient de lâcher. Ensuite la suppression du contrôle de
+ * sécurité (2026-09-14) : le simulateur est un outil de prix, il ne donne
+ * aucune consigne de sécurité. Celles-ci vivent dans la FAQ de
+ * /services/depannage-urgent, qui reste la seule source sur le sujet — ne pas
+ * les réintroduire ici sans en reparler à Adrian.
  */
 export const ECRAN_DEPANNAGE = {
   eyebrow: "Dépannage",
   titre: "Nos tarifs de dépannage",
-  securiteQuestion: "Odeur de brûlé, étincelles ou fumée ?",
-  // La sous-ligne porte la consigne, pas le comportement du simulateur : celui
-  // qui sent le brûlé se moque de savoir que le parcours s'interrompt.
-  securiteAide: "Si c'est le cas, ne touchez à rien : on vous dit quoi faire tout de suite.",
-  // Libellé autoporteur : « Oui » seul ne dit rien à un lecteur d'écran, sur
-  // l'écran précisément où l'erreur de clic compte le plus.
-  securiteOui: "Oui, c'est le cas",
-  securiteNon: "Non",
   intituleMontant: "Intervention à partir de",
   detailMontant: "Déplacement et première heure compris.",
   invitePrecision: "Choisissez votre commune pour le montant exact.",
@@ -631,8 +583,12 @@ export const MENTIONS = {
    */
   tvaProfessionnel:
     "Le taux de TVA applicable est confirmé avec vous : il dépend de l'affectation du bien.",
+  // Les régimes fiscaux belges sur les bornes ont été bornés dans le temps et
+  // dégressifs : annoncer une déduction comme un fait permanent, sur une page
+  // qui vivra des années, revient à promettre un avantage qui peut avoir
+  // disparu. On renvoie donc la vérification au devis, daté, lui.
   deductionSociete:
-    "Sociétés & indépendants : déduction fiscale possible pour une borne intelligente.",
+    "Sociétés & indépendants : selon le régime en vigueur, une déduction fiscale peut s'appliquer. Nous vérifions ce qui vaut pour votre situation au moment du devis.",
   facturationSociete:
     "Facturation adaptée pour les sociétés et indépendants : TVA déductible, attestation pour votre comptable.",
   splitBilling:
@@ -640,7 +596,7 @@ export const MENTIONS = {
   gestionDynamique:
     "La répartition automatique de la puissance entre votre maison et votre voiture est activable au passage au compteur digital.",
   casComplexe:
-    "Votre projet mérite une visite gratuite sur place, pour tout mesurer et vous donner un prix juste.",
+    "Votre projet mérite une visite sur place, pour tout mesurer et vous donner un prix juste.",
   electricienLocal:
     "Votre demande est traitée par un électricien local basé à Court-Saint-Étienne, pas par une plateforme.",
   rgpdCapture:

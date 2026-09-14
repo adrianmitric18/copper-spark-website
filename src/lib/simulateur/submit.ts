@@ -167,7 +167,7 @@ export function resumerSimulation(reponses: Reponses, devis: Devis): string {
   lignes.push("");
 
   if (devis.complexe) {
-    lignes.push("Estimation : aucun prix affiché, visite gratuite proposée");
+    lignes.push("Estimation : aucun prix affiché, visite sur place proposée");
     devis.raisonsComplexe.forEach((raison) => lignes.push(`  · ${raison}`));
   } else {
     lignes.push("Devis indicatif affiché :");
@@ -185,7 +185,7 @@ export function resumerSimulation(reponses: Reponses, devis: Devis): string {
 
 /** Fourchette affichée, en une ligne, pour l'email et l'admin. */
 const totalAffiche = (devis: Devis): string => {
-  if (devis.complexe) return "Aucun prix affiché — visite gratuite proposée";
+  if (devis.complexe) return "Aucun prix affiché — visite sur place proposée";
   return devis.total ? formatFourchette(devis.total) : "Non calculée";
 };
 
@@ -325,7 +325,7 @@ export async function envoyerSimulation(ctx: ContexteEnvoi): Promise<ResultatEnv
       ? libelle(CONTEXTES_RGIE, r.contexteRgie)
       : libelle(USAGES, r.usage),
     fourchette: fourchetteTexte,
-    complexe: devis.complexe ? "OUI — visite gratuite proposée" : "Non",
+    complexe: devis.complexe ? "OUI — visite sur place proposée" : "Non",
     resume,
     photo: lienPhoto,
     suspect: ctx.suspect ? `OUI (envoi en ${Math.round(ctx.dureeMs / 1000)} s)` : "Non",

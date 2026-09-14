@@ -10,7 +10,6 @@
 
 import type { ReactNode } from "react";
 import {
-  AlertTriangle,
   ArrowLeft,
   Building2,
   CalendarClock,
@@ -65,7 +64,6 @@ const ICONES: Record<IconeChoix, LucideIcon> = {
   neuf: Sparkles,
   tableau: CircuitBoard,
   tableaux: Layers,
-  danger: AlertTriangle,
   jour: Sun,
   nuit: Moon,
   agenda: CalendarClock,
