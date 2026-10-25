@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Clock, MapPin, Receipt, ShieldCheck, Wrench } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -8,7 +8,7 @@ import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import SimulateurWizard from "@/components/simulateur/SimulateurWizard";
-import { NB_QUESTIONS, PARCOURS_OBSOLETES, type Parcours } from "@/lib/simulateur/config";
+import { NB_QUESTIONS, PAGE_DEPANNAGE, PARCOURS_OBSOLETES, type Parcours } from "@/lib/simulateur/config";
 
 /**
  * Page /simulateur — borne de recharge, mise en conformité RGIE, dépannage.
@@ -102,6 +102,11 @@ const Simulateur = () => {
     parcoursDepuisUrl(params.get("besoin")),
   );
   const variante = VARIANTES[parcours ?? "defaut"];
+
+  // Anciens liens et favoris : le dépannage se lit désormais sur sa page.
+  if (parcoursDepuisUrl(params.get("besoin")) === "depannage") {
+    return <Navigate to={PAGE_DEPANNAGE} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">

@@ -54,7 +54,7 @@ Template client : `{{to_email}}`, `{{from_name}}`, `{{besoin}}`,
 | `/simulateur` | étape 1 (3 choix) puis le parcours choisi | — | — | — |
 | `/simulateur?besoin=borne` | fourniture → distance → tableau → âge → usage | 5 | oui | oui |
 | `/simulateur?besoin=rgie` | motif → nombre de tableaux → installation → âge | 4 | oui | oui |
-| `/simulateur?besoin=depannage` | écran unique : commune + moment, prix affiché d'emblée | 0 | **non** | **non** |
+| `/simulateur?besoin=depannage` | **redirigé vers `/services/depannage-urgent`** (grille affichée sans clic) | — | — | — |
 
 | `/simulateur?besoin=combine` | redirigé vers le parcours borne | — | — | — |
 
@@ -64,13 +64,13 @@ Chacun des trois parcours a son entrée sur la page service correspondante
 est posé **après** le bloc d'urgence : quelqu'un en panne doit tomber sur le
 numéro d'abord.
 
-Le **dépannage ne capture rien** : ni nom, ni téléphone, ni email, et il
-n'enregistre aucun lead (arbitrage d'Adrian du 2026-09-13). Il tient sur un
-**écran unique, purement tarifaire** (`ECRAN_DEPANNAGE`) : le forfait de la zone
-la moins chère est lisible avant le moindre clic, les sélecteurs commune et
-moment l'affinent en direct, puis boutons d'appel et WhatsApp. **Aucune consigne
-de sécurité** n'y est donnée (décision d'Adrian du 2026-09-14) : elles vivent
-dans /services/depannage-urgent, seule source sur le sujet.
+Le **dépannage ne passe plus par le simulateur** (décision d'Adrian du
+2026-10-25) : la grille est affichée sans clic en haut de
+`/services/depannage-urgent` (`GrilleDepannage`), et toutes les entrées
+« dépannage » — étape 1, `?besoin=depannage`, barre mobile, encart CTA — y
+renvoient (`PAGE_DEPANNAGE`). L'écran `EcranDepannage` et `ECRAN_DEPANNAGE`
+restent dans le code mais ne sont plus atteignables ; aucun lead, aucune
+coordonnée, aucune consigne de sécurité n'y a jamais été demandée ou donnée.
 
 Les questions ne vivent pas dans le composant : elles sont décrites par
 `QUESTIONS` et `SEQUENCES` dans `config.ts`, et rendues par un écran générique.
