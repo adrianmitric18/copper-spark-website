@@ -844,6 +844,14 @@ export const NB_QUESTIONS: Record<Parcours, number> = {
 //  Contact
 // =====================================================================
 
+/**
+ * Page où la grille de dépannage est affichée sans clic. Depuis le 2026-10-25,
+ * toute entrée « dépannage » du simulateur (étape 1, `?besoin=depannage`, barre
+ * mobile, encart CTA) y renvoie : un visiteur en panne ne passe pas par un
+ * simulateur pour lire un prix.
+ */
+export const PAGE_DEPANNAGE = "/services/depannage-urgent";
+
 export const CONTACT = {
   telephone: "+32485755227",
   telephoneAffiche: "0485 75 52 27",

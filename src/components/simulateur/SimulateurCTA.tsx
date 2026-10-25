@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NB_QUESTIONS, type Parcours } from "@/lib/simulateur/config";
+import { NB_QUESTIONS, PAGE_DEPANNAGE, type Parcours } from "@/lib/simulateur/config";
 
 /**
  * Encart d'accès au simulateur, posé sur les trois pages services qui ont un
@@ -28,10 +28,12 @@ const TEXTES: Record<Parcours, { titre: string; corps: string; bouton: string }>
     corps: `${NB_QUESTIONS.rgie} questions sur votre installation et le motif du contrôle, et vous obtenez un devis indicatif détaillé pour votre mise en conformité.`,
     bouton: "Lancer le simulateur",
   },
+  // Le dépannage ne passe plus par le simulateur : l'encart renvoie vers la
+  // page dépannage, où la grille est lisible sans clic (2026-10-25).
   depannage: {
     titre: "Voyez ce que coûte l'intervention avant d'appeler",
     corps:
-      "Le prix s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
+      "Les forfaits par commune, en journée comme le soir et le dimanche, sont affichés directement sur la page dépannage.",
     bouton: "Voir les tarifs",
   },
 };
@@ -52,7 +54,7 @@ const SimulateurCTA = ({ contexte }: { contexte: Parcours }) => {
           <p className="text-muted-foreground leading-relaxed">{textes.corps}</p>
         </div>
         <Button variant="copper" size="lg" asChild className="shrink-0 w-full md:w-auto">
-          <Link to={`/simulateur?besoin=${contexte}`}>
+          <Link to={contexte === "depannage" ? PAGE_DEPANNAGE : `/simulateur?besoin=${contexte}`}>
             {textes.bouton}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>

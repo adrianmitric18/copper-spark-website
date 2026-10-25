@@ -18,7 +18,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import { NB_QUESTIONS, type Parcours } from "@/lib/simulateur/config";
+import { NB_QUESTIONS, PAGE_DEPANNAGE, type Parcours } from "@/lib/simulateur/config";
 
 /**
  * Lien discret vers le parcours du simulateur correspondant à la page, sous les
@@ -36,8 +36,8 @@ const LIEN_SIMULATEUR: Record<Parcours, { texte: string; suffixe: string }> = {
     suffixe: `${NB_QUESTIONS.rgie} questions, sans engagement.`,
   },
   depannage: {
-    texte: "voyez ce que coûte l'intervention avant d'appeler",
-    suffixe: "prix affiché tout de suite, sans formulaire.",
+    texte: "voyez nos forfaits de dépannage",
+    suffixe: "affichés directement, par commune.",
   },
 };
 
@@ -188,7 +188,11 @@ const ServicePageLayout = ({
                 <p className="mt-5 text-sm text-muted-foreground">
                   Ou{" "}
                   <Link
-                    to={`/simulateur?besoin=${simulateurCta}`}
+                    to={
+                      simulateurCta === "depannage"
+                        ? PAGE_DEPANNAGE
+                        : `/simulateur?besoin=${simulateurCta}`
+                    }
                     className="font-semibold text-primary underline underline-offset-4 hover:no-underline"
                   >
                     {LIEN_SIMULATEUR[simulateurCta].texte}

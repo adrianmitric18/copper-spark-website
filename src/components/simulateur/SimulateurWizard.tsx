@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Loader2, Lock, ImagePlus, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ import {
   MENTIONS,
   NB_QUESTIONS,
   PARCOURS,
+  PAGE_DEPANNAGE,
   PARCOURS_OBSOLETES,
   PREFERENCES_RAPPEL,
   QUESTIONS,
@@ -120,6 +121,7 @@ const SimulateurWizard = ({
   // Pré-sélection par page d'origine. Lue une seule fois : changer l'URL en
   // cours de parcours ne doit pas réinitialiser les réponses déjà données.
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const prefillRef = useRef<Parcours | null>(lirePrefill(params.get("besoin")));
   const prefill = prefillRef.current;
 
@@ -672,6 +674,15 @@ const SimulateurWizard = ({
                   description={c.description}
                   selectionne={parcours === c.value}
                   onClick={() => {
+                    // Le dépannage ne passe plus par le simulateur : la grille
+                    // est lisible sans clic sur la page dépannage.
+                    if (c.value === "depannage") {
+                      trackEvent("simu_depannage_vers_page", {
+                        source_section: "simulateur_etape1",
+                      });
+                      navigate(PAGE_DEPANNAGE);
+                      return;
+                    }
                     setParcours(c.value);
                     // Repartir à zéro : changer d'avis à l'étape 1 ne doit pas
                     // traîner les réponses d'un autre parcours.

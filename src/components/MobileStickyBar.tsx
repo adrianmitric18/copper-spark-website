@@ -1,7 +1,7 @@
 import { Phone, FileText, Calculator } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import type { Parcours } from "@/lib/simulateur/config";
+import { PAGE_DEPANNAGE, type Parcours } from "@/lib/simulateur/config";
 
 /**
  * Barre de conversion mobile.
@@ -35,8 +35,13 @@ const VARIANTE = variante();
 const BESOIN_PAR_PAGE: Record<string, Parcours> = {
   "/services/bornes-de-recharge": "borne",
   "/services/mise-en-conformite-rgie": "rgie",
-  "/services/depannage-urgent": "depannage",
 };
+
+/**
+ * Pages où le prix est déjà affiché sans clic : proposer « Estimer » n'y a
+ * aucun sens. La page dépannage montre sa grille en haut (2026-10-25).
+ */
+const PAGES_PRIX_AFFICHES = new Set([PAGE_DEPANNAGE]);
 
 const MobileStickyBar = () => {
   const { trackEvent } = useAnalyticsEvents();
@@ -46,7 +51,7 @@ const MobileStickyBar = () => {
   if (pathname.startsWith("/admin")) return null;
 
   // Sur le simulateur lui-même, inutile de proposer d'y aller.
-  const surSimulateur = pathname.startsWith("/simulateur");
+  const surSimulateur = pathname.startsWith("/simulateur") || PAGES_PRIX_AFFICHES.has(pathname);
 
   const besoin = BESOIN_PAR_PAGE[pathname];
   const lienVersSimulateur = besoin ? `/simulateur?besoin=${besoin}` : "/simulateur";
