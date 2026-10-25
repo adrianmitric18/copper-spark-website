@@ -2,6 +2,32 @@ import ServicePageLayout from "@/components/services/ServicePageLayout";
 import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import {
+  DEFINITION_MOMENT,
+  DEPANNAGE,
+  MENTIONS,
+  ZONES,
+  type Moment,
+  type ZoneDeplacement,
+} from "@/lib/simulateur/config";
+import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
+
+/**
+ * Grille de dépannage affichée au public (section « Tarification transparente »
+ * et FAQ). Les montants viennent de `config.ts`, jamais d'ici : la page et le
+ * simulateur ne peuvent pas diverger. Grille du 2026-10-25 : forfait
+ * (déplacement + première heure) par zone et par moment, puis demi-heure
+ * supplémentaire entamée.
+ */
+type ZoneForfaitisee = ZoneDeplacement & { forfait: Record<Moment, number> };
+const ZONES_FORFAIT = ZONES.filter((z): z is ZoneForfaitisee => z.forfait !== null);
+const forfaitsJour = ZONES_FORFAIT.map((z) => z.forfait.jour);
+const forfaitsNuit = ZONES_FORFAIT.map((z) => z.forfait.nuitWeekend);
+const demiHeure = DEPANNAGE.demiHeureSupplementaire;
+
+/** « Zone 1 : 110 €, Zone 2 : 130 €, Zone 3 : 150 € » — pour la FAQ (et son schema). */
+const detailZones = (moment: Moment) =>
+  ZONES_FORFAIT.map((z) => `${z.label} : ${formatEuros(z.forfait[moment])}`).join(", ");
 
 const faqs = [
   {
@@ -11,8 +37,7 @@ const faqs = [
   },
   {
     question: "Quel est le tarif d'un dépannage urgent ?",
-    answer:
-      "Nous appliquons un forfait déplacement urgence + main d'œuvre, communiqué et accepté avant tout déplacement. Aucune mauvaise surprise : le tarif est annoncé clairement par téléphone ou WhatsApp avant que nous ne nous mettions en route.",
+    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). La nuit, le week-end et les jours fériés, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} la nuit ou le week-end. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le déplacement est confirmé par téléphone avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route.`,
   },
   {
     question: "Que faire en attendant votre arrivée ?",
@@ -159,15 +184,91 @@ const DepannageUrgent = () => {
         Tarification transparente
       </h2>
       <p className="text-muted-foreground leading-relaxed mb-4">
-        Notre dépannage urgence fonctionne avec un <strong>forfait déplacement</strong>{" "}
-        + un tarif horaire main d'œuvre. Le forfait est communiqué et accepté avant
-        tout déplacement, par téléphone ou WhatsApp. Pas de mauvaise surprise au
-        moment de la facture.
+        Un dépannage se facture au <strong>forfait</strong> : le déplacement et la
+        première heure sont compris, à partir de{" "}
+        <strong>{formatEuros(plancherDepannage("jour"))} hors TVA</strong>. Le
+        montant dépend de votre commune et du moment de l'intervention ; il est
+        annoncé et accepté avant que nous prenions la route, par téléphone ou
+        WhatsApp. Pas de mauvaise surprise au moment de la facture.
       </p>
-      <p className="text-muted-foreground leading-relaxed">
-        Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…)
-        est facturé en sus, après votre accord.
+
+      {/* La grille, telle qu'elle est facturée. Les montants viennent de
+          config.ts (simulateur) : une seule source pour les deux affichages. */}
+      <div className="overflow-x-auto rounded-2xl border border-border/60 mb-4">
+        <table className="w-full text-sm">
+          <caption className="sr-only">
+            Forfaits de dépannage hors TVA, par zone et par moment
+          </caption>
+          <thead className="bg-card text-left text-foreground">
+            <tr>
+              <th scope="col" className="px-4 py-3 font-semibold">
+                Zone
+              </th>
+              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+                Jour
+              </th>
+              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+                Nuit / week-end
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {ZONES_FORFAIT.map((z) => (
+              <tr key={z.value}>
+                <td className="px-4 py-3 align-top">
+                  <p className="font-medium text-foreground">{z.label}</p>
+                  <p className="text-muted-foreground leading-snug">{z.communes.join(", ")}</p>
+                </td>
+                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                  {formatEuros(z.forfait.jour)}
+                </td>
+                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                  {formatEuros(z.forfait.nuitWeekend)}
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td className="px-4 py-3 align-top">
+                <p className="font-medium text-foreground">
+                  Bruxelles, commune hors liste, au-delà de 50 km
+                </p>
+              </td>
+              <td colSpan={2} className="px-4 py-3 align-top text-muted-foreground">
+                Déplacement confirmé par téléphone avant tout départ
+              </td>
+            </tr>
+            <tr className="bg-card/60">
+              <td className="px-4 py-3 align-top">
+                <p className="font-medium text-foreground">{DEPANNAGE.libelleDemiHeure}</p>
+                <p className="text-muted-foreground leading-snug">Au-delà de la première heure</p>
+              </td>
+              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                {formatEuros(demiHeure.jour)}
+              </td>
+              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                {formatEuros(demiHeure.nuitWeekend)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul className="space-y-1.5 text-sm text-muted-foreground mb-4">
+        <li>
+          <strong className="text-foreground">Jour :</strong>{" "}
+          {DEFINITION_MOMENT.jour.toLowerCase()}.
+        </li>
+        <li>
+          <strong className="text-foreground">Nuit / week-end :</strong>{" "}
+          {DEFINITION_MOMENT.nuitWeekend.toLowerCase()}.
+        </li>
+      </ul>
+      <p className="text-muted-foreground leading-relaxed mb-4">
+        Prix hors TVA : <strong>6 %</strong> si votre logement a plus de 10 ans,
+        sinon <strong>21 %</strong>. Le matériel éventuellement nécessaire
+        (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.
       </p>
+      <p className="text-muted-foreground leading-relaxed">{MENTIONS.depannageNuit}</p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Conseils sécurité en attendant l'arrivée

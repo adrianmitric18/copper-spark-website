@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
 
 type FaqCategoryKey = "general" | "intervention" | "materiel" | "specialites";
 
@@ -141,7 +142,7 @@ const faqData: FaqItem[] = [
     category: "intervention",
     question: "Intervenez-vous en urgence ?",
     answer:
-      "Oui. Nous proposons un service de dépannage électrique rapide pour tous types de situations urgentes : panne générale, court-circuit, disjoncteur qui saute en permanence, prise qui grille, odeur de brûlé, tableau électrique défaillant, coupure partielle… Selon la disponibilité et la distance, une intervention le jour même est souvent possible dans le Brabant wallon. Appelez-nous directement au 0485 75 52 27 pour les urgences, c'est le moyen le plus rapide d'être pris en charge.",
+      `Oui. Nous proposons un service de dépannage électrique rapide pour tous types de situations urgentes : panne générale, court-circuit, disjoncteur qui saute en permanence, prise qui grille, odeur de brûlé, tableau électrique défaillant, coupure partielle… Selon la disponibilité et la distance, une intervention le jour même est souvent possible dans le Brabant wallon. Appelez-nous directement au 0485 75 52 27 pour les urgences, c'est le moyen le plus rapide d'être pris en charge. Le dépannage se facture au forfait, déplacement et première heure compris, à partir de ${formatEuros(plancherDepannage("jour"))} hors TVA : la grille complète par commune est sur la page dépannage urgent.`,
     answerNode: (
       <>
         <p>
@@ -156,6 +157,14 @@ const faqData: FaqItem[] = [
             0485 75 52 27
           </a>{" "}
           pour les urgences, c'est le moyen le plus rapide d'être pris en charge.
+        </p>
+        <p>
+          Le dépannage se facture au forfait, déplacement et première heure compris, à partir de{" "}
+          {formatEuros(plancherDepannage("jour"))} hors TVA. La grille complète par commune est sur la{" "}
+          <Link to="/services/depannage-urgent" className="text-primary font-medium hover:underline">
+            page dépannage urgent
+          </Link>
+          .
         </p>
       </>
     ),
