@@ -360,59 +360,30 @@ export const COMPLEMENT_MOMENT: Record<Moment, string> = {
   nuitWeekend: LIBELLE_HORS_JOUR.phrase,
 };
 
-export const MOMENTS: ChoixSimple<Moment>[] = [
-  {
-    value: "jour",
-    icone: "jour",
-    label: "En journée",
-    description: DEFINITION_MOMENT.jour,
-  },
-  {
-    value: "nuitWeekend",
-    icone: "nuit",
-    label: LIBELLE_HORS_JOUR.bouton,
-    description: DEFINITION_MOMENT.nuitWeekend,
-  },
-];
-
 // =====================================================================
-//  Parcours DÉPANNAGE — question 3 : zone de déplacement
+//  Dépannage — zones de forfait
 // =====================================================================
 
-/**
- * `hors` = hors secteur habituel. `sansForfait` = dans le secteur, mais le
- * déplacement n'est pas forfaitisable (Bruxelles et ses 19 communes) : les
- * deux mènent à « sur devis », mais ne se disent pas de la même façon au
- * visiteur.
- */
-export type Zone = "zone1" | "zone2" | "zone3" | "hors" | "sansForfait";
+export type Zone = "zone1" | "zone2" | "zone3";
 
 /**
- * Zones calculées au kilomètre depuis Court-Saint-Étienne, mais affichées par
- * liste de communes : personne ne sait à combien de kilomètres il habite, tout
- * le monde sait dans quelle commune il vit.
+ * Zones calculées au kilomètre routier depuis Court-Saint-Étienne, mais
+ * affichées par liste de communes : personne ne sait à combien de kilomètres
+ * il habite, tout le monde sait dans quelle commune il vit.
+ *
+ * SOURCE UNIQUE : la grille en haut de /services/depannage-urgent
+ * (GrilleDepannage), la liste des zones d'intervention de cette page, sa FAQ
+ * et son schema Service en dérivent. Aucune commune n'est écrite ailleurs.
  */
 export interface ZoneDeplacement {
   value: Zone;
   label: string;
   /**
    * Forfait dépannage — déplacement ET première heure compris — HORS TVA,
-   * par moment. `null` = pas forfaitisable, le déplacement est confirmé par
-   * téléphone. (Grille du 2026-10-25 : remplace l'ancien déplacement seul
-   * 25 / 35 / 50 € + main-d'œuvre horaire, qui n'était pas rentable.)
+   * par moment (grille du 2026-10-25).
    */
-  forfait: Record<Moment, number> | null;
+  forfait: Record<Moment, number>;
   communes: string[];
-}
-
-/**
- * Zones affichées par liste de communes, mais le visiteur, lui, choisit SA
- * commune : c'est la seule chose qu'il sait avec certitude. Les zones restent
- * la structure tarifaire, les communes en sont l'interface.
- */
-export interface CommuneZone {
-  commune: string;
-  zone: Zone;
 }
 
 export const ZONES: ZoneDeplacement[] = [
@@ -451,78 +422,18 @@ export const ZONES: ZoneDeplacement[] = [
     forfait: { jour: 150, nuitWeekend: 250 },
     communes: ["Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
   },
-  {
-    value: "sansForfait",
-    label: "Bruxelles",
-    forfait: null,
-    communes: [],
-  },
-  {
-    value: "hors",
-    label: "Ma commune n'est pas dans la liste",
-    forfait: null,
-    communes: [],
-  },
 ];
 
 /**
- * Entrées du sélecteur qui ne sont pas des communes au sens strict et dont le
- * déplacement ne peut pas être forfaitisé.
- *
- * Bruxelles couvre 19 communes, de 25 à 40 km de Court-Saint-Étienne : un
- * forfait unique y serait sous-facturé au nord et affiché ferme sur un écran
- * lu vite (arbitrage du 2026-09-14, maintenu avec la grille du 2026-10-25). La
- * demi-heure supplémentaire, elle, reste annoncée normalement.
+ * Hors forfait : Bruxelles (19 communes, de 25 à 40 km — un forfait unique y
+ * serait sous-facturé au nord, arbitrage du 2026-09-14), toute commune absente
+ * des listes, et au-delà de 50 km. Le forfait est alors confirmé par téléphone
+ * selon la distance.
  */
-export const COMMUNES_SANS_FORFAIT: CommuneZone[] = [
-  { commune: "Bruxelles (selon la commune)", zone: "sansForfait" },
-];
-
-/** Toutes les entrées du sélecteur de commune, par ordre alphabétique. */
-export const COMMUNES: CommuneZone[] = [
-  ...ZONES.flatMap((z) => z.communes.map((commune) => ({ commune, zone: z.value }))),
-  ...COMMUNES_SANS_FORFAIT,
-].sort((a, b) => a.commune.localeCompare(b.commune, "fr"));
-
-// =====================================================================
-//  Écran dépannage — un seul écran, le prix d'abord
-// =====================================================================
-
-/**
- * Écran dépannage : purement tarifaire.
- *
- * Deux décisions successives d'Adrian l'ont amené là. D'abord la compaction :
- * trois écrans avant de voir un prix, c'était deux de trop pour quelqu'un dont
- * l'installation vient de lâcher. Ensuite la suppression du contrôle de
- * sécurité (2026-09-14) : le simulateur est un outil de prix, il ne donne
- * aucune consigne de sécurité. Depuis le 2026-10-26, le site n'en donne plus
- * aucune non plus (consigne pompiers / 112 retirée partout, décision d'Adrian).
- */
-export const ECRAN_DEPANNAGE = {
-  eyebrow: "Dépannage",
-  // « Nos tarifs » annonçait une grille — c'est ce qu'affichait la v1. L'écran
-  // chiffre désormais un cas, pas un catalogue.
-  titre: "Ce que coûte votre dépannage",
-  /** Intitulé du montant tant que la commune n'est pas choisie (plancher). */
-  intitulePlancher: "Intervention à partir de",
-  /** Intitulé du montant une fois la commune connue : c'est LE forfait. */
-  intituleForfait: "Votre forfait dépannage",
-  /** Intitulé et « montant » quand le déplacement n'est pas forfaitisable. */
-  intituleSansForfait: "Forfait dépannage",
-  montantSansForfait: "Confirmé par téléphone",
-  sousTitreMontant: "hors TVA — déplacement et première heure compris",
-  sousTitreSansForfait: "hors TVA — le déplacement dépend de votre commune",
-  invitePrecision: "Choisissez votre commune pour le montant exact.",
-  labelCommune: "Votre commune",
-  optionHorsListe: "Ma commune n'est pas dans la liste",
-  labelMoment: "Quand faut-il intervenir ?",
+export const HORS_FORFAIT = {
+  libelle: "Bruxelles, communes hors liste et au-delà de 50 km",
+  detail: "Forfait confirmé par téléphone selon la distance, avant tout départ",
 } as const;
-
-/** Libellés courts, pour les boutons du sélecteur de l'écran dépannage. */
-export const MOMENTS_COURTS: Record<Moment, string> = {
-  jour: "En journée",
-  nuitWeekend: LIBELLE_HORS_JOUR.bouton,
-};
 
 // =====================================================================
 //  Tarifs — BORNE (TTC, TVA 6 %)
@@ -717,22 +628,13 @@ export const MENTIONS = {
   // peut pas garantir un départ à 3 h du matin, où que ce soit.
   depannageNuit:
     "Intervention de nuit sous réserve de disponibilité, confirmée par téléphone.",
-  depannageHorsZone:
-    "Votre commune est en dehors de notre secteur habituel : le déplacement, et donc le forfait, est confirmé par téléphone avant tout départ.",
-  // Bruxelles est bien desservie — c'est l'étendue de la région (19 communes,
-  // de 25 à 40 km) qui interdit un forfait unique, pas la distance.
-  depannageBruxelles:
-    "Bruxelles compte 19 communes, à des distances très différentes : le forfait est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
   // Décision d'Adrian du 2026-10-26 : un seul moyen de paiement affiché, le QR
   // code sur place — ni espèces, ni carte, nulle part sur le site (CGV §5
   // alignées le même jour).
   depannagePaiement: "Paiement sur place par QR code.",
-  // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
-  // et l'argument n'en avait pas besoin.
-  depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",
 } as const;
 
-/** Message WhatsApp pré-rempli depuis l'écran dépannage. */
+/** Message WhatsApp pré-rempli depuis la grille de la page dépannage. */
 export const MESSAGE_WHATSAPP_DEPANNAGE =
   "Bonjour, j'ai un problème électrique et je souhaite un dépannage. Voici ma situation :";
 
@@ -742,7 +644,7 @@ export const MESSAGE_WHATSAPP_DEPANNAGE =
 
 /**
  * Questions posées écran par écran. Le parcours dépannage n'en a aucune : il
- * tient sur un écran unique, décrit par `ECRAN_DEPANNAGE`.
+ * renvoie vers la page dépannage (`PAGE_DEPANNAGE`).
  */
 export type IdQuestion =
   // Parcours borne
@@ -816,8 +718,8 @@ export const QUESTIONS: Record<IdQuestion, DefinitionQuestion> = {
 /**
  * Les questions posées, dans l'ordre, parcours par parcours.
  *
- * Le dépannage n'en a aucune : tout tient sur un écran unique où le prix est
- * lisible avant le moindre clic (voir `ECRAN_DEPANNAGE`).
+ * Le dépannage n'en a aucune : l'étape 1 renvoie vers la page dépannage, où
+ * la grille est lisible sans clic (`PAGE_DEPANNAGE`).
  */
 export const SEQUENCES: Record<Parcours, IdQuestion[]> = {
   borne: ["fournisseur", "distance", "tableau", "age", "usage"],

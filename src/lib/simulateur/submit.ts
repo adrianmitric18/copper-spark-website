@@ -21,13 +21,11 @@ import {
   DISTANCES,
   ETATS_TABLEAU,
   FOURNISSEURS,
-  MOMENTS,
   NOMBRES_TABLEAUX,
   PREFERENCES_RAPPEL,
   UPLOAD,
   USAGES,
   USAGE_PAR_CONTEXTE_RGIE,
-  ZONES,
   nettoyerGsm,
   type Parcours,
   type Usage,
@@ -153,11 +151,6 @@ export function resumerSimulation(reponses: Reponses, devis: Devis): string {
     lignes.push(`Nombre de tableaux : ${libelle(NOMBRES_TABLEAUX, r.nombreTableaux)}`);
     lignes.push(`État de l'installation : ${libelle(ETATS_TABLEAU, r.tableau)}`);
     lignes.push(`Âge du logement : ${libelle(AGES_LOGEMENT, r.age)}`);
-  }
-
-  if (r.parcours === "depannage") {
-    lignes.push(`Moment souhaité : ${libelle(MOMENTS, r.moment)}`);
-    lignes.push(`Zone de déplacement : ${libelle(ZONES, r.zone)}`);
   }
 
   if (r.preferenceRappel) {

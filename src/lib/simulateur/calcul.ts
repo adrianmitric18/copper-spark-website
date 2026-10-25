@@ -15,10 +15,8 @@
 
 import {
   BORNE,
-  COMPLEMENT_MOMENT,
   DEPANNAGE,
   DISTANCES_COMPLEXES,
-  ECRAN_DEPANNAGE,
   FACTEUR_TVA_21,
   MENTIONS,
   RGIE_FORFAIT,
@@ -38,7 +36,6 @@ import {
   type Parcours,
   type PreferenceRappel,
   type Usage,
-  type Zone,
 } from "./config";
 
 // =====================================================================
@@ -63,10 +60,6 @@ export interface Reponses {
   // --- Parcours RGIE ---
   contexteRgie?: ContexteRgie;
   nombreTableaux?: NombreTableaux;
-
-  // --- Parcours dépannage ---
-  moment?: Moment;
-  zone?: Zone;
 
   // --- Écran de capture (borne et RGIE uniquement) ---
   preferenceRappel?: PreferenceRappel;
@@ -410,129 +403,20 @@ function devisRgie(r: Reponses): Devis {
 }
 
 // =====================================================================
-//  Parcours dépannage
+//  Dépannage — plancher affiché (la grille elle-même vit dans ZONES)
 // =====================================================================
 
-export const zoneParValeur = (zone: Zone | undefined) =>
-  ZONES.find((z) => z.value === zone);
-
 /** Forfaits réellement facturés pour un moment (hors « confirmé par téléphone »). */
-const forfaitsConnus = (moment: Moment): number[] =>
-  ZONES.map((z) => z.forfait?.[moment]).filter((m): m is number => m !== undefined);
+const forfaitsConnus = (moment: Moment): number[] => ZONES.map((z) => z.forfait[moment]);
 
 /**
  * Prix plancher absolu d'une intervention : le forfait de la zone la moins
  * chère, pour le moment choisi (110 € en journée avec la grille du
- * 2026-10-25). C'est le montant affiché tant que le visiteur n'a pas choisi sa
- * commune — dérivé des tarifs, jamais écrit en dur.
+ * 2026-10-25). Affiché sur la page dépannage, l'accueil et la FAQ — dérivé
+ * des tarifs, jamais écrit en dur.
  */
 export const plancherDepannage = (moment: Moment = "jour"): number =>
   Math.min(...forfaitsConnus(moment));
-
-/**
- * Ordre de grandeur d'une intervention réelle, pour la commune et le moment
- * choisis.
- *
- * Le forfait couvre la première heure ; un dépannage courant dure une à deux
- * heures. Sans cette phrase, le visiteur retient le forfait et découvre les
- * demi-heures sur la facture — le calcul lui était laissé. Entièrement dérivée
- * des constantes : aucun montant écrit en dur. `null` quand le forfait n'est
- * pas connu (commune hors liste, Bruxelles) : il n'y a alors rien à chiffrer.
- */
-export const fourchetteCourantePhrase = (
-  zone: Zone | undefined,
-  moment: Moment,
-): string | null => {
-  const z = zoneParValeur(zone);
-  if (z && z.forfait === null) return null;
-  const forfait = z?.forfait ? z.forfait[moment] : plancherDepannage(moment);
-  const demiHeuresEnPlus = (DEPANNAGE.dureeCouranteHeures - 1) * 2;
-  const haut = forfait + demiHeuresEnPlus * DEPANNAGE.demiHeureSupplementaire[moment];
-  return `Un dépannage courant dure une à ${DEPANNAGE.dureeCouranteTexte} heures, soit ${euros(
-    forfait,
-  )} à ${euros(haut)} hors TVA ${COMPLEMENT_MOMENT[moment]}.`;
-};
-
-function devisDepannage(r: Reponses): Devis {
-  const lignes: LigneDevis[] = [];
-  const zone = zoneParValeur(r.zone);
-  const moment: Moment = r.moment ?? "jour";
-
-  // 1. Le forfait (déplacement + première heure). Trois états : commune
-  //    connue, commune sans forfait (Bruxelles, hors liste), et commune pas
-  //    encore choisie — ce dernier cas affiche la fourchette réelle des zones,
-  //    pour qu'un prix soit lisible avant le moindre clic sans annoncer le
-  //    montant le plus bas à quelqu'un qui n'a pas dit où il habite.
-  if (zone && zone.forfait !== null) {
-    lignes.push({
-      libelle: `${DEPANNAGE.libelleForfait} — ${zone.label}`,
-      detail: DEPANNAGE.detailForfait,
-      statut: "chiffre",
-      montant: fixe(zone.forfait[moment]),
-    });
-  } else if (zone) {
-    lignes.push({
-      libelle: DEPANNAGE.libelleForfait,
-      detail: DEPANNAGE.detailForfaitParTelephone,
-      statut: "surDevis",
-    });
-  } else {
-    const montants = forfaitsConnus(moment);
-    lignes.push({
-      libelle: DEPANNAGE.libelleForfait,
-      detail: DEPANNAGE.detailForfaitSansCommune,
-      statut: "chiffre",
-      montant: { min: Math.min(...montants), max: Math.max(...montants) },
-    });
-  }
-
-  // 2. La demi-heure supplémentaire entamée : chiffrée une seule fois, hors
-  //    total — on n'affiche pas un montant « à partir de » qui compterait déjà
-  //    une demi-heure que l'intervention n'a peut-être pas besoin de prendre.
-  lignes.push({
-    libelle: DEPANNAGE.libelleDemiHeure,
-    detail: DEPANNAGE.detailDemiHeure,
-    statut: "chiffre",
-    montant: fixe(DEPANNAGE.demiHeureSupplementaire[moment]),
-    horsTotal: true,
-  });
-
-  // Sans forfait : pas de total. On n'affiche pas un « à partir de » qui
-  // passerait sous silence le déplacement.
-  const sansForfait = zone?.forfait === null;
-  const brut = sansForfait ? undefined : somme(lignes);
-  // Commune pas encore choisie : le titre annonce un plancher, donc un seul
-  // montant. La fourchette des zones reste lisible sur la ligne du forfait.
-  const total = brut && !zone ? { min: brut.min, max: brut.min } : brut;
-
-  const mentions: string[] = [
-    MENTIONS.depannageTva,
-    MENTIONS.depannageMateriel,
-    MENTIONS.depannagePaiement,
-  ];
-  if (sansForfait) {
-    mentions.unshift(
-      r.zone === "sansForfait"
-        ? MENTIONS.depannageBruxelles
-        : MENTIONS.depannageHorsZone,
-    );
-  }
-  // Réserve de disponibilité : toutes zones confondues.
-  if (moment === "nuitWeekend") mentions.unshift(MENTIONS.depannageNuit);
-
-  return {
-    parcours: "depannage",
-    complexe: false,
-    raisonsComplexe: [],
-    lignes,
-    total,
-    intituleTotal: zone ? ECRAN_DEPANNAGE.intituleForfait : ECRAN_DEPANNAGE.intitulePlancher,
-    sousTitreTotal: ECRAN_DEPANNAGE.sousTitreMontant,
-    aConfirmer: false,
-    mentions,
-    mentionsRepliees: [],
-  };
-}
 
 // =====================================================================
 //  Point d'entrée
@@ -545,7 +429,9 @@ export function calculerDevis(reponses: Reponses): Devis {
     case "rgie":
       return devisRgie(reponses);
     case "depannage":
-      return devisDepannage(reponses);
+      // Plus de devis dépannage : la grille est affichée sur la page dépannage
+      // et l'étape 1 y renvoie (2026-10-26). Garde-fou si un appel subsistait.
+      throw new Error("Le dépannage n'a pas de devis en ligne : voir PAGE_DEPANNAGE.");
   }
 }
 

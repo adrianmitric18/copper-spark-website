@@ -5,12 +5,11 @@ import {
   CONTACT,
   DEFINITION_MOMENT,
   DEPANNAGE,
+  HORS_FORFAIT,
   LIBELLE_HORS_JOUR,
   MENTIONS,
   MESSAGE_WHATSAPP_DEPANNAGE,
   ZONES,
-  type Moment,
-  type ZoneDeplacement,
 } from "@/lib/simulateur/config";
 import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
 
@@ -24,9 +23,6 @@ import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
  * boutons d'appel et WhatsApp sont répétés sous la grille : c'est l'action
  * utile une fois le prix lu.
  */
-type ZoneForfaitisee = ZoneDeplacement & { forfait: Record<Moment, number> };
-const ZONES_FORFAIT = ZONES.filter((z): z is ZoneForfaitisee => z.forfait !== null);
-
 const lienWhatsApp = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(
   MESSAGE_WHATSAPP_DEPANNAGE,
 )}`;
@@ -73,7 +69,7 @@ const GrilleDepannage = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-border/60">
-            {ZONES_FORFAIT.map((z) => (
+            {ZONES.map((z) => (
               <tr key={z.value}>
                 <td className="px-3 py-3 align-top sm:px-4">
                   <p className="font-medium text-foreground">{z.label}</p>
@@ -101,10 +97,10 @@ const GrilleDepannage = () => {
             </tr>
             <tr>
               <td className="px-3 py-3 align-top sm:px-4">
-                <p className="font-medium text-foreground">Bruxelles et communes hors liste</p>
+                <p className="font-medium text-foreground">{HORS_FORFAIT.libelle}</p>
               </td>
               <td colSpan={2} className="px-3 py-3 align-top text-muted-foreground sm:px-4">
-                Forfait confirmé par téléphone selon la distance, avant tout départ
+                {HORS_FORFAIT.detail}
               </td>
             </tr>
           </tbody>
