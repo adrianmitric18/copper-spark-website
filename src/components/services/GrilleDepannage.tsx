@@ -104,7 +104,7 @@ const GrilleDepannage = () => {
                 <p className="font-medium text-foreground">Bruxelles et communes hors liste</p>
               </td>
               <td colSpan={2} className="px-3 py-3 align-top text-muted-foreground sm:px-4">
-                Déplacement confirmé par téléphone avant tout départ
+                Forfait confirmé par téléphone selon la distance, avant tout départ
               </td>
             </tr>
           </tbody>
