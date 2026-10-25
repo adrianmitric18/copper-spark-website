@@ -1,5 +1,6 @@
 import { ArrowDown, Phone, Star } from "lucide-react";
 import LogoIcon from "@/components/LogoIcon";
+import DepannageBanner from "@/components/DepannageBanner";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from "framer-motion";
 import { useEffect } from "react";
@@ -97,6 +98,10 @@ const HeroSection = () => {
 
       <div className="container mx-auto relative z-10">
         <motion.div className="max-w-4xl mx-auto text-center">
+          {/* Dépannage d'abord : visible sans défiler, sur téléphone comme sur
+              ordinateur (décision d'Adrian du 2026-10-26). */}
+          <DepannageBanner />
+
           {/* Badge */}
           <motion.div initial={{
           opacity: 0,
