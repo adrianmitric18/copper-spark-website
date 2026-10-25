@@ -54,7 +54,7 @@ Template client : `{{to_email}}`, `{{from_name}}`, `{{besoin}}`,
 | `/simulateur` | étape 1 (3 choix) puis le parcours choisi | — | — | — |
 | `/simulateur?besoin=borne` | fourniture → distance → tableau → âge → usage | 5 | oui | oui |
 | `/simulateur?besoin=rgie` | motif → nombre de tableaux → installation → âge | 4 | oui | oui |
-| `/simulateur?besoin=depannage` | sécurité → moment → zone | 3 | **non** | **non** |
+| `/simulateur?besoin=depannage` | écran unique : commune + moment, prix affiché d'emblée | 0 | **non** | **non** |
 
 | `/simulateur?besoin=combine` | redirigé vers le parcours borne | — | — | — |
 
@@ -65,11 +65,12 @@ est posé **après** le bloc d'urgence : quelqu'un en panne doit tomber sur le
 numéro d'abord.
 
 Le **dépannage ne capture rien** : ni nom, ni téléphone, ni email, et il
-n'enregistre aucun lead (arbitrage d'Adrian du 2026-09-13). Il affiche le prix
-puis les boutons d'appel et WhatsApp. Sa première question peut le faire sortir
-immédiatement sur l'**écran d'alerte sécurité** (odeur de brûlé, étincelles,
-fumée) : consigne de coupure du disjoncteur général, bouton d'appel géant, et
-rien d'autre — surtout pas un formulaire.
+n'enregistre aucun lead (arbitrage d'Adrian du 2026-09-13). Il tient sur un
+**écran unique, purement tarifaire** (`ECRAN_DEPANNAGE`) : le forfait de la zone
+la moins chère est lisible avant le moindre clic, les sélecteurs commune et
+moment l'affinent en direct, puis boutons d'appel et WhatsApp. **Aucune consigne
+de sécurité** n'y est donnée (décision d'Adrian du 2026-09-14) : elles vivent
+dans /services/depannage-urgent, seule source sur le sujet.
 
 Les questions ne vivent pas dans le composant : elles sont décrites par
 `QUESTIONS` et `SEQUENCES` dans `config.ts`, et rendues par un écran générique.
@@ -94,8 +95,9 @@ seule liste de chiffres à valider.
 | `TABLEAUX_A_CONFIRMER` | États de tableau dont l'adaptation n'est pas chiffrée en ligne | 2026-09-13 |
 | `RGIE_FORFAIT` | Forfait 550 €, libellé exact d'Adrian + précision organisme | 2026-09-13 |
 | `RGIE_TRAVAUX` | Travaux par état d'installation (500–1 200 / 500–2 000 / 800–3 000 / 500–3 000) | 2026-09-13 |
-| `ZONES` | Zones de déplacement dépannage (25 / 35 / 50 € HTVA, hors zone = sur devis) | 2026-09-13 |
-| `DEPANNAGE.mainOeuvre` | 50 €/h jour, soirée et week-end ; 100 €/h nuit urgente | 2026-09-13 |
+| `ZONES` | Forfaits dépannage HTVA, déplacement + 1re heure compris : 110 / 130 / 150 € jour, 210 / 230 / 250 € nuit-week-end ; Bruxelles et hors liste = confirmé par téléphone | 2026-10-25 |
+| `DEPANNAGE.demiHeureSupplementaire` | Demi-heure supplémentaire entamée : 40 € jour, 50 € nuit-week-end | 2026-10-25 |
+| `SAMEDI_AU_TARIF_WEEKEND` | **Provisoire** : `true` = samedi au tarif nuit-week-end. Tous les libellés de plage en dérivent | à confirmer |
 | `MENTIONS` | Tous les textes légaux et avertissements | — |
 
 ⚠️ Ces montants sont affichés au public. Ils doivent rester cohérents avec :
@@ -105,6 +107,12 @@ seule liste de chiffres à valider.
 
 Les deux ont été alignés sur 2 650 – 3 000 € le 2026-09-13. Toute modification
 de `BORNE.alfen` ou `BORNE.poseSeule` doit y être reportée le même jour.
+
+La grille de dépannage, elle, est **importée** depuis `config.ts` par
+`/services/depannage-urgent` (section « Tarification transparente » et FAQ
+« Quel est le tarif d'un dépannage urgent ? ») et par `/faq` (plancher) :
+modifier `ZONES` ou `DEPANNAGE` met ces pages à jour sans autre intervention.
+Les CGV (§5) ne citent aucun montant de dépannage.
 
 ## 5. Deux règles de fond, à ne pas réapprendre
 
@@ -125,5 +133,6 @@ Les noms de la v1 sont conservés (les renommer casserait l'historique), avec un
 paramètre `parcours` en plus :
 
 `simu_step_1` … `simu_step_N` · `simu_capture_vu` · `simu_resultat_vu` ·
-`simu_depannage_vu` · `simu_alerte_securite_vu` · `simu_lead_envoye` (avec
+`simu_depannage_vu` · `simu_depannage_zone` · `simu_depannage_moment` ·
+`simu_lead_envoye` (avec
 `preference_rappel`) · `simu_cas_complexe` · `form_submit`.

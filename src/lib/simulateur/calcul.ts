@@ -15,8 +15,10 @@
 
 import {
   BORNE,
+  COMPLEMENT_MOMENT,
   DEPANNAGE,
   DISTANCES_COMPLEXES,
+  ECRAN_DEPANNAGE,
   FACTEUR_TVA_21,
   MENTIONS,
   RGIE_FORFAIT,
@@ -95,6 +97,12 @@ export interface LigneDevis {
    * confirmer » : « Total des postes chiffrés, hors adaptation du tableau ».
    */
   nomCourt?: string;
+  /**
+   * Ligne chiffrée qui n'entre PAS dans le total : un tarif unitaire affiché
+   * pour information (la demi-heure supplémentaire du dépannage), pas un poste
+   * dû d'office. Le détail de la ligne dit en toutes lettres qu'elle est en sus.
+   */
+  horsTotal?: boolean;
 }
 
 export interface Devis {
@@ -141,7 +149,7 @@ const appliquerTva = (f: Fourchette, age: AgeLogement | undefined): Fourchette =
 };
 
 const somme = (lignes: LigneDevis[]): Fourchette | undefined => {
-  const chiffrees = lignes.filter((l) => l.statut === "chiffre" && l.montant);
+  const chiffrees = lignes.filter((l) => l.statut === "chiffre" && l.montant && !l.horsTotal);
   if (chiffrees.length === 0) return undefined;
   return chiffrees.reduce<Fourchette>(
     (acc, l) => ({ min: acc.min + l.montant!.min, max: acc.max + l.montant!.max }),
@@ -408,97 +416,97 @@ function devisRgie(r: Reponses): Devis {
 export const zoneParValeur = (zone: Zone | undefined) =>
   ZONES.find((z) => z.value === zone);
 
-/** Montants de déplacement réellement facturés (hors « sur devis »). */
-const deplacementsConnus = (): number[] =>
-  ZONES.map((z) => z.montant).filter((m): m is number => m !== null);
+/** Forfaits réellement facturés pour un moment (hors « confirmé par téléphone »). */
+const forfaitsConnus = (moment: Moment): number[] =>
+  ZONES.map((z) => z.forfait?.[moment]).filter((m): m is number => m !== undefined);
 
 /**
- * Prix plancher absolu d'une intervention : la zone la moins chère plus
- * l'heure la moins chère. C'est le montant affiché tant que le visiteur n'a pas
- * choisi sa commune — dérivé des tarifs, jamais écrit en dur.
+ * Prix plancher absolu d'une intervention : le forfait de la zone la moins
+ * chère, pour le moment choisi (110 € en journée avec la grille du
+ * 2026-10-25). C'est le montant affiché tant que le visiteur n'a pas choisi sa
+ * commune — dérivé des tarifs, jamais écrit en dur.
  */
-export const plancherDepannage = (): number =>
-  Math.min(...deplacementsConnus()) + Math.min(...Object.values(DEPANNAGE.mainOeuvre));
+export const plancherDepannage = (moment: Moment = "jour"): number =>
+  Math.min(...forfaitsConnus(moment));
 
 /**
- * Ordre de grandeur d'une intervention réelle, en journée.
+ * Ordre de grandeur d'une intervention réelle, pour la commune et le moment
+ * choisis.
  *
- * Le plancher est le minimum absolu (déplacement + 1 h) ; un dépannage courant
- * dure une à deux heures. Sans cette phrase, le visiteur retient 75 € et
- * découvre 125 € sur la facture — le calcul lui était laissé. Entièrement
- * dérivée des constantes : aucun montant écrit en dur.
+ * Le forfait couvre la première heure ; un dépannage courant dure une à deux
+ * heures. Sans cette phrase, le visiteur retient le forfait et découvre les
+ * demi-heures sur la facture — le calcul lui était laissé. Entièrement dérivée
+ * des constantes : aucun montant écrit en dur. `null` quand le forfait n'est
+ * pas connu (commune hors liste, Bruxelles) : il n'y a alors rien à chiffrer.
  */
-export const fourchetteCourantePhrase = (): string => {
-  const deplacement = Math.min(...deplacementsConnus());
-  const heure = DEPANNAGE.mainOeuvre.journee;
-  const bas = deplacement + heure;
-  const haut = deplacement + heure * DEPANNAGE.dureeCouranteHeures;
+export const fourchetteCourantePhrase = (
+  zone: Zone | undefined,
+  moment: Moment,
+): string | null => {
+  const z = zoneParValeur(zone);
+  if (z && z.forfait === null) return null;
+  const forfait = z?.forfait ? z.forfait[moment] : plancherDepannage(moment);
+  const demiHeuresEnPlus = (DEPANNAGE.dureeCouranteHeures - 1) * 2;
+  const haut = forfait + demiHeuresEnPlus * DEPANNAGE.demiHeureSupplementaire[moment];
   return `Un dépannage courant dure une à ${DEPANNAGE.dureeCouranteTexte} heures, soit ${euros(
-    bas,
-  )} à ${euros(haut)} hors TVA en journée.`;
+    forfait,
+  )} à ${euros(haut)} hors TVA ${COMPLEMENT_MOMENT[moment]}.`;
 };
 
 function devisDepannage(r: Reponses): Devis {
   const lignes: LigneDevis[] = [];
   const zone = zoneParValeur(r.zone);
-  const moment: Moment = r.moment ?? "journee";
+  const moment: Moment = r.moment ?? "jour";
 
-  // 1. Déplacement. Trois états : commune connue, commune hors secteur, et
-  //    commune pas encore choisie — ce dernier cas affiche le plancher, pour
-  //    qu'un prix soit lisible avant le moindre clic.
-  if (zone && zone.montant !== null) {
+  // 1. Le forfait (déplacement + première heure). Trois états : commune
+  //    connue, commune sans forfait (Bruxelles, hors liste), et commune pas
+  //    encore choisie — ce dernier cas affiche la fourchette réelle des zones,
+  //    pour qu'un prix soit lisible avant le moindre clic sans annoncer le
+  //    montant le plus bas à quelqu'un qui n'a pas dit où il habite.
+  if (zone && zone.forfait !== null) {
     lignes.push({
-      libelle: `Déplacement — ${zone.label}`,
-      detail: DEPANNAGE.detailDeplacement,
+      libelle: `${DEPANNAGE.libelleForfait} — ${zone.label}`,
+      detail: DEPANNAGE.detailForfait,
       statut: "chiffre",
-      montant: fixe(zone.montant),
+      montant: fixe(zone.forfait[moment]),
     });
   } else if (zone) {
     lignes.push({
-      libelle: "Déplacement",
-      detail: "Confirmé par téléphone avant tout départ.",
+      libelle: DEPANNAGE.libelleForfait,
+      detail: DEPANNAGE.detailForfaitParTelephone,
       statut: "surDevis",
     });
   } else {
-    // Commune pas encore choisie : la ligne affiche la fourchette réelle, pas
-    // le montant le plus bas. Annoncer « 25 € » à quelqu'un qui n'a pas dit où
-    // il habite, c'est le chiffre qui double sous ses yeux au clic suivant.
-    const montants = deplacementsConnus();
+    const montants = forfaitsConnus(moment);
     lignes.push({
-      libelle: "Déplacement",
-      detail: "Selon votre commune.",
+      libelle: DEPANNAGE.libelleForfait,
+      detail: DEPANNAGE.detailForfaitSansCommune,
       statut: "chiffre",
       montant: { min: Math.min(...montants), max: Math.max(...montants) },
     });
   }
 
-  // 2. Première heure, indivisible.
+  // 2. La demi-heure supplémentaire entamée : chiffrée une seule fois, hors
+  //    total — on n'affiche pas un montant « à partir de » qui compterait déjà
+  //    une demi-heure que l'intervention n'a peut-être pas besoin de prendre.
   lignes.push({
-    libelle: DEPANNAGE.libelleMainOeuvre[moment],
-    detail: DEPANNAGE.detailPremiereHeure,
+    libelle: DEPANNAGE.libelleDemiHeure,
+    detail: DEPANNAGE.detailDemiHeure,
     statut: "chiffre",
-    montant: fixe(DEPANNAGE.mainOeuvre[moment]),
+    montant: fixe(DEPANNAGE.demiHeureSupplementaire[moment]),
+    horsTotal: true,
   });
 
-  // Hors secteur : pas de total. On n'affiche pas un « à partir de » qui
-  // passerait sous silence la moitié de la facture.
-  const horsSecteur = zone?.montant === null;
-  const brut = horsSecteur ? undefined : somme(lignes);
+  // Sans forfait : pas de total. On n'affiche pas un « à partir de » qui
+  // passerait sous silence le déplacement.
+  const sansForfait = zone?.forfait === null;
+  const brut = sansForfait ? undefined : somme(lignes);
   // Commune pas encore choisie : le titre annonce un plancher, donc un seul
-  // montant. La fourchette du déplacement reste lisible sur sa ligne.
+  // montant. La fourchette des zones reste lisible sur la ligne du forfait.
   const total = brut && !zone ? { min: brut.min, max: brut.min } : brut;
 
-  // Le tarif des heures suivantes est chiffré, une seule fois : l'écran
-  // affichait « au même tarif horaire » sans que le taux horaire apparaisse
-  // nulle part, et la première heure disait déjà la même chose.
-  const mentions: string[] = [
-    `Chaque heure entamée ensuite : ${euros(DEPANNAGE.mainOeuvre.journee)} (${euros(
-      DEPANNAGE.mainOeuvre.nuit,
-    )} la nuit).`,
-    MENTIONS.depannageTva,
-    MENTIONS.depannageMateriel,
-  ];
-  if (horsSecteur) {
+  const mentions: string[] = [MENTIONS.depannageTva, MENTIONS.depannageMateriel];
+  if (sansForfait) {
     mentions.unshift(
       r.zone === "sansForfait"
         ? MENTIONS.depannageBruxelles
@@ -506,7 +514,7 @@ function devisDepannage(r: Reponses): Devis {
     );
   }
   // Réserve de disponibilité : toutes zones confondues.
-  if (moment === "nuit") mentions.unshift(MENTIONS.depannageNuit);
+  if (moment === "nuitWeekend") mentions.unshift(MENTIONS.depannageNuit);
 
   return {
     parcours: "depannage",
@@ -514,8 +522,8 @@ function devisDepannage(r: Reponses): Devis {
     raisonsComplexe: [],
     lignes,
     total,
-    intituleTotal: "Intervention à partir de",
-    sousTitreTotal: "hors TVA — déplacement et première heure compris",
+    intituleTotal: zone ? ECRAN_DEPANNAGE.intituleForfait : ECRAN_DEPANNAGE.intitulePlancher,
+    sousTitreTotal: ECRAN_DEPANNAGE.sousTitreMontant,
     aConfirmer: false,
     mentions,
     mentionsRepliees: [],

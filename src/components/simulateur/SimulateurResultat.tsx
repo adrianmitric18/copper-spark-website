@@ -20,7 +20,6 @@ import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import {
   COMMUNES,
   CONTACT,
-  DEPANNAGE,
   ECRAN_DEPANNAGE,
   MENTIONS,
   MESSAGE_WHATSAPP_DEPANNAGE,
@@ -31,7 +30,6 @@ import {
 } from "@/lib/simulateur/config";
 import {
   calculerDevis,
-  formatEuros,
   formatFourchette,
   formatLigne,
   fourchetteCourantePhrase,
@@ -181,10 +179,13 @@ const CarteMontant = ({
   intitule,
   montant,
   sousTitre,
+  texte = false,
 }: {
   intitule: string;
   montant: string;
   sousTitre?: string;
+  /** Le « montant » est une phrase (« Confirmé par téléphone »), pas un chiffre : corps réduit. */
+  texte?: boolean;
 }) => (
   <div
     className="rounded-3xl border-2 border-primary/60 p-7 md:p-9 text-center shadow-xl shadow-primary/20"
@@ -193,7 +194,11 @@ const CarteMontant = ({
     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#E86830]">
       {intitule}
     </p>
-    <p className="font-display text-[2.125rem] md:text-5xl font-black leading-tight text-white">
+    <p
+      className={`font-display font-black leading-tight text-white ${
+        texte ? "text-2xl md:text-3xl" : "text-[2.125rem] md:text-5xl"
+      }`}
+    >
       {montant}
     </p>
     {sousTitre && (
@@ -298,9 +303,11 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
 /**
  * Le parcours dépannage tient sur un écran, purement tarifaire.
  *
- * Le prix plancher est lisible avant le moindre clic, puis deux sélecteurs
- * l'affinent en direct — sans jamais changer de page. Les boutons d'appel
- * restent sous le prix en permanence.
+ * Le prix plancher (forfait de la zone la moins chère) est lisible avant le
+ * moindre clic, puis deux sélecteurs — commune et moment — l'affinent en
+ * direct, sans jamais changer de page. Les boutons d'appel restent sous le
+ * prix en permanence. Grille du 2026-10-25 : forfait déplacement + première
+ * heure, puis demi-heure supplémentaire entamée.
  *
  * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée, et
  * AUCUNE consigne de sécurité n'est donnée (décision d'Adrian du 2026-09-14) :
@@ -311,9 +318,10 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
 export const EcranDepannage = () => {
   const { trackEvent } = useAnalyticsEvents();
   const [commune, setCommune] = useState("");
-  const [moment, setMoment] = useState<Moment>("journee");
+  const [moment, setMoment] = useState<Moment>("jour");
 
-  // « » = commune pas encore choisie : le devis affiche alors le plancher.
+  // « » = commune pas encore choisie : le devis affiche alors le plancher
+  // (forfait de la zone la moins chère, pour le moment choisi).
   const zone: Zone | undefined =
     commune === ""
       ? undefined
@@ -364,25 +372,32 @@ export const EcranDepannage = () => {
         </div>
       </div>
 
-      {/* Le prix, avant le moindre clic. */}
-      <CarteMontant
-        intitule={devis.total ? devis.intituleTotal : "Main-d'œuvre"}
-        montant={
-          devis.total
-            ? formatFourchette(devis.total)
-            : `${formatEuros(DEPANNAGE.mainOeuvre[moment])} / h`
-        }
-        sousTitre={
-          devis.total
-            ? devis.sousTitreTotal
-            : "hors TVA — déplacement confirmé par téléphone"
-        }
-      />
+      {/* Le prix, avant le moindre clic. Sans forfait (Bruxelles, hors liste),
+          la carte le dit en toutes lettres plutôt que d'afficher un chiffre
+          partiel. */}
+      {devis.total ? (
+        <CarteMontant
+          intitule={devis.intituleTotal}
+          montant={formatFourchette(devis.total)}
+          sousTitre={devis.sousTitreTotal}
+        />
+      ) : (
+        <CarteMontant
+          texte
+          intitule={ECRAN_DEPANNAGE.intituleSansForfait}
+          montant={ECRAN_DEPANNAGE.montantSansForfait}
+          sousTitre={ECRAN_DEPANNAGE.sousTitreSansForfait}
+        />
+      )}
 
-      {/* Le plancher est le minimum absolu : sans ordre de grandeur réel à
-          côté, le visiteur retient 75 € et fait lui-même le calcul des heures
-          suivantes. Phrase dérivée des constantes de tarif. */}
-      <MentionBox>{fourchetteCourantePhrase()}</MentionBox>
+      {/* Le forfait couvre la première heure : sans ordre de grandeur réel à
+          côté, le visiteur retient le forfait et fait lui-même le calcul des
+          demi-heures suivantes. Phrase dérivée des constantes de tarif, pour
+          la commune et le moment choisis. */}
+      {(() => {
+        const phrase = fourchetteCourantePhrase(zone, moment);
+        return phrase ? <MentionBox>{phrase}</MentionBox> : null;
+      })()}
 
       <div className="rounded-3xl border border-border/60 bg-card p-5 md:p-7">
         <ul className="divide-y divide-border/60">
@@ -423,7 +438,7 @@ export const EcranDepannage = () => {
                   type="button"
                   onClick={() => choisirMoment(m.value)}
                   aria-pressed={moment === m.value}
-                  className={`flex items-center gap-2.5 rounded-lg border px-3.5 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                     moment === m.value
                       ? "border-primary bg-primary/[0.07] text-foreground"
                       : "border-border/70 bg-card text-muted-foreground hover:border-primary/50"
@@ -432,11 +447,23 @@ export const EcranDepannage = () => {
                   {/* Pastille de sélection en CSS, sans emoji. */}
                   <span
                     aria-hidden="true"
-                    className={`h-3 w-3 shrink-0 rounded-full border-2 transition-colors ${
+                    className={`mt-1.5 h-3 w-3 shrink-0 self-start rounded-full border-2 transition-colors ${
                       moment === m.value ? "border-primary bg-primary" : "border-border"
                     }`}
                   />
-                  {MOMENTS_COURTS[m.value]}
+                  {/* La définition de la plage sous le libellé : « jour » et
+                      « nuit / week-end » ne veulent rien dire tant qu'on n'a
+                      pas lu où passe la frontière (19 h, samedi…). */}
+                  <span className="flex flex-col">
+                    <span className={moment === m.value ? "font-medium" : undefined}>
+                      {MOMENTS_COURTS[m.value]}
+                    </span>
+                    {m.description && (
+                      <span className="text-xs leading-snug text-muted-foreground">
+                        {m.description}
+                      </span>
+                    )}
+                  </span>
                 </button>
               ))}
             </div>

@@ -310,21 +310,54 @@ export const TABLEAUX_COMPLEXES: NombreTableaux[] = ["plusieurs"];
 //  Parcours DÉPANNAGE — quand intervenir
 // =====================================================================
 
-export type Moment = "journee" | "nuit" | "rdv";
+/**
+ * Deux moments, deux colonnes de forfaits (grille du 2026-10-25). Le « jour »
+ * est la plage ouvrable ; tout le reste — soirée, nuit, week-end, jours
+ * fériés — est au tarif nuit / week-end. L'ancienne option « sur rendez-vous »
+ * a disparu : un rendez-vous convenu tombe dans l'une des deux plages.
+ */
+export type Moment = "jour" | "nuitWeekend";
+
+/** Plage « jour », en heures pleines : de 7 h à 19 h. */
+export const PLAGE_JOUR = { debut: 7, fin: 19 } as const;
+
+/**
+ * PROVISOIRE — à confirmer par Adrian.
+ *
+ * `true` : le samedi est facturé au tarif nuit / week-end (grille du
+ * 2026-10-25). `false` : le samedi est une journée ordinaire, au tarif jour
+ * (le bureau annonce le samedi ouvert jusqu'à 19 h). Tous les libellés qui
+ * décrivent les deux plages — simulateur, page dépannage, FAQ — dérivent de
+ * cette constante : un seul booléen à changer.
+ */
+export const SAMEDI_AU_TARIF_WEEKEND = true;
+
+/** Définition de chaque plage, en toutes lettres, pour les écrans et la FAQ. */
+export const DEFINITION_MOMENT: Record<Moment, string> = {
+  jour: `Du lundi au ${SAMEDI_AU_TARIF_WEEKEND ? "vendredi" : "samedi"}, de ${PLAGE_JOUR.debut} h à ${PLAGE_JOUR.fin} h`,
+  nuitWeekend: `Après ${PLAGE_JOUR.fin} h, avant ${PLAGE_JOUR.debut} h, ${
+    SAMEDI_AU_TARIF_WEEKEND ? "le samedi, le dimanche" : "le dimanche"
+  } et les jours fériés`,
+};
+
+/** Complément de phrase (« … hors TVA en journée »), par moment. */
+export const COMPLEMENT_MOMENT: Record<Moment, string> = {
+  jour: "en journée",
+  nuitWeekend: "la nuit, le week-end ou un jour férié",
+};
 
 export const MOMENTS: ChoixSimple<Moment>[] = [
   {
-    value: "journee",
+    value: "jour",
     icone: "jour",
-    label: "Dès que possible, en journée ou en soirée",
-    description: "Week-end compris, au même tarif.",
+    label: "En journée",
+    description: DEFINITION_MOMENT.jour,
   },
-  { value: "nuit", icone: "nuit", label: "Cette nuit, c'est une urgence" },
-  // (labels courts pour les sélecteurs compacts : voir MOMENTS_COURTS)
   {
-    value: "rdv",
-    icone: "agenda",
-    label: "Ça peut attendre, on convient d'un rendez-vous",
+    value: "nuitWeekend",
+    icone: "nuit",
+    label: "Nuit, week-end ou jour férié",
+    description: DEFINITION_MOMENT.nuitWeekend,
   },
 ];
 
@@ -348,8 +381,13 @@ export type Zone = "zone1" | "zone2" | "zone3" | "hors" | "sansForfait";
 export interface ZoneDeplacement {
   value: Zone;
   label: string;
-  /** Montant du déplacement, HORS TVA. `null` = sur devis. */
-  montant: number | null;
+  /**
+   * Forfait dépannage — déplacement ET première heure compris — HORS TVA,
+   * par moment. `null` = pas forfaitisable, le déplacement est confirmé par
+   * téléphone. (Grille du 2026-10-25 : remplace l'ancien déplacement seul
+   * 25 / 35 / 50 € + main-d'œuvre horaire, qui n'était pas rentable.)
+   */
+  forfait: Record<Moment, number> | null;
   communes: string[];
 }
 
@@ -367,7 +405,7 @@ export const ZONES: ZoneDeplacement[] = [
   {
     value: "zone1",
     label: "Zone 1",
-    montant: 25,
+    forfait: { jour: 110, nuitWeekend: 210 },
     communes: [
       "Court-Saint-Étienne",
       "Ottignies-Louvain-la-Neuve",
@@ -381,7 +419,7 @@ export const ZONES: ZoneDeplacement[] = [
   {
     value: "zone2",
     label: "Zone 2",
-    montant: 35,
+    forfait: { jour: 130, nuitWeekend: 230 },
     communes: [
       "Wavre",
       "Rixensart",
@@ -396,19 +434,19 @@ export const ZONES: ZoneDeplacement[] = [
   {
     value: "zone3",
     label: "Zone 3",
-    montant: 50,
+    forfait: { jour: 150, nuitWeekend: 250 },
     communes: ["Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
   },
   {
     value: "sansForfait",
     label: "Bruxelles",
-    montant: null,
+    forfait: null,
     communes: [],
   },
   {
     value: "hors",
     label: "Ma commune n'est pas dans la liste",
-    montant: null,
+    forfait: null,
     communes: [],
   },
 ];
@@ -418,9 +456,9 @@ export const ZONES: ZoneDeplacement[] = [
  * déplacement ne peut pas être forfaitisé.
  *
  * Bruxelles couvre 19 communes, de 25 à 40 km de Court-Saint-Étienne : un
- * forfait unique à 50 € y serait sous-facturé au nord et affiché ferme sur un
- * écran lu vite (arbitrage du 2026-09-14). La main-d'œuvre, elle, reste
- * annoncée normalement.
+ * forfait unique y serait sous-facturé au nord et affiché ferme sur un écran
+ * lu vite (arbitrage du 2026-09-14, maintenu avec la grille du 2026-10-25). La
+ * demi-heure supplémentaire, elle, reste annoncée normalement.
  */
 export const COMMUNES_SANS_FORFAIT: CommuneZone[] = [
   { commune: "Bruxelles (selon la commune)", zone: "sansForfait" },
@@ -452,8 +490,15 @@ export const ECRAN_DEPANNAGE = {
   // « Nos tarifs » annonçait une grille — c'est ce qu'affichait la v1. L'écran
   // chiffre désormais un cas, pas un catalogue.
   titre: "Ce que coûte votre dépannage",
-  intituleMontant: "Intervention à partir de",
-  detailMontant: "Déplacement et première heure compris.",
+  /** Intitulé du montant tant que la commune n'est pas choisie (plancher). */
+  intitulePlancher: "Intervention à partir de",
+  /** Intitulé du montant une fois la commune connue : c'est LE forfait. */
+  intituleForfait: "Votre forfait dépannage",
+  /** Intitulé et « montant » quand le déplacement n'est pas forfaitisable. */
+  intituleSansForfait: "Forfait dépannage",
+  montantSansForfait: "Confirmé par téléphone",
+  sousTitreMontant: "hors TVA — déplacement et première heure compris",
+  sousTitreSansForfait: "hors TVA — le déplacement dépend de votre commune",
   invitePrecision: "Choisissez votre commune pour le montant exact.",
   labelCommune: "Votre commune",
   optionHorsListe: "Ma commune n'est pas dans la liste",
@@ -462,9 +507,8 @@ export const ECRAN_DEPANNAGE = {
 
 /** Libellés courts, pour les boutons du sélecteur de l'écran dépannage. */
 export const MOMENTS_COURTS: Record<Moment, string> = {
-  journee: "Journée ou soirée",
-  nuit: "Cette nuit, urgence",
-  rdv: "Sur rendez-vous",
+  jour: "En journée",
+  nuitWeekend: "Nuit, week-end ou jour férié",
 };
 
 // =====================================================================
@@ -569,20 +613,25 @@ export const RGIE_TRAVAUX: Record<EtatTableau, Fourchette> = {
 //  Tarifs — DÉPANNAGE (HORS TVA)
 // =====================================================================
 
+/**
+ * Grille du 2026-10-25 : un FORFAIT par zone et par moment (déplacement et
+ * première heure compris — voir `ZONES`), puis une demi-heure supplémentaire
+ * entamée. Il n'y a plus de déplacement seul ni de tarif horaire.
+ */
 export const DEPANNAGE = {
-  /** Main-d'œuvre horaire, hors TVA. Toute heure entamée est due. */
-  mainOeuvre: { journee: 50, nuit: 100, rdv: 50 } as Record<Moment, number>,
-  /** Libellé de la ligne main-d'œuvre selon le moment choisi. */
-  libelleMainOeuvre: {
-    journee: "Première heure de main-d'œuvre",
-    nuit: "Première heure de nuit",
-    rdv: "Première heure de main-d'œuvre",
-  } as Record<Moment, string>,
-  detailPremiereHeure: "Toute heure entamée est due.",
-  detailDeplacement: "Forfait annoncé et accepté avant que nous prenions la route.",
+  /** Demi-heure supplémentaire entamée, au-delà de la première heure, hors TVA. */
+  demiHeureSupplementaire: { jour: 40, nuitWeekend: 50 } as Record<Moment, number>,
+  libelleForfait: "Forfait dépannage",
+  detailForfait:
+    "Déplacement et première heure compris. Annoncé et accepté avant que nous prenions la route.",
+  detailForfaitSansCommune: "Selon votre commune. Déplacement et première heure compris.",
+  detailForfaitParTelephone:
+    "Déplacement et première heure compris. Confirmé par téléphone avant tout départ.",
+  libelleDemiHeure: "Demi-heure supplémentaire entamée",
+  detailDemiHeure: "Au-delà de la première heure, en sus du forfait.",
   /**
    * Durée d'un dépannage courant, validée par Adrian le 2026-09-14. Sert à
-   * afficher un ordre de grandeur réel à côté du plancher : celui-ci est le
+   * afficher un ordre de grandeur réel à côté du forfait : celui-ci est le
    * minimum absolu, pas ce que coûte une intervention typique.
    */
   dureeCouranteHeures: 2,
@@ -656,11 +705,11 @@ export const MENTIONS = {
   depannageNuit:
     "Intervention de nuit sous réserve de disponibilité, confirmée par téléphone.",
   depannageHorsZone:
-    "Votre commune est en dehors de notre secteur habituel : le déplacement est confirmé par téléphone, avant tout départ.",
+    "Votre commune est en dehors de notre secteur habituel : le déplacement, et donc le forfait, est confirmé par téléphone avant tout départ.",
   // Bruxelles est bien desservie — c'est l'étendue de la région (19 communes,
   // de 25 à 40 km) qui interdit un forfait unique, pas la distance.
   depannageBruxelles:
-    "Bruxelles compte 19 communes, à des distances très différentes : le déplacement est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
+    "Bruxelles compte 19 communes, à des distances très différentes : le forfait est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
   // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
   // et l'argument n'en avait pas besoin.
   depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",
