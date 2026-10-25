@@ -1,9 +1,11 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
 import GrilleDepannage from "@/components/services/GrilleDepannage";
 import {
+  COMMUNES_FORFAIT,
   COMPLEMENT_MOMENT,
   DEFINITION_MOMENT,
   DEPANNAGE,
+  HORS_FORFAIT,
   ZONES,
   type Moment,
 } from "@/lib/simulateur/config";
@@ -65,6 +67,7 @@ const DepannageUrgent = () => {
         intro:
           "Une panne électrique ne peut pas attendre. Adrian intervient rapidement dans le Brabant wallon, en Wallonie et à Bruxelles pour rétablir votre installation en toute sécurité, jour et nuit, week-ends compris.",
       }}
+      schemaAreaServed={COMMUNES_FORFAIT}
       faqs={faqs}
     >
       {/* La grille d'abord, sans rien à cliquer : décision d'Adrian du
@@ -97,36 +100,30 @@ const DepannageUrgent = () => {
         Zones d'intervention urgente
       </h2>
       <p className="text-muted-foreground leading-relaxed mb-4">
-        Nous intervenons en priorité dans tout le Brabant wallon depuis notre base
-        de Court-Saint-Étienne :
+        Nous intervenons depuis notre base de Court-Saint-Étienne. Les zones sont
+        les mêmes que celles de la grille ci-dessus.
       </p>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-4 text-sm">
-        {[
-          "Court-Saint-Étienne",
-          "Ottignies-Louvain-la-Neuve",
-          "Wavre",
-          "Nivelles",
-          "Waterloo",
-          "Genappe",
-          "Rixensart",
-          "Lasne",
-          "Braine-l'Alleud",
-          "Jodoigne",
-          "Gembloux",
-          "Namur",
-          "Bruxelles",
-        ].map((city) => (
-          <div
-            key={city}
-            className="px-3 py-2 bg-card border border-border/60 rounded-lg text-foreground"
-          >
-            {city}
+      {/* Même liste que la grille et que le schema : ZONES, dans config.ts. */}
+      <div className="space-y-4 mb-4">
+        {ZONES.map((z) => (
+          <div key={z.value}>
+            <p className="font-semibold text-foreground mb-2">{z.label}</p>
+            <div className="flex flex-wrap gap-2 text-sm">
+              {z.communes.map((commune) => (
+                <span
+                  key={commune}
+                  className="px-3 py-1.5 bg-card border border-border/60 rounded-lg text-foreground"
+                >
+                  {commune}
+                </span>
+              ))}
+            </div>
           </div>
         ))}
       </div>
       <p className="text-muted-foreground text-sm">
-        Vous n'êtes pas dans cette liste ? Appelez-nous : selon disponibilité, nous
-        intervenons aussi sur le reste de la Wallonie.
+        {HORS_FORFAIT.libelle} : {HORS_FORFAIT.detail.toLowerCase()}. Selon
+        disponibilité, nous intervenons aussi sur le reste de la Wallonie.
       </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">

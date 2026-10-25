@@ -386,19 +386,43 @@ export interface ZoneDeplacement {
   communes: string[];
 }
 
+/*
+ * Distances ROUTIÈRES mesurées le 2026-10-26 depuis le centre de
+ * Court-Saint-Étienne (géocodage OpenStreetMap / Nominatim, itinéraire voiture
+ * OSRM, vers le centre administratif de chaque commune ou section). La grille :
+ * zone 1 = 0-10 km, zone 2 = 10-20 km, zone 3 = 20-50 km. À refaire avec la
+ * même méthode avant d'ajouter une commune.
+ *
+ *   Zone 1 : Ottignies 5,5 · Mont-Saint-Guibert 6,0 · Bousval 6,9 ·
+ *            Céroux-Mousty 7,3 · Chastre 7,5 · Limelette 7,6 ·
+ *            Villers-la-Ville 7,9 · Louvain-la-Neuve 9,3
+ *   Zone 2 : Genappe 11,5 · Sart-Dames-Avelines 12,2 · Lasne 13,0 ·
+ *            Rixensart 13,6 · Wavre 14,7 · Chaumont-Gistoux 15,4 ·
+ *            Walhain 15,6 · Genval 16,3 · La Hulpe 18,3 · Grez-Doiceau 20,0
+ *   Zone 3 : Gembloux 20,5 · Waterloo 21,8 · Nivelles 21,9 · Incourt 23,0 ·
+ *            Braine-l'Alleud 23,8 · Perwez 24,2 · Ittre 28,5 · Jodoigne 33,4 ·
+ *            Tervuren 34,1 · Tubize 35,3 · Braine-le-Comte 39,5 · Namur 39,7 ·
+ *            Louvain (Leuven) 44,8 · Charleroi 46,0 · Hannut 49,2
+ *   Hors forfait : Bruxelles (Uccle 33,7 … Evere 42,6, selon la commune).
+ *
+ * Les communes sont listées par ordre alphabétique dans chaque zone : c'est
+ * ainsi qu'un visiteur retrouve la sienne.
+ */
 export const ZONES: ZoneDeplacement[] = [
   {
     value: "zone1",
     label: "Zone 1",
     forfait: { jour: 110, nuitWeekend: 210 },
     communes: [
-      "Court-Saint-Étienne",
-      "Ottignies-Louvain-la-Neuve",
-      "Mont-Saint-Guibert",
-      "Céroux-Mousty",
-      "Genappe",
-      "Chastre",
       "Bousval",
+      "Céroux-Mousty",
+      "Chastre",
+      "Court-Saint-Étienne",
+      "Limelette",
+      "Louvain-la-Neuve",
+      "Mont-Saint-Guibert",
+      "Ottignies",
+      "Villers-la-Ville",
     ],
   },
   {
@@ -406,23 +430,46 @@ export const ZONES: ZoneDeplacement[] = [
     label: "Zone 2",
     forfait: { jour: 130, nuitWeekend: 230 },
     communes: [
-      "Wavre",
-      "Rixensart",
-      "Lasne",
-      "Villers-la-Ville",
-      "Walhain",
-      "Nivelles",
+      "Chaumont-Gistoux",
+      "Genappe",
+      "Genval",
       "Grez-Doiceau",
-      "Waterloo",
+      "La Hulpe",
+      "Lasne",
+      "Rixensart",
+      "Sart-Dames-Avelines",
+      "Walhain",
+      "Wavre",
     ],
   },
   {
     value: "zone3",
     label: "Zone 3",
     forfait: { jour: 150, nuitWeekend: 250 },
-    communes: ["Braine-l'Alleud", "Jodoigne", "Gembloux", "Charleroi"],
+    communes: [
+      "Braine-l'Alleud",
+      "Braine-le-Comte",
+      "Charleroi",
+      "Gembloux",
+      "Hannut",
+      "Incourt",
+      "Ittre",
+      "Jodoigne",
+      "Louvain (Leuven)",
+      "Namur",
+      "Nivelles",
+      "Perwez",
+      "Tervuren",
+      "Tubize",
+      "Waterloo",
+    ],
   },
 ];
+
+/** Toutes les communes forfaitisées, à plat et par ordre alphabétique (schema, listes). */
+export const COMMUNES_FORFAIT: string[] = ZONES.flatMap((z) => z.communes).sort((a, b) =>
+  a.localeCompare(b, "fr"),
+);
 
 /**
  * Hors forfait : Bruxelles (19 communes, de 25 à 40 km — un forfait unique y
