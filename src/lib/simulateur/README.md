@@ -95,9 +95,10 @@ seule liste de chiffres à valider.
 | `TABLEAUX_A_CONFIRMER` | États de tableau dont l'adaptation n'est pas chiffrée en ligne | 2026-09-13 |
 | `RGIE_FORFAIT` | Forfait 550 €, libellé exact d'Adrian + précision organisme | 2026-09-13 |
 | `RGIE_TRAVAUX` | Travaux par état d'installation (500–1 200 / 500–2 000 / 800–3 000 / 500–3 000) | 2026-09-13 |
-| `ZONES` | Forfaits dépannage HTVA, déplacement + 1re heure compris : 110 / 130 / 150 € jour, 210 / 230 / 250 € nuit-week-end ; Bruxelles et hors liste = confirmé par téléphone | 2026-10-25 |
-| `DEPANNAGE.demiHeureSupplementaire` | Demi-heure supplémentaire entamée : 40 € jour, 50 € nuit-week-end | 2026-10-25 |
-| `SAMEDI_AU_TARIF_WEEKEND` | **Provisoire** : `true` = samedi au tarif nuit-week-end. Tous les libellés de plage en dérivent | à confirmer |
+| `ZONES` | Forfaits dépannage HTVA, déplacement + 1re heure compris : 110 / 130 / 150 € jour (lundi-samedi 7 h-19 h), 210 / 230 / 250 € soir-nuit-dimanche-fériés ; Bruxelles et hors liste = confirmé par téléphone | 2026-10-25 |
+| `DEPANNAGE.demiHeureSupplementaire` | Demi-heure supplémentaire entamée : 40 € jour, 50 € soir-nuit-dimanche | 2026-10-25 |
+| `SAMEDI_AU_TARIF_WEEKEND` | `false` = samedi au tarif jour (décidé par Adrian). Tous les libellés de plage (`DEFINITION_MOMENT`, `LIBELLE_HORS_JOUR`) en dérivent | 2026-10-25 |
+| `MENTIONS.depannagePaiement` | « Le dépannage se paie sur place, à la fin de l'intervention » (cohérent CGV §5) | 2026-10-25 |
 | `MENTIONS` | Tous les textes légaux et avertissements | — |
 
 ⚠️ Ces montants sont affichés au public. Ils doivent rester cohérents avec :

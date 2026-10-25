@@ -3,8 +3,10 @@ import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import {
+  COMPLEMENT_MOMENT,
   DEFINITION_MOMENT,
   DEPANNAGE,
+  LIBELLE_HORS_JOUR,
   MENTIONS,
   ZONES,
   type Moment,
@@ -29,6 +31,8 @@ const demiHeure = DEPANNAGE.demiHeureSupplementaire;
 const detailZones = (moment: Moment) =>
   ZONES_FORFAIT.map((z) => `${z.label} : ${formatEuros(z.forfait[moment])}`).join(", ");
 
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 const faqs = [
   {
     question: "Combien de temps pour une intervention urgente ?",
@@ -37,7 +41,7 @@ const faqs = [
   },
   {
     question: "Quel est le tarif d'un dépannage urgent ?",
-    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). La nuit, le week-end et les jours fériés, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} la nuit ou le week-end. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le déplacement est confirmé par téléphone avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route.`,
+    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). ${majuscule(COMPLEMENT_MOMENT.nuitWeekend)}, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} ${COMPLEMENT_MOMENT.nuitWeekend}. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le déplacement est confirmé par téléphone avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route, et le dépannage se paie sur place, à la fin de l'intervention.`,
   },
   {
     question: "Que faire en attendant votre arrivée ?",
@@ -208,7 +212,7 @@ const DepannageUrgent = () => {
                 Jour
               </th>
               <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
-                Nuit / week-end
+                {LIBELLE_HORS_JOUR.court}
               </th>
             </tr>
           </thead>
@@ -259,7 +263,7 @@ const DepannageUrgent = () => {
           {DEFINITION_MOMENT.jour.toLowerCase()}.
         </li>
         <li>
-          <strong className="text-foreground">Nuit / week-end :</strong>{" "}
+          <strong className="text-foreground">{LIBELLE_HORS_JOUR.court} :</strong>{" "}
           {DEFINITION_MOMENT.nuitWeekend.toLowerCase()}.
         </li>
       </ul>
@@ -268,7 +272,9 @@ const DepannageUrgent = () => {
         sinon <strong>21 %</strong>. Le matériel éventuellement nécessaire
         (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.
       </p>
-      <p className="text-muted-foreground leading-relaxed">{MENTIONS.depannageNuit}</p>
+      <p className="text-muted-foreground leading-relaxed mb-4">
+        {MENTIONS.depannagePaiement} {MENTIONS.depannageNuit}
+      </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Conseils sécurité en attendant l'arrivée

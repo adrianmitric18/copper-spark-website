@@ -505,7 +505,11 @@ function devisDepannage(r: Reponses): Devis {
   // montant. La fourchette des zones reste lisible sur la ligne du forfait.
   const total = brut && !zone ? { min: brut.min, max: brut.min } : brut;
 
-  const mentions: string[] = [MENTIONS.depannageTva, MENTIONS.depannageMateriel];
+  const mentions: string[] = [
+    MENTIONS.depannageTva,
+    MENTIONS.depannageMateriel,
+    MENTIONS.depannagePaiement,
+  ];
   if (sansForfait) {
     mentions.unshift(
       r.zone === "sansForfait"

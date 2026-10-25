@@ -322,15 +322,29 @@ export type Moment = "jour" | "nuitWeekend";
 export const PLAGE_JOUR = { debut: 7, fin: 19 } as const;
 
 /**
- * PROVISOIRE — à confirmer par Adrian.
- *
- * `true` : le samedi est facturé au tarif nuit / week-end (grille du
- * 2026-10-25). `false` : le samedi est une journée ordinaire, au tarif jour
- * (le bureau annonce le samedi ouvert jusqu'à 19 h). Tous les libellés qui
- * décrivent les deux plages — simulateur, page dépannage, FAQ — dérivent de
- * cette constante : un seul booléen à changer.
+ * Décidé par Adrian le 2026-10-25 : le samedi est au tarif JOUR (le bureau est
+ * ouvert le samedi jusqu'à 19 h). `true` le ferait basculer au tarif
+ * soir / nuit. Tous les libellés qui décrivent les deux plages — simulateur,
+ * page dépannage, FAQ — dérivent de cette constante : un seul booléen à changer.
  */
-export const SAMEDI_AU_TARIF_WEEKEND = true;
+export const SAMEDI_AU_TARIF_WEEKEND = false;
+
+/**
+ * Nom de la plage hors jour, selon que le samedi en fait partie ou non :
+ * « nuit / week-end » n'est vrai que si le samedi y est.
+ */
+export const LIBELLE_HORS_JOUR = {
+  /** En-tête de colonne : « Soir / nuit / dimanche ». */
+  court: SAMEDI_AU_TARIF_WEEKEND ? "Nuit / week-end" : "Soir / nuit / dimanche",
+  /** Libellé de bouton : « Soir, nuit, dimanche ou jour férié ». */
+  bouton: SAMEDI_AU_TARIF_WEEKEND
+    ? "Nuit, week-end ou jour férié"
+    : "Soir, nuit, dimanche ou jour férié",
+  /** Complément de phrase : « … hors TVA le soir, la nuit, le dimanche ou un jour férié ». */
+  phrase: SAMEDI_AU_TARIF_WEEKEND
+    ? "la nuit, le week-end ou un jour férié"
+    : "le soir, la nuit, le dimanche ou un jour férié",
+} as const;
 
 /** Définition de chaque plage, en toutes lettres, pour les écrans et la FAQ. */
 export const DEFINITION_MOMENT: Record<Moment, string> = {
@@ -343,7 +357,7 @@ export const DEFINITION_MOMENT: Record<Moment, string> = {
 /** Complément de phrase (« … hors TVA en journée »), par moment. */
 export const COMPLEMENT_MOMENT: Record<Moment, string> = {
   jour: "en journée",
-  nuitWeekend: "la nuit, le week-end ou un jour férié",
+  nuitWeekend: LIBELLE_HORS_JOUR.phrase,
 };
 
 export const MOMENTS: ChoixSimple<Moment>[] = [
@@ -356,7 +370,7 @@ export const MOMENTS: ChoixSimple<Moment>[] = [
   {
     value: "nuitWeekend",
     icone: "nuit",
-    label: "Nuit, week-end ou jour férié",
+    label: LIBELLE_HORS_JOUR.bouton,
     description: DEFINITION_MOMENT.nuitWeekend,
   },
 ];
@@ -508,7 +522,7 @@ export const ECRAN_DEPANNAGE = {
 /** Libellés courts, pour les boutons du sélecteur de l'écran dépannage. */
 export const MOMENTS_COURTS: Record<Moment, string> = {
   jour: "En journée",
-  nuitWeekend: "Nuit, week-end ou jour férié",
+  nuitWeekend: LIBELLE_HORS_JOUR.bouton,
 };
 
 // =====================================================================
@@ -710,6 +724,10 @@ export const MENTIONS = {
   // de 25 à 40 km) qui interdit un forfait unique, pas la distance.
   depannageBruxelles:
     "Bruxelles compte 19 communes, à des distances très différentes : le forfait est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
+  // Demandé par Adrian le 2026-10-25 : le visiteur doit savoir avant d'appeler
+  // que le dépannage se règle sur place (cohérent avec les CGV, §5 : paiement
+  // comptant à la fin de l'intervention).
+  depannagePaiement: "Le dépannage se paie sur place, à la fin de l'intervention.",
   // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
   // et l'argument n'en avait pas besoin.
   depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",
