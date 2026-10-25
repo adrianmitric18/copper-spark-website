@@ -83,8 +83,7 @@ const sections = [
         </ul>
         <p className="mb-4">
           Pour les chantiers inférieurs à 1 000 € HTVA et les dépannages :
-          paiement comptant à la fin de l'intervention (virement, espèces, ou
-          Bancontact si disponible).
+          paiement sur place par QR code, à la fin de l'intervention.
         </p>
         <p>
           En cas de retard de paiement, des intérêts de retard au taux légal belge
