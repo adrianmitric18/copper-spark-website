@@ -41,7 +41,7 @@ const faqs = [
   },
   {
     question: "Quel est le tarif d'un dépannage urgent ?",
-    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). ${majuscule(COMPLEMENT_MOMENT.nuitWeekend)}, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} ${COMPLEMENT_MOMENT.nuitWeekend}. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le déplacement est confirmé par téléphone avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route, et le dépannage se paie sur place, à la fin de l'intervention.`,
+    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). ${majuscule(COMPLEMENT_MOMENT.nuitWeekend)}, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} ${COMPLEMENT_MOMENT.nuitWeekend}. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le forfait est confirmé par téléphone selon la distance, avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route, et le dépannage se paie sur place, à la fin de l'intervention.`,
   },
   {
     question: "Que faire en attendant votre arrivée ?",
@@ -193,7 +193,8 @@ const DepannageUrgent = () => {
         <strong>{formatEuros(plancherDepannage("jour"))} hors TVA</strong>. Le
         montant dépend de votre commune et du moment de l'intervention ; il est
         annoncé et accepté avant que nous prenions la route, par téléphone ou
-        WhatsApp. Pas de mauvaise surprise au moment de la facture.
+        WhatsApp. Seuls le temps au-delà de la première heure et le matériel
+        que vous acceptez s'y ajoutent.
       </p>
 
       {/* La grille, telle qu'elle est facturée. Les montants viennent de
@@ -238,7 +239,7 @@ const DepannageUrgent = () => {
                 </p>
               </td>
               <td colSpan={2} className="px-4 py-3 align-top text-muted-foreground">
-                Déplacement confirmé par téléphone avant tout départ
+                Forfait confirmé par téléphone selon la distance, avant tout départ
               </td>
             </tr>
             <tr className="bg-card/60">
