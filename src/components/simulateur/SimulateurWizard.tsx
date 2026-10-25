@@ -10,7 +10,7 @@
  *   - /simulateur                  → le parcours est demandé à l'étape 1 ;
  *   - /simulateur?besoin=borne     → parcours borne direct (étape 1 sautée) ;
  *   - /simulateur?besoin=rgie      → parcours conformité direct ;
- *   - /simulateur?besoin=depannage → parcours dépannage direct.
+ *   - /simulateur?besoin=depannage → redirigé vers la page dépannage (Simulateur.tsx).
  *
  * Le dépannage est à part : il ne pose aucune question en séquence, ne demande
  * aucune coordonnée et n'enregistre aucun lead (arbitrages du 2026-09-13). Tout
@@ -66,18 +66,15 @@ import {
 import { calculerDevis, formatFourchette, type Reponses } from "@/lib/simulateur/calcul";
 import { envoyerSimulation } from "@/lib/simulateur/submit";
 import { ChoiceCard, MentionBox, ProgressBar, StepShell } from "./SimulateurUI";
-import { EcranComplexe, EcranDepannage, EcranDevis } from "./SimulateurResultat";
+import { EcranComplexe, EcranDevis } from "./SimulateurResultat";
 
-type Etape = "parcours" | IdQuestion | "depannage" | "capture" | "resultat";
+type Etape = "parcours" | IdQuestion | "capture" | "resultat";
 
 /**
- * Premier écran d'un parcours.
- *
- * Le dépannage n'a pas de question : il ouvre directement sur son écran
- * unique, où le prix est lisible avant le moindre clic.
+ * Premier écran d'un parcours. Jamais appelé pour le dépannage : l'étape 1 et
+ * `?besoin=depannage` renvoient vers la page dépannage avant d'arriver ici.
  */
-const premierEcran = (p: Parcours): Etape =>
-  p === "depannage" ? "depannage" : SEQUENCES[p][0];
+const premierEcran = (p: Parcours): Etape => SEQUENCES[p][0];
 
 /** Seul le dépannage se termine sans demander de coordonnées. */
 const DEMANDE_COORDONNEES: Record<Parcours, boolean> = {
@@ -148,10 +145,7 @@ const SimulateurWizard = ({
   /** Étapes réellement traversées, dans l'ordre. */
   const sequence: Etape[] = useMemo(() => {
     if (!parcours) return ["parcours"];
-    const ecrans: Etape[] =
-      parcours === "depannage"
-        ? ["depannage"]
-        : [...SEQUENCES[parcours], "capture"];
+    const ecrans: Etape[] = [...SEQUENCES[parcours], "capture"];
     return prefill ? ecrans : ["parcours", ...ecrans];
   }, [parcours, prefill]);
 
@@ -209,9 +203,6 @@ const SimulateurWizard = ({
    */
   const evenementPour = (cible: Etape, p: Parcours | null): string => {
     if (cible === "capture") return "simu_capture_vu";
-    // Le dépannage tient sur un écran : une seule vue, un seul événement. Les
-    // deux sélecteurs émettent les leurs depuis l'écran lui-même.
-    if (cible === "depannage") return "simu_depannage_vu";
     if (cible === "resultat") return "simu_resultat_vu";
     // La position est recalculée depuis le parcours passé en argument, et non
     // depuis `sequence` : au clic de l'étape 1, l'état React n'a pas encore été
@@ -282,7 +273,7 @@ const SimulateurWizard = ({
 
   const peutAfficher = (e: Etape): boolean => {
     const s = etatRef.current;
-    if (e === "parcours" || e === "depannage") return true;
+    if (e === "parcours") return true;
     if (!s.parcours) return false;
     const questions = SEQUENCES[s.parcours];
     if (e === "capture" || e === "resultat") {
@@ -650,9 +641,8 @@ const SimulateurWizard = ({
 
   return (
     <div ref={hautRef} className="mx-auto w-full max-w-2xl scroll-mt-28">
-      {/* Ni sur le résultat, ni sur le dépannage : ce dernier tient sur un
-          écran, il n'y a aucune progression à montrer. */}
-      {etape !== "resultat" && etape !== "depannage" && (
+      {/* Pas sur le résultat : il n'y a plus de progression à montrer. */}
+      {etape !== "resultat" && (
         <ProgressBar pourcentage={pourcentage} />
       )}
 
@@ -697,23 +687,6 @@ const SimulateurWizard = ({
 
         {/* --- Les questions du parcours ---------------------------------- */}
         {questionCourante && ecranQuestion(questionCourante)}
-
-        {/* --- Dépannage : un seul écran ---------------------------------- */}
-        {etape === "depannage" && (
-          <motion.div key="depannage">
-            {retourOuPas && (
-              <button
-                type="button"
-                onClick={retourOuPas}
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-4 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Retour
-              </button>
-            )}
-            <EcranDepannage />
-          </motion.div>
-        )}
 
         {/* --- Écran de capture ------------------------------------------- */}
         {etape === "capture" && (

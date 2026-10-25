@@ -6,7 +6,6 @@ import {
   DEPANNAGE,
   ZONES,
   type Moment,
-  type ZoneDeplacement,
 } from "@/lib/simulateur/config";
 import { formatEuros } from "@/lib/simulateur/calcul";
 
@@ -18,15 +17,13 @@ import { formatEuros } from "@/lib/simulateur/calcul";
  * (déplacement + première heure) par zone et par moment, puis demi-heure
  * supplémentaire entamée.
  */
-type ZoneForfaitisee = ZoneDeplacement & { forfait: Record<Moment, number> };
-const ZONES_FORFAIT = ZONES.filter((z): z is ZoneForfaitisee => z.forfait !== null);
-const forfaitsJour = ZONES_FORFAIT.map((z) => z.forfait.jour);
-const forfaitsNuit = ZONES_FORFAIT.map((z) => z.forfait.nuitWeekend);
+const forfaitsJour = ZONES.map((z) => z.forfait.jour);
+const forfaitsNuit = ZONES.map((z) => z.forfait.nuitWeekend);
 const demiHeure = DEPANNAGE.demiHeureSupplementaire;
 
 /** « Zone 1 : 110 €, Zone 2 : 130 €, Zone 3 : 150 € » — pour la FAQ (et son schema). */
 const detailZones = (moment: Moment) =>
-  ZONES_FORFAIT.map((z) => `${z.label} : ${formatEuros(z.forfait[moment])}`).join(", ");
+  ZONES.map((z) => `${z.label} : ${formatEuros(z.forfait[moment])}`).join(", ");
 
 const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 

@@ -42,7 +42,7 @@ const ESTIMATION = {
   accent: "moins d'une minute",
 };
 
-const VARIANTES: Record<Parcours | "defaut", Variante> = {
+const VARIANTES: Record<Exclude<Parcours, "depannage"> | "defaut", Variante> = {
   borne: {
     ...ESTIMATION,
     intro: `${NB_QUESTIONS.borne} questions sur votre installation et l'emplacement de la borne, et vous obtenez un devis indicatif détaillé poste par poste, établi sur nos tarifs réels en Brabant wallon.`,
@@ -59,20 +59,6 @@ const VARIANTES: Record<Parcours | "defaut", Variante> = {
       { icon: Clock, texte: `${NB_QUESTIONS.rgie} questions, moins d'une minute` },
       { icon: ShieldCheck, texte: "Sans engagement, gratuit" },
       { icon: Wrench, texte: "Chiffres d'un électricien du Brabant wallon" },
-    ],
-  },
-  // Aucune promesse de gratuité ici : il n'y a pas de simulation de chantier,
-  // mais le prix d'une intervention payante.
-  depannage: {
-    eyebrow: "Dépannage",
-    titre: "Une panne ?",
-    accent: "Nos tarifs, sans détour",
-    intro:
-      "Le prix de l'intervention s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
-    reassurances: [
-      { icon: Clock, texte: "Jour, soirée et week-end — nuit sur disponibilité" },
-      { icon: Receipt, texte: "Forfait annoncé avant le départ" },
-      { icon: MapPin, texte: "Électricien basé à Court-Saint-Étienne" },
     ],
   },
   defaut: {
@@ -101,7 +87,7 @@ const Simulateur = () => {
   const [parcours, setParcours] = useState<Parcours | null>(() =>
     parcoursDepuisUrl(params.get("besoin")),
   );
-  const variante = VARIANTES[parcours ?? "defaut"];
+  const variante = VARIANTES[parcours && parcours !== "depannage" ? parcours : "defaut"];
 
   // Anciens liens et favoris : le dépannage se lit désormais sur sa page.
   if (parcoursDepuisUrl(params.get("besoin")) === "depannage") {

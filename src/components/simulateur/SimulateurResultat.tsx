@@ -1,9 +1,8 @@
 /**
  * Simulateur de prix v2 — écrans finaux.
  *
- * Trois sorties possibles :
+ * Deux sorties possibles :
  *   - le mini-devis indicatif par poste (borne, RGIE) ;
- *   - l'écran dépannage, purement tarifaire ;
  *   - le cas complexe, où l'on n'affiche AUCUN chiffre et où l'on propose une
  *     visite sur place.
  *
@@ -11,28 +10,15 @@
  * doit jamais être gonflé par un chiffre qu'on n'a pas.
  */
 
-import { useState } from "react";
-import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown, Wrench } from "lucide-react";
+import { Phone, MessageCircle, CheckCircle2, Ruler, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
-import {
-  COMMUNES,
-  CONTACT,
-  ECRAN_DEPANNAGE,
-  MENTIONS,
-  MESSAGE_WHATSAPP_DEPANNAGE,
-  MOMENTS,
-  MOMENTS_COURTS,
-  type Moment,
-  type Zone,
-} from "@/lib/simulateur/config";
+import { CONTACT, MENTIONS } from "@/lib/simulateur/config";
 import {
   calculerDevis,
   formatFourchette,
   formatLigne,
-  fourchetteCourantePhrase,
   type Devis,
   type LigneDevis,
   type Reponses,
@@ -72,16 +58,13 @@ const Actions = ({
 }) => {
   const { trackEvent } = useAnalyticsEvents();
 
-  const messageWhatsApp =
-    reponses.parcours === "depannage"
-      ? [MESSAGE_WHATSAPP_DEPANNAGE, "", resumerSimulation(reponses, devis)].join("\n")
-      : [
-          "Bonjour, je viens de faire une simulation sur votre site.",
-          "",
-          resumerSimulation(reponses, devis),
-          "",
-          "Je vous envoie la photo de mon tableau électrique.",
-        ].join("\n");
+  const messageWhatsApp = [
+    "Bonjour, je viens de faire une simulation sur votre site.",
+    "",
+    resumerSimulation(reponses, devis),
+    "",
+    "Je vous envoie la photo de mon tableau électrique.",
+  ].join("\n");
 
   const lienWhatsApp = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(messageWhatsApp)}`;
   const taille = gros
@@ -291,207 +274,6 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
         libelleWhatsApp="Envoyer la photo de mon tableau sur WhatsApp"
       />
 
-      <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
-    </motion.div>
-  );
-};
-
-// =====================================================================
-//  Dépannage — un seul écran, le prix avant tout clic
-// =====================================================================
-
-/**
- * Le parcours dépannage tient sur un écran, purement tarifaire.
- *
- * Le prix plancher (forfait de la zone la moins chère) est lisible avant le
- * moindre clic, puis deux sélecteurs — commune et moment — l'affinent en
- * direct, sans jamais changer de page. Les boutons d'appel restent sous le
- * prix en permanence. Grille du 2026-10-25 : forfait déplacement + première
- * heure, puis demi-heure supplémentaire entamée.
- *
- * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée, et
- * AUCUNE consigne de sécurité n'est donnée (décision d'Adrian du 2026-09-14) :
- * le simulateur est un outil de prix. Depuis le 2026-10-26, le site ne donne
- * plus aucune consigne pompiers / 112 (décision d'Adrian) — ne pas la
- * réintroduire sans en reparler avec lui.
- */
-export const EcranDepannage = () => {
-  const { trackEvent } = useAnalyticsEvents();
-  const [commune, setCommune] = useState("");
-  const [moment, setMoment] = useState<Moment>("jour");
-
-  // « » = commune pas encore choisie : le devis affiche alors le plancher
-  // (forfait de la zone la moins chère, pour le moment choisi).
-  const zone: Zone | undefined =
-    commune === ""
-      ? undefined
-      : commune === "hors"
-        ? "hors"
-        : COMMUNES.find((c) => c.commune === commune)?.zone;
-
-  const reponses: Reponses = { parcours: "depannage", moment, zone };
-  const devis = calculerDevis(reponses);
-
-  const choisirCommune = (valeur: string) => {
-    setCommune(valeur);
-    trackEvent("simu_depannage_zone", {
-      source_section: "simulateur_depannage",
-      zone: valeur === "" ? "aucune" : (COMMUNES.find((c) => c.commune === valeur)?.zone ?? "hors"),
-    });
-  };
-
-  const choisirMoment = (valeur: Moment) => {
-    setMoment(valeur);
-    trackEvent("simu_depannage_moment", {
-      source_section: "simulateur_depannage",
-      moment: valeur,
-    });
-  };
-
-  const champ =
-    "mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-base text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:text-sm";
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 border border-primary/30">
-          <Wrench className="h-5 w-5 text-primary" />
-        </span>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-            {ECRAN_DEPANNAGE.eyebrow}
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight">
-            {ECRAN_DEPANNAGE.titre}
-          </h2>
-        </div>
-      </div>
-
-      {/* Le prix, avant le moindre clic. Sans forfait (Bruxelles, hors liste),
-          la carte le dit en toutes lettres plutôt que d'afficher un chiffre
-          partiel. */}
-      {devis.total ? (
-        <CarteMontant
-          intitule={devis.intituleTotal}
-          montant={formatFourchette(devis.total)}
-          sousTitre={devis.sousTitreTotal}
-        />
-      ) : (
-        <CarteMontant
-          texte
-          intitule={ECRAN_DEPANNAGE.intituleSansForfait}
-          montant={ECRAN_DEPANNAGE.montantSansForfait}
-          sousTitre={ECRAN_DEPANNAGE.sousTitreSansForfait}
-        />
-      )}
-
-      {/* Le forfait couvre la première heure : sans ordre de grandeur réel à
-          côté, le visiteur retient le forfait et fait lui-même le calcul des
-          demi-heures suivantes. Phrase dérivée des constantes de tarif, pour
-          la commune et le moment choisis. */}
-      {(() => {
-        const phrase = fourchetteCourantePhrase(zone, moment);
-        return phrase ? <MentionBox>{phrase}</MentionBox> : null;
-      })()}
-
-      <div className="rounded-3xl border border-border/60 bg-card p-5 md:p-7">
-        <ul className="divide-y divide-border/60">
-          {devis.lignes.map((ligne) => (
-            <Poste key={ligne.libelle} ligne={ligne} />
-          ))}
-        </ul>
-
-        {/* Les deux sélecteurs : le montant se met à jour au-dessus, sans
-            changer d'écran. */}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="depannage-commune">{ECRAN_DEPANNAGE.labelCommune}</Label>
-            <select
-              id="depannage-commune"
-              value={commune}
-              onChange={(ev) => choisirCommune(ev.target.value)}
-              className={champ}
-            >
-              <option value="">{ECRAN_DEPANNAGE.invitePrecision}</option>
-              {COMMUNES.map((c) => (
-                <option key={c.commune} value={c.commune}>
-                  {c.commune}
-                </option>
-              ))}
-              <option value="hors">{ECRAN_DEPANNAGE.optionHorsListe}</option>
-            </select>
-          </div>
-
-          <div>
-            <span className="text-sm font-medium text-foreground">
-              {ECRAN_DEPANNAGE.labelMoment}
-            </span>
-            <div className="mt-1.5 flex flex-col gap-2">
-              {MOMENTS.map((m) => (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => choisirMoment(m.value)}
-                  aria-pressed={moment === m.value}
-                  className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    moment === m.value
-                      ? "border-primary bg-primary/[0.07] text-foreground"
-                      : "border-border/70 bg-card text-muted-foreground hover:border-primary/50"
-                  }`}
-                >
-                  {/* Pastille de sélection en CSS, sans emoji. */}
-                  <span
-                    aria-hidden="true"
-                    className={`mt-1.5 h-3 w-3 shrink-0 self-start rounded-full border-2 transition-colors ${
-                      moment === m.value ? "border-primary bg-primary" : "border-border"
-                    }`}
-                  />
-                  {/* La définition de la plage sous le libellé : « jour » et
-                      « nuit / week-end » ne veulent rien dire tant qu'on n'a
-                      pas lu où passe la frontière (19 h, samedi…). */}
-                  <span className="flex flex-col">
-                    <span className={moment === m.value ? "font-medium" : undefined}>
-                      {MOMENTS_COURTS[m.value]}
-                    </span>
-                    {m.description && (
-                      <span className="text-xs leading-snug text-muted-foreground">
-                        {m.description}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Appeler reste sous le prix, en permanence : c'est l'action utile quand
-          il n'y a plus de courant. */}
-      <Actions
-        reponses={reponses}
-        devis={devis}
-        gros
-        contexte="simulateur_depannage"
-        libelleAppel={`Appeler le ${CONTACT.telephoneAffiche}`}
-        libelleWhatsApp="Décrire ma panne sur WhatsApp"
-      />
-
-      {devis.mentions.slice(0, 1).map((m) => (
-        <MentionBox key={m} accent>
-          {m}
-        </MentionBox>
-      ))}
-      {devis.mentions.slice(1).map((m) => (
-        <MentionBox key={m}>{m}</MentionBox>
-      ))}
-
-      <MentionBox>{MENTIONS.depannagePasDeFormulaire}</MentionBox>
       <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
     </motion.div>
   );

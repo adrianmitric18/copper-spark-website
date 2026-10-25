@@ -68,9 +68,10 @@ Le **dépannage ne passe plus par le simulateur** (décision d'Adrian du
 2026-10-25) : la grille est affichée sans clic en haut de
 `/services/depannage-urgent` (`GrilleDepannage`), et toutes les entrées
 « dépannage » — étape 1, `?besoin=depannage`, barre mobile, encart CTA — y
-renvoient (`PAGE_DEPANNAGE`). L'écran `EcranDepannage` et `ECRAN_DEPANNAGE`
-restent dans le code mais ne sont plus atteignables ; aucun lead, aucune
-coordonnée, aucune consigne de sécurité n'y a jamais été demandée ou donnée.
+renvoient (`PAGE_DEPANNAGE`). L'ancien écran dépannage du simulateur a été
+supprimé le 2026-10-26 ; `calculerDevis` lève une erreur si on l'appelle encore
+avec le parcours dépannage. Les zones (`ZONES`) et `HORS_FORFAIT` restent dans
+`config.ts` : c'est la source unique de la grille.
 
 Les questions ne vivent pas dans le composant : elles sont décrites par
 `QUESTIONS` et `SEQUENCES` dans `config.ts`, et rendues par un écran générique.
@@ -134,6 +135,5 @@ Les noms de la v1 sont conservés (les renommer casserait l'historique), avec un
 paramètre `parcours` en plus :
 
 `simu_step_1` … `simu_step_N` · `simu_capture_vu` · `simu_resultat_vu` ·
-`simu_depannage_vu` · `simu_depannage_zone` · `simu_depannage_moment` ·
-`simu_lead_envoye` (avec
+`simu_depannage_vers_page` (clic dépannage à l'étape 1) · `simu_lead_envoye` (avec
 `preference_rappel`) · `simu_cas_complexe` · `form_submit`.
