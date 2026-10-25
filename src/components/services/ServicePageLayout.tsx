@@ -56,6 +56,8 @@ export interface ServicePageProps {
   /** Service name passed to Schema.org Service node */
   schemaServiceName: string;
   schemaServiceDescription: string;
+  /** Communes citées dans l'areaServed du schema Service (sinon la zone générique). */
+  schemaAreaServed?: string[];
   /** Hero */
   hero: {
     eyebrow: string;
@@ -82,6 +84,7 @@ const ServicePageLayout = ({
   seoKeywords,
   schemaServiceName,
   schemaServiceDescription,
+  schemaAreaServed,
   hero,
   simulateurCta,
   children,
@@ -105,6 +108,7 @@ const ServicePageLayout = ({
         type="Service"
         serviceName={schemaServiceName}
         serviceDescription={schemaServiceDescription}
+        areaServed={schemaAreaServed}
       />
       <StructuredData type="FAQPage" questions={faqs} />
       <Header />

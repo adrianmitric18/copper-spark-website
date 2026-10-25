@@ -27,6 +27,8 @@ interface ServiceProps {
   type: "Service";
   serviceName: string;
   serviceDescription: string;
+  /** Communes desservies pour ce service ; à défaut, la zone générique. */
+  areaServed?: string[];
 }
 
 interface BreadcrumbItem {
@@ -242,8 +244,14 @@ const StructuredData = (props: StructuredDataProps) => {
           "areaServed": [
             { "@type": "AdministrativeArea", "name": "Brabant wallon" },
             { "@type": "AdministrativeArea", "name": "Wallonie" },
-            { "@type": "City", "name": "Court-Saint-Étienne" },
-            { "@type": "City", "name": "Bruxelles" }
+            // Liste propre au service quand elle existe (la page dépannage
+            // passe les communes de sa grille), sinon la zone générique.
+            ...(props.areaServed
+              ? props.areaServed.map((name) => ({ "@type": "City", "name": name }))
+              : [
+                  { "@type": "City", "name": "Court-Saint-Étienne" },
+                  { "@type": "City", "name": "Bruxelles" }
+                ])
           ]
         };
         break;
