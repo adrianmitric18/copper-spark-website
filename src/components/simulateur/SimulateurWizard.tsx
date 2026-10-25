@@ -699,8 +699,8 @@ const SimulateurWizard = ({
             <div className="grid gap-6 md:grid-cols-[minmax(0,15rem)_1fr] md:gap-8 md:items-start">
             {/* Réassurance : en haut sur mobile, colonne de gauche sur desktop.
                 Note Google réelle (valeur de secours 5,0/32 tant que Supabase
-                n'a pas répondu) et rappel qu'il y a un artisan du coin derrière
-                ce formulaire, pas un comparateur. */}
+                n'a pas répondu). Aucune phrase défensive ici (décision
+                d'Adrian du 2026-10-26). */}
             <aside className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
               <div className="flex items-center gap-2.5">
                 <LogoIcon className="h-7 w-7 text-primary shrink-0" />
@@ -729,10 +729,6 @@ const SimulateurWizard = ({
                 </div>
               )}
 
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Réponse rapide par un électricien basé à Court-Saint-Étienne, pas une
-                plateforme de revente de leads.
-              </p>
             </aside>
 
             <div>
