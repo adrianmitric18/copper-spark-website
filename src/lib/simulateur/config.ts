@@ -609,8 +609,6 @@ export const MENTIONS = {
     "La répartition automatique de la puissance entre votre maison et votre voiture est activable au passage au compteur digital.",
   casComplexe:
     "Votre projet mérite une visite sur place, pour tout mesurer et vous donner un prix juste.",
-  electricienLocal:
-    "Votre demande est traitée par un électricien local basé à Court-Saint-Étienne, pas par une plateforme.",
   rgpdCapture:
     "En validant, vous acceptez d'être recontacté par Le Cuivre Électrique au sujet de votre demande. Vos données ne sont jamais revendues.",
   /**

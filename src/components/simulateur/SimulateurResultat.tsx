@@ -274,7 +274,6 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
         libelleWhatsApp="Envoyer la photo de mon tableau sur WhatsApp"
       />
 
-      <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
     </motion.div>
   );
 };
@@ -336,6 +335,5 @@ export const EcranComplexe = ({ reponses, devis, prenom }: Props) => (
       libelleWhatsApp="Envoyer la photo de mon tableau sur WhatsApp"
     />
 
-    <MentionBox>{MENTIONS.electricienLocal}</MentionBox>
   </motion.div>
 );
