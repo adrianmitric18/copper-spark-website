@@ -723,10 +723,10 @@ export const MENTIONS = {
   // de 25 à 40 km) qui interdit un forfait unique, pas la distance.
   depannageBruxelles:
     "Bruxelles compte 19 communes, à des distances très différentes : le forfait est calculé selon la vôtre et confirmé par téléphone, avant tout départ.",
-  // Demandé par Adrian le 2026-10-25 : le visiteur doit savoir avant d'appeler
-  // que le dépannage se règle sur place (cohérent avec les CGV, §5 : paiement
-  // comptant à la fin de l'intervention).
-  depannagePaiement: "Le dépannage se paie sur place, à la fin de l'intervention.",
+  // Décision d'Adrian du 2026-10-26 : un seul moyen de paiement affiché, le QR
+  // code sur place — ni espèces, ni carte, nulle part sur le site (CGV §5
+  // alignées le même jour).
+  depannagePaiement: "Paiement sur place par QR code.",
   // « On vous répond » était une garantie qu'un artisan seul ne peut pas tenir,
   // et l'argument n'en avait pas besoin.
   depannagePasDeFormulaire: "Pas de formulaire pour une panne : un appel suffit.",
