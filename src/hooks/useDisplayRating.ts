@@ -24,7 +24,8 @@ export interface DisplayRating {
  */
 export const FALLBACK_RATING: DisplayRating = {
   ratingValue: 5.0,
-  reviewCount: 32,
+  // Relevé sur la fiche Google le 2026-09-14.
+  reviewCount: 33,
   ratingValueFormatted: "5,0",
   isFallback: true,
 };

@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import {
   ArrowLeft,
   Building2,
+  CalendarClock,
   Car,
   Check,
   CircuitBoard,
@@ -23,11 +24,15 @@ import {
   History,
   Home,
   Layers,
+  MapPin,
+  Moon,
   PlugZap,
   Briefcase,
   Route,
   ShieldCheck,
   Shovel,
+  Sparkles,
+  Sun,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -41,7 +46,6 @@ import type { IconeChoix } from "@/lib/simulateur/config";
 const ICONES: Record<IconeChoix, LucideIcon> = {
   borne: PlugZap,
   conformite: ShieldCheck,
-  combine: Layers,
   depannage: Wrench,
   vente: Handshake,
   certificat: FileText,
@@ -56,6 +60,14 @@ const ICONES: Record<IconeChoix, LucideIcon> = {
   voiture: Car,
   societe: Briefcase,
   immeuble: Building2,
+  maison: Home,
+  neuf: Sparkles,
+  tableau: CircuitBoard,
+  tableaux: Layers,
+  jour: Sun,
+  nuit: Moon,
+  agenda: CalendarClock,
+  zone: MapPin,
 };
 
 // =====================================================================

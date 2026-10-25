@@ -1,6 +1,7 @@
 import { Phone, FileText, Calculator } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import type { Parcours } from "@/lib/simulateur/config";
 
 /**
  * Barre de conversion mobile.
@@ -31,9 +32,10 @@ const VARIANTE = variante();
  * lui parler de borne de recharge — serait incohérent. Partout ailleurs, le
  * lien reste générique.
  */
-const BESOIN_PAR_PAGE: Record<string, string> = {
+const BESOIN_PAR_PAGE: Record<string, Parcours> = {
   "/services/bornes-de-recharge": "borne",
   "/services/mise-en-conformite-rgie": "rgie",
+  "/services/depannage-urgent": "depannage",
 };
 
 const MobileStickyBar = () => {

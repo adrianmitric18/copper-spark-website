@@ -143,7 +143,7 @@ const ZonePageLayout = ({
                     Un projet de borne ou de mise en conformité à {cityName} ?
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Obtenez une fourchette de prix en 4 questions.
+                    Obtenez un devis indicatif, détaillé poste par poste.
                   </p>
                 </div>
                 <Button variant="copper" asChild className="shrink-0 w-full md:w-auto">

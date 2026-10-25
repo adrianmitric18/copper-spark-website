@@ -1,6 +1,37 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
+import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
 import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import {
+  COMPLEMENT_MOMENT,
+  DEFINITION_MOMENT,
+  DEPANNAGE,
+  LIBELLE_HORS_JOUR,
+  MENTIONS,
+  ZONES,
+  type Moment,
+  type ZoneDeplacement,
+} from "@/lib/simulateur/config";
+import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
+
+/**
+ * Grille de dépannage affichée au public (section « Tarification transparente »
+ * et FAQ). Les montants viennent de `config.ts`, jamais d'ici : la page et le
+ * simulateur ne peuvent pas diverger. Grille du 2026-10-25 : forfait
+ * (déplacement + première heure) par zone et par moment, puis demi-heure
+ * supplémentaire entamée.
+ */
+type ZoneForfaitisee = ZoneDeplacement & { forfait: Record<Moment, number> };
+const ZONES_FORFAIT = ZONES.filter((z): z is ZoneForfaitisee => z.forfait !== null);
+const forfaitsJour = ZONES_FORFAIT.map((z) => z.forfait.jour);
+const forfaitsNuit = ZONES_FORFAIT.map((z) => z.forfait.nuitWeekend);
+const demiHeure = DEPANNAGE.demiHeureSupplementaire;
+
+/** « Zone 1 : 110 €, Zone 2 : 130 €, Zone 3 : 150 € » — pour la FAQ (et son schema). */
+const detailZones = (moment: Moment) =>
+  ZONES_FORFAIT.map((z) => `${z.label} : ${formatEuros(z.forfait[moment])}`).join(", ");
+
+const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const faqs = [
   {
@@ -10,8 +41,7 @@ const faqs = [
   },
   {
     question: "Quel est le tarif d'un dépannage urgent ?",
-    answer:
-      "Nous appliquons un forfait déplacement urgence + main d'œuvre, communiqué et accepté avant tout déplacement. Aucune mauvaise surprise : le tarif est annoncé clairement par téléphone ou WhatsApp avant que nous ne nous mettions en route.",
+    answer: `Un dépannage se facture au forfait, déplacement et première heure compris. En journée (${DEFINITION_MOMENT.jour.toLowerCase()}), le forfait va de ${formatEuros(Math.min(...forfaitsJour))} à ${formatEuros(Math.max(...forfaitsJour))} hors TVA selon votre commune (${detailZones("jour")}). ${majuscule(COMPLEMENT_MOMENT.nuitWeekend)}, il va de ${formatEuros(Math.min(...forfaitsNuit))} à ${formatEuros(Math.max(...forfaitsNuit))} (${detailZones("nuitWeekend")}). Chaque demi-heure supplémentaire entamée est comptée ${formatEuros(demiHeure.jour)} en journée et ${formatEuros(demiHeure.nuitWeekend)} ${COMPLEMENT_MOMENT.nuitWeekend}. À Bruxelles, pour une commune hors liste ou au-delà de 50 km, le forfait est confirmé par téléphone selon la distance, avant tout départ. TVA en sus : 6 % si votre logement a plus de 10 ans, sinon 21 %. Le matériel éventuel est facturé en plus, après votre accord. Le forfait est annoncé et accepté avant que nous prenions la route, et le dépannage se paie sur place, à la fin de l'intervention.`,
   },
   {
     question: "Que faire en attendant votre arrivée ?",
@@ -21,7 +51,7 @@ const faqs = [
   {
     question: "Intervenez-vous la nuit et le week-end ?",
     answer:
-      "Oui, notre service de dépannage est disponible 24h/24 et 7j/7. Le bureau est ouvert du lundi au samedi de 7h à 19h (fermé le dimanche) ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences.",
+      "Oui, week-ends compris. Le bureau est ouvert du lundi au samedi de 7h à 19h (fermé le dimanche) ; en dehors de ces plages, le numéro 0485 75 52 27 reste joignable pour les urgences. Les interventions de nuit se font sous réserve de disponibilité, confirmée par téléphone au moment de votre appel.",
   },
 ];
 
@@ -38,10 +68,11 @@ const DepannageUrgent = () => {
       schemaServiceDescription="Service de dépannage électrique d'urgence disponible 24h/24 et 7j/7 dans tout le Brabant wallon, en Wallonie et à Bruxelles."
       hero={{
         eyebrow: "Dépannage urgent",
-        h1: "Dépannage électrique urgent — 24h/24, 7j/7",
+        h1: "Dépannage électrique urgent — jour, soirée et week-end",
         intro:
           "Une panne électrique ne peut pas attendre. Adrian intervient rapidement dans le Brabant wallon, en Wallonie et à Bruxelles pour rétablir votre installation en toute sécurité, jour et nuit, week-ends compris.",
       }}
+      simulateurCta="depannage"
       faqs={faqs}
     >
       {/* Bloc urgence */}
@@ -52,8 +83,17 @@ const DepannageUrgent = () => {
             <p className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
               Panne en cours ? Appelez maintenant
             </p>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-3">
               Réponse immédiate, intervention rapide.
+            </p>
+            {/* Seule consigne de sécurité du parcours dépannage, et elle vit
+                ici — pas dans le simulateur, qui ne donne que des prix. Reprend
+                mot pour mot la FAQ plus bas sur cette page. Sans elle, un
+                visiteur qui sent le brûlé traverse page → simulateur → appel
+                sans croiser aucun avertissement. */}
+            <p className="mb-4 font-semibold text-foreground">
+              Odeur de brûlé, fumée ou étincelles ? Quittez la pièce et appelez
+              les pompiers (112) avant de nous joindre.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <a
@@ -80,6 +120,12 @@ const DepannageUrgent = () => {
           </div>
         </div>
       </div>
+
+      {/* Le simulateur vient APRÈS le bloc d'urgence, jamais avant : quelqu'un
+          dont l'installation est en panne doit tomber sur le numéro en premier.
+          Ce parcours-ci s'adresse à celui qui veut connaître le tarif avant
+          d'appeler. */}
+      <SimulateurCTA contexte="depannage" />
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Types de pannes traitées
@@ -142,14 +188,93 @@ const DepannageUrgent = () => {
         Tarification transparente
       </h2>
       <p className="text-muted-foreground leading-relaxed mb-4">
-        Notre dépannage urgence fonctionne avec un <strong>forfait déplacement</strong>{" "}
-        + un tarif horaire main d'œuvre. Le forfait est communiqué et accepté avant
-        tout déplacement, par téléphone ou WhatsApp. Pas de mauvaise surprise au
-        moment de la facture.
+        Un dépannage se facture au <strong>forfait</strong> : le déplacement et la
+        première heure sont compris, à partir de{" "}
+        <strong>{formatEuros(plancherDepannage("jour"))} hors TVA</strong>. Le
+        montant dépend de votre commune et du moment de l'intervention ; il est
+        annoncé et accepté avant que nous prenions la route, par téléphone ou
+        WhatsApp. Seuls le temps au-delà de la première heure et le matériel
+        que vous acceptez s'y ajoutent.
       </p>
-      <p className="text-muted-foreground leading-relaxed">
-        Le matériel éventuellement nécessaire (différentiel, disjoncteur, prise…)
-        est facturé en sus, après votre accord.
+
+      {/* La grille, telle qu'elle est facturée. Les montants viennent de
+          config.ts (simulateur) : une seule source pour les deux affichages. */}
+      <div className="overflow-x-auto rounded-2xl border border-border/60 mb-4">
+        <table className="w-full text-sm">
+          <caption className="sr-only">
+            Forfaits de dépannage hors TVA, par zone et par moment
+          </caption>
+          <thead className="bg-card text-left text-foreground">
+            <tr>
+              <th scope="col" className="px-4 py-3 font-semibold">
+                Zone
+              </th>
+              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+                Jour
+              </th>
+              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+                {LIBELLE_HORS_JOUR.court}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {ZONES_FORFAIT.map((z) => (
+              <tr key={z.value}>
+                <td className="px-4 py-3 align-top">
+                  <p className="font-medium text-foreground">{z.label}</p>
+                  <p className="text-muted-foreground leading-snug">{z.communes.join(", ")}</p>
+                </td>
+                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                  {formatEuros(z.forfait.jour)}
+                </td>
+                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                  {formatEuros(z.forfait.nuitWeekend)}
+                </td>
+              </tr>
+            ))}
+            <tr>
+              <td className="px-4 py-3 align-top">
+                <p className="font-medium text-foreground">
+                  Bruxelles, commune hors liste, au-delà de 50 km
+                </p>
+              </td>
+              <td colSpan={2} className="px-4 py-3 align-top text-muted-foreground">
+                Forfait confirmé par téléphone selon la distance, avant tout départ
+              </td>
+            </tr>
+            <tr className="bg-card/60">
+              <td className="px-4 py-3 align-top">
+                <p className="font-medium text-foreground">{DEPANNAGE.libelleDemiHeure}</p>
+                <p className="text-muted-foreground leading-snug">Au-delà de la première heure</p>
+              </td>
+              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                {formatEuros(demiHeure.jour)}
+              </td>
+              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
+                {formatEuros(demiHeure.nuitWeekend)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul className="space-y-1.5 text-sm text-muted-foreground mb-4">
+        <li>
+          <strong className="text-foreground">Jour :</strong>{" "}
+          {DEFINITION_MOMENT.jour.toLowerCase()}.
+        </li>
+        <li>
+          <strong className="text-foreground">{LIBELLE_HORS_JOUR.court} :</strong>{" "}
+          {DEFINITION_MOMENT.nuitWeekend.toLowerCase()}.
+        </li>
+      </ul>
+      <p className="text-muted-foreground leading-relaxed mb-4">
+        Prix hors TVA : <strong>6 %</strong> si votre logement a plus de 10 ans,
+        sinon <strong>21 %</strong>. Le matériel éventuellement nécessaire
+        (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.
+      </p>
+      <p className="text-muted-foreground leading-relaxed mb-4">
+        {MENTIONS.depannagePaiement} {MENTIONS.depannageNuit}
       </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">

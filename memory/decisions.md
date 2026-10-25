@@ -14,6 +14,51 @@
 
 ## Journal
 
+### 2026-09-13 — Simulateur v2 : trois parcours dédiés et mini-devis par poste
+- **Décision :** refonte complète du simulateur, branche `feat/simulateur-v2`.
+  - **Trois parcours totalement dédiés** : borne (5 questions), RGIE (4),
+    dépannage (3). Le parcours « les deux » (`combine`) est **supprimé** ;
+    `?besoin=combine` redirige vers le parcours borne.
+  - L'écran final est un **mini-devis indicatif par poste**, plus une fourchette
+    unique. Un poste peut être « compris », « à confirmer » ou « sur devis » —
+    et un poste « à confirmer » **n'entre jamais dans le total affiché**.
+  - Le **dépannage ne capture rien** : ni coordonnées, ni lead, ni email. Prix
+    affichés, puis appel ou WhatsApp. Sa première question est une **alerte
+    sécurité** (odeur de brûlé, étincelles, fumée) qui sort du parcours sur une
+    consigne de coupure du disjoncteur général et un bouton d'appel géant.
+  - **Préférence de rappel** ajoutée sur l'écran de capture (« être rappelé » /
+    « juste voir les prix ») : ne change rien à l'affichage, sert à prioriser le
+    rappel. Pastille de couleur CSS dans l'admin, jamais d'emoji.
+- **Tarifs arbitrés par Adrian ce jour, TTC TVA 6 % :** Alfen fournie et posée
+  2 650 – 3 000 € ; pose seule (borne du client) 950 – 1 300 € ; adaptation du
+  tableau et protection 6 mA DC **toujours « à confirmer »**, jamais chiffrées
+  en ligne ; forfait RGIE 550 € **affiché tel quel quelle que soit la TVA** ;
+  travaux RGIE inchangés (500–1 200 / 500–2 000 / 800–3 000 / 500–3 000) ;
+  dépannage 25 / 35 / 50 € de déplacement HTVA, 50 €/h jour-soirée-week-end,
+  100 €/h nuit, plancher = déplacement + 1re heure indivisible.
+- **Renversement assumé d'une règle du brief 2026-08-09 :** le dossier technique
+  et le passage de l'organisme agréé sont désormais présentés comme **COMPRIS**
+  dans les fourchettes borne. Raison : les fourchettes sont calées sur des
+  chantiers réels qui les incluaient (Alfen posée 2 834 € TTC dont 300 € de
+  dossier + contrôle ; pose seule 998 € TTC dont ~285 €). C'est un argument
+  commercial — les concurrents sortent ces postes de leur total pour paraître
+  moins chers. Ne pas re-inverser sans l'accord d'Adrian.
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **Aucune migration Supabase** : le payload est du `jsonb` libre. Mais
+    `source` doit **rester `'simulateur'`** — la policy d'insertion bascule sur
+    la branche « formulaire de contact » (rue, numéro, code postal et commune
+    obligatoires) pour toute autre valeur, et tous les leads seraient rejetés.
+  - **Aucun template EmailJS à refaire** : aucun nom de variable n'a bougé, le
+    détail du devis passe par `{{resume}}`, déjà multiligne.
+  - Le nombre de questions annoncé sur les pages d'origine est maintenant
+    **dérivé** de `SEQUENCES` via `NB_QUESTIONS` : il ne peut plus dériver.
+  - Les tarifs publics de `/faq` et `/services/bornes-de-recharge` sont passés
+    de « 1 800 – 3 000 € » à « 2 650 – 3 000 € » dans la même livraison. Toute
+    modification de `BORNE.alfen` doit y être reportée le même jour.
+  - Sur un logement de moins de 10 ans, l'intitulé du total RGIE dit « TVA 21 %
+    comprise » alors que le forfait de 550 € y est ajouté tel quel (arbitrage
+    d'Adrian : le libellé exact porte le montant). Imprécision connue et acceptée.
+
 ### 2026-08-16 — Simulateur : email obligatoire, pré-sélection par page, entrée dépannage
 - **Décision :**
   - L'email est **obligatoire** sur l'écran de capture (client + policy RLS,

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
 
 type FaqCategoryKey = "general" | "intervention" | "materiel" | "specialites";
 
@@ -141,7 +142,7 @@ const faqData: FaqItem[] = [
     category: "intervention",
     question: "Intervenez-vous en urgence ?",
     answer:
-      "Oui. Nous proposons un service de dépannage électrique rapide pour tous types de situations urgentes : panne générale, court-circuit, disjoncteur qui saute en permanence, prise qui grille, odeur de brûlé, tableau électrique défaillant, coupure partielle… Selon la disponibilité et la distance, une intervention le jour même est souvent possible dans le Brabant wallon. Appelez-nous directement au 0485 75 52 27 pour les urgences, c'est le moyen le plus rapide d'être pris en charge.",
+      `Oui. Nous proposons un service de dépannage électrique rapide pour tous types de situations urgentes : panne générale, court-circuit, disjoncteur qui saute en permanence, prise qui grille, odeur de brûlé, tableau électrique défaillant, coupure partielle… Selon la disponibilité et la distance, une intervention le jour même est souvent possible dans le Brabant wallon. Appelez-nous directement au 0485 75 52 27 pour les urgences, c'est le moyen le plus rapide d'être pris en charge. Le dépannage se facture au forfait, déplacement et première heure compris, à partir de ${formatEuros(plancherDepannage("jour"))} hors TVA : la grille complète par commune est sur la page dépannage urgent.`,
     answerNode: (
       <>
         <p>
@@ -156,6 +157,14 @@ const faqData: FaqItem[] = [
             0485 75 52 27
           </a>{" "}
           pour les urgences, c'est le moyen le plus rapide d'être pris en charge.
+        </p>
+        <p>
+          Le dépannage se facture au forfait, déplacement et première heure compris, à partir de{" "}
+          {formatEuros(plancherDepannage("jour"))} hors TVA. La grille complète par commune est sur la{" "}
+          <Link to="/services/depannage-urgent" className="text-primary font-medium hover:underline">
+            page dépannage urgent
+          </Link>
+          .
         </p>
       </>
     ),
@@ -453,20 +462,31 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Combien coûte l'installation d'une borne de recharge ?",
     answer:
-      "Le prix dépend de la marque, de la puissance, de la longueur de câble entre tableau et borne, et de la complexité de l'installation (renforcement de tableau, tranchée éventuelle). Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
+      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Alfen fournie et posée, comptez en ordre de grandeur entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris. Pensez à comparer ce point sur les autres devis que vous recevrez : ces deux postes n'y sont pas toujours compris. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les autres marques du marché : dans ce cas, la borne est chiffrée à part, selon le modèle choisi. Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
     answerNode: (
       <>
         <p>
-          Le prix dépend de la marque, de la puissance, de la longueur de
-          câble entre tableau et borne, et de la complexité de l'installation
-          (renforcement de tableau, tranchée éventuelle).
+          Le prix dépend de la marque, de la distance entre votre tableau et la
+          borne, et de l'état de votre tableau électrique.
         </p>
         <p>
-          Pour une borne Alfen, Hager ou Wallbox avec une pose simple, comptez
-          en ordre de grandeur entre 1 800 et 3 000 € TTC, matériel et
-          main-d'œuvre compris. Les chantiers nécessitant une tranchée ou un
-          terrassement sortent de cette fourchette. Le devis est gratuit après
-          visite technique sur place et détaille chaque poste séparément.
+          Pour une borne Alfen fournie et posée, comptez en ordre de grandeur
+          entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique
+          et passage de l'organisme agréé compris. Pensez à comparer ce point
+          sur les autres devis que vous recevrez : ces deux postes n'y sont pas
+          toujours compris.
+        </p>
+        <p>
+          Si vous fournissez vous-même votre borne, la pose seule se situe entre
+          950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les
+          autres marques du marché : dans ce cas, la borne est chiffrée à part,
+          selon le modèle choisi.
+        </p>
+        <p>
+          Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de
+          10 ans. Les chantiers nécessitant une tranchée ou un terrassement
+          sortent de cette fourchette. Le devis est gratuit après visite
+          technique sur place et détaille chaque poste séparément.
         </p>
       </>
     ),

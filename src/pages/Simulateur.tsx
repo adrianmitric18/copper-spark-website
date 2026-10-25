@@ -8,19 +8,24 @@ import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import SimulateurWizard from "@/components/simulateur/SimulateurWizard";
+import { NB_QUESTIONS, PARCOURS_OBSOLETES, type Parcours } from "@/lib/simulateur/config";
 
 /**
- * Page /simulateur — estimation borne de recharge et mise en conformité RGIE.
+ * Page /simulateur — borne de recharge, mise en conformité RGIE, dépannage.
  *
  * Le shell de la page (en-tête, intro, réassurance, pied de page) est
  * pré-rendu au build comme les autres routes ; seul le parcours lui-même est
  * interactif et se monte côté client.
  *
- * L'intro s'adapte au `?besoin=…` posé par la page d'origine, pour ne pas
- * annoncer quatre questions à quelqu'un qui n'en aura que deux, ni parler de
- * borne de recharge à quelqu'un venu pour une mise en conformité. Le pré-rendu
- * se fait sans paramètre : le HTML statique porte la variante générique, la
- * bonne variante s'affiche à l'hydratation.
+ * L'intro s'adapte au parcours réellement affiché — celui du `?besoin=…` posé
+ * par la page d'origine, ou celui choisi à l'étape 1 — pour ne pas annoncer
+ * cinq questions à quelqu'un qui n'en aura que trois, ni parler d'estimation
+ * gratuite au-dessus d'une grille de tarifs de dépannage. Le nombre de
+ * questions vient de `NB_QUESTIONS`, dérivé des parcours eux-mêmes : il ne peut
+ * pas dériver du parcours réel.
+ *
+ * Le pré-rendu se fait sans paramètre : le HTML statique porte la variante
+ * générique, la bonne variante s'affiche à l'hydratation.
  */
 
 interface Variante {
@@ -34,40 +39,38 @@ interface Variante {
 const ESTIMATION = {
   eyebrow: "Simulateur de prix",
   titre: "Estimez votre prix en",
-  accent: "45 secondes",
+  accent: "moins d'une minute",
 };
 
-const VARIANTES: Record<"borne" | "rgie" | "depannage" | "defaut", Variante> = {
+const VARIANTES: Record<Parcours | "defaut", Variante> = {
   borne: {
     ...ESTIMATION,
-    intro:
-      "Trois questions sur votre installation et l'emplacement de la borne, et vous obtenez une fourchette indicative établie sur nos tarifs réels en Brabant wallon.",
+    intro: `${NB_QUESTIONS.borne} questions sur votre installation et l'emplacement de la borne, et vous obtenez un devis indicatif détaillé poste par poste, établi sur nos tarifs réels en Brabant wallon.`,
     reassurances: [
-      { icon: Clock, texte: "Moins de 45 secondes, 3 questions" },
+      { icon: Clock, texte: `${NB_QUESTIONS.borne} questions, moins d'une minute` },
       { icon: ShieldCheck, texte: "Sans engagement, gratuit" },
       { icon: Wrench, texte: "Chiffres d'un électricien du Brabant wallon" },
     ],
   },
   rgie: {
     ...ESTIMATION,
-    intro:
-      "Deux questions sur votre installation et le motif du contrôle, et vous obtenez une fourchette indicative pour votre mise en conformité, établie sur nos tarifs réels en Brabant wallon.",
+    intro: `${NB_QUESTIONS.rgie} questions sur votre installation et le motif du contrôle, et vous obtenez un devis indicatif détaillé pour votre mise en conformité, établi sur nos tarifs réels en Brabant wallon.`,
     reassurances: [
-      { icon: Clock, texte: "Moins de 30 secondes, 2 questions" },
+      { icon: Clock, texte: `${NB_QUESTIONS.rgie} questions, moins d'une minute` },
       { icon: ShieldCheck, texte: "Sans engagement, gratuit" },
       { icon: Wrench, texte: "Chiffres d'un électricien du Brabant wallon" },
     ],
   },
-  // Aucune promesse de gratuité ni de durée de parcours ici : il n'y a pas de
-  // simulation, seulement une grille de tarifs payants.
+  // Aucune promesse de gratuité ici : il n'y a pas de simulation de chantier,
+  // mais le prix d'une intervention payante.
   depannage: {
     eyebrow: "Dépannage",
     titre: "Une panne ?",
     accent: "Nos tarifs, sans détour",
     intro:
-      "Un problème électrique ne s'estime pas en ligne. Voici ce que coûte une intervention, puis le moyen le plus rapide de nous joindre.",
+      "Le prix de l'intervention s'affiche tout de suite : déplacement et première heure. Vous choisissez votre commune et le moment, le montant s'ajuste — sans formulaire à remplir.",
     reassurances: [
-      { icon: Clock, texte: "Intervention 24h/24, 7j/7" },
+      { icon: Clock, texte: "Jour, soirée et week-end — nuit sur disponibilité" },
       { icon: Receipt, texte: "Forfait annoncé avant le départ" },
       { icon: MapPin, texte: "Électricien basé à Court-Saint-Étienne" },
     ],
@@ -75,40 +78,43 @@ const VARIANTES: Record<"borne" | "rgie" | "depannage" | "defaut", Variante> = {
   defaut: {
     ...ESTIMATION,
     intro:
-      "Borne de recharge, mise en conformité RGIE, ou les deux. Quatre questions, et vous obtenez une fourchette indicative établie sur nos tarifs réels en Brabant wallon.",
+      "Borne de recharge, mise en conformité RGIE ou dépannage. Quelques questions, et vous obtenez un devis indicatif détaillé poste par poste, établi sur nos tarifs réels en Brabant wallon.",
     reassurances: [
-      { icon: Clock, texte: "Moins de 45 secondes, 4 questions" },
+      { icon: Clock, texte: "Moins d'une minute" },
       { icon: ShieldCheck, texte: "Sans engagement, gratuit" },
       { icon: Wrench, texte: "Chiffres d'un électricien du Brabant wallon" },
     ],
   },
 };
 
+const parcoursDepuisUrl = (valeur: string | null): Parcours | null => {
+  if (!valeur) return null;
+  if (valeur === "borne" || valeur === "rgie" || valeur === "depannage") return valeur;
+  return PARCOURS_OBSOLETES[valeur] ?? null;
+};
+
 const Simulateur = () => {
   const [params] = useSearchParams();
-  const besoin = params.get("besoin");
-  const cleUrl =
-    besoin === "borne" || besoin === "rgie" || besoin === "depannage" ? besoin : "defaut";
 
-  // Le dépannage est aussi atteignable depuis l'étape 1, sans paramètre d'URL :
-  // le parcours nous dit alors lui-même quel écran est affiché.
-  const [ecran, setEcran] = useState<"simulation" | "depannage">(
-    cleUrl === "depannage" ? "depannage" : "simulation",
+  // Le parcours peut aussi être choisi à l'étape 1, sans paramètre d'URL : le
+  // wizard nous dit alors lui-même lequel est affiché.
+  const [parcours, setParcours] = useState<Parcours | null>(() =>
+    parcoursDepuisUrl(params.get("besoin")),
   );
-  const variante = VARIANTES[ecran === "depannage" ? "depannage" : cleUrl];
+  const variante = VARIANTES[parcours ?? "defaut"];
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
-        title="Simulateur de prix - Borne de recharge et RGIE"
-        description="Estimez en 45 secondes le prix de votre borne de recharge ou de votre mise en conformité RGIE en Brabant wallon. Estimation gratuite et sans engagement."
-        keywords="prix borne de recharge, tarif mise en conformité RGIE, devis borne Brabant wallon, estimation électricien"
+        title="Simulateur de prix - Borne de recharge, RGIE et dépannage"
+        description="Estimez en moins d'une minute le prix de votre borne de recharge, de votre mise en conformité RGIE ou d'un dépannage en Brabant wallon. Devis indicatif détaillé, gratuit et sans engagement."
+        keywords="prix borne de recharge, tarif mise en conformité RGIE, tarif dépannage électricien, devis borne Brabant wallon, estimation électricien"
         canonical="https://cuivre-electrique.com/simulateur"
       />
       <StructuredData
         type="Service"
-        serviceName="Estimation de prix borne de recharge et mise en conformité RGIE"
-        serviceDescription="Simulateur en ligne donnant une fourchette de prix indicative pour l'installation d'une borne de recharge ou une mise en conformité RGIE en Brabant wallon."
+        serviceName="Estimation de prix borne de recharge, mise en conformité RGIE et dépannage"
+        serviceDescription="Simulateur en ligne donnant un devis indicatif détaillé pour l'installation d'une borne de recharge, une mise en conformité RGIE ou un dépannage électrique en Brabant wallon."
       />
       <Header />
 
@@ -139,7 +145,7 @@ const Simulateur = () => {
               </ul>
             </div>
 
-            <SimulateurWizard onEcranChange={setEcran} />
+            <SimulateurWizard onParcoursChange={setParcours} />
           </div>
         </section>
       </main>

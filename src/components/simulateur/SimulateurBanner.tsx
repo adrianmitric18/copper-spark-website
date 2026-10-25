@@ -52,8 +52,8 @@ const SimulateurBanner = () => {
                 Simulateur de prix
               </p>
               <h2 className="font-display text-xl md:text-2xl font-bold leading-snug text-white">
-                Projet de borne ou de conformité ? Obtenez votre estimation
-                personnalisée en 4 questions.
+                Projet de borne ou de conformité ? Obtenez votre devis indicatif,
+                détaillé poste par poste.
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-white/65">
                 Résultat immédiat, sans engagement, sur nos tarifs réels en Brabant
