@@ -495,9 +495,8 @@ export const COMMUNES: CommuneZone[] = [
  * trois écrans avant de voir un prix, c'était deux de trop pour quelqu'un dont
  * l'installation vient de lâcher. Ensuite la suppression du contrôle de
  * sécurité (2026-09-14) : le simulateur est un outil de prix, il ne donne
- * aucune consigne de sécurité. Celles-ci vivent dans la FAQ de
- * /services/depannage-urgent, qui reste la seule source sur le sujet — ne pas
- * les réintroduire ici sans en reparler à Adrian.
+ * aucune consigne de sécurité. Depuis le 2026-10-26, le site n'en donne plus
+ * aucune non plus (consigne pompiers / 112 retirée partout, décision d'Adrian).
  */
 export const ECRAN_DEPANNAGE = {
   eyebrow: "Dépannage",

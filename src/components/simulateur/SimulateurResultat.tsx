@@ -311,9 +311,9 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
  *
  * Aucun lead n'est enregistré ici, aucune coordonnée n'est demandée, et
  * AUCUNE consigne de sécurité n'est donnée (décision d'Adrian du 2026-09-14) :
- * le simulateur est un outil de prix. Les consignes en cas de fumée ou d'odeur
- * de brûlé vivent dans la FAQ de /services/depannage-urgent, seule source sur
- * le sujet — ne pas les réintroduire ici sans en reparler à Adrian.
+ * le simulateur est un outil de prix. Depuis le 2026-10-26, le site ne donne
+ * plus aucune consigne pompiers / 112 (décision d'Adrian) — ne pas la
+ * réintroduire sans en reparler avec lui.
  */
 export const EcranDepannage = () => {
   const { trackEvent } = useAnalyticsEvents();

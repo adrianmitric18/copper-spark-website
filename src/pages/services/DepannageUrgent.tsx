@@ -1,6 +1,5 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
 import GrilleDepannage from "@/components/services/GrilleDepannage";
-import { AlertTriangle } from "lucide-react";
 import {
   COMPLEMENT_MOMENT,
   DEFINITION_MOMENT,
@@ -44,7 +43,7 @@ const faqs = [
   {
     question: "Que faire en attendant votre arrivée ?",
     answer:
-      "Si possible, coupez le disjoncteur général au tableau pour mettre l'installation hors tension. Ne touchez ni au tableau ni à la prise/appareil suspect tant que le courant n'est pas coupé. En cas de fumée ou d'odeur de brûlé, quittez la pièce et appelez les pompiers (112) avant de nous joindre.",
+      "Si possible, coupez le disjoncteur général au tableau pour mettre l'installation hors tension. Ne touchez ni au tableau ni à la prise/appareil suspect tant que le courant n'est pas coupé.",
   },
   {
     question: "Intervenez-vous la nuit et le week-end ?",
@@ -75,17 +74,6 @@ const DepannageUrgent = () => {
           2026-10-25, quelqu'un en panne est pressé. Les boutons du hero sont
           juste au-dessus, la grille les répète en dessous. */}
       <GrilleDepannage />
-
-      {/* Seule consigne de sécurité du parcours dépannage, et elle vit ici —
-          pas dans le simulateur, qui ne donne que des prix. Reprend mot pour
-          mot la FAQ plus bas sur cette page. */}
-      <div className="bg-primary/10 border-2 border-primary/40 rounded-2xl p-5 md:p-6 mb-10 flex items-start gap-4">
-        <AlertTriangle className="w-8 h-8 text-primary shrink-0" aria-hidden="true" />
-        <p className="font-semibold text-foreground leading-relaxed">
-          Odeur de brûlé, fumée ou étincelles ? Quittez la pièce et appelez les
-          pompiers (112) avant de nous joindre.
-        </p>
-      </div>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Types de pannes traitées
@@ -160,13 +148,6 @@ const DepannageUrgent = () => {
           <span>
             <strong>Ne touchez pas</strong> au tableau, à une prise qui chauffe ou à
             un appareil suspect tant que le courant n'est pas coupé.
-          </span>
-        </li>
-        <li className="flex items-start gap-3">
-          <span className="mt-2 w-2 h-2 rounded-full bg-primary shrink-0" />
-          <span>
-            <strong>En cas de fumée ou flammes</strong>, quittez immédiatement la
-            pièce et appelez le 112 avant de nous joindre.
           </span>
         </li>
         <li className="flex items-start gap-3">
