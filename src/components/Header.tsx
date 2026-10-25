@@ -12,6 +12,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import { PAGE_DEPANNAGE } from "@/lib/simulateur/config";
 
 const navItems = [
   { label: "Accueil", href: "/" },
@@ -76,13 +77,13 @@ const Header = () => {
         </motion.div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+        <nav className="hidden lg:flex items-center gap-3 xl:gap-6 whitespace-nowrap text-sm xl:text-base">
           {/* Accueil + À propos */}
           {navItems.slice(0, 2).map((item) => (
             <Link
               key={item.href}
               to={item.href}
-              className={`font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
+              className={`font-medium whitespace-nowrap transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
                 isActive(item.href)
                   ? "text-copper-deep after:w-full"
                   : "text-foreground/70 hover:text-copper-deep after:w-0 hover:after:w-full"
@@ -131,12 +132,25 @@ const Header = () => {
             </NavigationMenuList>
           </NavigationMenu>
 
+          {/* Dépannage : entrée directe et visible, pas seulement dans Services
+              (décision d'Adrian du 2026-10-26). */}
+          <Link
+            to={PAGE_DEPANNAGE}
+            className={`rounded-full border px-3 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+              isActive(PAGE_DEPANNAGE)
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-primary/50 bg-primary/10 text-copper-deep hover:bg-primary hover:text-primary-foreground"
+            }`}
+          >
+            Dépannage
+          </Link>
+
           {/* Reste */}
           {navItems.slice(2).map((item) => (
             <Link
               key={item.href}
               to={item.href}
-              className={`font-medium transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
+              className={`font-medium whitespace-nowrap transition-colors duration-300 relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:bg-primary after:transition-all after:duration-300 ${
                 isActive(item.href)
                   ? "text-copper-deep after:w-full"
                   : "text-foreground/70 hover:text-copper-deep after:w-0 hover:after:w-full"
@@ -152,13 +166,13 @@ const Header = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="hidden md:flex items-center gap-3"
+          className="hidden lg:flex items-center gap-3 whitespace-nowrap"
         >
           <a
             href="tel:+32485755227"
             data-analytics="call_click"
             onClick={() => trackEvent("call_click", { source_section: "header_desktop" })}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-copper-deep hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
+            className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-copper-deep hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
           >
             <Phone className="w-4 h-4 group-hover:animate-pulse" />
             <span className="font-bold">0485 75 52 27</span>
@@ -175,7 +189,7 @@ const Header = () => {
         </motion.div>
 
         {/* Mobile Menu Button */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2">
           <a
             href="tel:+32485755227"
             data-analytics="call_click"
@@ -204,7 +218,7 @@ const Header = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden absolute top-full left-0 right-0 glass overflow-hidden max-h-[80vh] overflow-y-auto"
+            className="lg:hidden absolute top-full left-0 right-0 glass overflow-hidden max-h-[80vh] overflow-y-auto"
           >
             <nav className="container mx-auto py-6 flex flex-col gap-2">
               {navItems.slice(0, 2).map((item) => (
@@ -221,6 +235,14 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
+
+              <Link
+                to={PAGE_DEPANNAGE}
+                onClick={handleNavClick}
+                className="my-1 inline-flex w-fit items-center rounded-full border border-primary/50 bg-primary/10 px-4 py-2 font-semibold text-copper-deep"
+              >
+                Dépannage
+              </Link>
 
               {/* Services accordion */}
               <div>
