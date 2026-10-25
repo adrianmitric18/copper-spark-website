@@ -56,12 +56,12 @@ const DepannageUrgent = () => {
   return (
     <ServicePageLayout
       slug="depannage-urgent"
-      breadcrumbLabel="Dépannage urgent 24h/24"
-      seoTitle="Dépannage électrique urgent 24h/24 en Brabant wallon | Le Cuivre Électrique"
-      seoDescription="Panne électrique, court-circuit, disjoncteur qui saute ? Dépannage urgent 24h/24, 7j/7, à Court-Saint-Étienne et dans tout le Brabant wallon. 0485 75 52 27."
-      seoKeywords="dépannage électrique urgent, électricien 24h/24, panne électrique Brabant wallon, court-circuit, disjoncteur qui saute, électricien Court-Saint-Étienne"
-      schemaServiceName="Dépannage électrique urgent 24h/24"
-      schemaServiceDescription="Service de dépannage électrique d'urgence disponible 24h/24 et 7j/7 dans tout le Brabant wallon, en Wallonie et à Bruxelles."
+      breadcrumbLabel="Dépannage urgent 7j/7"
+      seoTitle="Dépannage électrique urgent 7j/7 en Brabant wallon | Le Cuivre Électrique"
+      seoDescription="Panne électrique, court-circuit, disjoncteur qui saute ? Dépannage urgent 7j/7, à Court-Saint-Étienne et dans tout le Brabant wallon. 0485 75 52 27."
+      seoKeywords="dépannage électrique urgent, électricien 7j/7, panne électrique Brabant wallon, court-circuit, disjoncteur qui saute, électricien Court-Saint-Étienne"
+      schemaServiceName="Dépannage électrique urgent 7j/7"
+      schemaServiceDescription="Service de dépannage électrique d'urgence disponible 7j/7 dans tout le Brabant wallon, en Wallonie et à Bruxelles."
       hero={{
         eyebrow: "Dépannage urgent",
         h1: "Dépannage électrique urgent — jour, soirée et week-end",

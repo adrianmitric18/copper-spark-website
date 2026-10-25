@@ -19,7 +19,7 @@ const Services = () => {
       <StructuredData 
         type="Service" 
         serviceName="Services électriques professionnels" 
-        serviceDescription="Installation électrique complète, mise en conformité RGIE, dépannage 24h/24, panneaux photovoltaïques et bornes de recharge à Bruxelles et en Wallonie."
+        serviceDescription="Installation électrique complète, mise en conformité RGIE, dépannage 7j/7, panneaux photovoltaïques et bornes de recharge à Bruxelles et en Wallonie."
       />
       <Header />
       <main className="pt-24">
