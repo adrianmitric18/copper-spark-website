@@ -1,23 +1,21 @@
 import ServicePageLayout from "@/components/services/ServicePageLayout";
-import SimulateurCTA from "@/components/simulateur/SimulateurCTA";
-import { Phone, MessageCircle, AlertTriangle } from "lucide-react";
-import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
+import GrilleDepannage from "@/components/services/GrilleDepannage";
+import { AlertTriangle } from "lucide-react";
 import {
   COMPLEMENT_MOMENT,
   DEFINITION_MOMENT,
   DEPANNAGE,
-  LIBELLE_HORS_JOUR,
-  MENTIONS,
   ZONES,
   type Moment,
   type ZoneDeplacement,
 } from "@/lib/simulateur/config";
-import { formatEuros, plancherDepannage } from "@/lib/simulateur/calcul";
+import { formatEuros } from "@/lib/simulateur/calcul";
 
 /**
- * Grille de dépannage affichée au public (section « Tarification transparente »
- * et FAQ). Les montants viennent de `config.ts`, jamais d'ici : la page et le
- * simulateur ne peuvent pas diverger. Grille du 2026-10-25 : forfait
+ * Montants repris dans la FAQ de la page (et donc dans son schema FAQPage). La
+ * grille affichée en haut de page vit dans `GrilleDepannage`. Les montants
+ * viennent de `config.ts`, jamais d'ici : la page et le simulateur ne peuvent
+ * pas diverger. Grille du 2026-10-25 : forfait
  * (déplacement + première heure) par zone et par moment, puis demi-heure
  * supplémentaire entamée.
  */
@@ -56,7 +54,6 @@ const faqs = [
 ];
 
 const DepannageUrgent = () => {
-  const { trackEvent } = useAnalyticsEvents();
   return (
     <ServicePageLayout
       slug="depannage-urgent"
@@ -72,60 +69,23 @@ const DepannageUrgent = () => {
         intro:
           "Une panne électrique ne peut pas attendre. Adrian intervient rapidement dans le Brabant wallon, en Wallonie et à Bruxelles pour rétablir votre installation en toute sécurité, jour et nuit, week-ends compris.",
       }}
-      simulateurCta="depannage"
       faqs={faqs}
     >
-      {/* Bloc urgence */}
-      <div className="bg-primary/10 border-2 border-primary/40 rounded-2xl p-6 md:p-8 mb-10">
-        <div className="flex items-start gap-4">
-          <AlertTriangle className="w-10 h-10 text-primary shrink-0" />
-          <div className="flex-1">
-            <p className="font-display text-xl md:text-2xl font-bold text-foreground mb-2">
-              Panne en cours ? Appelez maintenant
-            </p>
-            <p className="text-muted-foreground mb-3">
-              Réponse immédiate, intervention rapide.
-            </p>
-            {/* Seule consigne de sécurité du parcours dépannage, et elle vit
-                ici — pas dans le simulateur, qui ne donne que des prix. Reprend
-                mot pour mot la FAQ plus bas sur cette page. Sans elle, un
-                visiteur qui sent le brûlé traverse page → simulateur → appel
-                sans croiser aucun avertissement. */}
-            <p className="mb-4 font-semibold text-foreground">
-              Odeur de brûlé, fumée ou étincelles ? Quittez la pièce et appelez
-              les pompiers (112) avant de nous joindre.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <a
-                href="tel:+32485755227"
-                data-analytics="call_click"
-                onClick={() => trackEvent("call_click", { source_section: "depannage_urgence_block" })}
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-copper hover:shadow-copper-lg transition-shadow"
-              >
-                <Phone className="w-5 h-5" />
-                0485 75 52 27
-              </a>
-              <a
-                href="https://wa.me/32485755227?text=Urgence%20%C3%A9lectrique"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-analytics="whatsapp_click"
-                onClick={() => trackEvent("whatsapp_click", { source_section: "depannage_urgence_block" })}
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
-              >
-                <MessageCircle className="w-5 h-5" />
-                WhatsApp urgence
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* La grille d'abord, sans rien à cliquer : décision d'Adrian du
+          2026-10-25, quelqu'un en panne est pressé. Les boutons du hero sont
+          juste au-dessus, la grille les répète en dessous. */}
+      <GrilleDepannage />
 
-      {/* Le simulateur vient APRÈS le bloc d'urgence, jamais avant : quelqu'un
-          dont l'installation est en panne doit tomber sur le numéro en premier.
-          Ce parcours-ci s'adresse à celui qui veut connaître le tarif avant
-          d'appeler. */}
-      <SimulateurCTA contexte="depannage" />
+      {/* Seule consigne de sécurité du parcours dépannage, et elle vit ici —
+          pas dans le simulateur, qui ne donne que des prix. Reprend mot pour
+          mot la FAQ plus bas sur cette page. */}
+      <div className="bg-primary/10 border-2 border-primary/40 rounded-2xl p-5 md:p-6 mb-10 flex items-start gap-4">
+        <AlertTriangle className="w-8 h-8 text-primary shrink-0" aria-hidden="true" />
+        <p className="font-semibold text-foreground leading-relaxed">
+          Odeur de brûlé, fumée ou étincelles ? Quittez la pièce et appelez les
+          pompiers (112) avant de nous joindre.
+        </p>
+      </div>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
         Types de pannes traitées
@@ -182,99 +142,6 @@ const DepannageUrgent = () => {
       <p className="text-muted-foreground text-sm">
         Vous n'êtes pas dans cette liste ? Appelez-nous : selon disponibilité, nous
         intervenons aussi sur le reste de la Wallonie.
-      </p>
-
-      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
-        Tarification transparente
-      </h2>
-      <p className="text-muted-foreground leading-relaxed mb-4">
-        Un dépannage se facture au <strong>forfait</strong> : le déplacement et la
-        première heure sont compris, à partir de{" "}
-        <strong>{formatEuros(plancherDepannage("jour"))} hors TVA</strong>. Le
-        montant dépend de votre commune et du moment de l'intervention ; il est
-        annoncé et accepté avant que nous prenions la route, par téléphone ou
-        WhatsApp. Seuls le temps au-delà de la première heure et le matériel
-        que vous acceptez s'y ajoutent.
-      </p>
-
-      {/* La grille, telle qu'elle est facturée. Les montants viennent de
-          config.ts (simulateur) : une seule source pour les deux affichages. */}
-      <div className="overflow-x-auto rounded-2xl border border-border/60 mb-4">
-        <table className="w-full text-sm">
-          <caption className="sr-only">
-            Forfaits de dépannage hors TVA, par zone et par moment
-          </caption>
-          <thead className="bg-card text-left text-foreground">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-semibold">
-                Zone
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
-                Jour
-              </th>
-              <th scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
-                {LIBELLE_HORS_JOUR.court}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {ZONES_FORFAIT.map((z) => (
-              <tr key={z.value}>
-                <td className="px-4 py-3 align-top">
-                  <p className="font-medium text-foreground">{z.label}</p>
-                  <p className="text-muted-foreground leading-snug">{z.communes.join(", ")}</p>
-                </td>
-                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
-                  {formatEuros(z.forfait.jour)}
-                </td>
-                <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
-                  {formatEuros(z.forfait.nuitWeekend)}
-                </td>
-              </tr>
-            ))}
-            <tr>
-              <td className="px-4 py-3 align-top">
-                <p className="font-medium text-foreground">
-                  Bruxelles, commune hors liste, au-delà de 50 km
-                </p>
-              </td>
-              <td colSpan={2} className="px-4 py-3 align-top text-muted-foreground">
-                Forfait confirmé par téléphone selon la distance, avant tout départ
-              </td>
-            </tr>
-            <tr className="bg-card/60">
-              <td className="px-4 py-3 align-top">
-                <p className="font-medium text-foreground">{DEPANNAGE.libelleDemiHeure}</p>
-                <p className="text-muted-foreground leading-snug">Au-delà de la première heure</p>
-              </td>
-              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
-                {formatEuros(demiHeure.jour)}
-              </td>
-              <td className="px-4 py-3 align-top font-display font-bold text-foreground whitespace-nowrap">
-                {formatEuros(demiHeure.nuitWeekend)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <ul className="space-y-1.5 text-sm text-muted-foreground mb-4">
-        <li>
-          <strong className="text-foreground">Jour :</strong>{" "}
-          {DEFINITION_MOMENT.jour.toLowerCase()}.
-        </li>
-        <li>
-          <strong className="text-foreground">{LIBELLE_HORS_JOUR.court} :</strong>{" "}
-          {DEFINITION_MOMENT.nuitWeekend.toLowerCase()}.
-        </li>
-      </ul>
-      <p className="text-muted-foreground leading-relaxed mb-4">
-        Prix hors TVA : <strong>6 %</strong> si votre logement a plus de 10 ans,
-        sinon <strong>21 %</strong>. Le matériel éventuellement nécessaire
-        (différentiel, disjoncteur, prise…) est facturé en sus, après votre accord.
-      </p>
-      <p className="text-muted-foreground leading-relaxed mb-4">
-        {MENTIONS.depannagePaiement} {MENTIONS.depannageNuit}
       </p>
 
       <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mt-12 mb-6">
