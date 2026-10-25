@@ -99,10 +99,10 @@ const ServiceCard = ({
 const services = [
   {
     icon: AlertTriangle,
-    title: "Dépannage Urgent 24h/24",
+    title: "Dépannage Urgent 7j/7",
     description:
       "Intervention rapide 7j/7 pour panne, court-circuit, disjoncteur. Court-Saint-Étienne et Brabant wallon.",
-    features: ["Disponible 24h/24, 7j/7", "Délai d'intervention rapide", "Diagnostic complet"],
+    features: ["Disponible 7j/7", "Délai d'intervention rapide", "Diagnostic complet"],
     href: "/services/depannage-urgent",
     accent: true,
   },

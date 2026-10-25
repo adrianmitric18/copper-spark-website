@@ -28,7 +28,7 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-muted-foreground mb-3 max-w-md leading-relaxed">
-              Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation, conformité RGIE et dépannage 24h/24.
+              Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation, conformité RGIE et dépannage 7j/7.
             </p>
             <p className="text-copper-deep font-medium text-lg italic">
               "On alimente vos idées, sans court-circuiter votre journée !"

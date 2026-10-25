@@ -14,7 +14,7 @@ export const SERVICES_LINKS: SeoLink[] = [
   },
   {
     slug: "depannage-urgent",
-    label: "Dépannage urgent 24h/24",
+    label: "Dépannage urgent 7j/7",
     href: "/services/depannage-urgent",
     description: "Panne, court-circuit, disjoncteur — intervention rapide 7j/7.",
   },

@@ -77,7 +77,7 @@ const StructuredData = (props: StructuredDataProps) => {
           "@type": "Electrician",
           "name": "Le Cuivre Électrique",
           "alternateName": "Le Cuivre Electrique",
-          "description": "Électricien indépendant basé à Court-Saint-Étienne. Installation électrique, mise en conformité RGIE, dépannage urgent 24h/24, panneaux photovoltaïques et bornes de recharge. Brabant wallon, Wallonie et Bruxelles.",
+          "description": "Électricien indépendant basé à Court-Saint-Étienne. Installation électrique, mise en conformité RGIE, dépannage urgent 7j/7, panneaux photovoltaïques et bornes de recharge. Brabant wallon, Wallonie et Bruxelles.",
           "url": "https://cuivre-electrique.com",
           "logo": "https://cuivre-electrique.com/android-chrome-512x512.png",
           "image": "https://cuivre-electrique.com/og-image.jpg",
@@ -158,7 +158,7 @@ const StructuredData = (props: StructuredDataProps) => {
                 "@type": "Offer",
                 "itemOffered": {
                   "@type": "Service",
-                  "name": "Dépannage électrique urgent 24h/24",
+                  "name": "Dépannage électrique urgent 7j/7",
                   "description": "Intervention rapide 7j/7 pour panne, court-circuit ou disjoncteur qui saute.",
                   "url": "https://cuivre-electrique.com/services/depannage-urgent"
                 }

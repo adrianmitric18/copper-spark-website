@@ -24,8 +24,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
-        title="Électricien Brabant wallon — Dépannage 24h & RGIE | Le Cuivre Électrique"
-        description="Électricien indépendant en Brabant wallon. Installations, mise en conformité RGIE, bornes de recharge, dépannage 24h/24. Devis gratuit : 0485 75 52 27."
+        title="Électricien Brabant wallon — Dépannage 7j/7 & RGIE | Le Cuivre Électrique"
+        description="Électricien indépendant en Brabant wallon. Installations, mise en conformité RGIE, bornes de recharge, dépannage 7j/7. Devis gratuit : 0485 75 52 27."
         keywords="électricien Brabant wallon, électricien Court-Saint-Étienne, électricien Wallonie, électricien Bruxelles, installation électrique, mise en conformité RGIE, dépannage électrique, Le Cuivre Électrique"
         canonical="https://cuivre-electrique.com"
       />

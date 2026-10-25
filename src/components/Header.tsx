@@ -26,7 +26,7 @@ const navItems = [
 
 const serviceItems = [
   { label: "Installation & Rénovation", href: "/services/installation-electrique-renovation" },
-  { label: "Dépannage 24h/24", href: "/services/depannage-urgent" },
+  { label: "Dépannage 7j/7", href: "/services/depannage-urgent" },
   { label: "Conformité RGIE", href: "/services/mise-en-conformite-rgie" },
   { label: "Bornes de recharge", href: "/services/bornes-de-recharge" },
   { label: "Panneaux photovoltaïques", href: "/services/panneaux-photovoltaiques" },

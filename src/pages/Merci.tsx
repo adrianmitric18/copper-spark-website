@@ -76,7 +76,7 @@ const Merci = () => {
                 </a>
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
-                Disponible 7j/7 24h/24 pour urgences électriques
+                Disponible 7j/7 pour urgences électriques
               </p>
             </motion.div>
 

@@ -216,7 +216,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-sm text-muted-foreground mt-6 max-w-2xl mx-auto text-center"
           >
-            Bureau : Lun–Sam 7h–19h, dimanche fermé — Disponible 24h/24, 7j/7 pour les urgences
+            Bureau : Lun–Sam 7h–19h, dimanche fermé — Disponible 7j/7 pour les urgences
           </motion.p>
         </motion.div>
 
