@@ -401,9 +401,11 @@ export interface ZoneDeplacement {
  *            Walhain 15,6 · Genval 16,3 · La Hulpe 18,3 · Grez-Doiceau 20,0
  *   Zone 3 : Gembloux 20,5 · Waterloo 21,8 · Nivelles 21,9 · Incourt 23,0 ·
  *            Braine-l'Alleud 23,8 · Perwez 24,2 · Ittre 28,5 · Jodoigne 33,4 ·
- *            Tervuren 34,1 · Tubize 35,3 · Braine-le-Comte 39,5 · Namur 39,7 ·
- *            Louvain (Leuven) 44,8 · Charleroi 46,0 · Hannut 49,2
- *   Hors forfait : Bruxelles (Uccle 33,7 … Evere 42,6, selon la commune).
+ *            Tubize 35,3 · Braine-le-Comte 39,5 · Namur 39,7 · Charleroi 46,0 ·
+ *            Hannut 49,2
+ *   Hors forfait : Bruxelles (Uccle 33,7 … Evere 42,6, selon la commune) ;
+ *   Tervuren (34,1) et Louvain / Leuven (44,8), retirées de la zone 3 par
+ *   Adrian le 2026-10-26, relèvent aussi du « confirmé par téléphone ».
  *
  * Les communes sont listées par ordre alphabétique dans chaque zone : c'est
  * ainsi qu'un visiteur retrouve la sienne.
@@ -455,11 +457,9 @@ export const ZONES: ZoneDeplacement[] = [
       "Incourt",
       "Ittre",
       "Jodoigne",
-      "Louvain (Leuven)",
       "Namur",
       "Nivelles",
       "Perwez",
-      "Tervuren",
       "Tubize",
       "Waterloo",
     ],
