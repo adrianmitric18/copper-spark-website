@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      chantiers: {
+        Row: {
+          actif: boolean
+          created_at: string
+          heures_prevues: number | null
+          id: string
+          km_defaut: number | null
+          nom: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          heures_prevues?: number | null
+          id?: string
+          km_defaut?: number | null
+          nom: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          heures_prevues?: number | null
+          id?: string
+          km_defaut?: number | null
+          nom?: string
+        }
+        Relationships: []
+      }
+      heures: {
+        Row: {
+          chantier: string
+          created_at: string
+          date: string
+          debut: string | null
+          fin: string | null
+          forfait_eur: number | null
+          heures_nettes: number
+          id: string
+          km: number | null
+          note: string | null
+          pause_min: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          chantier: string
+          created_at?: string
+          date: string
+          debut?: string | null
+          fin?: string | null
+          forfait_eur?: number | null
+          heures_nettes?: number
+          id?: string
+          km?: number | null
+          note?: string | null
+          pause_min?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          chantier?: string
+          created_at?: string
+          date?: string
+          debut?: string | null
+          fin?: string | null
+          forfait_eur?: number | null
+          heures_nettes?: number
+          id?: string
+          km?: number | null
+          note?: string | null
+          pause_min?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interventions: {
         Row: {
           created_at: string
