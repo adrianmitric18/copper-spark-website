@@ -11,6 +11,7 @@ import {
   Moon,
   LogOut,
   Zap,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ const NAV_ITEMS_PRIMARY = [
   { to: "/admin/pipeline", label: "Leads", icon: Kanban, end: false },
   { to: "/admin/rdv", label: "Calendrier", icon: Calendar, end: false },
   { to: "/admin/interventions", label: "Chantiers", icon: HardHat, end: false },
+  { to: "/admin/heures", label: "Heures", icon: Clock, end: false },
 ];
 
 const NAV_ITEMS_SECONDARY = [

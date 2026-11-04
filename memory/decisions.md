@@ -14,6 +14,30 @@
 
 ## Journal
 
+### 2026-11-04 — Pointage des heures dans l’admin (/admin/heures), Supabase
+- **Décision :** le pointage local de vertuoza-tools (`tools/hours.mjs` → `exports/heures.csv`)
+  est remplacé par une page admin mobile-first, branche `feat/pointage-heures`. Deux tables
+  Supabase réservées à l’admin (RLS `is_admin()`) : `heures` (une ligne par pointage) et
+  `chantiers` (référentiel créé à la première saisie d’un nom, heures prévues du devis,
+  km par défaut). Migration `20261104120000_pointage_heures.sql`.
+- **Pourquoi :** les pointages Vertuoza ne sont pas dans l’abonnement (`/timesheets` en 502) ;
+  Adrian veut pointer depuis son téléphone sur le chantier, pas en ligne de commande.
+- **Conséquences / pièges :**
+  - Trois types : `chantier`, `forfait`, `deplacement` (CHECK en DB). Début/fin obligatoires sauf
+    pour un déplacement ; `forfait_eur` n’a de sens que pour `forfait`.
+  - Une fin avant le début = fin le lendemain (dépannage de nuit 22:00 → 01:30) ; seule
+    l’égalité début = fin est refusée (CHECK `heures_fin_differente`).
+  - Un nom du référentiel `chantiers` sans pointage ni heures prévues est masqué partout :
+    une faute de frappe corrigée disparaît seule, pas besoin de bouton « supprimer ».
+  - Doublon refusé côté client ET en DB (index unique date + lower(chantier) + début/fin,
+    horaires absents comptés 00:00).
+  - Export CSV : mêmes 8 premières colonnes et même format que `hours.mjs` (séparateur « ; »,
+    décimales à la virgule, pause en HH:MM, BOM, CRLF) puis `type;forfait_eur`. Ne pas changer
+    l’ordre des colonnes : le fichier doit rester fusionnable avec l’ancien `heures.csv`.
+  - Tout est chargé puis calculé côté client (volume faible) : pas de vue SQL à maintenir.
+  - Tests unitaires vitest sur la logique pure (`src/lib/admin/heures.test.ts`, `npm test`).
+  - La migration doit être appliquée en prod par Adrian avant que la page fonctionne.
+
 ### 2026-09-13 — Simulateur v2 : trois parcours dédiés et mini-devis par poste
 - **Décision :** refonte complète du simulateur, branche `feat/simulateur-v2`.
   - **Trois parcours totalement dédiés** : borne (5 questions), RGIE (4),
