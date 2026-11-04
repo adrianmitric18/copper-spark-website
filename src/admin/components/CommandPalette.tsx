@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
+  Clock,
   Home,
   Kanban,
   Plus,
@@ -84,6 +85,10 @@ const CommandPalette = () => {
           <CommandItem onSelect={() => go("/admin/rdv")}>
             <Calendar className="mr-2 h-4 w-4" />
             <span>Calendrier (rendez-vous)</span>
+          </CommandItem>
+          <CommandItem onSelect={() => go("/admin/heures")}>
+            <Clock className="mr-2 h-4 w-4" />
+            <span>Heures (pointage)</span>
           </CommandItem>
           <CommandItem onSelect={() => go("/admin/avis")}>
             <Star className="mr-2 h-4 w-4" />

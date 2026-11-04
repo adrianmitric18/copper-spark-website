@@ -25,6 +25,7 @@ const ROOT_ADMIN_ROUTES = new Set<string>([
   "/admin/rdv",
   "/admin/rdv-rapide",
   "/admin/interventions",
+  "/admin/heures",
   "/admin/chantiers",
   "/admin/avis",
 ]);

@@ -44,16 +44,10 @@ export const buildLeadsCsv = (leads: Lead[]): string => {
   return "﻿" + [headerRow, ...dataRows].join("\r\n");
 };
 
-/** Déclenche le téléchargement d'un fichier CSV dans le navigateur. */
-export const downloadLeadsCsv = (leads: Lead[]): void => {
-  const csv = buildLeadsCsv(leads);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+/** Déclenche le téléchargement d'un contenu CSV sous le nom donné (leads, heures…). */
+export const downloadCsv = (contenu: string, filename: string): void => {
+  const blob = new Blob([contenu], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
-
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const filename = `leads-${dateStr}.csv`;
-
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
@@ -61,4 +55,11 @@ export const downloadLeadsCsv = (leads: Lead[]): void => {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+};
+
+/** Déclenche le téléchargement d'un fichier CSV des leads dans le navigateur. */
+export const downloadLeadsCsv = (leads: Lead[]): void => {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  downloadCsv(buildLeadsCsv(leads), `leads-${dateStr}.csv`);
 };
