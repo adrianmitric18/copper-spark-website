@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff, FileText } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -53,11 +54,19 @@ import {
   deleteLeadWithPhotos,
   hasUsableEmail,
   traceEnvoi,
+  terminerLead,
+  terminerRdv,
 } from "@/lib/admin/queries";
 import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
 import {
   type Lead,
+  type TerminalLeadStatus,
   LEAD_STATUSES,
+  STATUT_REACTIVATION,
+  TERMINER_CHOIX,
+  isRdvPasse,
+  isStatutAvecRdv,
+  isTerminal,
   leadSourceLabel,
 } from "@/lib/admin/types";
 import {
@@ -402,6 +411,14 @@ const LeadDetail = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, ready, loading: authLoading } = useAdminGuard();
+  // Les listes (Aujourd'hui, Leads, Calendrier) gardent 60 s de cache : après
+  // un changement fait depuis la fiche, on les invalide pour qu'elles soient
+  // justes au retour.
+  const queryClient = useQueryClient();
+  const rafraichirListes = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin-leads-overview"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+  };
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
@@ -519,6 +536,7 @@ const LeadDetail = () => {
         await updateLeadStatus(lead.id, newStatus);
         setLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
       }
+      rafraichirListes();
       toast.success("Statut mis à jour");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "mise à jour impossible";
@@ -549,7 +567,7 @@ const LeadDetail = () => {
     try {
       if (!lead) return;
       if (lead.devis_envoye_at) return; // déjà stampé → on garde la première date
-      if (lead.status === "converti" || lead.status === "perdu") return; // pas de rétrogradation
+      if (isTerminal(lead.status)) return; // pas de rétrogradation (converti / sans suite / perdu)
       const today = todayIso();
       setLead((prev) => (prev ? { ...prev, status: "devis envoyé", devis_envoye_at: today } : prev)); // visible tout de suite
       setLeadDevisEnvoye(lead.id, today)
@@ -943,6 +961,70 @@ const LeadDetail = () => {
     }
   };
 
+  // Lot 1B — bloc « RDV passé » : clôturer le RDV (statut `termine`). Le lead
+  // quitte « RDV confirmé » (plus aucun RDV ouvert) pour « traité » ; il reste
+  // ouvert pour le devis, la relance ou « Terminer ce lead ».
+  const [terminantRdv, setTerminantRdv] = useState(false);
+  const handleRdvTermine = async () => {
+    if (!lead || !rdv) return;
+    setTerminantRdv(true);
+    try {
+      await terminerRdv(rdv.id);
+      setRdv(null);
+      setRdvAnnule(null);
+      // « RDV confirmé » (fiche) ou `rdv_pris` (RDV rapide) → « traité ».
+      if (isStatutAvecRdv(lead.status)) {
+        try {
+          await updateLeadStatus(lead.id, STATUT_REACTIVATION);
+          setLead((prev) => (prev ? { ...prev, status: STATUT_REACTIVATION } : prev));
+        } catch (stErr: unknown) {
+          const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
+          toast.warning("RDV terminé, mais le statut du lead n'a pas changé", { description: m });
+        }
+      }
+      rafraichirListes();
+      toast.success("RDV terminé", {
+        description: "Le lead reste ouvert : devis, relance, ou « Terminer ce lead » en bas.",
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "clôture impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setTerminantRdv(false);
+    }
+  };
+
+  // Lot 1B — « Terminer ce lead » (bas de fiche) : applicable quel que soit
+  // l'état (avec ou sans RDV, email, devis). Clôt aussi un RDV passé ouvert.
+  const [terminantLead, setTerminantLead] = useState(false);
+  const handleTerminerLead = async (status: TerminalLeadStatus) => {
+    if (!lead) return;
+    setTerminantLead(true);
+    try {
+      const { rdvOk } = await terminerLead(lead.id, status);
+      setLead((prev) => (prev ? { ...prev, status } : prev));
+      // terminerLead ferme le RDV : passé → terminé ; à venir → annulé, sauf
+      // pour un lead converti (la pose peut être à venir).
+      const rdvFerme = Boolean(rdv) && (isRdvPasse(rdv) || status !== "converti");
+      if (rdvFerme && rdvOk) setRdv(null);
+      rafraichirListes();
+      if (rdvFerme && !rdvOk) {
+        toast.warning(`Lead terminé : ${status}, mais son RDV n'a pas pu être fermé`, {
+          description: "Ferme-le depuis l'encadré RDV en haut de la fiche.",
+        });
+      } else {
+        toast.success(`Lead terminé : ${status}`, {
+          description: "Il sort des listes actives (onglet « Terminés » dans Leads).",
+        });
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "mise à jour impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setTerminantLead(false);
+    }
+  };
+
   if (authLoading || !user || loading || !lead) return <AdminLoading />;
 
   const formatDate = (s: string) =>
@@ -1018,7 +1100,55 @@ const LeadDetail = () => {
       </div>
 
       {/* RDV planifié (en haut, encadré orange) */}
-      {rdv && !showForm && (
+      {/* Lot 1B — RDV passé encore ouvert : plus aucune mention « RDV confirmé »,
+          trois gestes pour le fermer. */}
+      {rdv && !showForm && isRdvPasse(rdv) && (
+        <Card className="p-4 sm:p-6 space-y-3 border-2 border-orange-500/50 bg-orange-500/5">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <h2 className="font-semibold text-lg">RDV passé</h2>
+            <Badge variant="outline" className="bg-orange-500/15 text-orange-700 border-orange-500/30">
+              À clôturer
+            </Badge>
+          </div>
+          <p className="text-sm">
+            <span className="font-medium capitalize">{formatRdvDateShort(rdv.date_rdv)}</span> à{" "}
+            {formatHeure(rdv.heure_rdv)} · {rdv.type_visite}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              onClick={handleRdvTermine}
+              disabled={terminantRdv || cancellingRdv}
+              variant="copper"
+              size="lg"
+              className="min-h-[48px] px-2"
+            >
+              {terminantRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              Terminer
+            </Button>
+            <Button
+              onClick={() => { setEditing(true); setShowForm(true); }}
+              disabled={terminantRdv || cancellingRdv}
+              variant="outline"
+              size="lg"
+              className="min-h-[48px] px-2"
+            >
+              <CalendarPlus className="w-4 h-4" /> Replanifier
+            </Button>
+            <Button
+              onClick={handleRdvCancel}
+              disabled={terminantRdv || cancellingRdv}
+              variant="outline"
+              size="lg"
+              className="min-h-[48px] px-2 text-destructive hover:bg-destructive/10"
+            >
+              {cancellingRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+              Annuler
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {rdv && !showForm && !isRdvPasse(rdv) && (
         <RendezVousCard
           rdv={rdv}
           lead={info}
@@ -1468,6 +1598,51 @@ const LeadDetail = () => {
           })}
         </ul>
       </CollapsibleCard>
+
+      {/* Lot 1B — Terminer ce lead : toujours visible en bas de fiche. */}
+      <Card className="p-4 sm:p-6 space-y-3">
+        {isTerminal(lead.status) ? (
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <h2 className="font-semibold text-lg">Lead terminé</h2>
+              <p className="text-sm text-muted-foreground">
+                Statut : {lead.status}. Il n'apparaît plus dans les listes actives.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="min-h-[48px]"
+              onClick={() => updateStatus(STATUT_REACTIVATION)}
+            >
+              <RotateCcw className="w-4 h-4" /> Réactiver
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div>
+              <h2 className="font-semibold text-lg">Terminer ce lead</h2>
+              <p className="text-sm text-muted-foreground">
+                Il sort des listes actives et reste dans « Terminés ».
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {TERMINER_CHOIX.map((c) => (
+                <Button
+                  key={c.value}
+                  variant={c.value === "converti" ? "copper" : "outline"}
+                  size="lg"
+                  className="min-h-[48px] px-2"
+                  disabled={terminantLead}
+                  onClick={() => handleTerminerLead(c.value)}
+                >
+                  {c.label}
+                </Button>
+              ))}
+            </div>
+          </>
+        )}
+      </Card>
 
       {/* Zone dangereuse (repliable, fermée par défaut) */}
       <CollapsibleCard
