@@ -8,22 +8,29 @@ import {
   Plus,
   Download,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchLeadsWithUpcomingRdvs, updateLeadStatus } from "@/lib/admin/queries";
+import { fetchLeadsWithUpcomingRdvs } from "@/lib/admin/queries";
 import {
   type Lead,
+  STATUT_REACTIVATION,
+  isTerminal,
   leadSourceLabel,
   leadStatusColor,
+  libelleStatutLead,
 } from "@/lib/admin/types";
 import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
+import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
+import ArchiverAnciensDialog from "@/components/admin/ArchiverAnciensDialog";
+import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,12 +41,12 @@ const COLUMNS: { key: string; label: string; tint: string }[] = [
   { key: "traité", label: "Traité", tint: "border-yellow-500/40 bg-yellow-500/5" },
   { key: "devis envoyé", label: "Devis envoyé", tint: "border-blue-500/40 bg-blue-500/5" },
   { key: "converti", label: "Converti", tint: "border-green-500/40 bg-green-500/5" },
+  { key: "sans suite", label: "Sans suite", tint: "border-muted bg-muted/30" },
   { key: "perdu", label: "Perdu", tint: "border-muted bg-muted/30" },
 ];
 
 // Statuts "terminés" (archivés) : sortis de la liste active par défaut.
-const TERMINAL_STATUSES = new Set(["converti", "perdu"]);
-const isTerminal = (status: string): boolean => TERMINAL_STATUSES.has(status);
+// Définition unique dans @/lib/admin/types (isTerminal) : converti, sans suite, perdu.
 
 // Colonnes actives (tout sauf terminés) — base des sous-filtres.
 const ACTIVE_COLUMNS = COLUMNS.filter((c) => !isTerminal(c.key));
@@ -76,7 +83,10 @@ interface LeadCardProps {
 
 const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
   const hours = ageInHours(lead.created_at);
-  const isOld = hours >= 48 && lead.status !== "converti" && lead.status !== "perdu";
+  const isOld = hours >= 48 && !isTerminal(lead.status);
+  // « RDV confirmé » sans RDV à venir = RDV passé : on ne l'affiche jamais confirmé.
+  const libelle = libelleStatutLead(lead.status, Boolean(upcoming));
+  const statutConnu = COLUMNS.some((c) => c.key === lead.status);
 
   return (
     <Card className="p-3 space-y-2 hover:border-primary/40 transition-colors">
@@ -92,6 +102,14 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
                 className={`mt-1 text-[10px] px-1.5 py-0 ${leadStatusColor(lead.status)}`}
               >
                 {lead.status}
+              </Badge>
+            )}
+            {libelle === "RDV passé" && (
+              <Badge
+                variant="outline"
+                className="mt-1 text-[10px] px-1.5 py-0 bg-orange-500/15 text-orange-700 border-orange-500/30"
+              >
+                RDV passé
               </Badge>
             )}
             {lead.commune && (
@@ -152,12 +170,29 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
           aria-label="Changer le statut"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Statut hors liste (RDV confirmé, RDV annulé, rdv_pris…) : affiché tel
+              quel pour que le menu reflète l'état réel du lead. */}
+          {!statutConnu && <option value={lead.status}>{libelle}</option>}
           {COLUMNS.map((c) => (
             <option key={c.key} value={c.key}>
               → {c.label}
             </option>
           ))}
         </select>
+        {isTerminal(lead.status) ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-9 shrink-0"
+            onClick={() => onStatusChange(lead, STATUT_REACTIVATION)}
+            aria-label={`Réactiver ${lead.name}`}
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Réactiver
+          </Button>
+        ) : (
+          <TerminerLeadButton lead={lead} className="h-9 min-h-0" />
+        )}
       </div>
     </Card>
   );
@@ -243,31 +278,12 @@ const Pipeline = () => {
     });
   }, [filtered, statusFilter]);
 
-  const handleStatusChange = async (lead: Lead, newStatus: string) => {
-    if (newStatus === lead.status) return;
-    // Optimistic update direct dans le cache React Query
-    queryClient.setQueryData<Awaited<ReturnType<typeof fetchLeadsWithUpcomingRdvs>>>(
-      ["admin-leads-overview"],
-      (prev) => prev && {
-        ...prev,
-        leads: prev.leads.map((l) => (l.id === lead.id ? { ...l, status: newStatus } : l)),
-      },
-    );
-    try {
-      await updateLeadStatus(lead.id, newStatus);
-      toast.success(`${lead.name} → ${newStatus}`);
-    } catch (e: unknown) {
-      // Rollback : revert au statut d'avant
-      queryClient.setQueryData<Awaited<ReturnType<typeof fetchLeadsWithUpcomingRdvs>>>(
-        ["admin-leads-overview"],
-        (prev) => prev && {
-          ...prev,
-          leads: prev.leads.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l)),
-        },
-      );
-      const msg = e instanceof Error ? e.message : "mise à jour impossible";
-      toast.error("Erreur : " + msg);
-    }
+  // Changement de statut partagé avec Aujourd'hui et le calendrier : mise à
+  // jour optimiste, retour arrière en cas d'échec, clôture des RDV passés quand
+  // le lead est terminé.
+  const changerStatut = useChangerStatutLead();
+  const handleStatusChange = (lead: Lead, newStatus: string) => {
+    void changerStatut(lead, newStatus);
   };
 
   return (
@@ -307,6 +323,7 @@ const Pipeline = () => {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
             </Button>
+            <ArchiverAnciensDialog leads={leads} upcomingByLead={upcomingByLead} />
             <ManualLeadDialog />
           </div>
         </div>
