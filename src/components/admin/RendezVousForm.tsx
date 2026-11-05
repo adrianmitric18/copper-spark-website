@@ -25,8 +25,6 @@ interface Props {
   onCancel?: () => void;
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
-
 const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }: Props) => {
   const [date, setDate] = useState(initial?.date_rdv ?? "");
   const [heure, setHeure] = useState((initial?.heure_rdv ?? "").slice(0, 5));
@@ -37,10 +35,10 @@ const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
+    // Règle 5 du brief admin : aucune règle de date bloquante (on enregistre
+    // aussi ce qui s'est passé) ; aucune plage horaire imposée (6 h 30, 22 h 30…).
     if (!date) e.date = "Date requise";
-    else if (date < todayIso()) e.date = "La date ne peut pas être dans le passé";
     if (!heure) e.heure = "Heure requise";
-    else if (heure < "07:00" || heure > "22:00") e.heure = "Entre 07h00 et 22h00";
     if (!type) e.type = "Type de visite requis";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -66,19 +64,16 @@ const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }
             id="rdv-date"
             type="date"
             value={date}
-            min={todayIso()}
             onChange={(e) => setDate(e.target.value)}
           />
           {errors.date && <p className="text-xs text-destructive mt-1">{errors.date}</p>}
         </div>
         <div>
-          <Label htmlFor="rdv-heure">Heure (07h00 – 22h00) *</Label>
+          <Label htmlFor="rdv-heure">Heure *</Label>
           <Input
             id="rdv-heure"
             type="time"
             value={heure}
-            min="07:00"
-            max="22:00"
             step={300}
             onChange={(e) => setHeure(e.target.value)}
           />
@@ -134,7 +129,7 @@ const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }
           className="flex-1"
         >
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarPlus className="w-4 h-4" />}
-          {submitLabel ?? "Confirmer le rendez-vous et envoyer les emails"}
+          {submitLabel ?? "Enregistrer le rendez-vous"}
         </Button>
         {onCancel && (
           <Button onClick={onCancel} disabled={submitting} variant="outline" size="lg">

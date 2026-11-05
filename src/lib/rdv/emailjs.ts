@@ -5,6 +5,7 @@ import emailjs from "@emailjs/browser";
 import { buildGoogleCalendarUrl } from "./googleCalendar";
 import { formatDateLong, formatHeure, formatDuree } from "./formatters";
 import { type RendezVous } from "./constants";
+import { hasUsableEmail } from "@/lib/admin/envois";
 
 function getSectionPreparation(typeVisite: string): string {
   const typeNorm = typeVisite.toLowerCase();
@@ -153,7 +154,8 @@ let emailJsInitialized = false;
 export interface LeadInfo {
   id: string;
   name: string;
-  email: string;
+  /** Peut être null : un lead téléphone n'a pas forcément d'email. */
+  email: string | null;
   phone: string;
   rue: string | null;
   numero: string | null;
@@ -196,7 +198,7 @@ function ensureEmailJsInitialized(): void {
 function buildBaseParams(lead: LeadInfo, rdv: RendezVous): Record<string, string> {
   return {
     from_name: lead.name,
-    from_email: lead.email,
+    from_email: lead.email ?? "",
     phone: lead.phone,
     rue: lead.rue ?? "",
     numero: lead.numero ?? "",
@@ -336,7 +338,7 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
   const results = await Promise.allSettled([
     sendOne({
       templateId: TPL_CLIENT_FUSION,
-      toEmail: lead.email,
+      toEmail: lead.email ?? "",
       params: { ...base, section_preparation: sectionPreparation },
     }),
     sendOne({
@@ -351,13 +353,51 @@ export async function sendRdvConfirmationEmails(lead: LeadInfo, rdv: RendezVous)
     }),
   ]);
 
-  const failed = results.filter((r) => r.status === "rejected");
-  if (failed.length > 0) {
-    failed.forEach((f) =>
-       
-      console.error("Email RDV échoué :", (f as PromiseRejectedResult).reason)
-    );
-    throw new Error(`${failed.length} email(s) sur 2 n'ont pas pu être envoyés`);
+  verifierClientEtMemo(results, "Email RDV");
+}
+
+/**
+ * Client et mémo Adrian sont indépendants (règle 3 du brief admin) : seul
+ * l'échec de l'email CLIENT compte comme un échec. Un mémo perdu est journalisé.
+ */
+function verifierClientEtMemo(
+  results: PromiseSettledResult<void>[],
+  contexte: string,
+): void {
+  const [client, memo] = results;
+  if (memo?.status === "rejected") {
+    console.warn(`${contexte} : mémo Adrian non envoyé`, memo.reason);
+  }
+  if (client?.status === "rejected") {
+    console.error(`${contexte} : email client échoué`, client.reason);
+    const r = client.reason as { message?: string; text?: string } | undefined;
+    throw new Error(r?.message || r?.text || "email client non envoyé");
+  }
+}
+
+export type StatutEnvoiEmail = "envoye" | "non_envoye" | "echec";
+
+export interface ResultatEnvoiEmail {
+  statut: StatutEnvoiEmail;
+  erreur?: string;
+}
+
+/**
+ * Règle 3 du brief admin, appliquée partout : n'envoie que si l'email est
+ * réel, ne lève jamais, et c'est l'appelant qui affiche success / warning.
+ * À appeler APRÈS l'écriture en base et la mise à jour de l'écran.
+ */
+export async function envoyerEmailSiPossible(
+  lead: Pick<LeadInfo, "email">,
+  envoi: () => Promise<void>,
+): Promise<ResultatEnvoiEmail> {
+  if (!hasUsableEmail(lead.email)) return { statut: "non_envoye" };
+  try {
+    await envoi();
+    return { statut: "envoye" };
+  } catch (e: unknown) {
+    const erreur = e instanceof Error ? e.message : "envoi impossible";
+    return { statut: "echec", erreur };
   }
 }
 
@@ -366,15 +406,20 @@ export async function sendRappelJ1Emails(lead: LeadInfo, rdv: RendezVous): Promi
 
   await sendOne({
     templateId: TPL_RAPPEL_FUSION,
-    toEmail: lead.email,
+    toEmail: lead.email ?? "",
     params: { ...base, is_notification_adrian: "" },
   });
 
-  await sendOne({
-    templateId: TPL_RAPPEL_FUSION,
-    toEmail: ADRIAN_EMAIL,
-    params: { ...base, is_notification_adrian: "1" },
-  });
+  // Mémo Adrian : jamais bloquant (règle 3).
+  try {
+    await sendOne({
+      templateId: TPL_RAPPEL_FUSION,
+      toEmail: ADRIAN_EMAIL,
+      params: { ...base, is_notification_adrian: "1" },
+    });
+  } catch (e) {
+    console.warn("Rappel J-1 : mémo Adrian non envoyé", e);
+  }
 }
 
 export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
@@ -401,7 +446,7 @@ export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous):
   const results = await Promise.allSettled([
     sendOne({
       templateId: TPL_CHANGEMENT,
-      toEmail: lead.email,
+      toEmail: lead.email ?? "",
       params: {
         ...base,
         statut_rdv: "Votre rendez-vous a été déplacé",
@@ -423,20 +468,13 @@ export async function sendRdvModificationEmail(lead: LeadInfo, rdv: RendezVous):
     }),
   ]);
 
-  const failed = results.filter((r) => r.status === "rejected");
-  if (failed.length > 0) {
-    failed.forEach((f) =>
-
-      console.error("Email modification RDV échoué :", (f as PromiseRejectedResult).reason)
-    );
-    throw new Error(`${failed.length} email(s) sur 2 n'ont pas pu être envoyés`);
-  }
+  verifierClientEtMemo(results, "Email modification RDV");
 }
 
 export async function sendRdvAnnulationEmail(lead: LeadInfo, rdv: RendezVous): Promise<void> {
   await sendOne({
     templateId: TPL_CHANGEMENT,
-    toEmail: lead.email,
+    toEmail: lead.email ?? "",
     params: {
       ...buildBaseParams(lead, rdv),
       statut_rdv: "Votre rendez-vous a été annulé",

@@ -37,7 +37,9 @@ import {
   sendRdvConfirmationEmails,
   sendRdvModificationEmail,
   sendRdvAnnulationEmail,
+  envoyerEmailSiPossible,
   type LeadInfo,
+  type ResultatEnvoiEmail,
 } from "@/lib/rdv/emailjs";
 import type { RendezVous, TypeVisite } from "@/lib/rdv/constants";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
@@ -49,7 +51,10 @@ import {
   updateLeadNotes,
   setLeadDevisEnvoye,
   deleteLeadWithPhotos,
+  hasUsableEmail,
+  traceEnvoi,
 } from "@/lib/admin/queries";
+import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
 import {
   type Lead,
   LEAD_STATUSES,
@@ -63,6 +68,8 @@ import {
   whatsappTemplateRelance1,
   smsTemplateConfirmation,
   whatsappTemplateConfirmation,
+  smsTemplateAnnulationRdv,
+  whatsappTemplateAnnulationRdv,
   buildMailtoHref,
   COMPANY,
   type RelanceDevisPayload,
@@ -131,17 +138,7 @@ interface MessageOutput {
 const fillTemplate = (tpl: string, vars: Record<string, string>): string =>
   tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_m, k: string) => vars[k.trim()] ?? `{{${k.trim()}}}`);
 
-// Email "utilisable" : réel, pas "Non fourni", pas le placeholder local du RDV
-// rapide. Sinon le mailto part sans destinataire (Adrian le saisit). Module-level
-// pour servir aussi MessagesCard.
-const hasUsableEmail = (email: string | null | undefined): boolean => {
-  if (!email) return false;
-  const e = email.trim().toLowerCase();
-  if (!e.includes("@")) return false;
-  if (e === "non fourni") return false;
-  if (e.endsWith("@local.cuivre-electrique.com")) return false;
-  return true;
-};
+// hasUsableEmail : source unique dans @/lib/admin/queries (règle 1.3 du brief admin).
 
 // Adresse : champ libre `address` en priorité, sinon recomposée depuis les
 // champs structurés (rue/numéro/CP/commune). Vide si rien d'exploitable.
@@ -418,6 +415,8 @@ const LeadDetail = () => {
   const [editing, setEditing] = useState(false);
   const [submittingRdv, setSubmittingRdv] = useState(false);
   const [cancellingRdv, setCancellingRdv] = useState(false);
+  // RDV annulé à l'instant : on garde ses infos pour prévenir le client par message.
+  const [rdvAnnule, setRdvAnnule] = useState<RendezVous | null>(null);
 
   // Interventions (chantiers programmés) — distinct des RDV exploratoires
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -515,10 +514,10 @@ const LeadDetail = () => {
       if (newStatus === "devis envoyé" && !lead.devis_envoye_at) {
         const today = todayIso();
         await setLeadDevisEnvoye(lead.id, today);
-        setLead({ ...lead, status: newStatus, devis_envoye_at: today });
+        setLead((prev) => (prev ? { ...prev, status: newStatus, devis_envoye_at: today } : prev));
       } else {
         await updateLeadStatus(lead.id, newStatus);
-        setLead({ ...lead, status: newStatus });
+        setLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
       }
       toast.success("Statut mis à jour");
     } catch (e: unknown) {
@@ -534,7 +533,7 @@ const LeadDetail = () => {
     try {
       const today = todayIso();
       await setLeadDevisEnvoye(lead.id, today);
-      setLead({ ...lead, status: "devis envoyé", devis_envoye_at: today });
+      setLead((prev) => (prev ? { ...prev, status: "devis envoyé", devis_envoye_at: today } : prev));
       toast.success("Devis marqué envoyé aujourd'hui");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "mise à jour impossible";
@@ -552,7 +551,7 @@ const LeadDetail = () => {
       if (lead.devis_envoye_at) return; // déjà stampé → on garde la première date
       if (lead.status === "converti" || lead.status === "perdu") return; // pas de rétrogradation
       const today = todayIso();
-      setLead({ ...lead, status: "devis envoyé", devis_envoye_at: today }); // visible tout de suite
+      setLead((prev) => (prev ? { ...prev, status: "devis envoyé", devis_envoye_at: today } : prev)); // visible tout de suite
       setLeadDevisEnvoye(lead.id, today)
         .then(() => toast.success("Devis marqué envoyé aujourd'hui"))
         .catch((e: unknown) => {
@@ -578,6 +577,35 @@ const LeadDetail = () => {
     }
   };
 
+  // Règle 6 du brief admin : chaque SMS / WhatsApp / Email tapé laisse une ligne
+  // horodatée dans les notes. Écran d'abord (la ligne apparaît tout de suite),
+  // base ensuite (fire-and-forget : n'empêche jamais l'ouverture du message).
+  const tracer = (canal: CanalEnvoi, titre: string) => {
+    if (!lead) return;
+    const ligne = formatTraceEnvoi(canal, titre);
+    setNotes((prev) => ajouterTrace(prev, ligne));
+    setLead((prev) => (prev ? { ...prev, notes_internes: ajouterTrace(prev.notes_internes, ligne) } : prev));
+    void traceEnvoi(lead.id, canal, titre);
+  };
+
+  // Règle 3 : un seul endroit pour dire ce qui s'est passé côté email. Jamais
+  // un toast.error : le RDV est déjà enregistré quand on arrive ici.
+  const afficherResultatEmail = (res: ResultatEnvoiEmail, titre: string) => {
+    if (res.statut === "envoye") {
+      toast.success(`${titre} — email envoyé au client`, {
+        description: "Les boutons SMS / WhatsApp restent disponibles plus bas.",
+      });
+    } else if (res.statut === "non_envoye") {
+      toast.success(titre, {
+        description: "Pas d'email pour ce client : préviens-le par SMS ou WhatsApp (boutons plus bas).",
+      });
+    } else {
+      toast.warning(`${titre}, mais l'email n'est pas parti`, {
+        description: `${res.erreur ?? "envoi impossible"}. Préviens le client par SMS ou WhatsApp.`,
+      });
+    }
+  };
+
   const formattedAddress = () => {
     if (!lead) return "";
     const line1 = [lead.rue, lead.numero].filter(Boolean).join(" ");
@@ -588,7 +616,7 @@ const LeadDetail = () => {
 
   const copyContact = () => {
     if (!lead) return;
-    const text = `${lead.name}\n${lead.phone}\n${lead.email}\n${formattedAddress()}`;
+    const text = `${lead.name}\n${lead.phone}\n${hasUsableEmail(lead.email) ? lead.email : ""}\n${formattedAddress()}`;
     navigator.clipboard.writeText(text);
     toast.success("Coordonnées copiées");
   };
@@ -693,6 +721,9 @@ const LeadDetail = () => {
     if (!info) return;
     setSubmittingRdv(true);
     try {
+      // Règle 3 du brief admin, dans cet ordre : on écrit en base → on met
+      // l'écran et le statut à jour → on tente l'email seulement s'il y a une
+      // adresse réelle → en cas d'échec, un avertissement, jamais une erreur.
       let saved: RendezVous;
       if (editing && rdv) {
         // Modification
@@ -712,8 +743,6 @@ const LeadDetail = () => {
           .single();
         if (error) throw error;
         saved = data as RendezVous;
-        await sendRdvModificationEmail(info, saved);
-        toast.success("RDV modifié, email envoyé au client");
       } else {
         // Création
         const { data, error } = await supabase
@@ -730,33 +759,34 @@ const LeadDetail = () => {
           .single();
         if (error) throw error;
         saved = data as RendezVous;
-        // Phase 1.6 — confirmation unifiée selon le client :
-        //  - client web (vrai email) -> envoi auto (email client + mémo Adrian) ;
-        //  - client téléphone (email placeholder/absent) -> pas d'envoi auto
-        //    (il planterait), on invite à prévenir par SMS/WhatsApp.
-        // Dans tous les cas, un échec d'email NE perd PAS le RDV déjà enregistré.
-        if (hasUsableEmail(lead.email)) {
-          try {
-            await sendRdvConfirmationEmails(info, saved);
-            toast.success("RDV confirmé — email envoyé au client + mémo pour toi");
-          } catch (mailErr: unknown) {
-            const m = mailErr instanceof Error ? mailErr.message : "envoi email impossible";
-            toast.warning("RDV confirmé, mais l'email n'est pas parti", {
-              description: `${m}. Préviens le client par SMS/WhatsApp (boutons plus bas).`,
-            });
-          }
-        } else {
-          toast.success("RDV confirmé", {
-            description:
-              "Pas d'email valide pour ce client — préviens-le par SMS ou WhatsApp (boutons plus bas).",
-          });
-        }
-        await updateLeadStatus(lead.id, "RDV confirmé");
-        setLead({ ...lead, status: "RDV confirmé" });
       }
+      const modification = editing && !!rdv;
       setRdv(saved);
+      setRdvAnnule(null);
       setShowForm(false);
       setEditing(false);
+      // Statut du lead : seulement à la création (une modification ne doit pas
+      // rétrograder un lead « devis envoyé » / « converti »). Un échec ici ne
+      // doit ni masquer le RDV enregistré ni empêcher l'email.
+      if (!modification) {
+        try {
+          await updateLeadStatus(lead.id, "RDV confirmé");
+          setLead((prev) => (prev ? { ...prev, status: "RDV confirmé" } : prev));
+        } catch (stErr: unknown) {
+          const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
+          toast.warning("RDV enregistré, mais le statut du lead n'a pas changé", { description: m });
+        }
+      }
+      const titre = modification ? "RDV modifié" : "RDV enregistré";
+      // Date passée (on note ce qui s'est passé) : aucun message automatique au client.
+      if (saved.date_rdv < todayIso()) {
+        toast.success(titre, { description: "Date passée : aucun email envoyé au client." });
+      } else {
+        const res = await envoyerEmailSiPossible(info, () =>
+          modification ? sendRdvModificationEmail(info, saved) : sendRdvConfirmationEmails(info, saved),
+        );
+        afficherResultatEmail(res, titre);
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "impossible d'enregistrer le RDV";
       toast.error("Erreur : " + msg);
@@ -883,15 +913,28 @@ const LeadDetail = () => {
     if (!info) return;
     setCancellingRdv(true);
     try {
+      const annule = rdv;
       const { error } = await supabase.from("rendez_vous")
         .update({ statut: "annule" })
-        .eq("id", rdv.id);
+        .eq("id", annule.id);
       if (error) throw error;
-      await sendRdvAnnulationEmail(info, rdv);
-      await updateLeadStatus(lead.id, "RDV annulé");
-      setLead({ ...lead, status: "RDV annulé" });
+      // Règle 3 : écran et statut d'abord, email ensuite (jamais bloquant).
       setRdv(null);
-      toast.success("RDV annulé, email envoyé au client");
+      setRdvAnnule(annule);
+      try {
+        await updateLeadStatus(lead.id, "RDV annulé");
+        setLead((prev) => (prev ? { ...prev, status: "RDV annulé" } : prev));
+      } catch (stErr: unknown) {
+        const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
+        toast.warning("RDV annulé, mais le statut du lead n'a pas changé", { description: m });
+      }
+      // RDV déjà passé : inutile d'écrire au client qu'il est annulé.
+      if (annule.date_rdv < todayIso()) {
+        toast.success("RDV annulé", { description: "Date passée : aucun email envoyé au client." });
+      } else {
+        const res = await envoyerEmailSiPossible(info, () => sendRdvAnnulationEmail(info, annule));
+        afficherResultatEmail(res, "RDV annulé");
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "annulation impossible";
       toast.error("Erreur : " + msg);
@@ -912,7 +955,7 @@ const LeadDetail = () => {
   const smsHref = `sms:${lead.phone}?body=${encodedBody}`;
   // mailto utilise encodeURIComponent (espaces → %20) pour conformité RFC 6068.
   // Sinon URLSearchParams produit "+" qui s'affiche littéralement sur Gmail mobile.
-  const emailHref = `mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
+  const emailHref = `mailto:${encodeURIComponent(lead.email ?? "")}?subject=${encodeURIComponent(quickMessage.subject)}&body=${encodedBody}`;
   // Itinéraire Google Maps depuis l'adresse précise (fallback adresse libre).
   const mapsDirQuery =
     [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ").trim() ||
@@ -958,7 +1001,7 @@ const LeadDetail = () => {
             size="sm"
             className="flex-1 min-h-[44px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
           >
-            <a href={whatsappHref} target="_blank" rel="noreferrer">
+            <a href={whatsappHref} target="_blank" rel="noreferrer" onClick={() => tracer("WhatsApp", "Message rapide")}>
               <MessageCircle className="w-4 h-4" /> WhatsApp
             </a>
           </Button>
@@ -982,7 +1025,48 @@ const LeadDetail = () => {
           cancelling={cancellingRdv}
           onEdit={() => { setEditing(true); setShowForm(true); }}
           onCancel={handleRdvCancel}
+          onTrace={tracer}
         />
+      )}
+
+      {/* RDV annulé à l'instant : prévenir le client par message (règle 2 —
+          aucune action ne dépend d'un email). */}
+      {rdvAnnule && !rdv && (
+        <Card className="p-4 sm:p-6 space-y-3 border-destructive/40 bg-destructive/5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-lg">RDV annulé</h2>
+              <p className="text-sm text-muted-foreground">
+                {formatRdvDateShort(rdvAnnule.date_rdv)} à {formatHeure(rdvAnnule.heure_rdv)} — préviens le client en 1 tap.
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setRdvAnnule(null)} aria-label="Masquer ce bloc">
+              OK
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
+              <a
+                href={buildSmsHref(lead.phone, smsTemplateAnnulationRdv({ clientName: lead.name, dateIso: rdvAnnule.date_rdv, heure: rdvAnnule.heure_rdv.slice(0, 5) }))}
+                onClick={() => tracer("SMS", "Annulation RDV")}
+                aria-label="Prévenir de l'annulation par SMS"
+              >
+                <Smartphone className="w-4 h-4" /> SMS
+              </a>
+            </Button>
+            <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
+              <a
+                href={buildWhatsappHref(lead.phone, whatsappTemplateAnnulationRdv({ clientName: lead.name, dateIso: rdvAnnule.date_rdv, heure: rdvAnnule.heure_rdv.slice(0, 5) }))}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => tracer("WhatsApp", "Annulation RDV")}
+                aria-label="Prévenir de l'annulation par WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </a>
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Contact */}
@@ -990,7 +1074,9 @@ const LeadDetail = () => {
         <h2 className="font-semibold text-lg">Coordonnées</h2>
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
           <div><span className="text-muted-foreground">Nom :</span> {lead.name}</div>
-          <div className="break-all"><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline">{lead.email}</a></div>
+          {hasUsableEmail(lead.email) && (
+            <div className="break-all"><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline" onClick={() => tracer("Email", "Email libre")}>{lead.email}</a></div>
+          )}
           <div><span className="text-muted-foreground">Téléphone :</span> <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a></div>
           <div className="sm:col-span-2">
             <span className="text-muted-foreground">Adresse :</span>
@@ -1020,16 +1106,18 @@ const LeadDetail = () => {
           <Button asChild variant="copper" size="lg" className="flex-1 min-h-[48px]">
             <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler ce client</a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
-            <a href={`mailto:${lead.email}`}><Mail className="w-4 h-4" /> Envoyer un email</a>
-          </Button>
+          {hasUsableEmail(lead.email) && (
+            <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
+              <a href={`mailto:${lead.email}`} onClick={() => tracer("Email", "Email libre")}><Mail className="w-4 h-4" /> Envoyer un email</a>
+            </Button>
+          )}
         </div>
       </Card>
 
       {/* Demande (repliable, ouverte par défaut — contexte avant la visite) */}
       <CollapsibleCard title="Détails de la demande" defaultOpen>
         <div className="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type}</div>
+          <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type || "—"}</div>
           <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
           <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground">Source :</span>
@@ -1053,7 +1141,7 @@ const LeadDetail = () => {
         </div>
         <div>
           <p className="text-sm text-muted-foreground mb-2">Message :</p>
-          <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message}</div>
+          <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message || "—"}</div>
         </div>
       </CollapsibleCard>
 
@@ -1097,7 +1185,7 @@ const LeadDetail = () => {
                 intervention={it}
                 clientName={lead.name}
                 clientPhone={lead.phone}
-                clientEmail={lead.email}
+                clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
                 clientAddress={
                   [lead.rue, lead.numero, lead.code_postal, lead.commune]
                     .filter(Boolean)
@@ -1153,7 +1241,7 @@ const LeadDetail = () => {
           mode="confirmation"
           clientName={lead.name}
           clientPhone={lead.phone}
-          clientEmail={lead.email}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
           clientAddress={
             [lead.rue, lead.numero, lead.code_postal, lead.commune]
               .filter(Boolean)
@@ -1173,7 +1261,7 @@ const LeadDetail = () => {
           mode="rectification"
           clientName={lead.name}
           clientPhone={lead.phone}
-          clientEmail={lead.email}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
           clientAddress={
             [lead.rue, lead.numero, lead.code_postal, lead.commune]
               .filter(Boolean)
@@ -1192,7 +1280,7 @@ const LeadDetail = () => {
           intervention={cancellingIntervention}
           clientName={lead.name}
           clientPhone={lead.phone}
-          clientEmail={lead.email}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
           onConfirm={handleConfirmAnnulation}
           submitting={submittingAnnulation}
         />
@@ -1307,27 +1395,29 @@ const LeadDetail = () => {
       {/* Messages (incrément 1/3) — isolé dans un ErrorBoundary : si la carte
           plante (donnée inattendue), elle disparaît sans casser la fiche. */}
       <ErrorBoundary label="MessagesCard">
-        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} />
+        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} onTrace={tracer} />
       </ErrorBoundary>
 
       {/* Actions (repliable, fermée par défaut) */}
       <CollapsibleCard title="Actions rapides">
         <div className="grid sm:grid-cols-3 gap-2">
           <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
-            <a href={whatsappHref} target="_blank" rel="noreferrer">
+            <a href={whatsappHref} target="_blank" rel="noreferrer" onClick={() => tracer("WhatsApp", "Message rapide")}>
               <MessageCircle className="w-4 h-4" /> WhatsApp
             </a>
           </Button>
           <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
-            <a href={smsHref}>
+            <a href={smsHref} onClick={() => tracer("SMS", "Message rapide")}>
               <Smartphone className="w-4 h-4" /> SMS
             </a>
           </Button>
-          <Button asChild variant="copper" size="lg" className="min-h-[48px]">
-            <a href={emailHref}>
-              <Mail className="w-4 h-4" /> Email rapide
-            </a>
-          </Button>
+          {hasUsableEmail(lead.email) && (
+            <Button asChild variant="copper" size="lg" className="min-h-[48px]">
+              <a href={emailHref} onClick={() => tracer("Email", "Message rapide")}>
+                <Mail className="w-4 h-4" /> Email rapide
+              </a>
+            </Button>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button variant="outline" onClick={copyContact} className="flex-1">
@@ -1354,7 +1444,7 @@ const LeadDetail = () => {
               >
                 <span className="flex-1 min-w-[8rem] text-sm font-medium">{q.label}</span>
                 <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`}>
+                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`} onClick={() => tracer("SMS", `Réponse rapide : ${q.label}`)}>
                     <Smartphone className="w-4 h-4" /> SMS
                   </a>
                 </Button>
@@ -1367,6 +1457,7 @@ const LeadDetail = () => {
                     href={`https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${enc}`}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={() => tracer("WhatsApp", `Réponse rapide : ${q.label}`)}
                     aria-label={`WhatsApp : ${q.label}`}
                   >
                     <MessageCircle className="w-4 h-4" /> WhatsApp
@@ -1426,10 +1517,13 @@ const MessagesCard = ({
   lead,
   rdv,
   onDevisEnvoye,
+  onTrace,
 }: {
   lead: Lead;
   rdv: RendezVous | null;
   onDevisEnvoye: () => void;
+  /** Règle 6 : trace l'envoi dans les notes du lead. */
+  onTrace: (canal: CanalEnvoi, titre: string) => void;
 }) => {
   const ctx: MsgCtx = { lead, rdv };
   let messageVars: Record<string, string> = {};
@@ -1484,7 +1578,10 @@ const MessagesCard = ({
                   >
                     <a
                       href={buildSmsHref(lead.phone, out.sms)}
-                      onClick={m.stampDevis ? onDevisEnvoye : undefined}
+                      onClick={() => {
+                        onTrace("SMS", m.title);
+                        if (m.stampDevis) onDevisEnvoye();
+                      }}
                       aria-label={`SMS : ${m.title}`}
                     >
                       <Smartphone className="w-5 h-5" /> SMS
@@ -1501,7 +1598,10 @@ const MessagesCard = ({
                       href={buildWhatsappHref(lead.phone, out.wa)}
                       target="_blank"
                       rel="noreferrer"
-                      onClick={m.stampDevis ? onDevisEnvoye : undefined}
+                      onClick={() => {
+                        onTrace("WhatsApp", m.title);
+                        if (m.stampDevis) onDevisEnvoye();
+                      }}
                       aria-label={`WhatsApp : ${m.title}`}
                     >
                       <MessageCircle className="w-5 h-5" /> WhatsApp
@@ -1511,10 +1611,11 @@ const MessagesCard = ({
               </div>
             )}
 
-            {out.email && (
+            {out.email && emailTo && (
               <Button asChild size="lg" variant="copper" className="w-full min-h-[48px] text-base">
                 <a
                   href={buildMailtoHref(emailTo, out.email.subject, out.email.body)}
+                  onClick={() => onTrace("Email", m.title)}
                   aria-label={`Email : ${m.title}`}
                 >
                   <Mail className="w-5 h-5" /> Email

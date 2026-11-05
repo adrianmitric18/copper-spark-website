@@ -1174,6 +1174,42 @@ export function emailSubjectChantierAnnulation(payload: ChantierAnnulationPayloa
 }
 
 // ---------------------------------------------------------------------------
+// Annulation d'un RENDEZ-VOUS (visite devis, dépannage…) — SMS / WhatsApp
+// Court, en mots simples, sur le modèle de smsTemplateChantierAnnulation.
+// Remplace l'email d'annulation quand le client n'a pas d'email (règle 2).
+// ---------------------------------------------------------------------------
+
+export interface AnnulationRdvPayload {
+  clientName: string;
+  /** YYYY-MM-DD */
+  dateIso: string;
+  /** HH:MM */
+  heure: string;
+}
+
+export function smsTemplateAnnulationRdv(payload: AnnulationRdvPayload): string {
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
+  return [
+    `Bonjour ${prenom}, je dois annuler notre rendez-vous du ${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}.`,
+    "Je vous recontacte vite pour une nouvelle date. Désolé pour le changement.",
+    `${COMPANY.owner} – ${COMPANY.name} / ${COMPANY.tel}`,
+  ].join("\n");
+}
+
+export function whatsappTemplateAnnulationRdv(payload: AnnulationRdvPayload): string {
+  const prenom = payload.clientName.trim().split(/\s+/)[0] || payload.clientName.trim();
+  return [
+    `Bonjour ${prenom},`,
+    "",
+    `Je dois *annuler* notre rendez-vous du *${formatDateLongNoYear(payload.dateIso)} à ${formatHeureFr(payload.heure)}*.`,
+    "Je vous recontacte vite pour une nouvelle date. Désolé pour le changement.",
+    "",
+    `${COMPANY.owner} – ${COMPANY.name}`,
+    `📱 ${COMPANY.tel}`,
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Liens deep links (sms: / wa.me / mailto:)
 // ---------------------------------------------------------------------------
 

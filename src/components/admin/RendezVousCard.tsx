@@ -19,17 +19,7 @@ import {
 } from "@/lib/admin/message-templates";
 import type { TypeVisite, RendezVous } from "@/lib/rdv/constants";
 import type { LeadInfo } from "@/lib/rdv/emailjs";
-
-// T2 — un email est "utilisable" s'il est réel : pas vide, pas "Non fourni",
-// pas le placeholder local du lead/RDV rapide. Même règle que LeadDetail.
-const hasUsableEmail = (email: string | null | undefined): boolean => {
-  if (!email) return false;
-  const e = email.trim().toLowerCase();
-  if (!e.includes("@")) return false;
-  if (e === "non fourni") return false;
-  if (e.endsWith("@local.cuivre-electrique.com")) return false;
-  return true;
-};
+import { hasUsableEmail } from "@/lib/admin/envois";
 
 interface Props {
   rdv: RendezVous;
@@ -37,9 +27,11 @@ interface Props {
   cancelling: boolean;
   onEdit: () => void;
   onCancel: () => void;
+  /** Règle 6 : trace l'envoi (SMS / WhatsApp) dans les notes du lead. */
+  onTrace?: (canal: "SMS" | "WhatsApp", titre: string) => void;
 }
 
-const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
+const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel, onTrace }: Props) => {
   const [open, setOpen] = useState(false);
 
   // T2 — confirmation SMS/WhatsApp 1-tap, pré-remplie avec la date/heure réelles
@@ -145,7 +137,7 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
         <p className="text-[11px] text-muted-foreground">Complète (détaillée)</p>
         <div className="grid grid-cols-2 gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={smsHref} aria-label="Envoyer la confirmation complète par SMS">
+            <a href={smsHref} aria-label="Envoyer la confirmation complète par SMS" onClick={() => onTrace?.("SMS", "Confirmation RDV")}>
               <MessageSquare className="w-4 h-4" /> SMS
             </a>
           </Button>
@@ -158,6 +150,7 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
               href={whatsappHref}
               target="_blank"
               rel="noreferrer"
+              onClick={() => onTrace?.("WhatsApp", "Confirmation RDV")}
               aria-label="Envoyer la confirmation complète par WhatsApp"
             >
               <Send className="w-4 h-4" /> WhatsApp
@@ -169,7 +162,7 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
         <p className="text-[11px] text-muted-foreground pt-1">Courte (date + heure)</p>
         <div className="grid grid-cols-2 gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={smsCourteHref} aria-label="Envoyer la confirmation courte par SMS">
+            <a href={smsCourteHref} aria-label="Envoyer la confirmation courte par SMS" onClick={() => onTrace?.("SMS", "Confirmation RDV (courte)")}>
               <MessageSquare className="w-4 h-4" /> SMS
             </a>
           </Button>
@@ -182,6 +175,7 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
               href={whatsappCourteHref}
               target="_blank"
               rel="noreferrer"
+              onClick={() => onTrace?.("WhatsApp", "Confirmation RDV (courte)")}
               aria-label="Envoyer la confirmation courte par WhatsApp"
             >
               <Send className="w-4 h-4" /> WhatsApp
@@ -209,7 +203,8 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel }: Props) => {
             <AlertDialogHeader>
               <AlertDialogTitle>Annuler ce rendez-vous ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Le client recevra un email d'annulation. Cette action est irréversible.
+                Le RDV passe en « annulé ». Tu pourras prévenir le client par SMS ou
+                WhatsApp juste après{emailUtilisable ? " (et un email part aussi)" : ""}.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
