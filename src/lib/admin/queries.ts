@@ -4,6 +4,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Lead, Rdv, Testimonial, UpcomingByLead } from "@/lib/admin/types";
+import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
+
+// Source unique de « l'email est-il réel ? » pour toutes les pages admin.
+export { hasUsableEmail } from "@/lib/admin/envois";
 
 // =====================================================================
 //  Helpers internes
@@ -97,10 +101,55 @@ export async function updateLeadStatus(leadId: string, status: string): Promise<
   if (error) throw error;
 }
 
+// Toutes les écritures de notes (enregistrement manuel + traces d'envoi)
+// passent par cette file : deux boutons tapés coup sur coup, ou une trace
+// pendant un enregistrement, ne s'écrasent plus (lecture-puis-écriture non
+// atomique sinon). Un échec ne casse pas la file pour les suivants.
+let fileNotes: Promise<unknown> = Promise.resolve();
+function enFileNotes<T>(tache: () => Promise<T>): Promise<T> {
+  const suite = fileNotes.then(tache, tache);
+  fileNotes = suite.catch(() => undefined);
+  return suite;
+}
+
 /** Met à jour les notes internes d'un lead. */
 export async function updateLeadNotes(leadId: string, notes: string): Promise<void> {
-  const { error } = await supabase.from("leads").update({ notes_internes: notes }).eq("id", leadId);
-  if (error) throw error;
+  return enFileNotes(async () => {
+    const { error } = await supabase.from("leads").update({ notes_internes: notes }).eq("id", leadId);
+    if (error) throw error;
+  });
+}
+
+/**
+ * Règle 6 du brief admin : taper SMS / WhatsApp / Email ajoute une ligne
+ * horodatée aux notes internes du lead (« 04/11/2026 16:30 — WhatsApp :
+ * Confirmation RDV »). Ne lève jamais : un échec de trace ne doit pas gêner
+ * l'ouverture du message. Retourne la ligne ajoutée, ou null si non écrite.
+ */
+export async function traceEnvoi(leadId: string, canal: CanalEnvoi, titre: string): Promise<string | null> {
+  const ligne = formatTraceEnvoi(canal, titre);
+  try {
+    return await enFileNotes(async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("notes_internes, notes")
+        .eq("id", leadId)
+        .maybeSingle();
+      if (error) throw error;
+      // Même repli que la fiche (notes_internes || notes) : un vieux lead dont
+      // seule la colonne historique `notes` est remplie ne perd pas sa note.
+      const base = data?.notes_internes || data?.notes || "";
+      const { error: upErr } = await supabase
+        .from("leads")
+        .update({ notes_internes: ajouterTrace(base, ligne) })
+        .eq("id", leadId);
+      if (upErr) throw upErr;
+      return ligne;
+    });
+  } catch (e) {
+    console.warn("Trace d'envoi non enregistrée :", e);
+    return null;
+  }
 }
 
 /**
