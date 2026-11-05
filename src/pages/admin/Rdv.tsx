@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { fetchAllRdvs } from "@/lib/admin/queries";
+import { isRdvPasse, isTerminal } from "@/lib/admin/types";
+import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
 import AdminShell from "@/admin/layout/AdminShell";
 
 type FilterKey = "a_venir" | "aujourdhui" | "semaine" | "mois" | "passes" | "annules";
@@ -38,7 +40,12 @@ const todayStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-const statutBadge = (s: string) => {
+// Un RDV passé encore ouvert n'est jamais affiché « Confirmé » (définition
+// unique : isRdvPasse dans @/lib/admin/types).
+const statutBadge = (s: string, passe = false) => {
+  if (passe) {
+    return <Badge variant="outline" className="bg-orange-500/15 text-orange-700 border-orange-500/30">RDV passé</Badge>;
+  }
   switch (s) {
     case "annule":
       return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Annulé</Badge>;
@@ -179,13 +186,21 @@ const AdminRdv = () => {
                     <TableCell className="text-sm">
                       {r.lead_commune || <span className="text-muted-foreground italic">—</span>}
                     </TableCell>
-                    <TableCell>{statutBadge(r.statut)}</TableCell>
+                    <TableCell>{statutBadge(r.statut, isRdvPasse(r))}</TableCell>
                     <TableCell className="text-right">
-                      <Button asChild size="sm" variant="outline">
-                        <Link to={`/admin/lead/${r.lead_id}`}>
-                          <Eye className="w-4 h-4" /> Fiche
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        {!isTerminal(r.lead_status) && (
+                          <TerminerLeadButton
+                            lead={{ id: r.lead_id, name: r.lead_name, status: r.lead_status }}
+                            label="Terminer le lead"
+                          />
+                        )}
+                        <Button asChild size="sm" variant="outline">
+                          <Link to={`/admin/lead/${r.lead_id}`}>
+                            <Eye className="w-4 h-4" /> Fiche
+                          </Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -207,7 +222,7 @@ const AdminRdv = () => {
                       <p className="text-xs text-muted-foreground">{r.type_visite}</p>
                       {r.lead_commune && <p className="text-xs text-muted-foreground">{r.lead_commune}</p>}
                     </div>
-                    {statutBadge(r.statut)}
+                    {statutBadge(r.statut, isRdvPasse(r))}
                   </div>
                 </Link>
                 <div className="flex gap-2 pt-2">
@@ -219,6 +234,12 @@ const AdminRdv = () => {
                   <Button asChild size="default" variant="copper" className="flex-1 min-h-[44px]">
                     <Link to={`/admin/lead/${r.lead_id}`}>Fiche lead</Link>
                   </Button>
+                  {!isTerminal(r.lead_status) && (
+                    <TerminerLeadButton
+                      lead={{ id: r.lead_id, name: r.lead_name, status: r.lead_status }}
+                      className="min-h-[44px]"
+                    />
+                  )}
                 </div>
               </Card>
             ))}

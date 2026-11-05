@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { AlertCircle, ChevronRight, Phone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Lead, UpcomingByLead } from "@/lib/admin/types";
+import { isARelancerStatus, type Lead, type UpcomingByLead } from "@/lib/admin/types";
 
 interface StaleLeadsCardProps {
   leads: Lead[];
@@ -16,7 +16,7 @@ interface StaleLeadsCardProps {
 
 const HOUR_MS = 60 * 60 * 1000;
 
-const ACTIVE_STATUSES = new Set(["nouveau", "traité", "devis envoyé"]);
+// Statuts « à relancer » : définition unique dans @/lib/admin/types (isARelancerStatus).
 
 const ageInHours = (createdAt: string): number => {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / HOUR_MS);
@@ -44,7 +44,7 @@ const StaleLeadsCard = ({
   const stale = useMemo(() => {
     return leads
       .filter((l) => {
-        if (!ACTIVE_STATUSES.has(l.status)) return false;
+        if (!isARelancerStatus(l.status)) return false;
         if (upcomingByLead[l.id]) return false; // RDV planifié → pas urgent
         return ageInHours(l.created_at) >= thresholdHours;
       })

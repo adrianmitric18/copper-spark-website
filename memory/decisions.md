@@ -14,6 +14,28 @@
 
 ## Journal
 
+### 2026-11-05 — Admin : « Terminer » partout, statut « sans suite », RDV passé (lot 1B)
+- **Décision :** tout lead peut être fermé en un geste depuis les listes et la fiche :
+  Converti / Sans suite / Perdu. Nouveau statut `sans suite` (pas de contrainte en base, donc
+  pas de migration). Branche `feat/admin-terminer`.
+- **Pourquoi :** des leads et des RDV restaient affichés sans pouvoir être fermés (brief admin
+  2026-11, règle 4).
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **Une seule définition** dans `src/lib/admin/types.ts` : `isTerminal`, `isRdvPasse`,
+    `isStatutAvecRdv`, `libelleStatutLead`, `estARappeler`, `estArchivable`,
+    `estChantierEnCours`. Ne plus recréer de liste de statuts dans une page.
+  - Terminer un lead ferme aussi ses RDV : passés → `termine` ; du jour ou à venir → `annule`
+    si le lead est perdu ou sans suite ; un lead **converti garde son RDV à venir**. Aucun
+    message n’est envoyé au client.
+  - Terminer un **RDV** passé (bloc « RDV passé » de la fiche) remet le lead en « traité ».
+  - Un lead « RDV confirmé » ou `rdv_pris` sans RDV à venir s’affiche « RDV passé », jamais
+    « confirmé ». Un lead express (RDV rapide sans date) est désormais créé en `nouveau`.
+  - Accueil : « à rappeler » = `nouveau` seulement, moins de 30 jours ; « à relancer » sort
+    aussi après 30 jours sans action.
+  - « Archiver les anciens » : dernière action = création, devis, dernier message tracé, dernier
+    RDV, dernier chantier ; un lead avec chantier programmé ou en cours n’est jamais proposé.
+  - Réactiver un lead terminé le remet en « traité ».
+
 ### 2026-11-04 — Admin : rien d'obligatoire sauf nom + téléphone
 - **Décision :** « Admin : rien d'obligatoire sauf nom + téléphone ; l'email n'est jamais
   bloquant ; aucune règle de date ; les envois WhatsApp/SMS sont tracés dans notes_internes. »

@@ -3,7 +3,15 @@
 // (ex: suppression d'un lead = effacement DB + photos storage).
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Lead, Rdv, Testimonial, UpcomingByLead } from "@/lib/admin/types";
+import {
+  RDV_STATUTS_ACTIFS,
+  todayIsoLocal,
+  type Lead,
+  type Rdv,
+  type TerminalLeadStatus,
+  type Testimonial,
+  type UpcomingByLead,
+} from "@/lib/admin/types";
 import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
 
 // Source unique de « l'email est-il réel ? » pour toutes les pages admin.
@@ -99,6 +107,79 @@ export async function fetchLeadById(id: string): Promise<Lead | null> {
 export async function updateLeadStatus(leadId: string, status: string): Promise<void> {
   const { error } = await supabase.from("leads").update({ status }).eq("id", leadId);
   if (error) throw error;
+}
+
+/** Clôt (statut `termine`) les RDV passés encore ouverts d'un ou plusieurs leads. */
+async function cloreRdvPasses(leadIds: string[]): Promise<boolean> {
+  const { error } = await supabase
+    .from("rendez_vous")
+    .update({ statut: "termine" })
+    .in("lead_id", leadIds)
+    .in("statut", [...RDV_STATUTS_ACTIFS])
+    .lt("date_rdv", todayIsoLocal());
+  if (error) console.warn("RDV passés non clôturés :", error.message);
+  return !error;
+}
+
+/**
+ * « Terminer » un lead (converti / sans suite / perdu), quel que soit son état.
+ * Ferme aussi ses RDV pour qu'aucun ne traîne :
+ *  - RDV passés encore ouverts → `termine` ;
+ *  - RDV du jour ou à venir → `annule` si le lead est perdu ou sans suite (un
+ *    lead converti garde son RDV : la pose peut être à venir). Aucun message
+ *    n'est envoyé au client.
+ * Le statut du lead est écrit d'abord ; `rdvOk` dit si les RDV ont suivi.
+ */
+export async function terminerLead(
+  leadId: string,
+  status: TerminalLeadStatus,
+): Promise<{ rdvOk: boolean }> {
+  await updateLeadStatus(leadId, status);
+  let rdvOk = await cloreRdvPasses([leadId]);
+  if (status !== "converti") {
+    const { error } = await supabase
+      .from("rendez_vous")
+      .update({ statut: "annule" })
+      .eq("lead_id", leadId)
+      .in("statut", [...RDV_STATUTS_ACTIFS])
+      .gte("date_rdv", todayIsoLocal());
+    if (error) {
+      console.warn("RDV à venir non annulés :", error.message);
+      rdvOk = false;
+    }
+  }
+  return { rdvOk };
+}
+
+/** Passe un RDV en « terminé » (bouton « Terminer » du bloc « RDV passé »). */
+export async function terminerRdv(rdvId: string): Promise<void> {
+  const { error } = await supabase.from("rendez_vous").update({ statut: "termine" }).eq("id", rdvId);
+  if (error) throw error;
+}
+
+/**
+ * « Archiver les anciens » : passe un lot de leads en « sans suite » et clôt
+ * leurs RDV passés encore ouverts (ils n'ont, par définition, aucun RDV à venir).
+ */
+export async function archiverLeads(leadIds: string[]): Promise<void> {
+  if (leadIds.length === 0) return;
+  const { error } = await supabase.from("leads").update({ status: "sans suite" }).in("id", leadIds);
+  if (error) throw error;
+  await cloreRdvPasses(leadIds);
+}
+
+/**
+ * Date du dernier RDV (passé ou non, annulé compris) par lead. Requête légère
+ * — deux colonnes, sans jointure — pour dater la dernière action d'un lead.
+ */
+export async function fetchDernierRdvParLead(): Promise<Record<string, string>> {
+  const { data, error } = await supabase.from("rendez_vous").select("lead_id, date_rdv");
+  if (error) throw error;
+  const dernier: Record<string, string> = {};
+  for (const r of data ?? []) {
+    if (!dernier[r.lead_id] || r.date_rdv > dernier[r.lead_id]) dernier[r.lead_id] = r.date_rdv;
+  }
+  return dernier;
 }
 
 // Toutes les écritures de notes (enregistrement manuel + traces d'envoi)
@@ -222,6 +303,8 @@ export type RdvWithLead = {
   // Phase 2.1 — nécessaires au rappel J-1 (email client via sendRappelJ1Emails).
   duree_minutes: number;
   lead_email: string;
+  /** Statut du lead (pour le bouton « Terminer » du calendrier). */
+  lead_status: string;
 };
 
 /** Charge tous les RDV avec les infos client (jointure leads). Utilisé par /admin/rdv. */
@@ -229,7 +312,7 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
   const { data, error } = await supabase
     .from("rendez_vous")
     .select(
-      "id, lead_id, date_rdv, heure_rdv, duree_minutes, type_visite, statut, leads(name, phone, email, commune, rue, numero, code_postal)",
+      "id, lead_id, date_rdv, heure_rdv, duree_minutes, type_visite, statut, leads(name, phone, email, commune, rue, numero, code_postal, status)",
     )
     .order("date_rdv", { ascending: true })
     .order("heure_rdv", { ascending: true });
@@ -243,6 +326,7 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
       rue?: string | null;
       numero?: string | null;
       code_postal?: string | null;
+      status?: string | null;
     } | null;
     return {
       id: r.id as string,
@@ -259,6 +343,7 @@ export async function fetchAllRdvs(): Promise<RdvWithLead[]> {
       lead_code_postal: leadJoin?.code_postal ?? null,
       duree_minutes: (r.duree_minutes as number) ?? 60,
       lead_email: leadJoin?.email ?? "",
+      lead_status: leadJoin?.status ?? "",
     };
   });
 }

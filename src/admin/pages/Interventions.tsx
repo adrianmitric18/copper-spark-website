@@ -8,20 +8,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Hammer, Calendar, Clock, ChevronRight, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Hammer, Calendar, Clock, ChevronRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import {
   fetchAllInterventions,
+  updateInterventionStatut,
   STATUT_LABELS,
   STATUT_BADGE_CLASSES,
   type Intervention,
   type StatutIntervention,
 } from "@/lib/admin/interventions";
 import { fetchLeadsWithUpcomingRdvs } from "@/lib/admin/queries";
+import { estChantierATerminer, estChantierEnCours, todayIsoLocal } from "@/lib/admin/types";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import { toast } from "sonner";
@@ -35,7 +37,8 @@ const FILTER_OPTIONS: { value: FilterMode; label: string }[] = [
   { value: "all", label: "Toutes" },
 ];
 
-const todayIso = (): string => new Date().toISOString().slice(0, 10);
+// Date LOCALE (toISOString décalait d'un jour entre minuit et 1 h ou 2 h).
+const todayIso = (): string => todayIsoLocal();
 
 const formatDateLong = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString("fr-BE", {
@@ -51,6 +54,8 @@ const formatHeure = (t: string) => {
 
 const Interventions = () => {
   const { user, ready } = useAdminGuard();
+  const queryClient = useQueryClient();
+  const [terminant, setTerminant] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const filter: FilterMode = (searchParams.get("filter") as FilterMode) || "upcoming";
   const setFilter = (f: FilterMode) => {
@@ -109,11 +114,9 @@ const Interventions = () => {
           (i) => i.statut === "programme" && i.date_debut >= today,
         );
       case "in_progress":
-        return all.filter(
-          (i) =>
-            i.statut === "en_cours" ||
-            (i.statut === "programme" && i.date_debut <= today && i.date_fin >= today),
-        );
+        // Inclut les chantiers programmés dont la date de fin est dépassée :
+        // avant, ils n'apparaissaient dans aucun filtre (définition unique dans types.ts).
+        return all.filter((i) => estChantierEnCours(i, today));
       case "done":
         return all.filter((i) => i.statut === "termine");
       case "all":
@@ -127,15 +130,26 @@ const Interventions = () => {
     const today = todayIso();
     return {
       upcoming: all.filter((i) => i.statut === "programme" && i.date_debut >= today).length,
-      in_progress: all.filter(
-        (i) =>
-          i.statut === "en_cours" ||
-          (i.statut === "programme" && i.date_debut <= today && i.date_fin >= today),
-      ).length,
+      in_progress: all.filter((i) => estChantierEnCours(i, today)).length,
       done: all.filter((i) => i.statut === "termine").length,
       all: all.length,
     };
   }, [interventionsQuery.data]);
+
+  // Lot 1B — clôturer un chantier depuis la liste (date de fin atteinte).
+  const terminerChantier = async (it: Intervention) => {
+    setTerminant(it.id);
+    try {
+      await updateInterventionStatut(it.id, "termine");
+      toast.success("Chantier terminé", { description: "À retrouver dans « Terminées »." });
+      void queryClient.invalidateQueries({ queryKey: ["admin-interventions"] });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "mise à jour impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setTerminant(null);
+    }
+  };
 
   if (!ready || !user) return <AdminLoading />;
 
@@ -244,6 +258,34 @@ const Interventions = () => {
                         {formatHeure(it.heure_fin.slice(0, 5))}
                       </span>
                     </div>
+
+                    {estChantierATerminer(it, todayIso()) && (
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-orange-700">
+                          {it.date_fin < todayIso() ? "Date de fin dépassée" : "Se termine aujourd'hui"}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="min-h-[40px]"
+                          disabled={terminant === it.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void terminerChantier(it);
+                          }}
+                          aria-label={`Terminer le chantier de ${leadInfo?.name ?? "ce client"}`}
+                        >
+                          {terminant === it.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-4 h-4" />
+                          )}
+                          Terminer
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 </Link>
               );

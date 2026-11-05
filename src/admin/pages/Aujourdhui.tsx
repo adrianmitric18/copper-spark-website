@@ -33,7 +33,14 @@ import {
 } from "@/lib/admin/queries";
 import type { CanalEnvoi } from "@/lib/admin/envois";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
-import { type Lead, leadSourceLabel } from "@/lib/admin/types";
+import {
+  ACCUEIL_MAX_AGE_JOURS,
+  estARappeler,
+  isARelancerStatus,
+  joursDepuis,
+  type Lead,
+  leadSourceLabel,
+} from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { sendRappelJ1Emails, envoyerEmailSiPossible, type LeadInfo } from "@/lib/rdv/emailjs";
 import { type RendezVous } from "@/lib/rdv/constants";
@@ -57,17 +64,20 @@ import {
 } from "@/lib/admin/message-templates";
 import { supabase } from "@/integrations/supabase/client";
 import AdminShell from "@/admin/layout/AdminShell";
+import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
 import { toast } from "sonner";
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
-const ACTIVE_STATUSES = new Set(["nouveau", "traité", "devis envoyé"]);
+// Statuts « à relancer » et « à rappeler » : définitions uniques dans
+// @/lib/admin/types (isARelancerStatus, estARappeler). Lot 1B : « à rappeler »
+// = nouveau seulement (un lead traité est traité) et rien de plus vieux que
+// 30 jours sur l'accueil — au-delà, le lead reste dans Leads.
 
 // T7 — « Leads à rappeler » : leads en attente d'un coup de fil. On exclut
 // « devis envoyé » (suivi par le flux relances devis) et garde les statuts qui
 // veulent dire « pas encore recontacté / sans suite ».
-const CALLBACK_STATUSES = new Set(["nouveau", "traité"]);
 const CALLBACK_LIMIT = 8;
 
 const isoDateLocal = (d: Date): string =>
@@ -343,8 +353,10 @@ const Aujourdhui = () => {
   const staleLeads = useMemo(() => {
     return leads
       .filter((l) => {
-        if (!ACTIVE_STATUSES.has(l.status)) return false;
+        if (!isARelancerStatus(l.status)) return false;
         if (upcomingByLead[l.id]) return false;
+        // Plus de 30 jours sans action : sort de l'accueil (reste dans Leads).
+        if (joursDepuis(staleRefMs(l)) > ACCUEIL_MAX_AGE_JOURS) return false;
         // Ancienneté depuis la dernière action (devis_envoye_at pour un devis
         // envoyé, sinon created_at) — plus depuis la création.
         return staleAgeHours(l) >= staleThresholdHours(l);
@@ -374,9 +386,7 @@ const Aujourdhui = () => {
   const leadsARappeler = useMemo(() => {
     return leads
       .filter((l) => {
-        if (!CALLBACK_STATUSES.has(l.status)) return false;
-        if (upcomingByLead[l.id]) return false;
-        return Boolean(l.phone);
+        return estARappeler(l, Boolean(upcomingByLead[l.id]));
       })
       .sort(
         (a, b) =>
@@ -644,6 +654,7 @@ const Aujourdhui = () => {
                                   {l.commune || ""} · {l.status}
                                 </p>
                               </div>
+                              <TerminerLeadButton lead={l} label="" className="w-10 px-0" />
                               <a
                                 href={`tel:${l.phone}`}
                                 onClick={(e) => e.stopPropagation()}
@@ -736,6 +747,7 @@ const Aujourdhui = () => {
                             <CalendarPlus className="w-4 h-4" /> Caler RDV
                           </Link>
                         </Button>
+                        <TerminerLeadButton lead={l} />
                       </li>
                     );
                   })}
@@ -898,6 +910,7 @@ const Aujourdhui = () => {
                             </a>
                           </Button>
                         )}
+                        <TerminerLeadButton lead={l} />
                       </li>
                     );
                   })}
