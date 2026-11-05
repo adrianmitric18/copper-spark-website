@@ -69,6 +69,8 @@ import {
   isStatutAvecRdv,
   isTerminal,
   leadSourceLabel,
+  leadStatusColor,
+  libelleStatutLead,
 } from "@/lib/admin/types";
 import {
   smsBienRecu,
@@ -1050,57 +1052,86 @@ const LeadDetail = () => {
   return (
     <AdminShell email={user.email} mobileTitle={lead.name}>
       <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Back + Title */}
-      <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/admin">
-            <ArrowLeft className="w-4 h-4" /> Retour
+      {/* Fiche lead — ordre du lot 2.3 du brief admin : (1) identité + actions,
+          (2) rendez-vous, (3) messages, (4) le reste replié par défaut,
+          (5) « Terminer ce lead » toujours visible. Rien n'est supprimé : les
+          blocs sont seulement déplacés ou repliés. */}
+      {/* 1 — Identité : nom, téléphone, commune. */}
+      <div className="flex items-start gap-2">
+        <Button asChild variant="ghost" size="icon" className="hidden md:inline-flex shrink-0">
+          <Link to="/admin/pipeline" aria-label="Retour aux leads">
+            <ArrowLeft className="w-4 h-4" />
           </Link>
         </Button>
         <div className="min-w-0 flex-1">
           <h1 className="text-xl md:text-2xl font-display font-bold truncate">{lead.name}</h1>
-          <p className="text-xs text-muted-foreground">Reçu le {formatDate(lead.created_at)}</p>
+          <p className="text-sm text-muted-foreground">
+            <a href={`tel:${lead.phone}`} className="font-medium text-primary hover:underline">
+              {lead.phone}
+            </a>
+            {lead.commune && <> · {lead.commune}</>}
+            {mapsDirUrl && (
+              <>
+                {" · "}
+                <a href={mapsDirUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                  Itinéraire
+                </a>
+              </>
+            )}
+          </p>
         </div>
+        <Badge variant="outline" className={`shrink-0 ${leadStatusColor(lead.status)}`}>
+          {libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv))}
+        </Badge>
       </div>
 
-      {/* Phase 1.3 — barre d'actions figée : l'essentiel accessible sans scroller.
-          Reste collée sous la topbar mobile (top-14) / en haut sur desktop (top-0). */}
-      <div className="sticky top-14 md:top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-y border-border/50 flex gap-2">
-        <Button asChild size="sm" variant="copper" className="flex-1 min-h-[44px]">
+      {/* 1 (suite) — Appeler · WhatsApp · SMS (· Email si adresse). Barre figée :
+          reste collée sous la barre du haut (top-14 téléphone / top-0 bureau).
+          Le texte des messages s'adapte au contexte (avec ou sans RDV). */}
+      <div
+        className={`sticky top-14 md:top-0 z-20 -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-y border-border/50 grid gap-1.5 ${
+          hasUsableEmail(lead.email) ? "grid-cols-4" : "grid-cols-3"
+        }`}
+      >
+        <Button asChild size="sm" variant="copper" className="min-h-[44px] min-w-0 px-1 gap-1 text-xs sm:text-sm">
           <a href={`tel:${lead.phone}`} aria-label={`Appeler ${lead.name}`}>
             <Phone className="w-4 h-4" /> Appeler
           </a>
         </Button>
-        {mapsDirUrl && (
-          <Button asChild size="sm" variant="outline" className="flex-1 min-h-[44px]">
-            <a href={mapsDirUrl} target="_blank" rel="noreferrer" aria-label="Itinéraire">
-              <Navigation className="w-4 h-4" /> Itinéraire
-            </a>
-          </Button>
-        )}
-        {rdv ? (
-          <Button
-            asChild
-            size="sm"
-            className="flex-1 min-h-[44px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+        <Button
+          asChild
+          size="sm"
+          className="min-h-[44px] min-w-0 px-1 gap-1 text-xs sm:text-sm bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+        >
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => tracer("WhatsApp", "Message rapide")}
+            aria-label={`WhatsApp à ${lead.name}`}
           >
-            <a href={whatsappHref} target="_blank" rel="noreferrer" onClick={() => tracer("WhatsApp", "Message rapide")}>
-              <MessageCircle className="w-4 h-4" /> WhatsApp
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </a>
+        </Button>
+        <Button
+          asChild
+          size="sm"
+          className="min-h-[44px] min-w-0 px-1 gap-1 text-xs sm:text-sm bg-sms text-sms-foreground hover:bg-sms/90"
+        >
+          <a href={smsHref} onClick={() => tracer("SMS", "Message rapide")} aria-label={`SMS à ${lead.name}`}>
+            <Smartphone className="w-4 h-4" /> SMS
+          </a>
+        </Button>
+        {hasUsableEmail(lead.email) && (
+          <Button asChild size="sm" variant="outline" className="min-h-[44px] min-w-0 px-1 gap-1 text-xs sm:text-sm">
+            <a href={emailHref} onClick={() => tracer("Email", "Message rapide")} aria-label={`Email à ${lead.name}`}>
+              <Mail className="w-4 h-4" /> Email
             </a>
-          </Button>
-        ) : (
-          <Button
-            onClick={() => { setEditing(false); setShowForm(true); }}
-            size="sm"
-            variant="outline"
-            className="flex-1 min-h-[44px]"
-          >
-            <CalendarPlus className="w-4 h-4" /> Caler RDV
           </Button>
         )}
       </div>
 
-      {/* RDV planifié (en haut, encadré orange) */}
+      {/* 2 — Rendez-vous : créer / modifier / annuler / terminer, puis les boutons de message. */}
       {/* Lot 1B — RDV passé encore ouvert : plus aucune mention « RDV confirmé »,
           trois gestes pour le fermer. */}
       {rdv && !showForm && isRdvPasse(rdv) && (
@@ -1200,226 +1231,13 @@ const LeadDetail = () => {
         </Card>
       )}
 
-      {/* Contact */}
-      <Card className="p-4 sm:p-6 space-y-4">
-        <h2 className="font-semibold text-lg">Coordonnées</h2>
-        <div className="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><span className="text-muted-foreground">Nom :</span> {lead.name}</div>
-          {hasUsableEmail(lead.email) && (
-            <div className="break-all"><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline" onClick={() => tracer("Email", "Email libre")}>{lead.email}</a></div>
-          )}
-          <div><span className="text-muted-foreground">Téléphone :</span> <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a></div>
-          <div className="sm:col-span-2">
-            <span className="text-muted-foreground">Adresse :</span>
-            {(lead.rue || lead.commune || lead.address) ? (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ") || lead.address
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 block leading-snug text-primary hover:underline"
-              >
-                {(lead.rue || lead.commune) ? (
-                  <>
-                    <div>{[lead.rue, lead.numero].filter(Boolean).join(" ")}</div>
-                    <div>{[lead.code_postal, lead.commune].filter(Boolean).join(" ")}</div>
-                  </>
-                ) : (
-                  <span>{lead.address}</span>
-                )}
-                <span className="text-xs text-muted-foreground block mt-0.5">↗ Ouvrir dans Google Maps</span>
-              </a>
-            ) : null}
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Button asChild variant="copper" size="lg" className="flex-1 min-h-[48px]">
-            <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler ce client</a>
-          </Button>
-          {hasUsableEmail(lead.email) && (
-            <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
-              <a href={`mailto:${lead.email}`} onClick={() => tracer("Email", "Email libre")}><Mail className="w-4 h-4" /> Envoyer un email</a>
-            </Button>
-          )}
-        </div>
-      </Card>
-
-      {/* Demande (repliable, ouverte par défaut — contexte avant la visite) */}
-      <CollapsibleCard title="Détails de la demande" defaultOpen>
-        <div className="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type || "—"}</div>
-          <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
-          <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Source :</span>
-            <Badge
-              variant="secondary"
-              className={
-                lead.source === "simulateur"
-                  ? "bg-primary/15 text-primary border-primary/30"
-                  : undefined
-              }
-            >
-              {leadSourceLabel(lead.source)}
-            </Badge>
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Services demandés :</p>
-          <div className="flex flex-wrap gap-2">
-            {lead.services?.map(s => <Badge key={s} variant="secondary">{s}</Badge>)}
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Message :</p>
-          <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message || "—"}</div>
-        </div>
-      </CollapsibleCard>
-
-      {/* Réponses du simulateur de prix (leads source = simulateur) */}
-      {lead.source === "simulateur" && <SimulateurPayloadCard payload={lead.payload} />}
-
-      {/* Checklist visite */}
-      <ChecklistVisite
-        leadId={lead.id}
-        leadServices={lead.services || []}
-        rdvTypeVisite={rdv?.type_visite}
-        defaultOpen={!!rdv}
-      />
-
-      {/* Photos */}
-      {photoUrls.length > 0 && (
-        <Card className="p-6 space-y-4">
-          <h2 className="font-semibold text-lg">Photos ({photoUrls.length})</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {photoUrls.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noreferrer" className="block aspect-square overflow-hidden rounded-md border hover:opacity-80 transition">
-                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
-              </a>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Chantiers programmés (devis accepté → blocage de dates) */}
-      <Card className="p-6 space-y-4 border-primary/30">
-        <h2 className="font-semibold text-lg flex items-center gap-2">
-          <Hammer className="w-5 h-5 text-primary" />
-          Chantiers programmés
-        </h2>
-
-        {interventions.length > 0 ? (
-          <div className="space-y-3">
-            {interventions.map((it) => (
-              <InterventionCard
-                key={it.id}
-                intervention={it}
-                clientName={lead.name}
-                clientPhone={lead.phone}
-                clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
-                clientAddress={
-                  [lead.rue, lead.numero, lead.code_postal, lead.commune]
-                    .filter(Boolean)
-                    .join(" ") || lead.address
-                }
-                onEdit={() => handleEditIntervention(it)}
-                onCancel={() => handleAskCancelIntervention(it)}
-                onTransformToProject={() => handleTransformToProject(it)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Aucun chantier programmé pour ce lead. Une fois le devis accepté,
-            bloque les dates et envoie la confirmation au client.
-          </p>
-        )}
-
-        <Button
-          onClick={() => setInterventionDialogOpen(true)}
-          variant="copper"
-          size="lg"
-          className="min-h-[48px]"
-        >
-          <Hammer className="w-4 h-4" />
-          {interventions.length > 0
-            ? "Programmer un autre chantier"
-            : "Programmer le chantier"}
-        </Button>
-      </Card>
-
-      {/* Dialog de création/édition d'intervention */}
-      <InterventionDialog
-        open={interventionDialogOpen}
-        onOpenChange={(o) => {
-          setInterventionDialogOpen(o);
-          if (!o) setEditingIntervention(null);
-        }}
-        intervention={editingIntervention}
-        defaultType={guessTypeIntervention()}
-        onSubmit={handleInterventionSubmit}
-        submitting={submittingIntervention}
-      />
-
-      {/* Écran de succès post-création (mode confirmation) */}
-      {lastCreatedIntervention && (
-        <InterventionSuccessScreen
-          open={!!lastCreatedIntervention}
-          onOpenChange={(o) => {
-            if (!o) setLastCreatedIntervention(null);
-          }}
-          intervention={lastCreatedIntervention}
-          mode="confirmation"
-          clientName={lead.name}
-          clientPhone={lead.phone}
-          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
-          clientAddress={
-            [lead.rue, lead.numero, lead.code_postal, lead.commune]
-              .filter(Boolean)
-              .join(" ") || lead.address
-          }
-        />
-      )}
-
-      {/* Écran de rectification post-modification */}
-      {lastUpdatedIntervention && (
-        <InterventionSuccessScreen
-          open={!!lastUpdatedIntervention}
-          onOpenChange={(o) => {
-            if (!o) setLastUpdatedIntervention(null);
-          }}
-          intervention={lastUpdatedIntervention}
-          mode="rectification"
-          clientName={lead.name}
-          clientPhone={lead.phone}
-          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
-          clientAddress={
-            [lead.rue, lead.numero, lead.code_postal, lead.commune]
-              .filter(Boolean)
-              .join(" ") || lead.address
-          }
-        />
-      )}
-
-      {/* Dialog d'annulation d'intervention */}
-      {cancellingIntervention && (
-        <InterventionAnnulationDialog
-          open={!!cancellingIntervention}
-          onOpenChange={(o) => {
-            if (!o) setCancellingIntervention(null);
-          }}
-          intervention={cancellingIntervention}
-          clientName={lead.name}
-          clientPhone={lead.phone}
-          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
-          onConfirm={handleConfirmAnnulation}
-          submitting={submittingAnnulation}
-        />
-      )}
-
-      {/* Planifier / modifier RDV */}
+      {/* 2 (suite) — Planifier / modifier le rendez-vous */}
       {/* scroll-mt : marge sous la barre d'actions collée (top-14 mobile / top-0 desktop)
           pour que le titre ne soit pas masqué par la barre au scrollIntoView. */}
+      {/* Affichée seulement s'il y a quelque chose à y faire : un formulaire
+          ouvert, ou aucun RDV. Sinon l'encadré du RDV juste au-dessus porte déjà
+          « Modifier » / « Replanifier ». */}
+      {(showForm || !rdv) && (
       <Card ref={rdvSectionRef} className="scroll-mt-32 md:scroll-mt-20 p-6 space-y-4 border-[hsl(var(--copper))]/30">
         <h2 className="font-semibold text-lg flex items-center gap-2">
           <CalendarPlus className="w-5 h-5 text-[hsl(var(--copper))]" />
@@ -1447,36 +1265,17 @@ const LeadDetail = () => {
           </p>
         )}
       </Card>
+      )}
 
-      {/* Gestion */}
-      <Card className="p-6 space-y-4 border-primary/30">
-        <h2 className="font-semibold text-lg">Gestion du lead</h2>
-        <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Statut</label>
-          <Select value={lead.status} onValueChange={updateStatus}>
-            <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* 3 — Messages (liste FICHE_MESSAGES, inchangée) — isolé dans un ErrorBoundary : si la carte
+          plante (donnée inattendue), elle disparaît sans casser la fiche. */}
+      <ErrorBoundary label="MessagesCard">
+        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} onTrace={tracer} />
+      </ErrorBoundary>
 
-        {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
-            J+3/7/14 (carte « Relances devis » du cockpit). */}
-        <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Devis</label>
-          <div className="flex flex-wrap items-center gap-2">
-            {lead.devis_envoye_at ? (
-              <span className="text-sm">Envoyé le <strong>{formatDevisDate(lead.devis_envoye_at)}</strong></span>
-            ) : (
-              <span className="text-sm text-muted-foreground italic">Pas encore envoyé</span>
-            )}
-            <Button variant="outline" size="sm" onClick={markDevisToday} className="min-h-[40px]">
-              <FileText className="w-4 h-4" />
-              {lead.devis_envoye_at ? "Renvoyé aujourd'hui" : "Marquer envoyé aujourd'hui"}
-            </Button>
-          </div>
-        </div>
+      {/* 4 — Le reste, replié par défaut. */}
+      {/* Notes internes, avec dictée (repliées) */}
+      <CollapsibleCard title="Notes internes">
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm text-muted-foreground">Notes internes</label>
@@ -1521,13 +1320,184 @@ const LeadDetail = () => {
             </Button>
           </div>
         </div>
-      </Card>
+      </CollapsibleCard>
 
-      {/* Messages (incrément 1/3) — isolé dans un ErrorBoundary : si la carte
-          plante (donnée inattendue), elle disparaît sans casser la fiche. */}
-      <ErrorBoundary label="MessagesCard">
-        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} onTrace={tracer} />
-      </ErrorBoundary>
+      {/* Checklist visite */}
+      <ChecklistVisite
+        leadId={lead.id}
+        leadServices={lead.services || []}
+        rdvTypeVisite={rdv?.type_visite}
+        defaultOpen={false}
+      />
+
+      {/* Chantiers programmés (devis accepté → blocage de dates) */}
+      <CollapsibleCard title={`Chantiers programmés${interventions.length ? ` (${interventions.length})` : ""}`}>
+
+        {interventions.length > 0 ? (
+          <div className="space-y-3">
+            {interventions.map((it) => (
+              <InterventionCard
+                key={it.id}
+                intervention={it}
+                clientName={lead.name}
+                clientPhone={lead.phone}
+                clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
+                clientAddress={
+                  [lead.rue, lead.numero, lead.code_postal, lead.commune]
+                    .filter(Boolean)
+                    .join(" ") || lead.address
+                }
+                onEdit={() => handleEditIntervention(it)}
+                onCancel={() => handleAskCancelIntervention(it)}
+                onTransformToProject={() => handleTransformToProject(it)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Aucun chantier programmé pour ce lead. Une fois le devis accepté,
+            bloque les dates et envoie la confirmation au client.
+          </p>
+        )}
+
+        <Button
+          onClick={() => setInterventionDialogOpen(true)}
+          variant="copper"
+          size="lg"
+          className="min-h-[48px]"
+        >
+          <Hammer className="w-4 h-4" />
+          {interventions.length > 0
+            ? "Programmer un autre chantier"
+            : "Programmer le chantier"}
+        </Button>
+      </CollapsibleCard>
+
+      {/* Réponses du simulateur de prix (leads source = simulateur) */}
+      {lead.source === "simulateur" && lead.payload && (
+        <CollapsibleCard title="Détail simulateur">
+          <SimulateurPayloadCard payload={lead.payload} sansCadre />
+        </CollapsibleCard>
+      )}
+
+      {/* Coordonnées complètes (repliées) */}
+      <CollapsibleCard title="Coordonnées">
+        <p className="text-xs text-muted-foreground">Reçu le {formatDate(lead.created_at)}</p>
+        <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <div><span className="text-muted-foreground">Nom :</span> {lead.name}</div>
+          {hasUsableEmail(lead.email) && (
+            <div className="break-all"><span className="text-muted-foreground">Email :</span> <a href={`mailto:${lead.email}`} className="text-primary hover:underline" onClick={() => tracer("Email", "Email libre")}>{lead.email}</a></div>
+          )}
+          <div><span className="text-muted-foreground">Téléphone :</span> <a href={`tel:${lead.phone}`} className="text-primary hover:underline">{lead.phone}</a></div>
+          <div className="sm:col-span-2">
+            <span className="text-muted-foreground">Adresse :</span>
+            {(lead.rue || lead.commune || lead.address) ? (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  [lead.rue, lead.numero, lead.code_postal, lead.commune].filter(Boolean).join(" ") || lead.address
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 block leading-snug text-primary hover:underline"
+              >
+                {(lead.rue || lead.commune) ? (
+                  <>
+                    <div>{[lead.rue, lead.numero].filter(Boolean).join(" ")}</div>
+                    <div>{[lead.code_postal, lead.commune].filter(Boolean).join(" ")}</div>
+                  </>
+                ) : (
+                  <span>{lead.address}</span>
+                )}
+                <span className="text-xs text-muted-foreground block mt-0.5">↗ Ouvrir dans Google Maps</span>
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button asChild variant="copper" size="lg" className="flex-1 min-h-[48px]">
+            <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler ce client</a>
+          </Button>
+          {hasUsableEmail(lead.email) && (
+            <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
+              <a href={`mailto:${lead.email}`} onClick={() => tracer("Email", "Email libre")}><Mail className="w-4 h-4" /> Envoyer un email</a>
+            </Button>
+          )}
+        </div>
+      </CollapsibleCard>
+
+      {/* Détails de la demande (repliés) */}
+      <CollapsibleCard title="Détails de la demande">
+        <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type || "—"}</div>
+          <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
+          <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">Source :</span>
+            <Badge
+              variant="secondary"
+              className={
+                lead.source === "simulateur"
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : undefined
+              }
+            >
+              {leadSourceLabel(lead.source)}
+            </Badge>
+          </div>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Services demandés :</p>
+          <div className="flex flex-wrap gap-2">
+            {lead.services?.map(s => <Badge key={s} variant="secondary">{s}</Badge>)}
+          </div>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Message :</p>
+          <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message || "—"}</div>
+        </div>
+      </CollapsibleCard>
+
+      {/* Photos */}
+      {photoUrls.length > 0 && (
+        <CollapsibleCard title={`Photos (${photoUrls.length})`}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {photoUrls.map((url, i) => (
+              <a key={i} href={url} target="_blank" rel="noreferrer" className="block aspect-square overflow-hidden rounded-md border hover:opacity-80 transition">
+                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+              </a>
+            ))}
+          </div>
+        </CollapsibleCard>
+      )}
+
+      {/* Statut et devis (repliés) */}
+      <CollapsibleCard title="Statut et devis">
+        <div>
+          <label className="text-sm text-muted-foreground mb-2 block">Statut</label>
+          <Select value={lead.status} onValueChange={updateStatus}>
+            <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
+            J+3/7/14 (carte « Relances devis » du cockpit). */}
+        <div>
+          <label className="text-sm text-muted-foreground mb-2 block">Devis</label>
+          <div className="flex flex-wrap items-center gap-2">
+            {lead.devis_envoye_at ? (
+              <span className="text-sm">Envoyé le <strong>{formatDevisDate(lead.devis_envoye_at)}</strong></span>
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Pas encore envoyé</span>
+            )}
+            <Button variant="outline" size="sm" onClick={markDevisToday} className="min-h-[40px]">
+              <FileText className="w-4 h-4" />
+              {lead.devis_envoye_at ? "Renvoyé aujourd'hui" : "Marquer envoyé aujourd'hui"}
+            </Button>
+          </div>
+        </div>
+      </CollapsibleCard>
 
       {/* Actions (repliable, fermée par défaut) */}
       <CollapsibleCard title="Actions rapides">
@@ -1600,7 +1570,7 @@ const LeadDetail = () => {
         </ul>
       </CollapsibleCard>
 
-      {/* Lot 1B — Terminer ce lead : toujours visible en bas de fiche. */}
+      {/* 5 — Terminer ce lead : toujours visible en bas de fiche. */}
       <Card className="p-4 sm:p-6 space-y-3">
         {isTerminal(lead.status) ? (
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -1677,6 +1647,76 @@ const LeadDetail = () => {
           </AlertDialogContent>
         </AlertDialog>
       </CollapsibleCard>
+
+      {/* Dialogues des chantiers programmés (hors flux visuel). */}
+      {/* Dialog de création/édition d'intervention */}
+      <InterventionDialog
+        open={interventionDialogOpen}
+        onOpenChange={(o) => {
+          setInterventionDialogOpen(o);
+          if (!o) setEditingIntervention(null);
+        }}
+        intervention={editingIntervention}
+        defaultType={guessTypeIntervention()}
+        onSubmit={handleInterventionSubmit}
+        submitting={submittingIntervention}
+      />
+
+      {/* Écran de succès post-création (mode confirmation) */}
+      {lastCreatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastCreatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastCreatedIntervention(null);
+          }}
+          intervention={lastCreatedIntervention}
+          mode="confirmation"
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
+
+      {/* Écran de rectification post-modification */}
+      {lastUpdatedIntervention && (
+        <InterventionSuccessScreen
+          open={!!lastUpdatedIntervention}
+          onOpenChange={(o) => {
+            if (!o) setLastUpdatedIntervention(null);
+          }}
+          intervention={lastUpdatedIntervention}
+          mode="rectification"
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
+          clientAddress={
+            [lead.rue, lead.numero, lead.code_postal, lead.commune]
+              .filter(Boolean)
+              .join(" ") || lead.address
+          }
+        />
+      )}
+
+      {/* Dialog d'annulation d'intervention */}
+      {cancellingIntervention && (
+        <InterventionAnnulationDialog
+          open={!!cancellingIntervention}
+          onOpenChange={(o) => {
+            if (!o) setCancellingIntervention(null);
+          }}
+          intervention={cancellingIntervention}
+          clientName={lead.name}
+          clientPhone={lead.phone}
+          clientEmail={hasUsableEmail(lead.email) ? lead.email : undefined}
+          onConfirm={handleConfirmAnnulation}
+          submitting={submittingAnnulation}
+        />
+      )}
       </div>
     </AdminShell>
   );

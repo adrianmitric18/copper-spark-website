@@ -580,6 +580,17 @@ const ECRANS = [
   { nom: "leads-archiver", url: "/admin/pipeline", apres: (p) => cliquer(p, "Archiver les anciens") },
   { nom: "leads-nouveau-lead", url: "/admin/pipeline", apres: (p) => cliquer(p, "Nouveau lead") },
   { nom: "fiche-rdv-planifie", url: "/admin/lead/l-rdvconf" },
+  {
+    nom: "fiche-sections-ouvertes",
+    url: "/admin/lead/l-rdvconf",
+    // Déplie tout ce qui est replié par défaut, pour mesurer aussi ce contenu.
+    apres: async (p) => {
+      for (let i = 0; i < 4; i++) {
+        await p.evaluate(() => document.querySelectorAll("main button[aria-expanded=\"false\"]:not([aria-haspopup]):not([role=\"combobox\"])").forEach((b) => b.click()));
+        await new Promise((r) => setTimeout(r, 350));
+      }
+    },
+  },
   { nom: "fiche-rdv-passe", url: "/admin/lead/l-rdvpasse" },
   { nom: "fiche-lead-termine", url: "/admin/lead/l-sanssuite" },
   { nom: "fiche-formulaire-rdv", url: "/admin/lead/l-nouveau?rdv=1" },
