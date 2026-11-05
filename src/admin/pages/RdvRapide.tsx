@@ -37,6 +37,7 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminLoading from "@/components/admin/AdminLoading";
 import { traceEnvoi } from "@/lib/admin/queries";
 import HeureInput from "@/components/admin/HeureInput";
+import { estHeureValide } from "@/lib/admin/heure-saisie";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -81,7 +82,7 @@ const formSchema = z.object({
   heureRdv: z
     .string()
     .min(1, "Heure requise")
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure au format HH:MM (ex. 07:30)"),
+    .refine(estHeureValide, "Heure au format HH:MM (ex. 07:30)"),
   typeVisite: z.enum(TYPE_VISITES),
   dureeMinutes: z.coerce.number().int().min(15).max(480),
   delaiAppelMinutes: z

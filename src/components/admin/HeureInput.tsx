@@ -9,38 +9,51 @@ type HeureInputProps = Omit<React.ComponentProps<"input">, "type" | "inputMode" 
  * navigateur (le `type="time"` natif affiche AM/PM sur un appareil en anglais).
  *
  * Clavier numérique sur téléphone ; le « : » se place tout seul ("0730" →
- * "07:30") et la valeur est complétée à la sortie du champ ("7" → "07:00").
- * Une saisie invalide est laissée telle quelle : c'est la validation du
- * formulaire qui la signale, on n'efface rien en silence.
+ * "07:30"). La valeur est complétée ("7" → "07:00", "7:3" → "07:30") à la
+ * sortie du champ ET sur Entrée, pour qu'un formulaire validé au clavier ne
+ * reçoive jamais une saisie à moitié tapée. Une saisie invalide est laissée
+ * telle quelle : c'est la validation du formulaire qui la signale, on
+ * n'efface rien en silence.
  *
  * Fonctionne en contrôlé (value / onChange) comme avec `form.register(...)`
- * de react-hook-form : la valeur est réécrite dans l'événement avant d'être
- * transmise.
+ * de react-hook-form.
  */
 const HeureInput = React.forwardRef<HTMLInputElement, HeureInputProps>(
-  ({ onChange, onBlur, placeholder = "HH:MM", ...props }, ref) => (
-    <Input
-      ref={ref}
-      type="text"
-      inputMode="numeric"
-      autoComplete="off"
-      maxLength={5}
-      placeholder={placeholder}
-      {...props}
-      onChange={(e) => {
-        e.target.value = formaterSaisieHeure(e.target.value);
-        onChange?.(e);
-      }}
-      onBlur={(e) => {
-        const normalisee = normaliserSaisieHeure(e.target.value);
-        if (normalisee && normalisee !== e.target.value) {
-          e.target.value = normalisee;
-          onChange?.(e as unknown as React.ChangeEvent<HTMLInputElement>);
-        }
-        onBlur?.(e);
-      }}
-    />
-  ),
+  ({ onChange, onBlur, onKeyDown, placeholder = "HH:MM", ...props }, ref) => {
+    // Complète la valeur et la transmet comme un événement « change » : relayé
+    // tel quel, un événement blur ou keydown ne ferait pas revalider le champ
+    // par react-hook-form (l'erreur resterait sous une valeur devenue valide).
+    const completer = (cible: HTMLInputElement) => {
+      const normalisee = normaliserSaisieHeure(cible.value);
+      if (!normalisee || normalisee === cible.value) return;
+      cible.value = normalisee;
+      onChange?.({ type: "change", target: cible, currentTarget: cible } as unknown as React.ChangeEvent<HTMLInputElement>);
+    };
+
+    return (
+      <Input
+        ref={ref}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={5}
+        placeholder={placeholder}
+        {...props}
+        onChange={(e) => {
+          e.target.value = formaterSaisieHeure(e.target.value);
+          onChange?.(e);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") completer(e.currentTarget);
+          onKeyDown?.(e);
+        }}
+        onBlur={(e) => {
+          completer(e.currentTarget);
+          onBlur?.(e);
+        }}
+      />
+    );
+  },
 );
 HeureInput.displayName = "HeureInput";
 

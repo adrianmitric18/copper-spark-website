@@ -68,11 +68,16 @@ export const useDarkMode = () => {
       montages -= 1;
       // Différé : entre deux écrans admin (changement de route, chargement
       // d'un morceau de code) on ne veut pas d'éclair blanc.
+      const retirer = () => document.documentElement.classList.remove("dark", "admin");
       window.setTimeout(() => {
-        if (montages === 0 && !window.location.pathname.startsWith("/admin")) {
-          document.documentElement.classList.remove("dark", "admin");
-        }
+        if (montages === 0 && !window.location.pathname.startsWith("/admin")) retirer();
       }, 0);
+      // Filet : une page non-admin servie sous une URL /admin (adresse
+      // inconnue → page introuvable du site public) ne monte aucun écran
+      // admin. Passé le temps de charger un écran, on rend la main au site.
+      window.setTimeout(() => {
+        if (montages === 0) retirer();
+      }, 4000);
     };
   }, []);
 

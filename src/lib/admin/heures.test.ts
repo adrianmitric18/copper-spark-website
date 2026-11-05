@@ -133,6 +133,19 @@ describe("validerSaisie", () => {
     if (moitie.ok === false) expect(moitie.erreur).toMatch(/début ET la fin/);
   });
 
+  it("complète une heure tapée vite et signale une heure impossible (jamais ignorée)", () => {
+    const vite = validerSaisie(saisie({ debut: "730", fin: "16" }));
+    expect(vite.ok && vite.valeur.debut).toBe("07:30");
+    expect(vite.ok && vite.valeur.fin).toBe("16:00");
+    const faux = validerSaisie(saisie({ debut: "07:30", fin: "9:9x" }));
+    expect(faux.ok === false && faux.erreur).toMatch(/fin invalide/);
+    // déplacement : une fin seule mal tapée ne doit pas être enregistrée « sans horaire »
+    const dep = validerSaisie(saisie({ type: "deplacement", debut: "", fin: "99" }));
+    expect(dep.ok).toBe(false);
+    const depFin = validerSaisie(saisie({ type: "deplacement", debut: "", fin: "17" }));
+    expect(depFin.ok === false && depFin.erreur).toMatch(/début ET la fin/);
+  });
+
   it("refuse chantier vide, fin avant début, pause trop longue, km négatif", () => {
     expect(validerSaisie(saisie({ chantier: "  " })).ok).toBe(false);
     const inv = validerSaisie(saisie({ debut: "08:00", fin: "08:00" }));

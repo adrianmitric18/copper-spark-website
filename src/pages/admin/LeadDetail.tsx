@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Navigation, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -496,10 +496,9 @@ const LeadDetail = () => {
     if (lead) document.title = `${lead.name} – Admin`;
   }, [lead]);
 
-  // Phase 1.3 — la barre d'actions « Caler RDV » est collée en haut, mais le
-  // formulaire est rendu tout en bas de la page. Sans scroll, le clic ouvre le
-  // formulaire hors écran et donne l'impression que rien ne se passe. On amène
-  // donc la carte du formulaire dans le viewport dès qu'on l'affiche.
+  // Le formulaire de RDV s'ouvre depuis l'encadré du RDV (« Modifier »,
+  // « Replanifier ») ou par un lien « ?rdv=1 » : on amène sa carte dans le
+  // viewport dès qu'on l'affiche, sinon on peut croire que rien ne s'est passé.
   const rdvSectionRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (showForm) {
@@ -676,6 +675,13 @@ const LeadDetail = () => {
     }
     const diff = daysUntilRdv(rdv.date_rdv);
     const heure = rdv.heure_rdv.slice(0, 5).replace(":", "h");
+    if (diff < 0) {
+      // RDV passé encore ouvert : on ne « confirme » pas une date révolue.
+      return {
+        subject: "Suite à notre rendez-vous",
+        body: `Bonjour ${firstName}, Adrian du Cuivre Électrique. Je reviens vers vous suite à notre rendez-vous du ${formatRdvDateShort(rdv.date_rdv)}.`,
+      };
+    }
     if (diff === 0) {
       return {
         subject: "Confirmation de ma visite aujourd'hui",
@@ -1034,6 +1040,9 @@ const LeadDetail = () => {
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
 
   const info = leadInfo()!;
+  // Libellé du badge d'en-tête : « RDV passé » (orange, comme partout) quand le
+  // lead est en « RDV confirmé » / rdv_pris sans RDV à venir.
+  const libelleEntete = libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv));
   const quickMessage = communicationMessage();
   const encodedBody = encodeURIComponent(quickMessage.body);
   const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
@@ -1080,8 +1089,11 @@ const LeadDetail = () => {
             )}
           </p>
         </div>
-        <Badge variant="outline" className={`shrink-0 ${leadStatusColor(lead.status)}`}>
-          {libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv))}
+        <Badge
+          variant="outline"
+          className={`shrink-0 ${libelleEntete === "RDV passé" ? TON.orange : leadStatusColor(lead.status)}`}
+        >
+          {libelleEntete}
         </Badge>
       </div>
 
@@ -1251,7 +1263,7 @@ const LeadDetail = () => {
             onSubmit={handleRdvSubmit}
             onCancel={() => { setShowForm(false); setEditing(false); }}
           />
-        ) : !rdv ? (
+        ) : (
           <Button
             onClick={() => { setEditing(false); setShowForm(true); }}
             variant="copper"
@@ -1259,10 +1271,6 @@ const LeadDetail = () => {
           >
             <CalendarPlus className="w-4 h-4" /> Planifier un nouveau RDV
           </Button>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Un RDV est déjà planifié (voir encadré en haut). Cliquez sur "Modifier" pour le changer.
-          </p>
         )}
       </Card>
       )}

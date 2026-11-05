@@ -44,6 +44,7 @@ import {
 } from "@/lib/admin/queries";
 import type { CanalEnvoi } from "@/lib/admin/envois";
 import { estARappeler, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
+import { addDays } from "@/lib/admin/heures";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { envoyerEmailSiPossible, sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
 import type { RendezVous } from "@/lib/rdv/constants";
@@ -200,7 +201,9 @@ const Aujourdhui = () => {
   const loading = leadsQuery.isLoading || rdvsQuery.isLoading;
 
   const aujourdhui = todayIsoLocal();
-  const demain = todayIsoLocal(new Date(Date.now() + JOUR_MS));
+  // Par calendrier (pas « maintenant + 24 h » : le jour de 25 h du changement
+  // d'heure donnerait encore aujourd'hui entre minuit et 1 h).
+  const demain = addDays(aujourdhui, 1);
 
   // Bloc 1 — RDV du jour (ni annulés ni terminés).
   const rdvDuJour = useMemo(
@@ -240,7 +243,14 @@ const Aujourdhui = () => {
       relances.push({ genre: "relance", lead: l, palier, detail: `Devis envoyé il y a ${jours} jours · relance ${palier}` });
     }
     relances.sort((a, b) => (a.lead.devis_envoye_at ?? "").localeCompare(b.lead.devis_envoye_at ?? ""));
-    return [...rappels, ...relances];
+    // Alternés (un rappel, une relance…) : avec 5 lignes au maximum, des leads
+    // nouveaux en nombre ne doivent pas masquer les devis à relancer.
+    const tous: AFaire[] = [];
+    for (let i = 0; i < Math.max(rappels.length, relances.length); i++) {
+      if (rappels[i]) tous.push(rappels[i]);
+      if (relances[i]) tous.push(relances[i]);
+    }
+    return tous;
   }, [leads, upcomingByLead]);
   const aFaire = aFaireTous.slice(0, A_FAIRE_MAX);
 
