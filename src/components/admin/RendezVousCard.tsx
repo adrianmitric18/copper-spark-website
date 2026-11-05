@@ -86,8 +86,8 @@ const RendezVousCard = ({ rdv, lead, cancelling, onEdit, onCancel, onTrace }: Pr
           <Calendar className="w-5 h-5 text-[hsl(var(--copper))]" />
           <h2 className="font-semibold text-lg">Rendez-vous planifié</h2>
         </div>
-        <Badge variant="outline" className="capitalize border-[hsl(var(--copper))] text-[hsl(var(--copper))]">
-          {rdv.statut === "rappel_envoye" ? "Rappel envoyé" : rdv.statut}
+        <Badge variant="outline" className="border-[hsl(var(--copper))] text-[hsl(var(--copper))]">
+          {rdv.statut === "rappel_envoye" ? "Rappel envoyé" : rdv.statut === "confirme" ? "Confirmé" : rdv.statut}
         </Badge>
       </div>
 

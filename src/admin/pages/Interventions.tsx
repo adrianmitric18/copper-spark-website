@@ -188,7 +188,7 @@ const Interventions = () => {
                   <span
                     className={`text-xs px-1.5 py-0.5 rounded-full ${
                       active
-                        ? "bg-primary-foreground/20"
+                        ? "bg-black/15"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -261,7 +261,7 @@ const Interventions = () => {
 
                     {estChantierATerminer(it, todayIso()) && (
                       <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-orange-700">
+                        <span className="text-xs font-medium text-orange-800 dark:text-orange-300">
                           {it.date_fin < todayIso() ? "Date de fin dépassée" : "Se termine aujourd'hui"}
                         </span>
                         <Button

@@ -14,6 +14,7 @@
  */
 
 import type { Tables } from "@/integrations/supabase/types";
+import { normaliserSaisieHeure } from "@/lib/admin/heure-saisie";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -394,8 +395,14 @@ export const validerSaisie = (v: HeureFormValues): ResultatValidation => {
   if (!chantier) return { ok: false, erreur: "Indique le chantier ou le client." };
   if (chantier.length > 120) return { ok: false, erreur: "Nom de chantier trop long (120 max)." };
 
-  const debut = normaliserHeure(v.debut);
-  const fin = normaliserHeure(v.fin);
+  // Saisie libre (champ HH:MM) : "7", "730", "7:3" sont complétés ; ce qui
+  // n'est pas une heure est SIGNALÉ, jamais traité comme un champ vide.
+  const debutSaisi = v.debut.trim();
+  const finSaisie = v.fin.trim();
+  const debut = debutSaisi ? normaliserSaisieHeure(debutSaisi) || null : null;
+  const fin = finSaisie ? normaliserSaisieHeure(finSaisie) || null : null;
+  if (debutSaisi && !debut) return { ok: false, erreur: "Heure de début invalide : format HH:MM (ex. 07:30)." };
+  if (finSaisie && !fin) return { ok: false, erreur: "Heure de fin invalide : format HH:MM (ex. 16:30)." };
   if ((debut === null) !== (fin === null)) {
     return { ok: false, erreur: "Indique le début ET la fin (ou aucun des deux)." };
   }

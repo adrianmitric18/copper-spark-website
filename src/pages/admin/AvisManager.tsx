@@ -25,6 +25,7 @@ import type { Testimonial } from "@/lib/admin/types";
 import AdminShell from "@/admin/layout/AdminShell";
 import AdminLoading from "@/components/admin/AdminLoading";
 import GoogleRatingCard from "@/components/admin/GoogleRatingCard";
+import { TON } from "@/lib/admin/badges";
 
 type FormState = {
   id?: string;
@@ -238,7 +239,7 @@ const AvisManager = () => {
                     <TableCell className="text-sm">{formatDate(t.created_at)}</TableCell>
                     <TableCell>
                       {t.approved ? (
-                        <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
+                        <Badge variant="outline" className={TON.vert}>Approuvé</Badge>
                       ) : (
                         <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
                       )}
@@ -271,7 +272,7 @@ const AvisManager = () => {
                     <p className="text-xs text-muted-foreground">{formatDate(t.created_at)}</p>
                   </div>
                   {t.approved ? (
-                    <Badge variant="outline" className="bg-green-500/15 text-green-700 border-green-500/30">Approuvé</Badge>
+                    <Badge variant="outline" className={TON.vert}>Approuvé</Badge>
                   ) : (
                     <Badge variant="outline" className="bg-muted text-muted-foreground">Masqué</Badge>
                   )}

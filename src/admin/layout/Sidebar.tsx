@@ -1,51 +1,61 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import {
-  Home,
-  Kanban,
-  Calendar,
-  Star,
-  Hammer,
-  HardHat,
-  Phone,
-  Sun,
-  Moon,
-  LogOut,
-  Zap,
-  Clock,
-} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Sun, Moon, LogOut, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useDarkMode } from "@/admin/hooks/useDarkMode";
 import { cn } from "@/lib/utils";
-
-const NAV_ITEMS_PRIMARY = [
-  { to: "/admin/rdv-rapide", label: "RDV rapide", icon: Phone, end: false, highlight: true },
-  { to: "/admin", label: "Aujourd'hui", icon: Home, end: true },
-  { to: "/admin/pipeline", label: "Leads", icon: Kanban, end: false },
-  { to: "/admin/rdv", label: "Calendrier", icon: Calendar, end: false },
-  { to: "/admin/interventions", label: "Chantiers", icon: HardHat, end: false },
-  { to: "/admin/heures", label: "Heures", icon: Clock, end: false },
-];
-
-const NAV_ITEMS_SECONDARY = [
-  { to: "/admin/chantiers", label: "Réalisations", icon: Hammer, end: false },
-  { to: "/admin/avis", label: "Avis clients", icon: Star, end: false },
-];
+import { NAV_PLUS, NAV_PRINCIPAL, type NavItem } from "@/admin/layout/navigation";
 
 interface SidebarProps {
   /** Email de l'admin connecté, affiché en bas de la sidebar. */
   email: string | null | undefined;
   /** Sur mobile, callback de fermeture après navigation. */
   onNavigate?: () => void;
+  /**
+   * "complet" (bureau) : les 4 entrées principales puis le groupe « Plus ».
+   * "plus" (tiroir du téléphone) : seulement le groupe « Plus » — les 4 entrées
+   * principales sont déjà dans la barre du bas.
+   */
+  variant?: "complet" | "plus";
 }
 
-const Sidebar = ({ email, onNavigate }: SidebarProps) => {
+/**
+ * Menu latéral. Même ordre que la barre du bas (source unique : navigation.ts) :
+ * RDV rapide · Aujourd'hui · Leads · Heures, puis « Plus » = Calendrier,
+ * Chantiers, Réalisations, Avis clients, Import archives.
+ */
+const Sidebar = ({ email, onNavigate, variant = "complet" }: SidebarProps) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { isDark, toggle } = useDarkMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/admin/login");
+  };
+
+  const entree = (item: NavItem) => {
+    const Icon = item.icon;
+    const active = item.match(pathname);
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
+          active
+            ? "bg-primary/15 text-primary"
+            : item.highlight
+              ? "bg-primary/10 text-primary hover:bg-primary/15"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <Icon className="w-[18px] h-[18px] shrink-0" />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
   };
 
   return (
@@ -57,71 +67,23 @@ const Sidebar = ({ email, onNavigate }: SidebarProps) => {
             <Zap className="w-5 h-5 text-primary-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="font-display font-bold text-sm leading-tight truncate">
-              Le Cuivre
-            </p>
-            <p className="text-xs text-primary leading-tight font-semibold">
-              Back-office
-            </p>
+            <p className="font-display font-bold text-sm leading-tight truncate">Le Cuivre</p>
+            <p className="text-xs text-primary leading-tight font-semibold">Back-office</p>
           </div>
         </div>
       </div>
 
-      {/* Nav : groupe primaire (leads/RDV) + séparateur + groupe secondaire (contenu) */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAV_ITEMS_PRIMARY.map((item) => {
-          const Icon = item.icon;
-          const highlight = "highlight" in item && item.highlight;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
-                  isActive
-                    ? "bg-primary/15 text-primary"
-                    : highlight
-                      ? "bg-primary/10 text-primary hover:bg-primary/15"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )
-              }
-            >
-              <Icon className="w-4.5 h-4.5 shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </NavLink>
-          );
-        })}
-
-        <div className="my-3 border-t border-border/50" />
-        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-          Contenu
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Menu">
+        {variant === "complet" && (
+          <>
+            {NAV_PRINCIPAL.map(entree)}
+            <div className="my-3 border-t border-border/50" />
+          </>
+        )}
+        <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Plus
         </p>
-
-        {NAV_ITEMS_SECONDARY.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px]",
-                  isActive
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )
-              }
-            >
-              <Icon className="w-4.5 h-4.5 shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </NavLink>
-          );
-        })}
+        {NAV_PLUS.map(entree)}
       </nav>
 
       {/* Footer : user + actions */}

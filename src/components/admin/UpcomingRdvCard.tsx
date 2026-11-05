@@ -111,10 +111,10 @@ const UpcomingRdvCard = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-sm truncate">{r.lead_name}</p>
                     {r.date_rdv === today && (
-                      <Badge className="bg-orange-500 text-white border-orange-500 text-[10px] px-1.5 py-0">AUJOURD'HUI</Badge>
+                      <Badge className="bg-orange-700 text-white border-orange-700 text-[10px] px-1.5 py-0">AUJOURD'HUI</Badge>
                     )}
                     {r.date_rdv === tomorrow && (
-                      <Badge className="bg-blue-500 text-white border-blue-500 text-[10px] px-1.5 py-0">DEMAIN</Badge>
+                      <Badge className="bg-blue-700 text-white border-blue-700 text-[10px] px-1.5 py-0">DEMAIN</Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">

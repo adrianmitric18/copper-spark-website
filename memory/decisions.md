@@ -14,6 +14,35 @@
 
 ## Journal
 
+### 2026-11-05 — Admin simplifié : menu, accueil en 3 blocs, fiche réordonnée, contraste mesuré (lot 2)
+- **Décision :** barre du bas `RDV rapide · Aujourd'hui · Leads · Heures · Plus` ; « Plus » ouvre
+  Calendrier, Chantiers, Réalisations, Avis clients, Import archives (même ordre dans le menu
+  latéral). Accueil = Aujourd'hui / Demain / À faire, rien d'autre. Fiche lead : identité +
+  Appeler/WhatsApp/SMS/Email, rendez-vous, messages, le reste replié, « Terminer ce lead » en bas.
+  Branche `feat/admin-simple`. Aucune migration.
+- **Pourquoi :** Adrian n'utilise vraiment que les messages et le RDV rapide ; le reste
+  l'encombrait (brief admin 2026-11, lot 2).
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **Navigation décrite une seule fois** dans `src/admin/layout/navigation.ts` (barre du bas +
+    menu latéral). Le bouton flottant RDV rapide n'est plus monté (doublon).
+  - **Heures toujours en HH:MM sur 24 h** : composant `HeureInput` (jamais `type="time"`, qui
+    suit la langue du navigateur et affiche AM/PM). Dates affichées via `fr-BE`.
+  - **Couleurs de l'admin** : jetons dans `src/index.css` sous `.admin:not(.dark)` et
+    `.admin.dark`. Ces classes sont posées sur `<html>` par `useDarkMode` et n'existent jamais
+    sur le site public : ne JAMAIS corriger un contraste de l'admin en touchant `:root`.
+  - **Badges** : palette unique `src/lib/admin/badges.ts` (`TON`). Six statuts de lead = six
+    teintes (orange, violet, bleu ciel, vert, rouge, gris). Ne pas remettre de
+    `text-xxx-600` sur un fond teinté dans une page.
+  - **Règle de contraste : 4,5:1 pour tout texte, vérifié par calcul.** Outil :
+    `npx vite --port 5199 --strictPort` puis `node scripts/admin-audit.mjs <dossier>`. Il ouvre
+    27 écrans × 2 thèmes dans Chromium avec des données factices (aucune requête vers la
+    prod), mesure chaque texte, détecte les débordements et prend les captures. À relancer
+    après tout changement visuel de l'admin. Non couvert : survol, toasts, listes ouvertes.
+  - L'ancien accueil est conservé, non routé, dans `AujourdhuiCockpit.tsx` (rail 4). À supprimer
+    au lot 3 avec l'accord d'Adrian.
+  - En mode clair, l'orange de l'admin est plus foncé que celui du site (5,4:1 au lieu de
+    3,3:1) ; en sombre, les boutons d'action portent un texte presque noir.
+
 ### 2026-11-05 — Admin : « Terminer » partout, statut « sans suite », RDV passé (lot 1B)
 - **Décision :** tout lead peut être fermé en un geste depuis les listes et la fiche :
   Converti / Sans suite / Perdu. Nouveau statut `sans suite` (pas de contrainte en base, donc

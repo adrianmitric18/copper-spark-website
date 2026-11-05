@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Eye, Calendar } from "lucide-react";
+import { Eye, Calendar, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchAllRdvs } from "@/lib/admin/queries";
-import { isRdvPasse, isTerminal } from "@/lib/admin/types";
+import { fetchAllRdvs, terminerRdv, updateLeadStatus, type RdvWithLead } from "@/lib/admin/queries";
+import { STATUT_REACTIVATION, isRdvPasse, isStatutAvecRdv, isTerminal } from "@/lib/admin/types";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
+import { TON } from "@/lib/admin/badges";
 import AdminShell from "@/admin/layout/AdminShell";
 
 type FilterKey = "a_venir" | "aujourdhui" | "semaine" | "mois" | "passes" | "annules";
@@ -44,23 +45,51 @@ const todayStr = () => {
 // unique : isRdvPasse dans @/lib/admin/types).
 const statutBadge = (s: string, passe = false) => {
   if (passe) {
-    return <Badge variant="outline" className="bg-orange-500/15 text-orange-700 border-orange-500/30">RDV passé</Badge>;
+    return <Badge variant="outline" className={TON.orange}>RDV passé</Badge>;
   }
   switch (s) {
     case "annule":
-      return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Annulé</Badge>;
+      return <Badge variant="outline" className={TON.rouge}>Annulé</Badge>;
     case "termine":
-      return <Badge variant="outline" className="bg-muted text-muted-foreground">Terminé</Badge>;
+      return <Badge variant="outline" className={TON.gris}>Terminé</Badge>;
     case "rappel_envoye":
-      return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">Rappel envoyé</Badge>;
+      return <Badge variant="outline" className={TON.bleu}>Rappel envoyé</Badge>;
     default:
-      return <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/30">Confirmé</Badge>;
+      return <Badge variant="outline" className={TON.vert}>Confirmé</Badge>;
   }
 };
 
 const AdminRdv = () => {
   const { user, ready } = useAdminGuard();
   const [filter, setFilter] = useState<FilterKey>("a_venir");
+  const queryClient = useQueryClient();
+  const [terminant, setTerminant] = useState<string | null>(null);
+
+  // Lot 2.5 — clôturer un RDV passé depuis le calendrier. Même règle que sur la
+  // fiche : le RDV passe en « terminé » et le lead quitte « RDV confirmé » /
+  // rdv_pris pour « traité » (il reste ouvert pour le devis).
+  const terminerRdvPasse = async (r: RdvWithLead) => {
+    setTerminant(r.id);
+    try {
+      await terminerRdv(r.id);
+      if (isStatutAvecRdv(r.lead_status)) {
+        try {
+          await updateLeadStatus(r.lead_id, STATUT_REACTIVATION);
+        } catch (stErr: unknown) {
+          const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
+          toast.warning("RDV terminé, mais le statut du lead n'a pas changé", { description: m });
+        }
+      }
+      toast.success(`RDV terminé — ${r.lead_name}`);
+      void queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-leads-overview"] });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "clôture impossible";
+      toast.error("Erreur : " + msg);
+    } finally {
+      setTerminant(null);
+    }
+  };
 
   useEffect(() => {
     document.title = "Tous les RDV – Admin";
@@ -189,6 +218,21 @@ const AdminRdv = () => {
                     <TableCell>{statutBadge(r.statut, isRdvPasse(r))}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {isRdvPasse(r) && (
+                          <Button
+                            size="sm"
+                            variant="copper"
+                            disabled={terminant === r.id}
+                            onClick={() => terminerRdvPasse(r)}
+                          >
+                            {terminant === r.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="w-4 h-4" />
+                            )}
+                            Terminer le RDV
+                          </Button>
+                        )}
                         {!isTerminal(r.lead_status) && (
                           <TerminerLeadButton
                             lead={{ id: r.lead_id, name: r.lead_name, status: r.lead_status }}
@@ -225,7 +269,22 @@ const AdminRdv = () => {
                     {statutBadge(r.statut, isRdvPasse(r))}
                   </div>
                 </Link>
-                <div className="flex gap-2 pt-2">
+                {isRdvPasse(r) && (
+                  <Button
+                    variant="copper"
+                    className="w-full min-h-[44px]"
+                    disabled={terminant === r.id}
+                    onClick={() => terminerRdvPasse(r)}
+                  >
+                    {terminant === r.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    Terminer le RDV
+                  </Button>
+                )}
+                <div className="flex flex-wrap gap-2 pt-2">
                   {r.lead_phone && (
                     <Button asChild size="default" variant="outline" className="flex-1 min-h-[44px]">
                       <a href={`tel:${r.lead_phone}`}>Appeler</a>
@@ -237,7 +296,8 @@ const AdminRdv = () => {
                   {!isTerminal(r.lead_status) && (
                     <TerminerLeadButton
                       lead={{ id: r.lead_id, name: r.lead_name, status: r.lead_status }}
-                      className="min-h-[44px]"
+                      label="Terminer le lead"
+                      className="min-h-[44px] w-full"
                     />
                   )}
                 </div>

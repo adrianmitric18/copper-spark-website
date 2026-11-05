@@ -36,6 +36,8 @@ import {
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminLoading from "@/components/admin/AdminLoading";
 import { traceEnvoi } from "@/lib/admin/queries";
+import HeureInput from "@/components/admin/HeureInput";
+import { estHeureValide } from "@/lib/admin/heure-saisie";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -77,7 +79,10 @@ const formSchema = z.object({
     .optional()
     .or(z.literal("")),
   dateRdv: z.string().min(1, "Date requise"),
-  heureRdv: z.string().min(1, "Heure requise"),
+  heureRdv: z
+    .string()
+    .min(1, "Heure requise")
+    .refine(estHeureValide, "Heure au format HH:MM (ex. 07:30)"),
   typeVisite: z.enum(TYPE_VISITES),
   dureeMinutes: z.coerce.number().int().min(15).max(480),
   delaiAppelMinutes: z
@@ -229,7 +234,7 @@ const RdvRapide = () => {
         },
       });
       toast.success("RDV créé", {
-        description: `${vars.name} • ${vars.dateRdv} à ${vars.heureRdv}`,
+        description: `${vars.name} • ${new Date(`${vars.dateRdv}T12:00:00`).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" })} à ${vars.heureRdv}`,
       });
     },
     onError: (e: Error) => {
@@ -398,7 +403,7 @@ const RdvRapide = () => {
           {/* T4 — bandeau anti-doublon : informe sans bloquer (nouveau client possible). */}
           {duplicates.length > 0 && (
             <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm space-y-2">
-              <p className="font-medium text-amber-700">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
                 ⚠️ Ce numéro est déjà enregistré
               </p>
               <ul className="space-y-1.5">
@@ -454,9 +459,7 @@ const RdvRapide = () => {
               label="Heure *"
               error={form.formState.errors.heureRdv?.message}
             >
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureRdv")}
                 className="h-12 text-base"
               />

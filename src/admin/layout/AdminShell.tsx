@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import Sidebar from "@/admin/layout/Sidebar";
 import BottomTabBar from "@/admin/layout/BottomTabBar";
 import CommandPalette from "@/admin/components/CommandPalette";
-import RdvRapideFab from "@/admin/components/RdvRapideFab";
+// Lot 2.1 — bouton flottant retiré : « RDV rapide » est désormais la 1re entrée
+// de la barre du bas (doublon). Composant conservé, non monté (rail 4).
+// import RdvRapideFab from "@/admin/components/RdvRapideFab";
+import { useDarkMode } from "@/admin/hooks/useDarkMode";
 
 interface AdminShellProps {
   email?: string | null;
@@ -27,6 +30,7 @@ const ROOT_ADMIN_ROUTES = new Set<string>([
   "/admin/interventions",
   "/admin/heures",
   "/admin/chantiers",
+  "/admin/chantiers/import-archives",
   "/admin/avis",
 ]);
 
@@ -40,6 +44,9 @@ const ROOT_ADMIN_ROUTES = new Set<string>([
  */
 const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Applique le thème (sombre par défaut) à tout écran admin, même avant que
+  // le menu ne soit monté.
+  useDarkMode();
   const location = useLocation();
   const navigate = useNavigate();
   const isRootRoute = ROOT_ADMIN_ROUTES.has(location.pathname);
@@ -64,7 +71,9 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed left-0 top-0 bottom-0 z-50 md:hidden">
-            <Sidebar email={email} onNavigate={() => setMobileOpen(false)} />
+            {/* Sur téléphone, les 4 entrées principales sont dans la barre du
+                bas : le tiroir ne montre que « Plus ». */}
+            <Sidebar email={email} onNavigate={() => setMobileOpen(false)} variant="plus" />
           </div>
         </>
       )}
@@ -128,8 +137,8 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
         </main>
       </div>
 
-      {/* FAB mobile-only : créer un RDV rapide depuis n'importe où */}
-      <RdvRapideFab />
+      {/* Lot 2.1 — FAB « RDV rapide » retiré (doublon de la barre du bas).
+      <RdvRapideFab /> */}
 
       {/* Barre d'onglets mobile-only : navigation pouce. « Plus » rouvre le
           drawer Sidebar existant (rien n'est supprimé, rail 4). */}

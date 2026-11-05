@@ -247,7 +247,7 @@ const ImportArchives = () => {
 
         <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-4 text-sm">
           <p className="font-semibold flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-300" />
             Avant de cliquer
           </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-0.5 ml-1">
@@ -285,7 +285,7 @@ const ImportArchives = () => {
           </Button>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-green-600 font-semibold">
+            <div className="flex items-center gap-2 text-green-800 dark:text-green-300 font-semibold">
               <CheckCircle2 className="w-5 h-5" />
               Import terminé. Tu peux retourner sur les chantiers.
             </div>

@@ -12,6 +12,7 @@
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/chantiers/slug";
+import { TON } from "@/lib/admin/badges";
 
 /**
  * Liste PROPRE aux interventions/chantiers — découplée des types de visite RDV.
@@ -49,11 +50,11 @@ export const STATUT_LABELS: Record<StatutIntervention, string> = {
 };
 
 export const STATUT_BADGE_CLASSES: Record<StatutIntervention, string> = {
-  programme: "bg-blue-500/15 text-blue-600 border-blue-500/30",
-  en_cours: "bg-orange-500/15 text-orange-600 border-orange-500/30",
-  termine: "bg-green-500/15 text-green-700 border-green-500/30",
-  reporte: "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
-  annule: "bg-destructive/10 text-destructive border-destructive/30",
+  programme: TON.bleu,
+  en_cours: TON.orange,
+  termine: TON.vert,
+  reporte: TON.ambre,
+  annule: TON.rouge,
 };
 
 // ---------------------------------------------------------------------------

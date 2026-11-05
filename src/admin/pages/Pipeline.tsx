@@ -26,11 +26,13 @@ import {
 } from "@/lib/admin/types";
 import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
+import { formaterDateCourte } from "@/lib/admin/heures";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
 import ArchiverAnciensDialog from "@/components/admin/ArchiverAnciensDialog";
 import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
+import { TON } from "@/lib/admin/badges";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -107,7 +109,7 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
             {libelle === "RDV passé" && (
               <Badge
                 variant="outline"
-                className="mt-1 text-[10px] px-1.5 py-0 bg-orange-500/15 text-orange-700 border-orange-500/30"
+                className={`mt-1 text-[10px] px-1.5 py-0 ${TON.orange}`}
               >
                 RDV passé
               </Badge>
@@ -119,9 +121,7 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
           <Badge
             variant="outline"
             className={`text-[10px] px-1.5 py-0 shrink-0 ${
-              isOld
-                ? "bg-orange-500/15 text-orange-700 border-orange-500/30"
-                : "bg-muted text-muted-foreground"
+              isOld ? TON.orange : "bg-muted text-muted-foreground"
             }`}
           >
             {formatAge(hours)}
@@ -148,7 +148,7 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
           {upcoming && (
             <span className="flex items-center gap-1 text-primary font-medium">
               <Calendar className="w-3 h-3" />
-              {upcoming.date_rdv} · {formatHeure(upcoming.heure_rdv)}
+              {formaterDateCourte(upcoming.date_rdv)} · {formatHeure(upcoming.heure_rdv)}
             </span>
           )}
         </div>

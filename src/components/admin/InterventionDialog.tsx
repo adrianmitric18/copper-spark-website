@@ -37,6 +37,7 @@ import {
   type Intervention,
   type TypeIntervention,
 } from "@/lib/admin/interventions";
+import HeureInput from "@/components/admin/HeureInput";
 
 interface InterventionDialogProps {
   open: boolean;
@@ -214,8 +215,8 @@ const InterventionDialog = ({
           {/* Warning week-end */}
           {showWeekendWarning && (
             <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
-              <AlertTriangle className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
-              <p className="text-xs text-yellow-800">
+              <AlertTriangle className="w-4 h-4 text-yellow-800 dark:text-yellow-300 shrink-0 mt-0.5" />
+              <p className="text-xs text-yellow-900 dark:text-yellow-200">
                 Le chantier inclut un samedi ou un dimanche. Vérifie que c'est
                 voulu — sinon, ajuste les dates.
               </p>
@@ -226,9 +227,7 @@ const InterventionDialog = ({
           <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Heure début *</Label>
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureDebut", {
                   onChange: () => setAutoHoraires(false),
                 })}
@@ -242,9 +241,7 @@ const InterventionDialog = ({
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Heure fin *</Label>
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureFin", {
                   onChange: () => setAutoHoraires(false),
                 })}

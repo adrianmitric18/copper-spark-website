@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, AlertTriangle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
+import { TON } from "@/lib/admin/badges";
 
 /**
  * Affiche les réponses d'un lead issu du simulateur de prix.
@@ -61,7 +62,14 @@ const Ligne = ({ label, valeur }: { label: string; valeur: string }) => (
   </div>
 );
 
-const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
+const SimulateurPayloadCard = ({
+  payload,
+  sansCadre = false,
+}: {
+  payload: Json | null;
+  /** Dans une carte repliable (fiche lead) : pas de second cadre autour. */
+  sansCadre?: boolean;
+}) => {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
   const p = payload as Record<string, Json | undefined>;
 
@@ -83,13 +91,15 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
   const preference = texte(p.preference_rappel_label);
   const veutEtreRappele = p.preference_rappel === "rappel";
 
+  const Cadre = sansCadre ? "div" : Card;
+
   return (
-    <Card className="p-6 space-y-4 border-primary/40">
+    <Cadre className={sansCadre ? "space-y-4" : "p-6 space-y-4 border-primary/40"}>
       <div className="flex flex-wrap items-center gap-2">
         <Calculator className="w-5 h-5 text-primary" />
         <h2 className="font-semibold text-lg">Réponses du simulateur</h2>
         {complexe && (
-          <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30">
+          <Badge className={TON.orange}>
             Cas complexe — visite requise
           </Badge>
         )}
@@ -100,7 +110,7 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
             variant="outline"
             className={
               veutEtreRappele
-                ? "border-emerald-500/40 text-emerald-600"
+                ? "border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
                 : "border-border text-muted-foreground"
             }
           >
@@ -215,7 +225,7 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
           {texte(p.envoye_le) && ` · ${new Date(texte(p.envoye_le)!).toLocaleString("fr-BE")}`}
         </p>
       )}
-    </Card>
+    </Cadre>
   );
 };
 
