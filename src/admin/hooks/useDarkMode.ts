@@ -1,42 +1,77 @@
-// Dark mode toggle isolé à /admin (le site public reste en clair).
-// Persisté dans localStorage ; default = dark (Adrian travaille tard).
+// Thème de l'admin (le site public reste toujours clair).
+// Persisté dans localStorage ; défaut = sombre (Adrian travaille tard).
+//
+// Un seul état partagé par tout l'admin (store module + useSyncExternalStore).
+// Avant, chaque composant qui appelait le hook avait son propre état et retirait
+// la classe `dark` en se démontant : fermer le tiroir « Plus » repassait la page
+// en clair, et l'écran de connexion n'était jamais sombre.
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "ce_admin_theme";
 
 type Theme = "dark" | "light";
 
-const readInitial = (): Theme => {
+const lireStockage = (): Theme => {
   if (typeof window === "undefined") return "dark";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  return "dark"; // default sombre, parti pris pour /admin
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // stockage indisponible (navigation privée) → défaut
+  }
+  return "dark"; // défaut sombre, parti pris pour /admin
 };
 
-const applyTheme = (theme: Theme) => {
-  const root = document.documentElement;
-  if (theme === "dark") root.classList.add("dark");
-  else root.classList.remove("dark");
+let theme: Theme = lireStockage();
+let montages = 0;
+const abonnes = new Set<() => void>();
+
+const appliquer = () => {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.toggle("dark", theme === "dark");
 };
 
-export const useDarkMode = () => {
-  const [theme, setTheme] = useState<Theme>(readInitial);
+const sAbonner = (cb: () => void) => {
+  abonnes.add(cb);
+  return () => abonnes.delete(cb);
+};
 
-  useEffect(() => {
-    applyTheme(theme);
+const lire = (): Theme => theme;
+
+const basculer = () => {
+  theme = theme === "dark" ? "light" : "dark";
+  try {
     localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+  } catch {
+    // non bloquant
+  }
+  appliquer();
+  abonnes.forEach((cb) => cb());
+};
 
-  // Au unmount (ex: l'utilisateur sort de /admin pour aller sur le site
-  // public), on retire le mode sombre — le public reste toujours clair.
-  useEffect(() => {
+/**
+ * À appeler dans tout écran de l'admin (AdminShell, connexion, chargement).
+ * Applique le thème tant qu'au moins un écran admin est monté ; le retire
+ * seulement quand on quitte réellement /admin pour le site public.
+ */
+export const useDarkMode = () => {
+  const courant = useSyncExternalStore(sAbonner, lire, lire);
+
+  useLayoutEffect(() => {
+    montages += 1;
+    appliquer();
     return () => {
-      document.documentElement.classList.remove("dark");
+      montages -= 1;
+      // Différé : entre deux écrans admin (changement de route, chargement
+      // d'un morceau de code) on ne veut pas d'éclair blanc.
+      window.setTimeout(() => {
+        if (montages === 0 && !window.location.pathname.startsWith("/admin")) {
+          document.documentElement.classList.remove("dark");
+        }
+      }, 0);
     };
   }, []);
 
-  const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
-
-  return { theme, toggle, isDark: theme === "dark" };
+  return { theme: courant, toggle: basculer, isDark: courant === "dark" };
 };

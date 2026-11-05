@@ -7,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Logo from "@/components/Logo";
 import { Loader2, Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { useDarkMode } from "@/admin/hooks/useDarkMode";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  useDarkMode();
 
   useEffect(() => { document.title = "Connexion Admin – Le Cuivre Électrique"; }, []);
 

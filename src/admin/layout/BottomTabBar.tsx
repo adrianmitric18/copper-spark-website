@@ -1,47 +1,32 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, HardHat, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NAV_PRINCIPAL, estDansPlus } from "@/admin/layout/navigation";
 
 /**
  * Barre d'onglets en bas, MOBILE uniquement (md:hidden).
  *
- * Pensée pour le pouce d'un électricien pressé : 4 cibles larges (≥ 56 px),
- * atteignables d'une main, plutôt que le hamburger en haut à gauche (le coin
- * le plus pénible à toucher sur un grand téléphone).
+ * Pensée pour le pouce d'un électricien pressé : 5 cibles larges (≥ 56 px),
+ * atteignables d'une main.
  *
- * 3 onglets = navigation directe (Aujourd'hui / Leads / Chantiers).
- * Le 4e « Plus » rouvre le drawer latéral existant (Sidebar) pour accéder au
- * reste (Calendrier, Réalisations, Avis, thème, déconnexion) — rien n'est
- * supprimé, on réutilise la Sidebar (rail 4).
- *
- * Le FAB « RDV rapide » (RdvRapideFab) reste au-dessus de cette barre : c'est
- * l'action n°1 quand le téléphone sonne.
+ * Lot 2.1 : RDV rapide · Aujourd'hui · Leads · Heures · Plus (source unique :
+ * navigation.ts). « RDV rapide » est dans la barre — c'est l'action n° 1 quand
+ * le téléphone sonne — et remplace le bouton flottant, qui faisait doublon.
+ * « Plus » ouvre le tiroir latéral : Calendrier, Chantiers, Réalisations, Avis
+ * clients, Import archives, thème, déconnexion. Rien n'est supprimé.
  */
 
-interface TabDef {
-  to: string;
-  label: string;
-  icon: typeof Home;
-  /** Correspondance stricte (ex. /admin) vs préfixe (ex. /admin/pipeline...). */
-  exact?: boolean;
-}
-
-const TABS: TabDef[] = [
-  { to: "/admin", label: "Aujourd'hui", icon: Home, exact: true },
-  { to: "/admin/pipeline", label: "Leads", icon: Users },
-  { to: "/admin/interventions", label: "Chantiers", icon: HardHat },
-];
-
 interface BottomTabBarProps {
-  /** Ouvre le drawer latéral (menu « Plus »). */
+  /** Ouvre le tiroir latéral (menu « Plus »). */
   onOpenMore: () => void;
 }
 
+const BASE =
+  "flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 min-h-[56px] pt-1.5 pb-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary";
+
 const BottomTabBar = ({ onOpenMore }: BottomTabBarProps) => {
   const { pathname } = useLocation();
-
-  const isActive = (tab: TabDef): boolean =>
-    tab.exact ? pathname === tab.to : pathname.startsWith(tab.to);
+  const plusActif = estDansPlus(pathname);
 
   return (
     <nav
@@ -53,23 +38,32 @@ const BottomTabBar = ({ onOpenMore }: BottomTabBarProps) => {
         "flex items-stretch",
       )}
     >
-      {TABS.map((tab) => {
+      {NAV_PRINCIPAL.map((tab) => {
         const Icon = tab.icon;
-        const active = isActive(tab);
+        const active = tab.match(pathname);
         return (
           <Link
             key={tab.to}
             to={tab.to}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-0.5",
-              "min-h-[56px] pt-1.5 pb-1 text-[11px] font-medium transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-              active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+              BASE,
+              active
+                ? "text-primary"
+                : tab.highlight
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 2} />
-            <span className="truncate max-w-full">{tab.label}</span>
+            {tab.highlight ? (
+              // Action n° 1 : pastille pleine, repérable sans lire.
+              <span className="flex items-center justify-center w-9 h-7 rounded-full bg-primary text-primary-foreground">
+                <Icon className="w-4 h-4" strokeWidth={2.5} />
+              </span>
+            ) : (
+              <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 2} />
+            )}
+            <span className="truncate max-w-full px-0.5">{tab.label}</span>
           </Link>
         );
       })}
@@ -77,15 +71,10 @@ const BottomTabBar = ({ onOpenMore }: BottomTabBarProps) => {
       <button
         type="button"
         onClick={onOpenMore}
-        aria-label="Ouvrir le menu (plus d'options)"
-        className={cn(
-          "flex-1 flex flex-col items-center justify-center gap-0.5",
-          "min-h-[56px] pt-1.5 pb-1 text-[11px] font-medium transition-colors",
-          "text-muted-foreground hover:text-foreground",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-        )}
+        aria-label="Plus : calendrier, chantiers, réalisations, avis, import"
+        className={cn(BASE, plusActif ? "text-primary" : "text-muted-foreground hover:text-foreground")}
       >
-        <Menu className="w-5 h-5 shrink-0" strokeWidth={2} />
+        <Menu className="w-5 h-5 shrink-0" strokeWidth={plusActif ? 2.5 : 2} />
         <span>Plus</span>
       </button>
     </nav>
