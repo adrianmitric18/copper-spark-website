@@ -3,6 +3,7 @@
 // LeadDetail, Rdv, AvisManager et ManualLeadDialog.
 
 import type { Tables } from "@/integrations/supabase/types";
+import { TON } from "@/lib/admin/badges";
 
 // =====================================================================
 //  Types métier
@@ -224,26 +225,32 @@ export const estChantierEnCours = (i: ChantierDates, today: string = todayIsoLoc
 export const estChantierATerminer = (i: ChantierDates, today: string = todayIsoLocal()): boolean =>
   (i.statut === "en_cours" || i.statut === "programme") && i.date_fin <= today;
 
-/** Couleur Tailwind associée à un statut de lead (badge). */
+/**
+ * Classes du badge d'un statut de lead (clair + sombre). Six statuts, six
+ * teintes distinctes : nouveau orange, traité violet, devis envoyé bleu,
+ * converti vert, perdu rouge, sans suite gris. Palette : @/lib/admin/badges.
+ */
 export const leadStatusColor = (status: string): string => {
   switch (status) {
     case "nouveau":
-      return "bg-orange-500/15 text-orange-600 border-orange-500/30";
+      return TON.orange;
     case "traité":
-      return "bg-yellow-500/15 text-yellow-700 border-yellow-500/30";
+      return TON.violet;
     case "devis envoyé":
-      return "bg-blue-500/15 text-blue-600 border-blue-500/30";
+      return TON.bleu;
     case "converti":
-      return "bg-green-500/15 text-green-700 border-green-500/30";
-    case "sans suite":
+      return TON.vert;
     case "perdu":
-      return "bg-muted text-muted-foreground border-border";
+      return TON.rouge;
+    case "sans suite":
+      return TON.gris;
     case "RDV confirmé":
-      return "bg-green-500/15 text-green-700 border-green-500/30";
+    case "rdv_pris":
+      return TON.sarcelle;
     case "RDV annulé":
-      return "bg-destructive/10 text-destructive border-destructive/30";
+      return TON.ambre;
     default:
-      return "";
+      return TON.gris;
   }
 };
 
@@ -253,6 +260,7 @@ export const leadStatusColor = (status: string): string => {
 
 export const LEAD_SOURCE_LABELS: Record<string, string> = {
   formulaire_site: "Site web",
+  rdv_rapide: "RDV rapide",
   simulateur: "Simulateur",
   telephone: "Téléphone",
   whatsapp: "WhatsApp",

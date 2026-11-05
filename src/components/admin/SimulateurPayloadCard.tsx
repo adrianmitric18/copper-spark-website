@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, AlertTriangle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
+import { TON } from "@/lib/admin/badges";
 
 /**
  * Affiche les réponses d'un lead issu du simulateur de prix.
@@ -89,7 +90,7 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
         <Calculator className="w-5 h-5 text-primary" />
         <h2 className="font-semibold text-lg">Réponses du simulateur</h2>
         {complexe && (
-          <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30">
+          <Badge className={TON.orange}>
             Cas complexe — visite requise
           </Badge>
         )}
@@ -100,7 +101,7 @@ const SimulateurPayloadCard = ({ payload }: { payload: Json | null }) => {
             variant="outline"
             className={
               veutEtreRappele
-                ? "border-emerald-500/40 text-emerald-600"
+                ? "border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
                 : "border-border text-muted-foreground"
             }
           >

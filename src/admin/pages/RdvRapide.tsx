@@ -402,7 +402,7 @@ const RdvRapide = () => {
           {/* T4 — bandeau anti-doublon : informe sans bloquer (nouveau client possible). */}
           {duplicates.length > 0 && (
             <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm space-y-2">
-              <p className="font-medium text-amber-700">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
                 ⚠️ Ce numéro est déjà enregistré
               </p>
               <ul className="space-y-1.5">

@@ -14,6 +14,7 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import { fetchAllRdvs, terminerRdv, updateLeadStatus, type RdvWithLead } from "@/lib/admin/queries";
 import { STATUT_REACTIVATION, isRdvPasse, isStatutAvecRdv, isTerminal } from "@/lib/admin/types";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
+import { TON } from "@/lib/admin/badges";
 import AdminShell from "@/admin/layout/AdminShell";
 
 type FilterKey = "a_venir" | "aujourdhui" | "semaine" | "mois" | "passes" | "annules";
@@ -44,17 +45,17 @@ const todayStr = () => {
 // unique : isRdvPasse dans @/lib/admin/types).
 const statutBadge = (s: string, passe = false) => {
   if (passe) {
-    return <Badge variant="outline" className="bg-orange-500/15 text-orange-700 border-orange-500/30">RDV passé</Badge>;
+    return <Badge variant="outline" className={TON.orange}>RDV passé</Badge>;
   }
   switch (s) {
     case "annule":
-      return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Annulé</Badge>;
+      return <Badge variant="outline" className={TON.rouge}>Annulé</Badge>;
     case "termine":
-      return <Badge variant="outline" className="bg-muted text-muted-foreground">Terminé</Badge>;
+      return <Badge variant="outline" className={TON.gris}>Terminé</Badge>;
     case "rappel_envoye":
-      return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">Rappel envoyé</Badge>;
+      return <Badge variant="outline" className={TON.bleu}>Rappel envoyé</Badge>;
     default:
-      return <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/30">Confirmé</Badge>;
+      return <Badge variant="outline" className={TON.vert}>Confirmé</Badge>;
   }
 };
 

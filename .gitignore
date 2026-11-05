@@ -49,3 +49,6 @@ backups/
 *.njsproj
 *.sln
 *.sw?
+
+# Captures et rapport de scripts/admin-audit.mjs
+.audit-admin/

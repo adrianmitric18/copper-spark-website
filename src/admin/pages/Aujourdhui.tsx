@@ -125,8 +125,9 @@ const ageTexte = (createdAt: string): string => {
   return `reçu il y a ${j} jour${j > 1 ? "s" : ""}`;
 };
 
-// Boutons d'action : trois par ligne, cibles de 44 px.
-const ACTION = "min-h-[44px] px-2 text-sm";
+// Boutons d'action : trois par ligne sur un téléphone de 360 px de large,
+// cibles de 44 px. Texte et marges resserrés pour que « WhatsApp » tienne.
+const ACTION = "min-h-[44px] min-w-0 px-1 gap-1 text-[13px] sm:px-3 sm:gap-2 sm:text-sm";
 
 const Bloc = ({
   titre,
@@ -139,13 +140,13 @@ const Bloc = ({
   icone: ReactNode;
   children: ReactNode;
 }) => (
-  <Card className="p-4 md:p-6 space-y-3">
+  <Card className="p-3 sm:p-4 md:p-6 space-y-3">
     <div className="flex items-baseline justify-between gap-2 flex-wrap">
       <h2 className="text-lg font-semibold flex items-center gap-2">
         {icone}
         {titre}
       </h2>
-      {sousTitre && <p className="text-sm text-muted-foreground capitalize">{sousTitre}</p>}
+      {sousTitre && <p className="text-sm text-muted-foreground first-letter:uppercase">{sousTitre}</p>}
     </div>
     {children}
   </Card>
@@ -328,7 +329,7 @@ const Aujourdhui = () => {
                   {rdvDuJour.map((r) => {
                     const maps = itineraire(r);
                     return (
-                      <li key={r.id} className="rounded-lg border bg-background p-3 space-y-2">
+                      <li key={r.id} className="rounded-lg border bg-background p-2.5 sm:p-3 space-y-2">
                         <Link to={`/admin/lead/${r.lead_id}`} className="flex items-center gap-3 group">
                           <span className="text-lg font-bold text-primary tabular-nums shrink-0">
                             {formatHeure(r.heure_rdv)}
@@ -396,7 +397,7 @@ const Aujourdhui = () => {
                     {rappelsAEnvoyer.map((r) => {
                       const email = hasUsableEmail(r.lead_email);
                       return (
-                        <li key={r.id} className="rounded-lg border bg-background p-3 space-y-2">
+                        <li key={r.id} className="rounded-lg border bg-background p-2.5 sm:p-3 space-y-2">
                           <Link to={`/admin/lead/${r.lead_id}`} className="flex items-center gap-3 group">
                             <span className="text-lg font-bold text-primary tabular-nums shrink-0">
                               {formatHeure(r.heure_rdv)}
@@ -491,7 +492,7 @@ const Aujourdhui = () => {
                             });
                       const titreTrace = item.genre === "rappel" ? "Rappel lead" : `Relance devis ${item.palier}`;
                       return (
-                        <li key={`${item.genre}-${l.id}`} className="rounded-lg border bg-background p-3 space-y-2">
+                        <li key={`${item.genre}-${l.id}`} className="rounded-lg border bg-background p-2.5 sm:p-3 space-y-2">
                           <Link to={`/admin/lead/${l.id}`} className="flex items-center gap-3 group">
                             <span className="min-w-0 flex-1">
                               <span className="block font-medium truncate group-hover:underline">{l.name}</span>

@@ -4,6 +4,7 @@ import { AlertCircle, ChevronRight, Phone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { isARelancerStatus, type Lead, type UpcomingByLead } from "@/lib/admin/types";
+import { TON } from "@/lib/admin/badges";
 
 interface StaleLeadsCardProps {
   leads: Lead[];
@@ -57,7 +58,7 @@ const StaleLeadsCard = ({
   return (
     <Card className="p-5 space-y-3 border-orange-500/40 bg-orange-500/5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2 text-orange-600">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-orange-800 dark:text-orange-300">
           <AlertCircle className="w-5 h-5" />
           À relancer ({stale.length})
         </h2>
@@ -80,7 +81,7 @@ const StaleLeadsCard = ({
                     <p className="font-semibold text-sm truncate">{lead.name}</p>
                     <Badge
                       variant="outline"
-                      className="text-[10px] px-1.5 py-0 bg-orange-500/15 text-orange-700 border-orange-500/30"
+                      className={`text-[10px] px-1.5 py-0 ${TON.orange}`}
                     >
                       {formatAge(hours)}
                     </Badge>
@@ -94,7 +95,7 @@ const StaleLeadsCard = ({
                 <a
                   href={`tel:${lead.phone}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center justify-center w-10 h-10 rounded-md text-orange-700 hover:bg-orange-500/10 shrink-0"
+                  className="flex items-center justify-center w-10 h-10 rounded-md text-orange-800 dark:text-orange-300 hover:bg-orange-500/10 shrink-0"
                   aria-label={`Appeler ${lead.name}`}
                 >
                   <Phone className="w-4 h-4" />

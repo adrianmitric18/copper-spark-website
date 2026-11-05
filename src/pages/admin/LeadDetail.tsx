@@ -58,6 +58,7 @@ import {
   terminerRdv,
 } from "@/lib/admin/queries";
 import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
+import { TON } from "@/lib/admin/badges";
 import {
   type Lead,
   type TerminalLeadStatus,
@@ -1106,7 +1107,7 @@ const LeadDetail = () => {
         <Card className="p-4 sm:p-6 space-y-3 border-2 border-orange-500/50 bg-orange-500/5">
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <h2 className="font-semibold text-lg">RDV passé</h2>
-            <Badge variant="outline" className="bg-orange-500/15 text-orange-700 border-orange-500/30">
+            <Badge variant="outline" className={TON.orange}>
               À clôturer
             </Badge>
           </div>

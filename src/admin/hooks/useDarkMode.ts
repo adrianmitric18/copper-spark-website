@@ -27,8 +27,11 @@ let theme: Theme = lireStockage();
 let montages = 0;
 const abonnes = new Set<() => void>();
 
+// `admin` : portée des jetons de contraste réservés à l'admin (index.css).
+// `dark`  : thème sombre. Aucune des deux classes n'existe sur le site public.
 const appliquer = () => {
   if (typeof document === "undefined") return;
+  document.documentElement.classList.add("admin");
   document.documentElement.classList.toggle("dark", theme === "dark");
 };
 
@@ -67,7 +70,7 @@ export const useDarkMode = () => {
       // d'un morceau de code) on ne veut pas d'éclair blanc.
       window.setTimeout(() => {
         if (montages === 0 && !window.location.pathname.startsWith("/admin")) {
-          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.remove("dark", "admin");
         }
       }, 0);
     };

@@ -24,11 +24,12 @@ import {
   type TypeHeure,
 } from "@/lib/admin/heures";
 import TotauxGrille from "@/admin/components/heures/TotauxGrille";
+import { TON } from "@/lib/admin/badges";
 
 const TYPE_BADGE_CLASSES: Record<TypeHeure, string> = {
-  chantier: "bg-primary/15 text-primary border-primary/30",
-  forfait: "bg-green-500/15 text-green-700 border-green-500/30",
-  deplacement: "bg-blue-500/15 text-blue-600 border-blue-500/30",
+  chantier: TON.orange,
+  forfait: TON.vert,
+  deplacement: TON.bleu,
 };
 
 interface SemaineTabProps {

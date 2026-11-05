@@ -215,8 +215,8 @@ const InterventionDialog = ({
           {/* Warning week-end */}
           {showWeekendWarning && (
             <div className="flex items-start gap-2 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/30">
-              <AlertTriangle className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5" />
-              <p className="text-xs text-yellow-800">
+              <AlertTriangle className="w-4 h-4 text-yellow-800 dark:text-yellow-300 shrink-0 mt-0.5" />
+              <p className="text-xs text-yellow-900 dark:text-yellow-200">
                 Le chantier inclut un samedi ou un dimanche. Vérifie que c'est
                 voulu — sinon, ajuste les dates.
               </p>
