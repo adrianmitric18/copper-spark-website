@@ -1,205 +1,170 @@
-import { useEffect, useMemo, useState } from "react";
+/**
+ * /admin — Accueil en TROIS BLOCS, pas plus (lot 2.2 du brief admin 2026-11) :
+ *
+ *   1. Aujourd'hui : les RDV du jour → Appeler · WhatsApp · Itinéraire
+ *   2. Demain      : les rappels J-1 → WhatsApp · SMS (· Email si adresse) ;
+ *                    un rappel envoyé disparaît du bloc
+ *   3. À faire     : nouveaux leads à rappeler (< 30 jours) et devis à
+ *                    relancer, 5 maximum → Appeler · WhatsApp · Terminer
+ *
+ * Pas de salutation, pas de statistiques, pas de « Sources ce mois », pas de
+ * « 7 prochains jours » (le calendrier les montre). L'ancien cockpit est
+ * conservé tel quel, non routé, dans AujourdhuiCockpit.tsx (rail 4 : on ne
+ * supprime rien ; le ménage est prévu au lot 3).
+ */
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Phone,
-  Calendar,
-  AlertCircle,
-  TrendingUp,
-  Users,
-  Sparkles,
-  ChevronRight,
-  HardHat,
-  Navigation,
   Bell,
-  MessageCircle,
-  Smartphone,
-  Mail,
+  ChevronRight,
+  ListChecks,
   Loader2,
-  FileText,
-  PhoneCall,
-  CalendarPlus,
+  Mail,
+  MessageCircle,
+  Navigation,
+  Phone,
+  Smartphone,
+  Sun,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
+import AdminShell from "@/admin/layout/AdminShell";
+import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
 import {
-  fetchLeadsWithUpcomingRdvs,
   fetchAllRdvs,
+  fetchLeadsWithUpcomingRdvs,
   hasUsableEmail,
   traceEnvoi,
   type RdvWithLead,
 } from "@/lib/admin/queries";
 import type { CanalEnvoi } from "@/lib/admin/envois";
-import { fetchAllInterventions } from "@/lib/admin/interventions";
-import {
-  ACCUEIL_MAX_AGE_JOURS,
-  estARappeler,
-  isARelancerStatus,
-  joursDepuis,
-  type Lead,
-  leadSourceLabel,
-} from "@/lib/admin/types";
+import { estARappeler, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
-import { sendRappelJ1Emails, envoyerEmailSiPossible, type LeadInfo } from "@/lib/rdv/emailjs";
-import { type RendezVous } from "@/lib/rdv/constants";
+import { envoyerEmailSiPossible, sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
+import type { RendezVous } from "@/lib/rdv/constants";
 import {
+  COMPANY,
   buildSmsHref,
   buildWhatsappHref,
-  buildMailtoHref,
   smsRappelLead,
-  COMPANY,
-  smsTemplateRelance1,
-  smsTemplateRelance2,
-  smsTemplateRelance3,
   whatsappTemplateRelance1,
   whatsappTemplateRelance2,
   whatsappTemplateRelance3,
-  emailPlaintextRelance1,
-  emailPlaintextRelance2,
-  emailPlaintextRelance3,
-  emailSubjectRelance,
   type RelanceDevisPayload,
 } from "@/lib/admin/message-templates";
-import { supabase } from "@/integrations/supabase/client";
-import AdminShell from "@/admin/layout/AdminShell";
-import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
-import { toast } from "sonner";
 
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
+const JOUR_MS = 24 * 60 * 60 * 1000;
+const A_FAIRE_MAX = 5;
 
-// Statuts « à relancer » et « à rappeler » : définitions uniques dans
-// @/lib/admin/types (isARelancerStatus, estARappeler). Lot 1B : « à rappeler »
-// = nouveau seulement (un lead traité est traité) et rien de plus vieux que
-// 30 jours sur l'accueil — au-delà, le lead reste dans Leads.
+const prenomDe = (nom: string): string => nom.trim().split(/\s+/)[0] || nom.trim();
 
-// T7 — « Leads à rappeler » : leads en attente d'un coup de fil. On exclut
-// « devis envoyé » (suivi par le flux relances devis) et garde les statuts qui
-// veulent dire « pas encore recontacté / sans suite ».
-const CALLBACK_LIMIT = 8;
+const dateLongue = (iso: string): string =>
+  new Date(`${iso}T12:00:00`).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" });
 
-const isoDateLocal = (d: Date): string =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-const todayDateStr = (): string => isoDateLocal(new Date());
-
-const getGreeting = (): string => {
-  const h = new Date().getHours();
-  if (h < 6) return "Bonne nuit";
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
-};
-
-const formatLongDate = (d: Date): string =>
-  d.toLocaleDateString("fr-BE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-/**
- * Lien d'itinéraire Google Maps depuis les morceaux d'adresse du lead.
- * Renvoie null si on n'a aucune info exploitable (pas de bouton affiché).
- */
-const buildMapsDir = (parts: (string | null | undefined)[]): string | null => {
-  const query = parts.filter(Boolean).join(" ").trim();
-  if (!query) return null;
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
-};
-
-// hasUsableEmail : source unique dans @/lib/admin/queries (règle 1.3 du brief admin).
-
-// Texte de rappel J-1 pour SMS/WhatsApp (lignes 🔧/📍 affichées seulement si l'info existe).
-const rappelText = (r: RdvWithLead): string => {
-  const dateLong = new Date(`${r.date_rdv}T12:00:00`).toLocaleDateString("fr-BE", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  const prenom = r.lead_name.trim().split(/\s+/)[0] || r.lead_name;
-  const adresse = [
+const adresseDe = (r: RdvWithLead): string =>
+  [
     [r.lead_rue, r.lead_numero].filter(Boolean).join(" "),
     [r.lead_code_postal, r.lead_commune].filter(Boolean).join(" "),
   ]
     .filter(Boolean)
     .join(", ");
-  const lines = [
-    `Bonjour ${prenom} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique.`,
-    `Petit rappel pour demain :`,
-    `🗓️ ${dateLong} à ${formatHeure(r.heure_rdv)}`,
+
+const itineraire = (r: RdvWithLead): string | null => {
+  const q = [r.lead_rue, r.lead_numero, r.lead_code_postal, r.lead_commune].filter(Boolean).join(" ").trim();
+  return q ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}` : null;
+};
+
+/** WhatsApp du jour : « je confirme ma visite aujourd'hui ». */
+const texteDuJour = (r: RdvWithLead): string =>
+  `Bonjour ${prenomDe(r.lead_name)} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique. Je confirme ma visite aujourd'hui à ${formatHeure(r.heure_rdv)}. À tout à l'heure !`;
+
+/** Rappel J-1 (SMS / WhatsApp) : lignes 🔧 / 📍 seulement si l'info existe. */
+const texteRappel = (r: RdvWithLead): string => {
+  const lignes = [
+    `Bonjour ${prenomDe(r.lead_name)} 👋 C'est ${COMPANY.ownerFirstName}, du Cuivre Électrique.`,
+    "Petit rappel pour demain :",
+    `🗓️ ${dateLongue(r.date_rdv)} à ${formatHeure(r.heure_rdv)}`,
   ];
-  if (r.type_visite) lines.push(`🔧 ${r.type_visite}`);
-  if (adresse) lines.push(`📍 ${adresse}`);
-  lines.push(`Si ça ne convient plus, prévenez-moi au ${COMPANY.tel} et on décale sans souci.`);
-  lines.push(`À demain ! ${COMPANY.ownerFirstName}`);
-  return lines.join("\n");
+  if (r.type_visite) lignes.push(`🔧 ${r.type_visite}`);
+  const adresse = adresseDe(r);
+  if (adresse) lignes.push(`📍 ${adresse}`);
+  lignes.push(`Si ça ne convient plus, prévenez-moi au ${COMPANY.tel} et on décale sans souci.`);
+  lignes.push(`À demain ! ${COMPANY.ownerFirstName}`);
+  return lignes.join("\n");
 };
 
-// Tier 1 / Phase 3 — relances devis.
-// Nombre de jours calendaires écoulés depuis une date YYYY-MM-DD (locale).
-const daysSinceIso = (iso: string): number => {
+// Relances devis : J+3 → 1, J+7 → 2, J+14 → 3.
+type Palier = 1 | 2 | 3;
+const palierDe = (jours: number): Palier | null => (jours >= 14 ? 3 : jours >= 7 ? 2 : jours >= 3 ? 1 : null);
+const joursDepuisIso = (iso: string): number => {
   const [y, m, d] = iso.split("-").map(Number);
-  const start = new Date(y, m - 1, d, 12).getTime();
-  const now = new Date();
-  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12).getTime();
-  return Math.round((todayMid - start) / DAY_MS);
+  const debut = new Date(y, m - 1, d, 12).getTime();
+  const n = new Date();
+  return Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12).getTime() - debut) / JOUR_MS);
+};
+const texteRelance = (palier: Palier, payload: RelanceDevisPayload): string =>
+  palier === 1
+    ? whatsappTemplateRelance1(payload)
+    : palier === 2
+      ? whatsappTemplateRelance2(payload)
+      : whatsappTemplateRelance3(payload);
+
+type AFaire =
+  | { genre: "rappel"; lead: Lead; detail: string }
+  | { genre: "relance"; lead: Lead; detail: string; palier: Palier };
+
+const ageTexte = (createdAt: string): string => {
+  const h = Math.floor((Date.now() - new Date(createdAt).getTime()) / 3_600_000);
+  if (h < 24) return `reçu il y a ${Math.max(h, 1)} h`;
+  const j = Math.floor(h / 24);
+  return `reçu il y a ${j} jour${j > 1 ? "s" : ""}`;
 };
 
-type RelancePalier = 1 | 2 | 3;
+// Boutons d'action : trois par ligne, cibles de 44 px.
+const ACTION = "min-h-[44px] px-2 text-sm";
 
-// Palier selon l'ancienneté du devis : J+3 → 1, J+7 → 2, J+14 → 3.
-const relancePalier = (days: number): RelancePalier | null =>
-  days >= 14 ? 3 : days >= 7 ? 2 : days >= 3 ? 1 : null;
+const Bloc = ({
+  titre,
+  sousTitre,
+  icone,
+  children,
+}: {
+  titre: string;
+  sousTitre?: string;
+  icone: ReactNode;
+  children: ReactNode;
+}) => (
+  <Card className="p-4 md:p-6 space-y-3">
+    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+      <h2 className="text-lg font-semibold flex items-center gap-2">
+        {icone}
+        {titre}
+      </h2>
+      {sousTitre && <p className="text-sm text-muted-foreground capitalize">{sousTitre}</p>}
+    </div>
+    {children}
+  </Card>
+);
 
-// Sélectionne les bons templates (déjà écrits dans message-templates) par palier.
-const buildRelanceMessages = (palier: RelancePalier, payload: RelanceDevisPayload) => ({
-  sms: palier === 1 ? smsTemplateRelance1(payload) : palier === 2 ? smsTemplateRelance2(payload) : smsTemplateRelance3(payload),
-  wa: palier === 1 ? whatsappTemplateRelance1(payload) : palier === 2 ? whatsappTemplateRelance2(payload) : whatsappTemplateRelance3(payload),
-  emailBody: palier === 1 ? emailPlaintextRelance1(payload) : palier === 2 ? emailPlaintextRelance2(payload) : emailPlaintextRelance3(payload),
-  subject: emailSubjectRelance(palier),
-});
-
-const PALIER_BADGE: Record<RelancePalier, string> = {
-  1: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-  2: "bg-orange-500/15 text-orange-700 border-orange-500/30",
-  3: "bg-destructive/10 text-destructive border-destructive/30",
-};
-
-// « À relancer » — date de référence de la DERNIÈRE ACTION :
-// - "devis envoyé" → la date d'envoi du devis (colonne `date`, ancrée midi local) ;
-//   c'est elle qui doit piloter ancienneté + relance, PAS la création.
-// - sinon (nouveau / traité) → created_at, seul repère dispo (pas d'`updated_at` en base).
-const staleRefMs = (l: Lead): number => {
-  if (l.status === "devis envoyé" && l.devis_envoye_at) {
-    const [y, m, d] = l.devis_envoye_at.split("-").map(Number);
-    return new Date(y, m - 1, d, 12).getTime();
-  }
-  return new Date(l.created_at).getTime();
-};
-
-// Heures (entières) écoulées depuis la dernière action — base du badge et du seuil.
-const staleAgeHours = (l: Lead): number =>
-  Math.floor((Date.now() - staleRefMs(l)) / HOUR_MS);
-
-// Seuil d'apparition dans « À relancer » : un devis envoyé n'est "à relancer"
-// qu'à partir de J+3 (72 h depuis l'envoi, aligné sur la cadence de relance) ;
-// les autres statuts à partir de 48 h sans action.
-const staleThresholdHours = (l: Lead): number =>
-  l.status === "devis envoyé" ? 72 : 48;
+const Vide = ({ children }: { children: ReactNode }) => (
+  <p className="text-sm text-muted-foreground py-2">{children}</p>
+);
 
 const Aujourdhui = () => {
   const { user, ready } = useAdminGuard();
   const queryClient = useQueryClient();
-  const [rappelSending, setRappelSending] = useState<string | null>(null);
+  const [emailEnCours, setEmailEnCours] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Aujourd'hui – Le Cuivre Admin";
   }, []);
 
-  // Cache 60s en mémoire — instant entre Aujourd'hui ↔ Pipeline.
+  // Caches partagés avec Leads et le calendrier (navigation instantanée).
   const leadsQuery = useQuery({
     queryKey: ["admin-leads-overview"],
     queryFn: fetchLeadsWithUpcomingRdvs,
@@ -207,7 +172,6 @@ const Aujourdhui = () => {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
-
   const rdvsQuery = useQuery({
     queryKey: ["admin-rdvs-all"],
     queryFn: fetchAllRdvs,
@@ -216,80 +180,88 @@ const Aujourdhui = () => {
     refetchOnWindowFocus: false,
   });
 
-  const interventionsQuery = useQuery({
-    queryKey: ["admin-interventions"],
-    queryFn: fetchAllInterventions,
-    enabled: ready,
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Toast d'erreur si une requête plante (retry géré par React Query)
   useEffect(() => {
     if (leadsQuery.error) {
-      const msg = leadsQuery.error instanceof Error ? leadsQuery.error.message : "chargement leads impossible";
+      const msg = leadsQuery.error instanceof Error ? leadsQuery.error.message : "chargement des leads impossible";
       toast.error("Erreur : " + msg);
     }
   }, [leadsQuery.error]);
-
   useEffect(() => {
     if (rdvsQuery.error) {
-      const msg = rdvsQuery.error instanceof Error ? rdvsQuery.error.message : "chargement RDV impossible";
+      const msg = rdvsQuery.error instanceof Error ? rdvsQuery.error.message : "chargement des RDV impossible";
       toast.error("Erreur : " + msg);
     }
   }, [rdvsQuery.error]);
 
   const leads = useMemo(() => leadsQuery.data?.leads ?? [], [leadsQuery.data]);
-  const upcomingByLead = useMemo(
-    () => leadsQuery.data?.upcomingByLead ?? {},
-    [leadsQuery.data],
-  );
+  const upcomingByLead = useMemo(() => leadsQuery.data?.upcomingByLead ?? {}, [leadsQuery.data]);
   const rdvs = useMemo(() => rdvsQuery.data ?? [], [rdvsQuery.data]);
   const loading = leadsQuery.isLoading || rdvsQuery.isLoading;
 
-  // ===== Données dérivées =====
-  const today = todayDateStr();
+  const aujourdhui = todayIsoLocal();
+  const demain = todayIsoLocal(new Date(Date.now() + JOUR_MS));
 
-  const todayRdvs = useMemo(
+  // Bloc 1 — RDV du jour (ni annulés ni terminés).
+  const rdvDuJour = useMemo(
     () =>
       rdvs
-        .filter((r) => r.statut !== "annule" && r.date_rdv === today)
+        .filter((r) => isRdvActif(r.statut) && r.date_rdv === aujourdhui)
         .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv)),
-    [rdvs, today],
+    [rdvs, aujourdhui],
   );
 
-  const tomorrowRdvs = useMemo(() => {
-    const tStr = isoDateLocal(new Date(Date.now() + DAY_MS));
-    return rdvs
-      .filter((r) => r.statut !== "annule" && r.date_rdv === tStr)
-      .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv));
-  }, [rdvs]);
+  // Bloc 2 — rappels J-1 : un rappel envoyé disparaît du bloc.
+  const rdvDeDemain = useMemo(
+    () => rdvs.filter((r) => isRdvActif(r.statut) && r.date_rdv === demain),
+    [rdvs, demain],
+  );
+  const rappelsAEnvoyer = useMemo(
+    () =>
+      rdvDeDemain
+        .filter((r) => r.statut !== "rappel_envoye")
+        .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv)),
+    [rdvDeDemain],
+  );
+  const rappelsEnvoyes = rdvDeDemain.length - rappelsAEnvoyer.length;
 
-  // Règles 3 et 6 du brief admin : taper SMS / WhatsApp (ou envoyer l'email)
-  // marque le RDV « rappel envoyé » et trace l'envoi dans les notes du lead.
+  // Bloc 3 — à faire : nouveaux leads à rappeler (< 30 jours) puis devis à relancer.
+  const aFaireTous = useMemo<AFaire[]>(() => {
+    const rappels: AFaire[] = leads
+      .filter((l) => estARappeler(l, Boolean(upcomingByLead[l.id])))
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map((l) => ({ genre: "rappel", lead: l, detail: `Nouveau · ${ageTexte(l.created_at)}` }));
+    const relances: AFaire[] = [];
+    for (const l of leads) {
+      if (l.status !== "devis envoyé" || !l.devis_envoye_at) continue;
+      const jours = joursDepuisIso(l.devis_envoye_at);
+      const palier = palierDe(jours);
+      if (palier === null) continue;
+      relances.push({ genre: "relance", lead: l, palier, detail: `Devis envoyé il y a ${jours} jours · relance ${palier}` });
+    }
+    relances.sort((a, b) => (a.lead.devis_envoye_at ?? "").localeCompare(b.lead.devis_envoye_at ?? ""));
+    return [...rappels, ...relances];
+  }, [leads, upcomingByLead]);
+  const aFaire = aFaireTous.slice(0, A_FAIRE_MAX);
+
+  // Taper SMS / WhatsApp marque le RDV « rappel envoyé » et trace l'envoi.
   // Fire-and-forget : n'empêche jamais l'ouverture du message.
   const marquerRappelEnvoye = async (r: RdvWithLead, canal: CanalEnvoi) => {
     try {
       void traceEnvoi(r.lead_id, canal, "Rappel J-1");
-      if (r.statut !== "rappel_envoye") {
-        const { error } = await supabase
-          .from("rendez_vous")
-          .update({ statut: "rappel_envoye", rappel_envoye_at: new Date().toISOString() })
-          .eq("id", r.id);
-        if (error) throw error;
-      }
-      queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+      const { error } = await supabase
+        .from("rendez_vous")
+        .update({ statut: "rappel_envoye", rappel_envoye_at: new Date().toISOString() })
+        .eq("id", r.id);
+      if (error) throw error;
+      void queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
     } catch (e: unknown) {
       const m = e instanceof Error ? e.message : "mise à jour impossible";
       toast.warning("Rappel non marqué comme envoyé : " + m);
     }
   };
 
-  // Phase 2.1 — envoie le rappel J-1 par email (client + mémo Adrian) via la
-  // fonction existante sendRappelJ1Emails, puis marque le RDV "rappel_envoye".
-  // Pas de cron (rail 5) : déclenchement manuel groupé depuis le cockpit.
-  const sendRappelEmail = async (r: RdvWithLead) => {
-    setRappelSending(r.id);
+  const envoyerRappelEmail = async (r: RdvWithLead) => {
+    setEmailEnCours(r.id);
     try {
       const lead: LeadInfo = {
         id: r.lead_id,
@@ -316,7 +288,7 @@ const Aujourdhui = () => {
       } as RendezVous;
       const res = await envoyerEmailSiPossible(lead, () => sendRappelJ1Emails(lead, rdv));
       if (res.statut === "envoye") {
-        toast.success("Rappel email envoyé (client + mémo pour toi)");
+        toast.success("Rappel email envoyé");
         await marquerRappelEnvoye(r, "Email");
       } else if (res.statut === "non_envoye") {
         toast.info("Pas d'email pour ce client : utilise SMS ou WhatsApp.");
@@ -325,756 +297,252 @@ const Aujourdhui = () => {
           description: "Préviens le client par SMS ou WhatsApp.",
         });
       }
-    } catch (e: unknown) {
-      const m = e instanceof Error ? e.message : "envoi impossible";
-      toast.error("Rappel non envoyé : " + m);
     } finally {
-      setRappelSending(null);
+      setEmailEnCours(null);
     }
-  };
-
-  const weekRdvs = useMemo(() => {
-    const todayDate = new Date();
-    const end = new Date(todayDate.getTime() + 7 * DAY_MS);
-    const endStr = isoDateLocal(end);
-    return rdvs
-      .filter(
-        (r) =>
-          r.statut !== "annule" && r.date_rdv > today && r.date_rdv <= endStr,
-      )
-      .sort((a, b) =>
-        a.date_rdv === b.date_rdv
-          ? a.heure_rdv.localeCompare(b.heure_rdv)
-          : a.date_rdv.localeCompare(b.date_rdv),
-      )
-      .slice(0, 5);
-  }, [rdvs, today]);
-
-  const staleLeads = useMemo(() => {
-    return leads
-      .filter((l) => {
-        if (!isARelancerStatus(l.status)) return false;
-        if (upcomingByLead[l.id]) return false;
-        // Plus de 30 jours sans action : sort de l'accueil (reste dans Leads).
-        if (joursDepuis(staleRefMs(l)) > ACCUEIL_MAX_AGE_JOURS) return false;
-        // Ancienneté depuis la dernière action (devis_envoye_at pour un devis
-        // envoyé, sinon created_at) — plus depuis la création.
-        return staleAgeHours(l) >= staleThresholdHours(l);
-      })
-      .sort((a, b) => staleRefMs(a) - staleRefMs(b))
-      .slice(0, 5);
-  }, [leads, upcomingByLead]);
-
-  // Tier 1 / Phase 3 — devis envoyés sans réponse depuis 3 j+ (statut encore
-  // "devis envoyé" → ni converti ni perdu). Bucketés par palier J+3/7/14.
-  const relanceLeads = useMemo(() => {
-    return leads
-      .filter((l) => l.status === "devis envoyé" && l.devis_envoye_at)
-      .map((l) => {
-        const days = daysSinceIso(l.devis_envoye_at as string);
-        return { lead: l, days, palier: relancePalier(days) };
-      })
-      .filter((x): x is { lead: Lead; days: number; palier: RelancePalier } => x.palier !== null)
-      .sort((a, b) => b.days - a.days);
-  }, [leads]);
-
-  // T7 — Liste de travail « Leads à rappeler » : tous les leads actifs sans RDV
-  // à venir, du plus ancien au plus récent (ne laisser personne traîner).
-  // Heuristique 100 % sans DB : statut + absence de RDV à venir + ancienneté.
-  // Plus large que la mini-liste « À relancer » du héro (>48h) : ici c'est la
-  // file complète des appels à passer, avec actions 1-tap.
-  const leadsARappeler = useMemo(() => {
-    return leads
-      .filter((l) => {
-        return estARappeler(l, Boolean(upcomingByLead[l.id]));
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      )
-      .slice(0, CALLBACK_LIMIT);
-  }, [leads, upcomingByLead]);
-
-  // Chantiers programmés cette semaine (du jour à +7 jours, statut programme/en_cours
-  // dont la plage englobe la fenêtre).
-  const upcomingInterventionsCount = useMemo(() => {
-    const all = interventionsQuery.data ?? [];
-    const todayDate = new Date();
-    const endDate = new Date(todayDate.getTime() + 7 * DAY_MS);
-    const todayStr = isoDateLocal(todayDate);
-    const endStr = isoDateLocal(endDate);
-    return all.filter((i) => {
-      if (i.statut === "annule" || i.statut === "termine") return false;
-      // chevauchement plage [date_debut, date_fin] avec [today, today+7]
-      return i.date_fin >= todayStr && i.date_debut <= endStr;
-    }).length;
-  }, [interventionsQuery.data]);
-
-  const stats = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-    const thisMonth = leads.filter(
-      (l) => new Date(l.created_at) >= monthStart,
-    );
-    const lastMonth = leads.filter((l) => {
-      const d = new Date(l.created_at);
-      return d >= lastMonthStart && d < monthStart;
-    });
-
-    const conv = thisMonth.filter((l) => l.status === "converti").length;
-    const total = thisMonth.length;
-    const rate = total ? Math.round((conv / total) * 100) : 0;
-
-    const newLeads = leads.filter((l) => l.status === "nouveau").length;
-
-    return {
-      thisMonth: total,
-      lastMonth: lastMonth.length,
-      delta: total - lastMonth.length,
-      conversionRate: rate,
-      newLeads,
-      weekRdvCount: weekRdvs.length + todayRdvs.length,
-    };
-  }, [leads, weekRdvs.length, todayRdvs.length]);
-
-  const ageInHours = (createdAt: string): number =>
-    Math.floor((Date.now() - new Date(createdAt).getTime()) / HOUR_MS);
-
-  const formatAge = (hours: number): string => {
-    if (hours < 24) return `${hours}h`;
-    const days = Math.floor(hours / 24);
-    return days === 1 ? "1 jour" : `${days} jours`;
   };
 
   return (
     <AdminShell email={user?.email} mobileTitle="Aujourd'hui">
-      <div className="p-4 md:p-8 space-y-6 max-w-6xl mx-auto">
-        {/* Greeting */}
-        <div className="space-y-1">
-          <p className="text-sm text-muted-foreground capitalize">
-            {formatLongDate(new Date())}
-          </p>
-          <h1 className="font-display text-3xl md:text-4xl font-bold">
-            {getGreeting()}, Adrian
-            {stats.newLeads > 0 && (
-              <span className="text-primary"> · {stats.newLeads} {stats.newLeads === 1 ? "nouveau lead" : "nouveaux leads"}</span>
-            )}
-          </h1>
-        </div>
+      <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto">
+        <h1 className="sr-only">Accueil</h1>
 
         {loading ? (
-          <SkeletonContent />
+          <div className="space-y-4" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-28 rounded-lg bg-muted/40 animate-pulse" />
+            ))}
+          </div>
         ) : (
           <>
-            {/* KPIs row — 2 cols mobile / 3 cols tablette / 5 cols desktop large.
-                Sur mobile : 5 cards = 2/2/1 lignes. Sur tablette : 3/2 lignes. */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              <Card className="p-4 space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <Users className="w-3.5 h-3.5" />
-                  Leads ce mois
-                </div>
-                <p className="text-2xl font-bold">{stats.thisMonth}</p>
-                {stats.lastMonth > 0 && (
-                  <p
-                    className={`text-xs ${stats.delta >= 0 ? "text-green-600" : "text-orange-600"}`}
-                  >
-                    {stats.delta >= 0 ? "+" : ""}
-                    {stats.delta} vs mois dernier
-                  </p>
-                )}
-              </Card>
-              <Card className="p-4 space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  Conversion
-                </div>
-                <p className="text-2xl font-bold">{stats.conversionRate}%</p>
-                <p className="text-xs text-muted-foreground">ce mois</p>
-              </Card>
-              <Card className="p-4 space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <Calendar className="w-3.5 h-3.5" />
-                  RDV à venir
-                </div>
-                <p className="text-2xl font-bold">{stats.weekRdvCount}</p>
-                <p className="text-xs text-muted-foreground">cette semaine</p>
-              </Card>
-              <Link
-                to="/admin/interventions?filter=upcoming"
-                className="block group"
-              >
-                <Card className="p-4 space-y-1 h-full transition-colors group-hover:border-primary/40">
-                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                    <HardHat className="w-3.5 h-3.5" />
-                    Chantiers
-                  </div>
-                  <p
-                    className={`text-2xl font-bold ${upcomingInterventionsCount > 0 ? "text-primary" : ""}`}
-                  >
-                    {upcomingInterventionsCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    cette semaine
-                  </p>
-                </Card>
-              </Link>
-              <Card className="p-4 space-y-1">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <AlertCircle className="w-3.5 h-3.5" />À relancer
-                </div>
-                <p
-                  className={`text-2xl font-bold ${staleLeads.length > 0 ? "text-orange-600" : ""}`}
-                >
-                  {staleLeads.length}
-                </p>
-                <p className="text-xs text-muted-foreground">{">"}48h sans action</p>
-              </Card>
-            </div>
-
-            {/* À faire MAINTENANT */}
-            <Card className="p-5 md:p-6 space-y-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Aujourd'hui</h2>
-              </div>
-
-              {todayRdvs.length === 0 && staleLeads.length === 0 ? (
-                <div className="py-8 text-center space-y-2">
-                  <p className="text-muted-foreground">
-                    Pas de RDV ni de relance urgente aujourd'hui.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Profite-en pour avancer sur les devis en attente. ☕
-                  </p>
-                </div>
+            {/* 1 — Aujourd'hui */}
+            <Bloc
+              titre={`Aujourd'hui${rdvDuJour.length ? ` (${rdvDuJour.length})` : ""}`}
+              sousTitre={dateLongue(aujourdhui)}
+              icone={<Sun className="w-5 h-5 text-primary" aria-hidden="true" />}
+            >
+              {rdvDuJour.length === 0 ? (
+                <Vide>Aucun RDV aujourd'hui.</Vide>
               ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {/* RDV du jour */}
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      RDV du jour ({todayRdvs.length})
-                    </h3>
-                    {todayRdvs.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic px-1">
-                        Aucun RDV planifié.
-                      </p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {todayRdvs.map((r) => {
-                          const mapsUrl = buildMapsDir([
-                            r.lead_rue,
-                            r.lead_numero,
-                            r.lead_code_postal,
-                            r.lead_commune,
-                          ]);
-                          return (
-                            <li key={r.id}>
-                              <Link
-                                to={`/admin/lead/${r.lead_id}`}
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-primary/40 transition-colors min-h-[56px]"
-                              >
-                                <div className="text-center w-14 shrink-0">
-                                  <p className="text-base font-bold text-primary">
-                                    {formatHeure(r.heure_rdv)}
-                                  </p>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate">
-                                    {r.lead_name}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    {r.type_visite}
-                                    {r.lead_commune && ` · ${r.lead_commune}`}
-                                  </p>
-                                </div>
-                                {mapsUrl && (
-                                  <a
-                                    href={mapsUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="flex items-center justify-center w-10 h-10 rounded-md text-muted-foreground hover:bg-muted shrink-0"
-                                    aria-label={`Itinéraire vers ${r.lead_name}`}
-                                  >
-                                    <Navigation className="w-4 h-4" />
-                                  </a>
-                                )}
-                                {r.lead_phone && (
-                                  <a
-                                    href={`tel:${r.lead_phone}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="flex items-center justify-center w-10 h-10 rounded-md text-primary hover:bg-primary/10 shrink-0"
-                                    aria-label={`Appeler ${r.lead_name}`}
-                                  >
-                                    <Phone className="w-4 h-4" />
-                                  </a>
-                                )}
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Leads à relancer */}
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />À relancer ({staleLeads.length})
-                    </h3>
-                    {staleLeads.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic px-1">
-                        Tout est sous contrôle.
-                      </p>
-                    ) : (
-                      <ul className="space-y-1.5">
-                        {staleLeads.map((l) => (
-                          <li key={l.id}>
-                            <Link
-                              to={`/admin/lead/${l.id}`}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border hover:border-orange-500/40 transition-colors min-h-[56px]"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-medium text-sm truncate">
-                                    {l.name}
-                                  </p>
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[10px] px-1.5 py-0 bg-orange-500/15 text-orange-700 border-orange-500/30"
-                                  >
-                                    {formatAge(staleAgeHours(l))}
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {l.commune || ""} · {l.status}
-                                </p>
-                              </div>
-                              <TerminerLeadButton lead={l} label="" className="w-10 px-0" />
-                              <a
-                                href={`tel:${l.phone}`}
-                                onClick={(e) => e.stopPropagation()}
-                                className="flex items-center justify-center w-10 h-10 rounded-md text-orange-700 hover:bg-orange-500/10 shrink-0"
-                                aria-label={`Appeler ${l.name}`}
-                              >
-                                <Phone className="w-4 h-4" />
-                              </a>
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Leads à rappeler (T7) — file des appels à passer : leads actifs
-                sans RDV, du plus ancien au plus récent. Appeler / SMS / WhatsApp
-                / Caler RDV en 1 tap. Heuristique sans DB. */}
-            {leadsARappeler.length > 0 && (
-              <Card className="p-5 md:p-6 space-y-3">
-                <div className="flex items-center gap-2">
-                  <PhoneCall className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold">
-                    Leads à rappeler ({leadsARappeler.length})
-                  </h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Pas encore de RDV : un appel, un SMS, ou cale une date direct.
-                  Les plus anciens en premier.
-                </p>
                 <ul className="space-y-2">
-                  {leadsARappeler.map((l) => {
-                    const rappelMsg = smsRappelLead(l.name);
+                  {rdvDuJour.map((r) => {
+                    const maps = itineraire(r);
                     return (
-                      <li
-                        key={l.id}
-                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
-                      >
-                        <Link
-                          to={`/admin/lead/${l.id}`}
-                          className="flex-1 min-w-[10rem] group"
-                        >
-                          <p className="font-medium text-sm truncate flex items-center gap-2 group-hover:text-primary transition-colors">
-                            {l.name}
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border"
-                            >
-                              {formatAge(ageInHours(l.created_at))}
-                            </Badge>
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {l.commune || "—"} · {l.status}
-                            {l.services?.[0] && ` · ${l.services[0]}`}
-                          </p>
+                      <li key={r.id} className="rounded-lg border bg-background p-3 space-y-2">
+                        <Link to={`/admin/lead/${r.lead_id}`} className="flex items-center gap-3 group">
+                          <span className="text-lg font-bold text-primary tabular-nums shrink-0">
+                            {formatHeure(r.heure_rdv)}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium truncate group-hover:underline">{r.lead_name}</span>
+                            <span className="block text-xs text-muted-foreground truncate">
+                              {r.type_visite}
+                              {r.lead_commune && ` · ${r.lead_commune}`}
+                            </span>
+                          </span>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
                         </Link>
-                        <Button asChild size="sm" className="min-h-[40px]">
-                          <a href={`tel:${l.phone}`} aria-label={`Appeler ${l.name}`}>
-                            <Phone className="w-4 h-4" /> Appeler
-                          </a>
-                        </Button>
-                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(l.phone, rappelMsg)} aria-label={`SMS à ${l.name}`} onClick={() => void traceEnvoi(l.id, "SMS", "Rappel lead")}>
-                            <Smartphone className="w-4 h-4" /> SMS
-                          </a>
-                        </Button>
-                        <Button
-                          asChild
-                          size="sm"
-                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-                        >
-                          <a
-                            href={buildWhatsappHref(l.phone, rappelMsg)}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => void traceEnvoi(l.id, "WhatsApp", "Rappel lead")}
-                            aria-label={`WhatsApp à ${l.name}`}
-                          >
-                            <MessageCircle className="w-4 h-4" /> WA
-                          </a>
-                        </Button>
-                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <Link
-                            to={`/admin/lead/${l.id}?rdv=1`}
-                            aria-label={`Caler un RDV avec ${l.name}`}
-                          >
-                            <CalendarPlus className="w-4 h-4" /> Caler RDV
-                          </Link>
-                        </Button>
-                        <TerminerLeadButton lead={l} />
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Card>
-            )}
-
-            {/* Rappels demain (Phase 2.1) — préviens les RDV du lendemain */}
-            {tomorrowRdvs.length > 0 && (
-              <Card className="p-5 md:p-6 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold">
-                    Rappels demain ({tomorrowRdvs.length})
-                  </h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Préviens tes RDV de demain : SMS / WhatsApp en 1 tap, ou email de rappel.
-                </p>
-                <ul className="space-y-2">
-                  {tomorrowRdvs.map((r) => {
-                    const already = r.statut === "rappel_envoye";
-                    return (
-                      <li
-                        key={r.id}
-                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
-                      >
-                        <div className="flex-1 min-w-[10rem]">
-                          <p className="font-medium text-sm truncate flex items-center gap-2">
-                            {formatHeure(r.heure_rdv)} · {r.lead_name}
-                            {already && (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-600 border-blue-500/30"
-                              >
-                                Rappel envoyé
-                              </Badge>
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {r.type_visite}
-                            {r.lead_commune && ` · ${r.lead_commune}`}
-                          </p>
-                        </div>
-                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(r.lead_phone, rappelText(r))} aria-label={`SMS rappel ${r.lead_name}`} onClick={() => void marquerRappelEnvoye(r, "SMS")}>
-                            <Smartphone className="w-4 h-4" /> SMS
-                          </a>
-                        </Button>
-                        <Button
-                          asChild
-                          size="sm"
-                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-                        >
-                          <a
-                            href={buildWhatsappHref(r.lead_phone, rappelText(r))}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => void marquerRappelEnvoye(r, "WhatsApp")}
-                            aria-label={`WhatsApp rappel ${r.lead_name}`}
-                          >
-                            <MessageCircle className="w-4 h-4" /> WA
-                          </a>
-                        </Button>
-                        {hasUsableEmail(r.lead_email) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="min-h-[40px]"
-                            disabled={rappelSending === r.id}
-                            onClick={() => sendRappelEmail(r)}
-                            aria-label={`Envoyer le rappel email à ${r.lead_name}`}
-                          >
-                            {rappelSending === r.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Mail className="w-4 h-4" />
-                            )}
-                            Email
-                          </Button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Card>
-            )}
-
-            {/* Relances devis (Tier 1 / Phase 3) — devis sans réponse depuis 3 j+ */}
-            {relanceLeads.length > 0 && (
-              <Card className="p-5 md:p-6 space-y-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold">
-                    Relances devis ({relanceLeads.length})
-                  </h2>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Devis envoyés sans réponse depuis 3 jours et plus. Relance en 1 tap — le message
-                  s'adapte au palier (J+3 / J+7 / J+14).
-                </p>
-                <ul className="space-y-2">
-                  {relanceLeads.map(({ lead: l, days, palier }) => {
-                    const firstName = l.name.trim().split(/\s+/)[0] || l.name;
-                    const payload: RelanceDevisPayload = {
-                      clientName: firstName,
-                      devisEnvoyeAt: l.devis_envoye_at as string,
-                    };
-                    const { sms, wa, emailBody, subject } = buildRelanceMessages(palier, payload);
-                    return (
-                      <li
-                        key={l.id}
-                        className="flex items-center gap-2 flex-wrap rounded-lg border bg-background px-3 py-2"
-                      >
-                        <div className="flex-1 min-w-[10rem]">
-                          <p className="font-medium text-sm truncate flex items-center gap-2">
-                            <Link to={`/admin/lead/${l.id}`} className="hover:underline">
-                              {l.name}
-                            </Link>
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] px-1.5 py-0 ${PALIER_BADGE[palier]}`}
-                            >
-                              Relance {palier}
-                            </Badge>
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            devis envoyé il y a {days} jours
-                            {l.commune && ` · ${l.commune}`}
-                          </p>
-                        </div>
-                        <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(l.phone, sms)} aria-label={`SMS relance ${l.name}`} onClick={() => void traceEnvoi(l.id, "SMS", `Relance devis ${palier}`)}>
-                            <Smartphone className="w-4 h-4" /> SMS
-                          </a>
-                        </Button>
-                        <Button
-                          asChild
-                          size="sm"
-                          className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-                        >
-                          <a
-                            href={buildWhatsappHref(l.phone, wa)}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => void traceEnvoi(l.id, "WhatsApp", `Relance devis ${palier}`)}
-                            aria-label={`WhatsApp relance ${l.name}`}
-                          >
-                            <MessageCircle className="w-4 h-4" /> WA
-                          </a>
-                        </Button>
-                        {hasUsableEmail(l.email) && (
-                          <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                            <a
-                              href={buildMailtoHref(l.email, subject, emailBody)}
-                              onClick={() => void traceEnvoi(l.id, "Email", `Relance devis ${palier}`)}
-                              aria-label={`Email relance ${l.name}`}
-                            >
-                              <Mail className="w-4 h-4" /> Email
+                        <div className={`grid gap-2 ${maps ? "grid-cols-3" : "grid-cols-2"}`}>
+                          <Button asChild size="sm" variant="copper" className={ACTION}>
+                            <a href={`tel:${r.lead_phone}`} aria-label={`Appeler ${r.lead_name}`}>
+                              <Phone className="w-4 h-4" /> Appeler
                             </a>
                           </Button>
-                        )}
-                        <TerminerLeadButton lead={l} />
+                          <Button
+                            asChild
+                            size="sm"
+                            className={`${ACTION} bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90`}
+                          >
+                            <a
+                              href={buildWhatsappHref(r.lead_phone, texteDuJour(r))}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => void traceEnvoi(r.lead_id, "WhatsApp", "Confirmation du jour")}
+                              aria-label={`WhatsApp à ${r.lead_name}`}
+                            >
+                              <MessageCircle className="w-4 h-4" /> WhatsApp
+                            </a>
+                          </Button>
+                          {maps && (
+                            <Button asChild size="sm" variant="outline" className={ACTION}>
+                              <a href={maps} target="_blank" rel="noreferrer" aria-label={`Itinéraire vers ${r.lead_name}`}>
+                                <Navigation className="w-4 h-4" /> Itinéraire
+                              </a>
+                            </Button>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
                 </ul>
-              </Card>
-            )}
-
-            {/* Cette semaine */}
-            <Card className="p-5 md:p-6 space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-muted-foreground" />
-                  Les 7 prochains jours
-                </h2>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/admin/rdv" className="text-sm">
-                    Tout voir <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </div>
-              {weekRdvs.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic py-4">
-                  Pas de RDV cette semaine.
-                </p>
-              ) : (
-                <ul className="divide-y divide-border/50 -mx-2">
-                  {weekRdvs.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        to={`/admin/lead/${r.lead_id}`}
-                        className="flex items-center gap-3 px-2 py-2.5 rounded-md hover:bg-muted/50 active:bg-muted transition-colors min-h-[48px]"
-                      >
-                        <div className="text-center w-20 shrink-0">
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {new Date(`${r.date_rdv}T12:00:00`).toLocaleDateString(
-                              "fr-BE",
-                              { weekday: "short", day: "numeric", month: "short" },
-                            )}
-                          </p>
-                          <p className="text-sm font-bold text-primary">
-                            {formatHeure(r.heure_rdv)}
-                          </p>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {r.lead_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {r.type_visite}
-                            {r.lead_commune && ` · ${r.lead_commune}`}
-                          </p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 hidden sm:block" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
               )}
-            </Card>
+            </Bloc>
 
-            {/* Sources mois (compact) */}
-            {stats.thisMonth > 0 && (
-              <Card className="p-5 md:p-6 space-y-3">
-                <h2 className="text-lg font-semibold">Sources ce mois</h2>
-                <SourcesBreakdown leads={leads} />
-              </Card>
-            )}
+            {/* 2 — Demain : rappels J-1 */}
+            <Bloc
+              titre={`Demain${rappelsAEnvoyer.length ? ` (${rappelsAEnvoyer.length})` : ""}`}
+              sousTitre={dateLongue(demain)}
+              icone={<Bell className="w-5 h-5 text-primary" aria-hidden="true" />}
+            >
+              {rappelsAEnvoyer.length === 0 ? (
+                <Vide>
+                  {rappelsEnvoyes > 0
+                    ? `Rappels envoyés (${rappelsEnvoyes}). Plus rien à faire pour demain.`
+                    : "Aucun RDV demain."}
+                </Vide>
+              ) : (
+                <>
+                  <ul className="space-y-2">
+                    {rappelsAEnvoyer.map((r) => {
+                      const email = hasUsableEmail(r.lead_email);
+                      return (
+                        <li key={r.id} className="rounded-lg border bg-background p-3 space-y-2">
+                          <Link to={`/admin/lead/${r.lead_id}`} className="flex items-center gap-3 group">
+                            <span className="text-lg font-bold text-primary tabular-nums shrink-0">
+                              {formatHeure(r.heure_rdv)}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-medium truncate group-hover:underline">{r.lead_name}</span>
+                              <span className="block text-xs text-muted-foreground truncate">
+                                {r.type_visite}
+                                {r.lead_commune && ` · ${r.lead_commune}`}
+                              </span>
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                          </Link>
+                          <div className={`grid gap-2 ${email ? "grid-cols-3" : "grid-cols-2"}`}>
+                            <Button
+                              asChild
+                              size="sm"
+                              className={`${ACTION} bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90`}
+                            >
+                              <a
+                                href={buildWhatsappHref(r.lead_phone, texteRappel(r))}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={() => void marquerRappelEnvoye(r, "WhatsApp")}
+                                aria-label={`Rappel WhatsApp à ${r.lead_name}`}
+                              >
+                                <MessageCircle className="w-4 h-4" /> WhatsApp
+                              </a>
+                            </Button>
+                            <Button
+                              asChild
+                              size="sm"
+                              className={`${ACTION} bg-sms text-sms-foreground hover:bg-sms/90`}
+                            >
+                              <a
+                                href={buildSmsHref(r.lead_phone, texteRappel(r))}
+                                onClick={() => void marquerRappelEnvoye(r, "SMS")}
+                                aria-label={`Rappel SMS à ${r.lead_name}`}
+                              >
+                                <Smartphone className="w-4 h-4" /> SMS
+                              </a>
+                            </Button>
+                            {email && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={ACTION}
+                                disabled={emailEnCours === r.id}
+                                onClick={() => envoyerRappelEmail(r)}
+                                aria-label={`Rappel email à ${r.lead_name}`}
+                              >
+                                {emailEnCours === r.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Mail className="w-4 h-4" />
+                                )}
+                                Email
+                              </Button>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {rappelsEnvoyes > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {rappelsEnvoyes} rappel{rappelsEnvoyes > 1 ? "s" : ""} déjà envoyé{rappelsEnvoyes > 1 ? "s" : ""}.
+                    </p>
+                  )}
+                </>
+              )}
+            </Bloc>
+
+            {/* 3 — À faire */}
+            <Bloc
+              titre={`À faire${aFaireTous.length ? ` (${aFaireTous.length})` : ""}`}
+              icone={<ListChecks className="w-5 h-5 text-primary" aria-hidden="true" />}
+            >
+              {aFaire.length === 0 ? (
+                <Vide>Rien à rappeler, rien à relancer.</Vide>
+              ) : (
+                <>
+                  <ul className="space-y-2">
+                    {aFaire.map((item) => {
+                      const l = item.lead;
+                      const texte =
+                        item.genre === "rappel"
+                          ? smsRappelLead(l.name)
+                          : texteRelance(item.palier, {
+                              clientName: prenomDe(l.name),
+                              devisEnvoyeAt: l.devis_envoye_at as string,
+                            });
+                      const titreTrace = item.genre === "rappel" ? "Rappel lead" : `Relance devis ${item.palier}`;
+                      return (
+                        <li key={`${item.genre}-${l.id}`} className="rounded-lg border bg-background p-3 space-y-2">
+                          <Link to={`/admin/lead/${l.id}`} className="flex items-center gap-3 group">
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-medium truncate group-hover:underline">{l.name}</span>
+                              <span className="block text-xs text-muted-foreground truncate">
+                                {item.detail}
+                                {l.commune && ` · ${l.commune}`}
+                              </span>
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                          </Link>
+                          <div className="grid grid-cols-3 gap-2">
+                            <Button asChild size="sm" variant="copper" className={ACTION}>
+                              <a href={`tel:${l.phone}`} aria-label={`Appeler ${l.name}`}>
+                                <Phone className="w-4 h-4" /> Appeler
+                              </a>
+                            </Button>
+                            <Button
+                              asChild
+                              size="sm"
+                              className={`${ACTION} bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90`}
+                            >
+                              <a
+                                href={buildWhatsappHref(l.phone, texte)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={() => void traceEnvoi(l.id, "WhatsApp", titreTrace)}
+                                aria-label={`WhatsApp à ${l.name}`}
+                              >
+                                <MessageCircle className="w-4 h-4" /> WhatsApp
+                              </a>
+                            </Button>
+                            <TerminerLeadButton lead={l} className={`${ACTION} w-full`} />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {aFaireTous.length > aFaire.length && (
+                    <Button asChild variant="ghost" size="sm" className="min-h-[40px]">
+                      <Link to="/admin/pipeline">
+                        Voir les {aFaireTous.length - aFaire.length} autres dans Leads <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  )}
+                </>
+              )}
+            </Bloc>
           </>
         )}
       </div>
     </AdminShell>
-  );
-};
-
-/**
- * Squelettes affichés pendant le chargement initial.
- * Mime la structure de la page chargée pour que le layout ne saute pas.
- */
-const SkeletonBlock = ({ className = "" }: { className?: string }) => (
-  <div className={`animate-pulse rounded bg-muted/60 ${className}`} />
-);
-
-const SkeletonContent = () => (
-  <>
-    {/* 4 KPI */}
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {[0, 1, 2, 3].map((i) => (
-        <Card key={i} className="p-4 space-y-2">
-          <SkeletonBlock className="h-3 w-24" />
-          <SkeletonBlock className="h-8 w-16" />
-          <SkeletonBlock className="h-3 w-20" />
-        </Card>
-      ))}
-    </div>
-
-    {/* Aujourd'hui card */}
-    <Card className="p-5 md:p-6 space-y-4 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-      <SkeletonBlock className="h-6 w-40" />
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <SkeletonBlock className="h-4 w-32" />
-          {[0, 1].map((i) => (
-            <SkeletonBlock key={i} className="h-14 w-full" />
-          ))}
-        </div>
-        <div className="space-y-2">
-          <SkeletonBlock className="h-4 w-32" />
-          {[0, 1].map((i) => (
-            <SkeletonBlock key={i} className="h-14 w-full" />
-          ))}
-        </div>
-      </div>
-    </Card>
-
-    {/* Cette semaine */}
-    <Card className="p-5 md:p-6 space-y-3">
-      <SkeletonBlock className="h-6 w-48" />
-      {[0, 1, 2].map((i) => (
-        <SkeletonBlock key={i} className="h-12 w-full" />
-      ))}
-    </Card>
-  </>
-);
-
-const SourcesBreakdown = ({ leads }: { leads: Lead[] }) => {
-  const data = useMemo(() => {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthLeads = leads.filter((l) => new Date(l.created_at) >= monthStart);
-    const total = monthLeads.length;
-    if (total === 0) return [];
-    const counts = monthLeads.reduce<Record<string, number>>((acc, l) => {
-      const key = l.source || "formulaire_site";
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-    return Object.entries(counts)
-      .map(([source, count]) => ({
-        source,
-        count,
-        percent: Math.round((count / total) * 100),
-      }))
-      .sort((a, b) => b.count - a.count);
-  }, [leads]);
-
-  if (data.length === 0) return null;
-
-  return (
-    <div className="space-y-2">
-      {data.map((item) => (
-        <div key={item.source} className="flex items-center gap-3">
-          <div className="w-32 text-sm shrink-0">{leadSourceLabel(item.source)}</div>
-          <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-primary"
-              style={{ width: `${item.percent}%` }}
-            />
-          </div>
-          <div className="text-sm tabular-nums w-16 text-right">
-            {item.count} · {item.percent}%
-          </div>
-        </div>
-      ))}
-    </div>
   );
 };
 
