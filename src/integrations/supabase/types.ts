@@ -198,16 +198,16 @@ export type Database = {
       }
       leads: {
         Row: {
-          address: string
-          client_type: string
+          address: string | null
+          client_type: string | null
           code_postal: string | null
           commune: string | null
           created_at: string
           devis_envoye_at: string | null
-          email: string
+          email: string | null
           gdpr_consent: boolean
           id: string
-          message: string
+          message: string | null
           name: string
           notes: string | null
           notes_internes: string | null
@@ -222,16 +222,16 @@ export type Database = {
           timing: string | null
         }
         Insert: {
-          address: string
-          client_type: string
+          address?: string | null
+          client_type?: string | null
           code_postal?: string | null
           commune?: string | null
           created_at?: string
           devis_envoye_at?: string | null
-          email: string
+          email?: string | null
           gdpr_consent: boolean
           id?: string
-          message: string
+          message?: string | null
           name: string
           notes?: string | null
           notes_internes?: string | null
@@ -246,16 +246,16 @@ export type Database = {
           timing?: string | null
         }
         Update: {
-          address?: string
-          client_type?: string
+          address?: string | null
+          client_type?: string | null
           code_postal?: string | null
           commune?: string | null
           created_at?: string
           devis_envoye_at?: string | null
-          email?: string
+          email?: string | null
           gdpr_consent?: boolean
           id?: string
-          message?: string
+          message?: string | null
           name?: string
           notes?: string | null
           notes_internes?: string | null

@@ -27,12 +27,15 @@ import { useAdminGuard } from "@/hooks/useAdminGuard";
 import {
   fetchLeadsWithUpcomingRdvs,
   fetchAllRdvs,
+  hasUsableEmail,
+  traceEnvoi,
   type RdvWithLead,
 } from "@/lib/admin/queries";
+import type { CanalEnvoi } from "@/lib/admin/envois";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
 import { type Lead, leadSourceLabel } from "@/lib/admin/types";
 import { formatHeure } from "@/lib/rdv/formatters";
-import { sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
+import { sendRappelJ1Emails, envoyerEmailSiPossible, type LeadInfo } from "@/lib/rdv/emailjs";
 import { type RendezVous } from "@/lib/rdv/constants";
 import {
   buildSmsHref,
@@ -97,12 +100,7 @@ const buildMapsDir = (parts: (string | null | undefined)[]): string | null => {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
 };
 
-// Phase 2.1 — email réel (sinon pas d'envoi auto, on s'en tient à SMS/WhatsApp).
-const hasUsableEmail = (email: string | null | undefined): boolean => {
-  if (!email) return false;
-  const e = email.trim().toLowerCase();
-  return e.includes("@") && e !== "non fourni" && !e.endsWith("@local.cuivre-electrique.com");
-};
+// hasUsableEmail : source unique dans @/lib/admin/queries (règle 1.3 du brief admin).
 
 // Texte de rappel J-1 pour SMS/WhatsApp (lignes 🔧/📍 affichées seulement si l'info existe).
 const rappelText = (r: RdvWithLead): string => {
@@ -257,6 +255,26 @@ const Aujourdhui = () => {
       .sort((a, b) => a.heure_rdv.localeCompare(b.heure_rdv));
   }, [rdvs]);
 
+  // Règles 3 et 6 du brief admin : taper SMS / WhatsApp (ou envoyer l'email)
+  // marque le RDV « rappel envoyé » et trace l'envoi dans les notes du lead.
+  // Fire-and-forget : n'empêche jamais l'ouverture du message.
+  const marquerRappelEnvoye = async (r: RdvWithLead, canal: CanalEnvoi) => {
+    try {
+      void traceEnvoi(r.lead_id, canal, "Rappel J-1");
+      if (r.statut !== "rappel_envoye") {
+        const { error } = await supabase
+          .from("rendez_vous")
+          .update({ statut: "rappel_envoye", rappel_envoye_at: new Date().toISOString() })
+          .eq("id", r.id);
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+    } catch (e: unknown) {
+      const m = e instanceof Error ? e.message : "mise à jour impossible";
+      toast.warning("Rappel non marqué comme envoyé : " + m);
+    }
+  };
+
   // Phase 2.1 — envoie le rappel J-1 par email (client + mémo Adrian) via la
   // fonction existante sendRappelJ1Emails, puis marque le RDV "rappel_envoye".
   // Pas de cron (rail 5) : déclenchement manuel groupé depuis le cockpit.
@@ -286,13 +304,17 @@ const Aujourdhui = () => {
         created_at: "",
         updated_at: "",
       } as RendezVous;
-      await sendRappelJ1Emails(lead, rdv);
-      await supabase
-        .from("rendez_vous")
-        .update({ statut: "rappel_envoye", rappel_envoye_at: new Date().toISOString() })
-        .eq("id", r.id);
-      toast.success("Rappel email envoyé (client + mémo pour toi)");
-      queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+      const res = await envoyerEmailSiPossible(lead, () => sendRappelJ1Emails(lead, rdv));
+      if (res.statut === "envoye") {
+        toast.success("Rappel email envoyé (client + mémo pour toi)");
+        await marquerRappelEnvoye(r, "Email");
+      } else if (res.statut === "non_envoye") {
+        toast.info("Pas d'email pour ce client : utilise SMS ou WhatsApp.");
+      } else {
+        toast.warning("Rappel email non parti : " + (res.erreur ?? "envoi impossible"), {
+          description: "Préviens le client par SMS ou WhatsApp.",
+        });
+      }
     } catch (e: unknown) {
       const m = e instanceof Error ? e.message : "envoi impossible";
       toast.error("Rappel non envoyé : " + m);
@@ -687,7 +709,7 @@ const Aujourdhui = () => {
                           </a>
                         </Button>
                         <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(l.phone, rappelMsg)} aria-label={`SMS à ${l.name}`}>
+                          <a href={buildSmsHref(l.phone, rappelMsg)} aria-label={`SMS à ${l.name}`} onClick={() => void traceEnvoi(l.id, "SMS", "Rappel lead")}>
                             <Smartphone className="w-4 h-4" /> SMS
                           </a>
                         </Button>
@@ -700,6 +722,7 @@ const Aujourdhui = () => {
                             href={buildWhatsappHref(l.phone, rappelMsg)}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={() => void traceEnvoi(l.id, "WhatsApp", "Rappel lead")}
                             aria-label={`WhatsApp à ${l.name}`}
                           >
                             <MessageCircle className="w-4 h-4" /> WA
@@ -758,7 +781,7 @@ const Aujourdhui = () => {
                           </p>
                         </div>
                         <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(r.lead_phone, rappelText(r))} aria-label={`SMS rappel ${r.lead_name}`}>
+                          <a href={buildSmsHref(r.lead_phone, rappelText(r))} aria-label={`SMS rappel ${r.lead_name}`} onClick={() => void marquerRappelEnvoye(r, "SMS")}>
                             <Smartphone className="w-4 h-4" /> SMS
                           </a>
                         </Button>
@@ -771,6 +794,7 @@ const Aujourdhui = () => {
                             href={buildWhatsappHref(r.lead_phone, rappelText(r))}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={() => void marquerRappelEnvoye(r, "WhatsApp")}
                             aria-label={`WhatsApp rappel ${r.lead_name}`}
                           >
                             <MessageCircle className="w-4 h-4" /> WA
@@ -844,7 +868,7 @@ const Aujourdhui = () => {
                           </p>
                         </div>
                         <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                          <a href={buildSmsHref(l.phone, sms)} aria-label={`SMS relance ${l.name}`}>
+                          <a href={buildSmsHref(l.phone, sms)} aria-label={`SMS relance ${l.name}`} onClick={() => void traceEnvoi(l.id, "SMS", `Relance devis ${palier}`)}>
                             <Smartphone className="w-4 h-4" /> SMS
                           </a>
                         </Button>
@@ -857,6 +881,7 @@ const Aujourdhui = () => {
                             href={buildWhatsappHref(l.phone, wa)}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={() => void traceEnvoi(l.id, "WhatsApp", `Relance devis ${palier}`)}
                             aria-label={`WhatsApp relance ${l.name}`}
                           >
                             <MessageCircle className="w-4 h-4" /> WA
@@ -866,6 +891,7 @@ const Aujourdhui = () => {
                           <Button asChild size="sm" variant="outline" className="min-h-[40px]">
                             <a
                               href={buildMailtoHref(l.email, subject, emailBody)}
+                              onClick={() => void traceEnvoi(l.id, "Email", `Relance devis ${palier}`)}
                               aria-label={`Email relance ${l.name}`}
                             >
                               <Mail className="w-4 h-4" /> Email

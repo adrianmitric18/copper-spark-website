@@ -104,7 +104,7 @@ const CommandPalette = () => {
                 <CommandItem
                   key={lead.id}
                   // Concatène les champs cherchables pour que cmdk les match
-                  value={`${lead.name} ${lead.email} ${lead.phone} ${lead.commune ?? ""} ${lead.code_postal ?? ""}`}
+                  value={`${lead.name} ${lead.email ?? ""} ${lead.phone} ${lead.commune ?? ""} ${lead.code_postal ?? ""}`}
                   onSelect={() => go(`/admin/lead/${lead.id}`)}
                 >
                   <User className="mr-2 h-4 w-4 shrink-0" />

@@ -241,11 +241,7 @@ const InterventionSuccessScreen = ({
                 dans Gmail/Outlook (Ctrl+V) pour un email pro avec mise en forme.
               </p>
             </div>
-          ) : (
-            <p className="text-xs text-center text-muted-foreground italic">
-              Pas d'email saisi pour ce client — boutons email indisponibles.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <DialogFooter>

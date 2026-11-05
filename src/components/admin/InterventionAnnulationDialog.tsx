@@ -254,11 +254,7 @@ const InterventionAnnulationDialog = ({
                     Copier HTML
                   </Button>
                 </div>
-              ) : (
-                <p className="text-xs text-center text-muted-foreground italic">
-                  Pas d'email saisi pour ce client.
-                </p>
-              )}
+              ) : null}
 
               <p className="text-xs text-muted-foreground italic mt-2 text-center">
                 ⚠️ Pense à supprimer manuellement l'événement Google Calendar.

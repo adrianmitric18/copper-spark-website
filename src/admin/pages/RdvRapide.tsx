@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminLoading from "@/components/admin/AdminLoading";
+import { traceEnvoi } from "@/lib/admin/queries";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -260,11 +261,6 @@ const RdvRapide = () => {
   const onSubmit = (values: FormValues) => {
     // T1 — mode lead express : on ignore les champs RDV.
     if (sansRdv) {
-      // Adresse/commune requise dans ce mode (validation légère, schema partagé).
-      if (!values.address?.trim()) {
-        form.setError("address", { message: "Commune ou adresse requise" });
-        return;
-      }
       createLeadMut.mutate({
         name: values.name,
         phone: values.phone,
@@ -449,7 +445,6 @@ const RdvRapide = () => {
             >
               <Input
                 type="date"
-                min={todayIso}
                 {...form.register("dateRdv")}
                 className="h-12 text-base"
               />
@@ -821,7 +816,7 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
               size="lg"
               className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
             >
-              <a href={smsHref}>
+              <a href={smsHref} onClick={() => void traceEnvoi(summary.leadId, "SMS", "Confirmation RDV")}>
                 <MessageSquare className="w-5 h-5" />
                 SMS
               </a>
@@ -833,7 +828,12 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
               size="lg"
               className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
             >
-              <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => void traceEnvoi(summary.leadId, "WhatsApp", "Confirmation RDV")}
+              >
                 <Send className="w-5 h-5" />
                 WhatsApp
               </a>
@@ -849,7 +849,7 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
                   size="lg"
                   className="h-14 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/10"
                 >
-                  <a href={mailtoHref}>
+                  <a href={mailtoHref} onClick={() => void traceEnvoi(summary.leadId, "Email", "Confirmation RDV")}>
                     <Mail className="w-5 h-5" />
                     Ouvrir email (texte)
                   </a>
@@ -873,12 +873,7 @@ const SuccessScreen = ({ summary, onNew }: SuccessScreenProps) => {
                 dans Gmail/Outlook (Ctrl+V) pour un email pro avec mise en forme.
               </p>
             </div>
-          ) : (
-            <p className="text-xs text-center text-muted-foreground italic">
-              Saisis l'email du client pour activer les boutons "Ouvrir email"
-              et "Copier HTML" lors du prochain RDV.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-2 mt-6">
@@ -977,7 +972,7 @@ const LeadSuccessScreen = ({ summary, onNew }: LeadSuccessScreenProps) => {
             size="lg"
             className="w-full h-12 text-sm font-medium"
           >
-            <a href={carteVisiteHref}>
+            <a href={carteVisiteHref} onClick={() => void traceEnvoi(summary.leadId, "SMS", "Bien reçu")}>
               <Contact className="w-5 h-5" />
               Prévenir le client (bien reçu)
             </a>
