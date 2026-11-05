@@ -159,8 +159,9 @@ export async function findLeadsByPhone(rawPhone: string): Promise<LeadMatch[]> {
 /** Crée un lead minimal sans rendez-vous (lead express téléphone). */
 export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapideResult> {
   // Policy « Admin can insert leads » (is_admin()) : aucune autre règle que
-  // nom + téléphone. source/status gardent leurs valeurs historiques : l'absence
-  // de rendez_vous distingue un lead express d'un RDV rapide, pas le statut.
+  // nom + téléphone. Un lead express n'a PAS de rendez-vous : il est « nouveau »
+  // (donc « à rappeler » sur l'accueil), plus « rdv_pris » — ce statut voulait
+  // dire « RDV calé » et le faisait passer pour un « RDV passé ».
   const { data: lead, error } = await supabase
     .from("leads")
     .insert({
@@ -174,7 +175,7 @@ export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapi
       notes_internes: input.notes?.trim() || null,
       gdpr_consent: true,
       source: "rdv_rapide",
-      status: "rdv_pris",
+      status: "nouveau",
     })
     .select("id")
     .single();
