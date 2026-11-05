@@ -21,9 +21,9 @@ const formatDate = (iso: string): string => {
 const COLUMNS: { header: string; pick: (l: Lead) => string }[] = [
   { header: "Date", pick: (l) => formatDate(l.created_at) },
   { header: "Nom", pick: (l) => l.name },
-  { header: "Email", pick: (l) => l.email },
+  { header: "Email", pick: (l) => l.email ?? "" },
   { header: "Téléphone", pick: (l) => l.phone },
-  { header: "Type client", pick: (l) => l.client_type },
+  { header: "Type client", pick: (l) => l.client_type ?? "" },
   { header: "Rue", pick: (l) => l.rue ?? "" },
   { header: "Numéro", pick: (l) => l.numero ?? "" },
   { header: "Code postal", pick: (l) => l.code_postal ?? "" },
@@ -32,7 +32,7 @@ const COLUMNS: { header: string; pick: (l: Lead) => string }[] = [
   { header: "Timing", pick: (l) => l.timing ?? "" },
   { header: "Source", pick: (l) => l.source ?? "" },
   { header: "Statut", pick: (l) => l.status },
-  { header: "Message", pick: (l) => l.message },
+  { header: "Message", pick: (l) => l.message ?? "" },
   { header: "Notes internes", pick: (l) => l.notes_internes ?? "" },
 ];
 

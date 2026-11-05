@@ -14,6 +14,26 @@
 
 ## Journal
 
+### 2026-11-04 — Admin : rien d'obligatoire sauf nom + téléphone
+- **Décision :** « Admin : rien d'obligatoire sauf nom + téléphone ; l'email n'est jamais
+  bloquant ; aucune règle de date ; les envois WhatsApp/SMS sont tracés dans notes_internes. »
+  Lot 1A du brief admin (branche `fix/admin-deblocage`, migration
+  `20261104180000_admin_deblocage.sql`).
+- **Pourquoi :** Adrian confirme par message, pas par email ; le trigger « date dans le passé »
+  empêchait d'annuler ou de clôturer un RDV passé, et la même fonction faisait planter la
+  checklist. Les leads sans email bloquaient la modification/annulation de RDV à l'écran alors
+  que la base était à jour.
+- **Conséquences / pièges à ne pas réapprendre :**
+  - `leads.email/address/message/client_type` sont nullables : toujours `?? ""` à l'affichage,
+    TypeScript non strict ne signale rien.
+  - Un seul `hasUsableEmail` (src/lib/admin/envois.ts, réexporté par queries.ts) ; un seul
+    wrapper `envoyerEmailSiPossible` (emailjs.ts) : écrire en base → écran → email si possible
+    → `toast.warning` en cas d'échec, jamais `toast.error`. Le mémo Adrian ne bloque jamais.
+  - `traceEnvoi(leadId, canal, titre)` (queries.ts) sur CHAQUE bouton SMS/WhatsApp/Email ;
+    dans la fiche, la ligne est aussi ajoutée à l'état local des notes.
+  - Plus aucun placeholder (`@local.cuivre-electrique.com`, « À préciser ») : null.
+  - Policy `Admin can insert leads` (is_admin()) remplace `Admin can insert rdv_rapide leads`.
+
 ### 2026-11-04 — Pointage des heures dans l’admin (/admin/heures), Supabase
 - **Décision :** le pointage local de vertuoza-tools (`tools/hours.mjs` → `exports/heures.csv`)
   est remplacé par une page admin mobile-first, branche `feat/pointage-heures`. Deux tables

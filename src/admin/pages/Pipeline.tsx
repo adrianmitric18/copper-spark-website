@@ -222,7 +222,7 @@ const Pipeline = () => {
     return leads.filter(
       (l) =>
         l.name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
+        (l.email ?? "").toLowerCase().includes(q) ||
         l.phone.toLowerCase().includes(q) ||
         (l.commune || "").toLowerCase().includes(q) ||
         (l.code_postal || "").toLowerCase().includes(q),

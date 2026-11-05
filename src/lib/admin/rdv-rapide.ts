@@ -5,9 +5,9 @@
  * (Supabase JS ne supporte pas les transactions multi-table, on rollback à
  * la main si l'INSERT rendez_vous échoue).
  *
- * Pour respecter les contraintes NOT NULL côté schema `leads` (email,
- * address, client_type, services, message), on remplit avec des placeholders
- * sensibles. Adrian peut enrichir le lead plus tard via la fiche détail.
+ * Depuis le lot 1A (migration 20261104180000_admin_deblocage), email, adresse,
+ * message et type de client sont facultatifs en base : on insère `null`, plus
+ * aucun placeholder. Adrian enrichit le lead plus tard depuis la fiche.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,7 @@ export const DELAI_APPEL_PRESETS = [15, 30, 45, 60] as const;
 export interface RdvRapideInput {
   name: string;
   phone: string;
-  /** Email du client, optionnel. Si vide, on stocke un placeholder local. */
+  /** Email du client, optionnel. Vide → null. */
   email?: string;
   /** YYYY-MM-DD */
   dateRdv: string;
@@ -101,14 +101,13 @@ export interface RdvRapideResult {
 /**
  * T1 — Lead express (appel sans RDV).
  * Entrée minimale d'un lead pris au téléphone quand AUCUNE date n'est encore
- * fixée. Mêmes placeholders que `createRdvRapide` pour respecter les NOT NULL
- * du schema `leads` (email/adresse/message), donc ZÉRO changement DB. Adrian
- * enrichit / cale le RDV plus tard depuis la fiche.
+ * fixée. Nom + téléphone suffisent ; le reste est null. Adrian enrichit / cale
+ * le RDV plus tard depuis la fiche.
  */
 export interface LeadRapideInput {
   name: string;
   phone: string;
-  /** Email du client, optionnel. Si vide → placeholder local (hasUsableEmail le filtre). */
+  /** Email du client, optionnel. Vide → null. */
   email?: string;
   /** Adresse / commune, optionnelle. */
   address?: string;
@@ -159,28 +158,20 @@ export async function findLeadsByPhone(rawPhone: string): Promise<LeadMatch[]> {
 
 /** Crée un lead minimal sans rendez-vous (lead express téléphone). */
 export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapideResult> {
-  const placeholderEmail = `lead-${Date.now()}@local.cuivre-electrique.com`;
-  const emailFinal = input.email?.trim() || placeholderEmail;
-  const adresseFinale = input.address?.trim() || "À préciser";
-  const messageFinal =
-    input.notes?.trim() ||
-    `Lead créé par téléphone le ${new Date().toLocaleDateString("fr-BE")}.`;
-
-  // La policy RLS d'INSERT minimale ("Admin can insert rdv_rapide leads",
-  // migration 20260429100000) exige source='rdv_rapide' ET status='rdv_pris'.
-  // On réutilise donc ces valeurs (mêmes que createRdvRapide, qui passe déjà) :
-  // l'absence de rendez_vous distingue un lead express d'un RDV rapide, pas le
-  // statut. Aligné ici pour rester SANS changement DB.
+  // Policy « Admin can insert leads » (is_admin()) : aucune autre règle que
+  // nom + téléphone. source/status gardent leurs valeurs historiques : l'absence
+  // de rendez_vous distingue un lead express d'un RDV rapide, pas le statut.
   const { data: lead, error } = await supabase
     .from("leads")
     .insert({
       name: input.name.trim(),
       phone: input.phone.trim(),
-      email: emailFinal,
-      address: adresseFinale,
-      client_type: "Particulier",
-      services: ["rdv_rapide"],
-      message: messageFinal,
+      email: input.email?.trim() || null,
+      address: input.address?.trim() || null,
+      client_type: null,
+      services: [],
+      message: null,
+      notes_internes: input.notes?.trim() || null,
       gdpr_consent: true,
       source: "rdv_rapide",
       status: "rdv_pris",
@@ -197,27 +188,17 @@ export async function createLeadRapide(input: LeadRapideInput): Promise<LeadRapi
  * échoue, on supprime le lead créé pour ne pas laisser de fantôme.
  */
 export async function createRdvRapide(input: RdvRapideInput): Promise<RdvRapideResult> {
-  // 1. INSERT lead minimal — placeholders pour les NOT NULL non saisis.
-  // Si Adrian a saisi le vrai email du client, on l'utilise (utile pour
-  // l'envoi futur de confirmation par email). Sinon on génère un placeholder
-  // local unique pour respecter la contrainte NOT NULL du schema leads.
-  const placeholderEmail = `rdv-${Date.now()}@local.cuivre-electrique.com`;
-  const emailFinal = input.email?.trim() || placeholderEmail;
-  const adresseFinale = input.address?.trim() || "À préciser";
-  const messageFinal =
-    input.notes?.trim() ||
-    `RDV ${input.typeVisite.toLowerCase()} pris par téléphone le ${new Date().toLocaleDateString("fr-BE")}.`;
-
+  // 1. INSERT lead minimal — nom + téléphone, le reste null (plus de placeholder).
   const { data: lead, error: leadErr } = await supabase
     .from("leads")
     .insert({
       name: input.name.trim(),
       phone: input.phone.trim(),
-      email: emailFinal,
-      address: adresseFinale,
-      client_type: "Particulier",
-      services: ["rdv_rapide"],
-      message: messageFinal,
+      email: input.email?.trim() || null,
+      address: input.address?.trim() || null,
+      client_type: null,
+      services: [],
+      message: null,
       gdpr_consent: true,
       source: "rdv_rapide",
       status: "rdv_pris",
