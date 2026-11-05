@@ -26,6 +26,7 @@ import {
 } from "@/lib/admin/types";
 import { downloadLeadsCsv } from "@/lib/admin/csv";
 import { formatHeure } from "@/lib/rdv/formatters";
+import { formaterDateCourte } from "@/lib/admin/heures";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
@@ -148,7 +149,7 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
           {upcoming && (
             <span className="flex items-center gap-1 text-primary font-medium">
               <Calendar className="w-3 h-3" />
-              {upcoming.date_rdv} · {formatHeure(upcoming.heure_rdv)}
+              {formaterDateCourte(upcoming.date_rdv)} · {formatHeure(upcoming.heure_rdv)}
             </span>
           )}
         </div>

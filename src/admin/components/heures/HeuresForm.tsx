@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import HeureInput from "@/components/admin/HeureInput";
 import { cn } from "@/lib/utils";
 import {
   TYPES_HEURES,
@@ -31,6 +32,7 @@ import {
   TYPE_LABELS,
   addDays,
   calculerHeuresNettes,
+  formaterDateCourte,
   formaterHeures,
   todayIso,
   type Heure,
@@ -230,10 +232,8 @@ const HeuresForm = ({
           <Label htmlFor="heures-debut" className="text-base">
             Début{deplacement && <span className="text-muted-foreground font-normal"> (facultatif)</span>}
           </Label>
-          <Input
+          <HeureInput
             id="heures-debut"
-            type="time"
-            step={300}
             value={v.debut}
             onChange={(e) => set("debut", e.target.value)}
             className={CHAMP}
@@ -244,10 +244,8 @@ const HeuresForm = ({
           <Label htmlFor="heures-fin" className="text-base">
             Fin{deplacement && <span className="text-muted-foreground font-normal"> (facultatif)</span>}
           </Label>
-          <Input
+          <HeureInput
             id="heures-fin"
-            type="time"
-            step={300}
             value={v.fin}
             onChange={(e) => set("fin", e.target.value)}
             className={CHAMP}
@@ -389,7 +387,7 @@ const HeuresForm = ({
             <AlertDialogTitle>Supprimer cette ligne ?</AlertDialogTitle>
             <AlertDialogDescription>
               {enEdition
-                ? `${enEdition.date} · ${enEdition.chantier} · ${formaterHeures(Number(enEdition.heures_nettes) || 0)}. Cette action est définitive.`
+                ? `${formaterDateCourte(enEdition.date)} · ${enEdition.chantier} · ${formaterHeures(Number(enEdition.heures_nettes) || 0)}. Cette action est définitive.`
                 : "Cette action est définitive."}
             </AlertDialogDescription>
           </AlertDialogHeader>

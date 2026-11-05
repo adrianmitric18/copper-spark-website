@@ -36,6 +36,7 @@ import {
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminLoading from "@/components/admin/AdminLoading";
 import { traceEnvoi } from "@/lib/admin/queries";
+import HeureInput from "@/components/admin/HeureInput";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -77,7 +78,10 @@ const formSchema = z.object({
     .optional()
     .or(z.literal("")),
   dateRdv: z.string().min(1, "Date requise"),
-  heureRdv: z.string().min(1, "Heure requise"),
+  heureRdv: z
+    .string()
+    .min(1, "Heure requise")
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure au format HH:MM (ex. 07:30)"),
   typeVisite: z.enum(TYPE_VISITES),
   dureeMinutes: z.coerce.number().int().min(15).max(480),
   delaiAppelMinutes: z
@@ -229,7 +233,7 @@ const RdvRapide = () => {
         },
       });
       toast.success("RDV créé", {
-        description: `${vars.name} • ${vars.dateRdv} à ${vars.heureRdv}`,
+        description: `${vars.name} • ${new Date(`${vars.dateRdv}T12:00:00`).toLocaleDateString("fr-BE", { weekday: "long", day: "numeric", month: "long" })} à ${vars.heureRdv}`,
       });
     },
     onError: (e: Error) => {
@@ -454,9 +458,7 @@ const RdvRapide = () => {
               label="Heure *"
               error={form.formState.errors.heureRdv?.message}
             >
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureRdv")}
                 className="h-12 text-base"
               />

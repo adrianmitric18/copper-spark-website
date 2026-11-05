@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2, CalendarPlus } from "lucide-react";
 import { TYPES_VISITE, DUREES_OPTIONS, type RendezVous } from "@/lib/rdv/constants";
+import HeureInput from "@/components/admin/HeureInput";
+import { estHeureValide } from "@/lib/admin/heure-saisie";
 
 export interface RdvFormValues {
   date_rdv: string;
@@ -39,6 +41,7 @@ const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }
     // aussi ce qui s'est passé) ; aucune plage horaire imposée (6 h 30, 22 h 30…).
     if (!date) e.date = "Date requise";
     if (!heure) e.heure = "Heure requise";
+    else if (!estHeureValide(heure)) e.heure = "Heure au format HH:MM (ex. 07:30)";
     if (!type) e.type = "Type de visite requis";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -70,11 +73,9 @@ const RendezVousForm = ({ initial, submitting, submitLabel, onSubmit, onCancel }
         </div>
         <div>
           <Label htmlFor="rdv-heure">Heure *</Label>
-          <Input
+          <HeureInput
             id="rdv-heure"
-            type="time"
             value={heure}
-            step={300}
             onChange={(e) => setHeure(e.target.value)}
           />
           {errors.heure && <p className="text-xs text-destructive mt-1">{errors.heure}</p>}

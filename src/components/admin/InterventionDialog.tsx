@@ -37,6 +37,7 @@ import {
   type Intervention,
   type TypeIntervention,
 } from "@/lib/admin/interventions";
+import HeureInput from "@/components/admin/HeureInput";
 
 interface InterventionDialogProps {
   open: boolean;
@@ -226,9 +227,7 @@ const InterventionDialog = ({
           <div className="grid grid-cols-1 [@media(min-width:380px)]:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Heure début *</Label>
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureDebut", {
                   onChange: () => setAutoHoraires(false),
                 })}
@@ -242,9 +241,7 @@ const InterventionDialog = ({
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Heure fin *</Label>
-              <Input
-                type="time"
-                step="900"
+              <HeureInput
                 {...form.register("heureFin", {
                   onChange: () => setAutoHoraires(false),
                 })}
