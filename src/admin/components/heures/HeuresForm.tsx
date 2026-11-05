@@ -171,7 +171,8 @@ const HeuresForm = ({
                 aria-checked={actif}
                 onClick={() => set("type", t)}
                 className={cn(
-                  "h-16 rounded-lg border text-sm font-bold uppercase tracking-wide transition-colors",
+                  // 3 boutons sur 360 px : « DÉPLACEMENT » doit tenir sans déborder.
+                  "h-16 min-w-0 px-1 rounded-lg border text-xs sm:text-sm font-bold uppercase tracking-normal sm:tracking-wide transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   actif
                     ? "bg-primary text-primary-foreground border-primary"
@@ -258,7 +259,7 @@ const HeuresForm = ({
       <div className="space-y-2">
         <Label htmlFor="heures-pause" className="text-base">Pause (minutes)</Label>
         <div className="flex gap-2 items-stretch">
-          <div className="flex gap-1.5 flex-1 overflow-x-auto scrollbar-thin">
+          <div className="flex gap-1 flex-1 overflow-x-auto scrollbar-thin">
             {PAUSES_RAPIDES.map((p) => {
               const actif = Number(v.pauseMin) === p;
               return (
@@ -267,7 +268,7 @@ const HeuresForm = ({
                   type="button"
                   onClick={() => set("pauseMin", String(p))}
                   className={cn(
-                    "shrink-0 h-12 min-w-[52px] px-2 rounded-md border text-sm font-medium transition-colors",
+                    "shrink-0 h-12 min-w-[44px] px-1.5 rounded-md border text-sm font-medium transition-colors",
                     actif
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-background border-border hover:border-primary/40",

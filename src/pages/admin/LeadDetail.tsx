@@ -1164,7 +1164,7 @@ const LeadDetail = () => {
               disabled={terminantRdv || cancellingRdv}
               variant="copper"
               size="lg"
-              className="min-h-[48px] px-2"
+              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base"
             >
               {terminantRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
               Terminer
@@ -1174,7 +1174,7 @@ const LeadDetail = () => {
               disabled={terminantRdv || cancellingRdv}
               variant="outline"
               size="lg"
-              className="min-h-[48px] px-2"
+              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base"
             >
               <CalendarPlus className="w-4 h-4" /> Replanifier
             </Button>
@@ -1183,7 +1183,7 @@ const LeadDetail = () => {
               disabled={terminantRdv || cancellingRdv}
               variant="outline"
               size="lg"
-              className="min-h-[48px] px-2 text-destructive hover:bg-destructive/10"
+              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base text-destructive hover:bg-destructive/10"
             >
               {cancellingRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
               Annuler
@@ -1611,7 +1611,7 @@ const LeadDetail = () => {
                   key={c.value}
                   variant={c.value === "converti" ? "copper" : "outline"}
                   size="lg"
-                  className="min-h-[48px] px-2"
+                  className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base"
                   disabled={terminantLead}
                   onClick={() => handleTerminerLead(c.value)}
                 >

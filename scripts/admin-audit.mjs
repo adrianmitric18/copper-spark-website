@@ -478,7 +478,32 @@ function auditerDansLaPage(seuil) {
     if (el.value) mesurer(el, el.value, getComputedStyle(el).color, "saisie");
     else if (el.placeholder) mesurer(el, el.placeholder, getComputedStyle(el, "::placeholder").color, "placeholder");
   }
-  return { total, ignoresDesactives, echecs };
+  // Débordements : un texte qui sort de son bouton, ou un élément qui sort de
+  // l'écran sans être dans une zone qui défile. Le contraste ne les voit pas.
+  const debords = [];
+  const defileX = (el) => {
+    for (let n = el.parentElement; n && n.nodeType === 1; n = n.parentElement) {
+      const c = getComputedStyle(n);
+      if (["auto", "scroll", "hidden", "clip"].includes(c.overflowX) && n.scrollWidth > n.clientWidth + 1) return true;
+    }
+    return false;
+  };
+  const court = (t) => (t || "").trim().replace(/\s+/g, " ").slice(0, 40);
+  const largeur = document.documentElement.clientWidth;
+  for (const el of document.querySelectorAll("button, a, [role='tab'], [role='menuitem'], input, select, textarea, h1, h2, h3, p, span, li, td, th, label")) {
+    if (!visible(el)) continue;
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    const interactif = el.matches("button, a, [role='tab'], [role='menuitem']");
+    if (interactif && cs.overflowX === "visible" && cs.display !== "inline" && el.scrollWidth > el.clientWidth + 2) {
+      debords.push({ genre: "texte hors du bouton", texte: court(el.textContent), element: decrire(el), depassement: el.scrollWidth - el.clientWidth });
+      continue;
+    }
+    if ((r.right > largeur + 1 || r.left < -1) && cs.position !== "fixed" && !defileX(el)) {
+      debords.push({ genre: "hors de l'écran", texte: court(el.textContent || el.value), element: decrire(el), depassement: Math.round(Math.max(r.right - largeur, -r.left)) });
+    }
+  }
+  return { total, ignoresDesactives, echecs, debords };
 }
 
 // Les 6 statuts de lead : contraste de chaque badge + distinction entre eux.
@@ -673,7 +698,7 @@ for (const theme of THEMES) {
       if (themeApplique !== (theme === "dark")) throw new Error(`thème non appliqué (attendu ${theme})`);
       const mesure = await page.evaluate(auditerDansLaPage, SEUIL);
       Object.assign(entree, mesure, { erreursPage, titre: await page.title() });
-      echecsTotal += mesure.echecs.length;
+      echecsTotal += mesure.echecs.length + mesure.debords.length;
       const fichier = `${ecran.nom}-${theme === "dark" ? "sombre" : "clair"}.jpg`;
       // Capture de toute la page : on agrandit la fenêtre à la hauteur du contenu
       // pour que la barre du bas (fixe) reste en bas au lieu de couper la page.
@@ -690,7 +715,8 @@ for (const theme of THEMES) {
       echecsTotal += 1;
     }
     rapport.ecrans.push(entree);
-    const marque = entree.erreur ? "ERREUR" : entree.echecs.length ? `${entree.echecs.length} échec(s)` : "ok";
+    const nb = (entree.echecs?.length ?? 0) + (entree.debords?.length ?? 0);
+    const marque = entree.erreur ? "ERREUR" : nb ? `${entree.echecs.length} contraste, ${entree.debords.length} débordement(s)` : "ok";
     console.log(`${theme === "dark" ? "sombre" : "clair "}  ${ecran.nom.padEnd(24)} ${String(entree.total ?? "-").padStart(4)} textes  ${marque}${entree.erreur ? " — " + entree.erreur : ""}`);
     await page.close();
   }
@@ -699,6 +725,7 @@ await navigateur.close();
 
 fs.writeFileSync(path.join(OUT, "rapport.json"), JSON.stringify(rapport, null, 2));
 
+const vusDebordsTotal = rapport.ecrans.reduce((n, e) => n + (e.debords?.length ?? 0), 0);
 // Résumé : échecs regroupés par (élément, couleurs) pour corriger à la source.
 const groupes = new Map();
 for (const e of rapport.ecrans) {
@@ -710,9 +737,18 @@ for (const e of rapport.ecrans) {
     groupes.set(cle, g);
   }
 }
-console.log(`\n${echecsTotal} échec(s) sous ${SEUIL}:1 — ${groupes.size} cause(s) distincte(s)`);
+console.log(`\n${echecsTotal} problème(s) — contraste sous ${SEUIL}:1 : ${groupes.size} cause(s) ; débordements : ${vusDebordsTotal}`);
 for (const g of [...groupes.values()].sort((a, b) => a.ratio - b.ratio).slice(0, 60)) {
   console.log(`  ${g.theme === "dark" ? "sombre" : "clair "} ${String(g.ratio).padEnd(5)} ${g.couleur} sur ${g.fond}  ×${g.n}  « ${g.texte} »  [${g.genre}] ${g.element.slice(0, 90)}  (${[...g.ecrans].slice(0, 3).join(", ")})`);
+}
+const vusDebords = new Set();
+for (const e of rapport.ecrans) {
+  for (const d of e.debords ?? []) {
+    const cle = `${e.ecran}|${d.genre}|${d.texte}`;
+    if (vusDebords.has(cle)) continue;
+    vusDebords.add(cle);
+    console.log(`  débordement  ${e.ecran.padEnd(24)} ${d.genre} (+${d.depassement}px) « ${d.texte} »  ${d.element.slice(0, 70)}`);
+  }
 }
 for (const t of THEMES) {
   const s = rapport.statuts[t];

@@ -284,7 +284,7 @@ const AdminRdv = () => {
                     Terminer le RDV
                   </Button>
                 )}
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   {r.lead_phone && (
                     <Button asChild size="default" variant="outline" className="flex-1 min-h-[44px]">
                       <a href={`tel:${r.lead_phone}`}>Appeler</a>
@@ -296,8 +296,8 @@ const AdminRdv = () => {
                   {!isTerminal(r.lead_status) && (
                     <TerminerLeadButton
                       lead={{ id: r.lead_id, name: r.lead_name, status: r.lead_status }}
-                      label={isRdvPasse(r) ? "Terminer le lead" : "Terminer"}
-                      className="min-h-[44px]"
+                      label="Terminer le lead"
+                      className="min-h-[44px] w-full"
                     />
                   )}
                 </div>
