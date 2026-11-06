@@ -29,6 +29,8 @@ const ROOT_ADMIN_ROUTES = new Set<string>([
   "/admin/rdv-rapide",
   "/admin/interventions",
   "/admin/heures",
+  "/admin/depannage",
+  "/admin/avis-a-demander",
   "/admin/chantiers",
   "/admin/chantiers/import-archives",
   "/admin/avis",

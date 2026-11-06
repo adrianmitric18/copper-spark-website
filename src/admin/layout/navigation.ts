@@ -7,7 +7,9 @@ import {
   Home,
   Phone,
   Star,
+  ThumbsUp,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -16,9 +18,9 @@ import {
  * barre latérale (lot 2.1 du brief admin 2026-11).
  *
  * Barre du bas : RDV rapide · Aujourd'hui · Leads · Heures · Plus.
- * « Plus » ouvre : Calendrier, Chantiers, Réalisations, Avis clients, Import
- * archives. Même ordre dans la barre latérale. Rien n'est supprimé, seulement
- * déplacé.
+ * « Plus » ouvre : Dépannage au téléphone, Calendrier, Chantiers, Réalisations,
+ * Avis à demander, Avis clients, Import archives. Même ordre dans la barre
+ * latérale. Rien n'est supprimé, seulement déplacé.
  */
 export interface NavItem {
   to: string;
@@ -51,7 +53,16 @@ export const NAV_PRINCIPAL: NavItem[] = [
   { to: "/admin/heures", label: "Heures", icon: Clock, match: (p) => p.startsWith("/admin/heures") },
 ];
 
+const AVIS_A_DEMANDER = "/admin/avis-a-demander";
+
 export const NAV_PLUS: NavItem[] = [
+  // Lot 2 bis : le prix à annoncer quand le téléphone sonne pour une panne.
+  {
+    to: "/admin/depannage",
+    label: "Dépannage au téléphone",
+    icon: Wrench,
+    match: (p) => p.startsWith("/admin/depannage"),
+  },
   {
     to: "/admin/rdv",
     label: "Calendrier",
@@ -70,7 +81,9 @@ export const NAV_PLUS: NavItem[] = [
     icon: Hammer,
     match: (p) => p.startsWith("/admin/chantiers") && p !== IMPORT_ARCHIVES,
   },
-  { to: "/admin/avis", label: "Avis clients", icon: Star, match: (p) => p.startsWith("/admin/avis") },
+  // Lot 2 bis : clients dont le chantier est fini, sans demande d'avis Google.
+  { to: AVIS_A_DEMANDER, label: "Avis à demander", icon: ThumbsUp, match: (p) => p.startsWith(AVIS_A_DEMANDER) },
+  { to: "/admin/avis", label: "Avis clients", icon: Star, match: (p) => p === "/admin/avis" },
   { to: IMPORT_ARCHIVES, label: "Import archives", icon: Archive, match: (p) => p === IMPORT_ARCHIVES },
 ];
 

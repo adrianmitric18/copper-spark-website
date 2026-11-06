@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import {
   Copy,
   Contact,
   Loader2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -38,6 +39,7 @@ import AdminLoading from "@/components/admin/AdminLoading";
 import { traceEnvoi } from "@/lib/admin/queries";
 import HeureInput from "@/components/admin/HeureInput";
 import { estHeureValide } from "@/lib/admin/heure-saisie";
+import { TYPE_VISITE_DEPANNAGE } from "@/lib/admin/depannage";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -97,6 +99,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+/**
+ * Valeurs de départ du formulaire, d'après l'URL. Depuis « Dépannage au
+ * téléphone » : `?type=depannage&tel=…&commune=…` → type Dépannage déjà choisi,
+ * téléphone et commune repris. Sans paramètre : formulaire vierge.
+ */
+const valeursInitiales = (params: URLSearchParams, dateDuJour: string): FormValues => ({
+  name: "",
+  phone: params.get("tel") ?? "",
+  email: "",
+  dateRdv: dateDuJour,
+  heureRdv: "10:00",
+  typeVisite:
+    params.get("type") === "depannage" ? TYPE_VISITE_DEPANNAGE : "Visite devis - Installation électrique complète",
+  dureeMinutes: 60,
+  delaiAppelMinutes: 30,
+  address: params.get("commune") ?? "",
+  notes: "",
+});
+
 // T6 — détecte si le presse-papier contient (uniquement) un numéro de tél
 // exploitable. On reste strict : seul un contenu entièrement "numéro" est
 // proposé, pour ne jamais coller du texte parasite. Aligné sur le regex du
@@ -143,6 +164,10 @@ const RdvRapide = () => {
   const [success, setSuccess] = useState<SuccessState | null>(null);
   // T1 — mode "lead express" : on masque les champs RDV et on ne crée que le lead.
   const [sansRdv, setSansRdv] = useState(false);
+  // Arrivée depuis « Dépannage au téléphone » : type Dépannage déjà choisi,
+  // téléphone et commune repris s'ils ont été saisis là-bas.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const depuisDepannage = searchParams.get("type") === "depannage";
   // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
   const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
   // T6 — numéro détecté dans le presse-papier, proposé en collage 1 tap.
@@ -185,18 +210,7 @@ const RdvRapide = () => {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      phone: "",
-      email: "",
-      dateRdv: todayIso,
-      heureRdv: "10:00",
-      typeVisite: "Visite devis - Installation électrique complète",
-      dureeMinutes: 60,
-      delaiAppelMinutes: 30,
-      address: "",
-      notes: "",
-    },
+    defaultValues: valeursInitiales(searchParams, todayIso),
   });
 
   // Auto-suggère la durée selon le type sélectionné, tant que l'utilisateur
@@ -295,21 +309,32 @@ const RdvRapide = () => {
 
   const resetForm = () => {
     setSuccess(null);
-    form.reset({
-      name: "",
-      phone: "",
-      email: "",
-      dateRdv: todayIso,
-      heureRdv: "10:00",
-      typeVisite: "Visite devis - Installation électrique complète",
-      dureeMinutes: 60,
-      delaiAppelMinutes: 30,
-      address: "",
-      notes: "",
-    });
+    // On repart d'un formulaire vierge : le pré-remplissage venu de l'écran
+    // dépannage (dans l'URL) ne doit pas servir une seconde fois.
+    if (searchParams.toString()) setSearchParams({}, { replace: true });
+    form.reset(valeursInitiales(new URLSearchParams(), todayIso));
+    setDuplicates([]);
     setAutoDuree(true);
     setAutoDelai(true);
   };
+
+  // L'URL change sans que l'écran soit démonté (onglet « RDV rapide » tapé depuis
+  // un formulaire pré-rempli, ou arrivée depuis le dépannage) : le formulaire
+  // suit l'URL. Un téléphone pré-rempli passe par la détection de doublon,
+  // comme s'il avait été saisi à la main.
+  const cleParams = searchParams.toString();
+  const premierRendu = useRef(true);
+  useEffect(() => {
+    if (premierRendu.current) {
+      premierRendu.current = false;
+    } else {
+      form.reset(valeursInitiales(searchParams, todayIso));
+      setDuplicates([]);
+    }
+    const tel = searchParams.get("tel");
+    if (tel) void checkDuplicates(tel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleParams]);
 
   if (!ready || !user) return <AdminLoading />;
 
@@ -334,6 +359,15 @@ const RdvRapide = () => {
             </p>
           </div>
         </div>
+
+        {/* Lot 2 bis — une panne au téléphone : le prix à annoncer, en un tap. */}
+        {!depuisDepannage && (
+          <Button asChild variant="outline" className="w-full min-h-[48px] mb-4">
+            <Link to="/admin/depannage">
+              <Wrench className="w-4 h-4" /> Dépannage : le prix à annoncer
+            </Link>
+          </Button>
+        )}
 
         {/* T1 — bascule "lead express" : crée juste le lead, sans date de RDV. */}
         <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 mb-5">

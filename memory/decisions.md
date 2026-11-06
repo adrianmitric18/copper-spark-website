@@ -14,6 +14,27 @@
 
 ## Journal
 
+### 2026-11-06 — Admin : devis pour Claude, avis à demander, dépannage au téléphone (lot 2 bis)
+- **Décision :** trois ajouts sur `feat/admin-rapporte`, aucune migration :
+  bouton « Préparer le devis avec Claude » sur la fiche (texte brut copié ou partagé, aucun
+  appel d'API) ; liste « Avis à demander » (`/admin/avis-a-demander`) + compteur sur l'accueil ;
+  écran « Dépannage au téléphone » (`/admin/depannage`), accessible depuis « Plus » et RDV rapide.
+- **Pourquoi :** chaque ajout doit faire gagner du temps ou de l'argent dès la première semaine
+  (brief admin 2026-11, lot 2 bis, validé par Adrian le 04/11/2026).
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **La grille dépannage n'a qu'UNE source : `src/lib/simulateur/config.ts`** (`ZONES[].forfait`,
+    `DEPANNAGE.demiHeureSupplementaire`). L'admin la lit via `src/lib/admin/depannage.ts`, qui ne
+    contient aucun montant. Changer un prix dans `config.ts` le change sur le site ET dans l'admin.
+  - Le site public affichait DÉJÀ la grille du 25/10/2026 (mergée les 25 et 26/10) : la branche
+    `fix/site-grille-depannage` demandée le 05/11 n'a pas été créée, il n'y avait rien à aligner.
+  - Seuls la marge matériel (+ 30 %, interne, jamais montrée au client) et la signature du
+    WhatsApp dépannage vivent dans `depannage.ts`.
+  - « Avis à demander » ne crée pas de colonne : un lead sort de la liste dès que ses notes
+    contiennent « Avis demandé », « Avis Google » (message envoyé depuis la fiche) ou « Avis : non ».
+    Texte d'avis unique : `messageDemandeAvis` dans `message-templates.ts`.
+  - `traceNote(leadId, texte)` trace une décision sans envoi (pas de canal).
+  - RDV rapide accepte `?type=depannage&tel=…&commune=…` pour arriver pré-rempli.
+
 ### 2026-11-05 — Admin simplifié : menu, accueil en 3 blocs, fiche réordonnée, contraste mesuré (lot 2)
 - **Décision :** barre du bas `RDV rapide · Aujourd'hui · Leads · Heures · Plus` ; « Plus » ouvre
   Calendrier, Chantiers, Réalisations, Avis clients, Import archives (même ordre dans le menu
