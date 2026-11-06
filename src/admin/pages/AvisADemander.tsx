@@ -7,7 +7,7 @@
  * sort la ligne de la liste. « Ne pas demander » trace « Avis : non ».
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, MessageCircle, Smartphone, Star } from "lucide-react";
@@ -62,6 +62,24 @@ const AvisADemander = () => {
     [leadsQuery.data, chantiersQuery.data],
   );
 
+  // Rechargement différé : plusieurs taps rapprochés n'en déclenchent qu'un,
+  // une fois les écritures passées — sinon le rechargement du premier ferait
+  // réapparaître la ligne du second, pas encore écrite.
+  const rechargement = useRef<number | null>(null);
+  const rechargerBientot = () => {
+    if (rechargement.current !== null) window.clearTimeout(rechargement.current);
+    rechargement.current = window.setTimeout(() => {
+      rechargement.current = null;
+      void queryClient.invalidateQueries({ queryKey: CLE_LEADS });
+    }, 2500);
+  };
+  useEffect(
+    () => () => {
+      if (rechargement.current !== null) window.clearTimeout(rechargement.current);
+    },
+    [],
+  );
+
   // La ligne quitte la liste tout de suite (la trace est ajoutée au cache),
   // puis l'écriture part en arrière-plan : elle n'empêche jamais l'ouverture
   // du message.
@@ -82,7 +100,7 @@ const AvisADemander = () => {
           description: `${lead.name} reviendra dans la liste au prochain chargement.`,
         });
       }
-      void queryClient.invalidateQueries({ queryKey: CLE_LEADS });
+      rechargerBientot();
     });
   };
 
@@ -99,6 +117,9 @@ const AvisADemander = () => {
   if (!ready || !user) return <AdminLoading />;
 
   const chargement = leadsQuery.isLoading || chantiersQuery.isLoading;
+  // Sans les deux jeux de données, la liste serait fausse : on le dit, on
+  // n'affiche pas « personne à relancer ».
+  const erreurChargement = Boolean(leadsQuery.error || chantiersQuery.error);
 
   return (
     <AdminShell mobileTitle="Avis à demander">
@@ -119,6 +140,22 @@ const AvisADemander = () => {
               <div key={i} className="h-28 rounded-lg bg-muted/40 animate-pulse" />
             ))}
           </div>
+        ) : erreurChargement ? (
+          <Card className="p-6 text-center space-y-3">
+            <p role="alert" className="text-sm">
+              La liste n'a pas pu être chargée. Vérifie la connexion, puis réessaie.
+            </p>
+            <Button
+              variant="outline"
+              className="min-h-[44px]"
+              onClick={() => {
+                void leadsQuery.refetch();
+                void chantiersQuery.refetch();
+              }}
+            >
+              Réessayer
+            </Button>
+          </Card>
         ) : aDemander.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             Personne à relancer : un avis a été demandé à tous les clients dont le chantier est fini.
@@ -140,7 +177,14 @@ const AvisADemander = () => {
                       </span>
                       <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
                     </Link>
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Sans numéro, aucun message ne peut partir : on ne trace rien,
+                        la fiche permet de le compléter. */}
+                    {!l.phone?.trim() && (
+                      <p className="text-sm text-muted-foreground">
+                        Pas de téléphone : ouvre la fiche pour l'ajouter.
+                      </p>
+                    )}
+                    <div className={l.phone?.trim() ? "grid grid-cols-2 gap-2" : "hidden"}>
                       <Button
                         asChild
                         size="sm"

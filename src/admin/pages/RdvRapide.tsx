@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -99,6 +99,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+/**
+ * Valeurs de départ du formulaire, d'après l'URL. Depuis « Dépannage au
+ * téléphone » : `?type=depannage&tel=…&commune=…` → type Dépannage déjà choisi,
+ * téléphone et commune repris. Sans paramètre : formulaire vierge.
+ */
+const valeursInitiales = (params: URLSearchParams, dateDuJour: string): FormValues => ({
+  name: "",
+  phone: params.get("tel") ?? "",
+  email: "",
+  dateRdv: dateDuJour,
+  heureRdv: "10:00",
+  typeVisite:
+    params.get("type") === "depannage" ? TYPE_VISITE_DEPANNAGE : "Visite devis - Installation électrique complète",
+  dureeMinutes: 60,
+  delaiAppelMinutes: 30,
+  address: params.get("commune") ?? "",
+  notes: "",
+});
+
 // T6 — détecte si le presse-papier contient (uniquement) un numéro de tél
 // exploitable. On reste strict : seul un contenu entièrement "numéro" est
 // proposé, pour ne jamais coller du texte parasite. Aligné sur le regex du
@@ -147,7 +166,7 @@ const RdvRapide = () => {
   const [sansRdv, setSansRdv] = useState(false);
   // Arrivée depuis « Dépannage au téléphone » : type Dépannage déjà choisi,
   // téléphone et commune repris s'ils ont été saisis là-bas.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const depuisDepannage = searchParams.get("type") === "depannage";
   // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
   const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
@@ -191,18 +210,7 @@ const RdvRapide = () => {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      phone: searchParams.get("tel") ?? "",
-      email: "",
-      dateRdv: todayIso,
-      heureRdv: "10:00",
-      typeVisite: depuisDepannage ? TYPE_VISITE_DEPANNAGE : "Visite devis - Installation électrique complète",
-      dureeMinutes: 60,
-      delaiAppelMinutes: 30,
-      address: searchParams.get("commune") ?? "",
-      notes: "",
-    },
+    defaultValues: valeursInitiales(searchParams, todayIso),
   });
 
   // Auto-suggère la durée selon le type sélectionné, tant que l'utilisateur
@@ -301,21 +309,32 @@ const RdvRapide = () => {
 
   const resetForm = () => {
     setSuccess(null);
-    form.reset({
-      name: "",
-      phone: "",
-      email: "",
-      dateRdv: todayIso,
-      heureRdv: "10:00",
-      typeVisite: "Visite devis - Installation électrique complète",
-      dureeMinutes: 60,
-      delaiAppelMinutes: 30,
-      address: "",
-      notes: "",
-    });
+    // On repart d'un formulaire vierge : le pré-remplissage venu de l'écran
+    // dépannage (dans l'URL) ne doit pas servir une seconde fois.
+    if (searchParams.toString()) setSearchParams({}, { replace: true });
+    form.reset(valeursInitiales(new URLSearchParams(), todayIso));
+    setDuplicates([]);
     setAutoDuree(true);
     setAutoDelai(true);
   };
+
+  // L'URL change sans que l'écran soit démonté (onglet « RDV rapide » tapé depuis
+  // un formulaire pré-rempli, ou arrivée depuis le dépannage) : le formulaire
+  // suit l'URL. Un téléphone pré-rempli passe par la détection de doublon,
+  // comme s'il avait été saisi à la main.
+  const cleParams = searchParams.toString();
+  const premierRendu = useRef(true);
+  useEffect(() => {
+    if (premierRendu.current) {
+      premierRendu.current = false;
+    } else {
+      form.reset(valeursInitiales(searchParams, todayIso));
+      setDuplicates([]);
+    }
+    const tel = searchParams.get("tel");
+    if (tel) void checkDuplicates(tel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cleParams]);
 
   if (!ready || !user) return <AdminLoading />;
 

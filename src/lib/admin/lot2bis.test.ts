@@ -69,6 +69,10 @@ describe("avis à demander", () => {
     expect(avisDejaTraite("05/11/2026 16:30 — SMS : Avis Google")).toBe(true);
     expect(avisDejaTraite(formatTraceNote("Avis : non", new Date(2026, 10, 5, 16, 30)))).toBe(true);
     expect(avisDejaTraite("Client très content")).toBe(false);
+    // une mention dans une note libre n'est pas une trace : le lead reste dans la liste
+    expect(avisDejaTraite("Client venu par un avis Google")).toBe(false);
+    expect(avisDejaTraite("Avis demandé au voisin, à rappeler")).toBe(false);
+    expect(avisDejaTraite("Note\n05/11/2026 16:30 — SMS : Avis demandé\nAutre note")).toBe(true);
     expect(estAvisADemander({ status: "converti", notes_internes: "05/11/2026 16:30 — SMS : Avis demandé" }, true)).toBe(false);
   });
   it("liste triée, les plus récents d'abord", () => {
@@ -163,6 +167,8 @@ describe("préparer le devis avec Claude", () => {
   it("adresse : champs structurés, sinon adresse libre", () => {
     expect(adresseComplete({ address: "Chez lui", rue: null, numero: null, code_postal: null, commune: null })).toBe("Chez lui");
     expect(adresseComplete({ address: null, rue: null, numero: null, code_postal: "1300", commune: "Wavre" })).toBe("1300 Wavre");
+    // même priorité que la fiche : l'adresse libre d'abord
+    expect(adresseComplete({ address: "Rue du Moulin 12, 1340 Ottignies", rue: null, numero: null, code_postal: null, commune: "Ottignies" })).toBe("Rue du Moulin 12, 1340 Ottignies");
     expect(lignesSimulateur(null)).toEqual([]);
     expect(lignesSimulateur("texte")).toEqual([]);
   });

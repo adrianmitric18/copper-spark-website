@@ -103,13 +103,21 @@ const Depannage = () => {
             autoCapitalize="words"
             className="h-12 text-base"
           />
-          {commune.trim().length >= 3 && (
-            <p className="text-xs text-muted-foreground" aria-live="polite">
-              {communeReconnue
-                ? `${prixDepannage(communeReconnue, moment).zoneLabel} sélectionnée.`
-                : "Commune hors liste : choisis la zone à la main, ou confirme le prix par téléphone."}
-            </p>
-          )}
+          {commune.trim().length >= 3 &&
+            (communeReconnue === null ? (
+              <p className="text-sm font-medium text-destructive" role="status">
+                Commune hors liste : vérifie la zone choisie, ou confirme le prix par téléphone.
+              </p>
+            ) : communeReconnue === zone ? (
+              <p className="text-xs text-muted-foreground" role="status">
+                {prix.zoneLabel} sélectionnée pour cette commune.
+              </p>
+            ) : (
+              <p className="text-sm font-medium text-destructive" role="status">
+                Cette commune est en {prixDepannage(communeReconnue, moment).zoneLabel.toLowerCase()}, mais{" "}
+                {prix.zoneLabel.toLowerCase()} est sélectionnée.
+              </p>
+            ))}
         </div>
 
         {/* Zone */}

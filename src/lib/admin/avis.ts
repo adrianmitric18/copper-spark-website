@@ -16,13 +16,19 @@ export const TRACE_AVIS_DEMANDE = "Avis demandé";
 /** Trace du bouton « Ne pas demander ». */
 export const TRACE_AVIS_REFUSE = "Avis : non";
 
+// Une ligne de trace complète, horodatée, et rien d'autre : une note libre du
+// genre « client venu par un avis Google » ne doit PAS sortir le lead de la liste.
+const LIGNE_AVIS = new RegExp(
+  "^" + "\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2} — (?:(?:SMS|WhatsApp|Email) : (?:Avis demandé|Avis Google)|Avis : non)\\s*$",
+  "m",
+);
+
 /**
  * Vrai si les notes portent déjà une décision sur l'avis : demandé depuis la
  * liste (« Avis demandé »), depuis la fiche (message « Avis Google »), ou
  * écarté (« Avis : non »).
  */
-export const avisDejaTraite = (notes: string | null | undefined): boolean =>
-  /Avis demandé|Avis Google|Avis : non/.test(notes ?? "");
+export const avisDejaTraite = (notes: string | null | undefined): boolean => LIGNE_AVIS.test(notes ?? "");
 
 export const estAvisADemander = (
   lead: Pick<Lead, "status" | "notes_internes">,

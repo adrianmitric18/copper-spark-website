@@ -59,7 +59,7 @@ import {
 } from "@/lib/admin/queries";
 import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
 import { TON } from "@/lib/admin/badges";
-import { texteDevisPourClaude } from "@/lib/admin/devis-claude";
+import { adresseComplete, texteDevisPourClaude } from "@/lib/admin/devis-claude";
 import {
   type Lead,
   type TerminalLeadStatus,
@@ -156,15 +156,7 @@ const fillTemplate = (tpl: string, vars: Record<string, string>): string =>
 
 // Adresse : champ libre `address` en priorité, sinon recomposée depuis les
 // champs structurés (rue/numéro/CP/commune). Vide si rien d'exploitable.
-const composeAddress = (lead: Lead): string => {
-  const struct = [
-    [lead.rue, lead.numero].filter(Boolean).join(" "),
-    [lead.code_postal, lead.commune].filter(Boolean).join(" "),
-  ]
-    .filter(Boolean)
-    .join(", ");
-  return (lead.address?.trim() || struct || "").trim();
-};
+const composeAddress = (lead: Lead): string => adresseComplete(lead);
 
 // Variables disponibles, depuis les données de la fiche + le RDV lié.
 // (date_intervention/heure restent vides s'il n'y a pas de RDV.)
@@ -1036,7 +1028,18 @@ const LeadDetail = () => {
   // en texte brut, à coller dans la discussion Claude. Aucun appel d'API.
   const partagePossible = typeof navigator !== "undefined" && typeof navigator.share === "function";
   const preparerDevis = async (partager: boolean) => {
-    const texte = texteDevisPourClaude(lead, rdv, photoUrls);
+    // Notes : ce qui est À L'ÉCRAN (dictée comprise), même pas encore enregistré.
+    // Photos : liens signés refaits maintenant, pour une heure pleine (ceux de
+    // l'ouverture de la fiche peuvent déjà avoir expiré après une visite).
+    let liens = photoUrls;
+    if (lead.photo_urls?.length) {
+      try {
+        liens = await fetchLeadPhotoSignedUrls(lead.photo_urls);
+      } catch {
+        // on garde les liens déjà chargés
+      }
+    }
+    const texte = texteDevisPourClaude({ ...lead, notes_internes: notes }, rdv, liens);
     if (partager && partagePossible) {
       try {
         await navigator.share({ title: `Devis — ${lead.name}`, text: texte });

@@ -100,10 +100,15 @@ export const lignesSimulateur = (payload: unknown): string[] => {
   return out;
 };
 
+/**
+ * Adresse d'un lead — LA règle, partagée avec la fiche et ses messages :
+ * l'adresse libre en priorité (c'est la plus complète quand elle existe),
+ * sinon recomposée depuis rue / numéro / code postal / commune.
+ */
 export const adresseComplete = (lead: Pick<Lead, "address" | "rue" | "numero" | "code_postal" | "commune">): string => {
   const ligne1 = [lead.rue, lead.numero].filter(Boolean).join(" ");
   const ligne2 = [lead.code_postal, lead.commune].filter(Boolean).join(" ");
-  return [ligne1, ligne2].filter(Boolean).join(", ") || (lead.address ?? "").trim();
+  return ((lead.address ?? "").trim() || [ligne1, ligne2].filter(Boolean).join(", ")).trim();
 };
 
 /**
@@ -149,7 +154,7 @@ export const texteDevisPourClaude = (
   bloc("NOTES INTERNES (dictées sur place)", [notes]);
 
   bloc(
-    "PHOTOS (liens valables 1 heure)",
+    "PHOTOS (liens valables 1 heure à partir de maintenant)",
     liensPhotos.filter(Boolean).map((u, i) => `Photo ${i + 1} : ${u}`),
   );
 

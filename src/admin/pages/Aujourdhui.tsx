@@ -267,8 +267,9 @@ const Aujourdhui = () => {
   }, [leads, upcomingByLead]);
   const aFaire = aFaireTous.slice(0, A_FAIRE_MAX);
 
+  // Compté seulement quand les chantiers sont chargés : sans eux il serait trop bas.
   const nbAvis = useMemo(
-    () => leadsAvisADemander(leads, chantiersQuery.data ?? []).length,
+    () => (chantiersQuery.data ? leadsAvisADemander(leads, chantiersQuery.data).length : 0),
     [leads, chantiersQuery.data],
   );
 
