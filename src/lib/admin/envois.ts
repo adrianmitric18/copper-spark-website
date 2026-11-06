@@ -32,6 +32,10 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
 export const formatTraceEnvoi = (canal: CanalEnvoi, titre: string, quand: Date = new Date()): string =>
   `${pad2(quand.getDate())}/${pad2(quand.getMonth() + 1)}/${quand.getFullYear()} ${pad2(quand.getHours())}:${pad2(quand.getMinutes())} — ${canal} : ${titre.trim()}`;
 
+/** Trace d'une décision sans envoi : `05/11/2026 16:30 — Avis : non`. */
+export const formatTraceNote = (texte: string, quand: Date = new Date()): string =>
+  `${pad2(quand.getDate())}/${pad2(quand.getMonth() + 1)}/${quand.getFullYear()} ${pad2(quand.getHours())}:${pad2(quand.getMinutes())} — ${texte.trim()}`;
+
 /** Ajoute une ligne en fin de notes (une ligne par envoi, jamais de doublon de saut de ligne). */
 export const ajouterTrace = (notes: string | null | undefined, ligne: string): string => {
   const base = (notes ?? "").trimEnd();

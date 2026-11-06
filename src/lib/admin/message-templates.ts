@@ -1174,6 +1174,26 @@ export function emailSubjectChantierAnnulation(payload: ChantierAnnulationPayloa
 }
 
 // ---------------------------------------------------------------------------
+// Demande d'avis Google (SMS / WhatsApp) — une seule version du texte, utilisée
+// par la fiche lead (message « Avis Google ») et par la liste « Avis à demander ».
+// ---------------------------------------------------------------------------
+
+export function messageDemandeAvis(prenom: string, objet: string = "votre projet"): string {
+  return `Bonjour ${prenom} 👋 C'est Adrian. J'espère que tout fonctionne nickel depuis mon passage pour ${objet}, et que vous êtes content du résultat 😊
+
+Si c'est le cas, j'aurais un petit service à vous demander — 2 minutes, pas plus. Pour un artisan indépendant, un avis Google a une vraie valeur : c'est votre confiance rendue visible, et la plus belle vitrine pour mon travail. ⭐
+
+👉 Le lien direct (ça ouvre la page, vous mettez les étoiles, c'est réglé) :
+${COMPANY.reviewUrl}
+
+Et si vous séchez sur quoi écrire, un mot sur le travail ou le contact suffit.
+
+Si quelque chose ne vous a pas plu, dites-le moi à moi en premier 🙏 — je tiens à ce que vous soyez vraiment content.
+
+Merci de tout cœur ! Adrian`;
+}
+
+// ---------------------------------------------------------------------------
 // Annulation d'un RENDEZ-VOUS (visite devis, dépannage…) — SMS / WhatsApp
 // Court, en mots simples, sur le modèle de smsTemplateChantierAnnulation.
 // Remplace l'email d'annulation quand le client n'a pas d'email (règle 2).

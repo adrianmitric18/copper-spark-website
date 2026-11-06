@@ -26,6 +26,7 @@ import {
   Navigation,
   Phone,
   Smartphone,
+  Star,
   Sun,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,6 +45,8 @@ import {
 } from "@/lib/admin/queries";
 import type { CanalEnvoi } from "@/lib/admin/envois";
 import { estARappeler, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
+import { fetchAllInterventions } from "@/lib/admin/interventions";
+import { leadsAvisADemander } from "@/lib/admin/avis";
 import { addDays } from "@/lib/admin/heures";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { envoyerEmailSiPossible, sendRappelJ1Emails, type LeadInfo } from "@/lib/rdv/emailjs";
@@ -182,6 +185,16 @@ const Aujourdhui = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Lot 2 bis — pour le compteur « avis à demander » (chantiers terminés).
+  // Cache partagé avec Chantiers ; son échec ne gêne pas l'accueil.
+  const chantiersQuery = useQuery({
+    queryKey: ["admin-interventions"],
+    queryFn: fetchAllInterventions,
+    enabled: ready,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
   useEffect(() => {
     if (leadsQuery.error) {
       const msg = leadsQuery.error instanceof Error ? leadsQuery.error.message : "chargement des leads impossible";
@@ -253,6 +266,11 @@ const Aujourdhui = () => {
     return tous;
   }, [leads, upcomingByLead]);
   const aFaire = aFaireTous.slice(0, A_FAIRE_MAX);
+
+  const nbAvis = useMemo(
+    () => leadsAvisADemander(leads, chantiersQuery.data ?? []).length,
+    [leads, chantiersQuery.data],
+  );
 
   // Taper SMS / WhatsApp marque le RDV « rappel envoyé » et trace l'envoi.
   // Fire-and-forget : n'empêche jamais l'ouverture du message.
@@ -548,6 +566,16 @@ const Aujourdhui = () => {
                     </Button>
                   )}
                 </>
+              )}
+              {nbAvis > 0 && (
+                <Button asChild variant="outline" className="w-full min-h-[44px] justify-between">
+                  <Link to="/admin/avis-a-demander">
+                    <span className="flex items-center gap-2">
+                      <Star className="w-4 h-4" /> {nbAvis} avis à demander
+                    </span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </Button>
               )}
             </Bloc>
           </>

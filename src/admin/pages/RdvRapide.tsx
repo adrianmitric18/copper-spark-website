@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import {
   Copy,
   Contact,
   Loader2,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -38,6 +39,7 @@ import AdminLoading from "@/components/admin/AdminLoading";
 import { traceEnvoi } from "@/lib/admin/queries";
 import HeureInput from "@/components/admin/HeureInput";
 import { estHeureValide } from "@/lib/admin/heure-saisie";
+import { TYPE_VISITE_DEPANNAGE } from "@/lib/admin/depannage";
 import {
   createRdvRapide,
   createLeadRapide,
@@ -143,6 +145,10 @@ const RdvRapide = () => {
   const [success, setSuccess] = useState<SuccessState | null>(null);
   // T1 — mode "lead express" : on masque les champs RDV et on ne crée que le lead.
   const [sansRdv, setSansRdv] = useState(false);
+  // Arrivée depuis « Dépannage au téléphone » : type Dépannage déjà choisi,
+  // téléphone et commune repris s'ils ont été saisis là-bas.
+  const [searchParams] = useSearchParams();
+  const depuisDepannage = searchParams.get("type") === "depannage";
   // T4 — anti-doublon : leads existants avec le même numéro (vérifié au blur).
   const [duplicates, setDuplicates] = useState<LeadMatch[]>([]);
   // T6 — numéro détecté dans le presse-papier, proposé en collage 1 tap.
@@ -187,14 +193,14 @@ const RdvRapide = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      phone: "",
+      phone: searchParams.get("tel") ?? "",
       email: "",
       dateRdv: todayIso,
       heureRdv: "10:00",
-      typeVisite: "Visite devis - Installation électrique complète",
+      typeVisite: depuisDepannage ? TYPE_VISITE_DEPANNAGE : "Visite devis - Installation électrique complète",
       dureeMinutes: 60,
       delaiAppelMinutes: 30,
-      address: "",
+      address: searchParams.get("commune") ?? "",
       notes: "",
     },
   });
@@ -334,6 +340,15 @@ const RdvRapide = () => {
             </p>
           </div>
         </div>
+
+        {/* Lot 2 bis — une panne au téléphone : le prix à annoncer, en un tap. */}
+        {!depuisDepannage && (
+          <Button asChild variant="outline" className="w-full min-h-[48px] mb-4">
+            <Link to="/admin/depannage">
+              <Wrench className="w-4 h-4" /> Dépannage : le prix à annoncer
+            </Link>
+          </Button>
+        )}
 
         {/* T1 — bascule "lead express" : crée juste le lead, sans date de RDV. */}
         <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4 mb-5">

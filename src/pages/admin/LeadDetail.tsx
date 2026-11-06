@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X, ClipboardList, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -59,6 +59,7 @@ import {
 } from "@/lib/admin/queries";
 import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
 import { TON } from "@/lib/admin/badges";
+import { texteDevisPourClaude } from "@/lib/admin/devis-claude";
 import {
   type Lead,
   type TerminalLeadStatus,
@@ -82,6 +83,7 @@ import {
   whatsappTemplateConfirmation,
   smsTemplateAnnulationRdv,
   whatsappTemplateAnnulationRdv,
+  messageDemandeAvis,
   buildMailtoHref,
   COMPANY,
   type RelanceDevisPayload,
@@ -318,21 +320,8 @@ Je ne touche à rien sans votre feu vert — dites-moi ce qui vous arrange.
     title: "Avis Google",
     moment: "Chantier fini",
     build: (_ctx, vars) => {
-      const txt = fillTemplate(
-        `Bonjour {{prénom}} 👋 C'est Adrian. J'espère que tout fonctionne nickel depuis mon passage pour {{objet}}, et que vous êtes content du résultat 😊
-
-Si c'est le cas, j'aurais un petit service à vous demander — 2 minutes, pas plus. Pour un artisan indépendant, un avis Google a une vraie valeur : c'est votre confiance rendue visible, et la plus belle vitrine pour mon travail. ⭐
-
-👉 Le lien direct (ça ouvre la page, vous mettez les étoiles, c'est réglé) :
-{{lien_avis}}
-
-Et si vous séchez sur quoi écrire, un mot sur le travail ou le contact suffit.
-
-Si quelque chose ne vous a pas plu, dites-le moi à moi en premier 🙏 — je tiens à ce que vous soyez vraiment content.
-
-Merci de tout cœur ! Adrian`,
-        vars,
-      );
+      // Texte partagé avec la liste « Avis à demander » (message-templates).
+      const txt = messageDemandeAvis(vars["prénom"], vars["objet"]);
       return { sms: txt, wa: txt };
     },
   },
@@ -437,6 +426,8 @@ const LeadDetail = () => {
   const [cancellingRdv, setCancellingRdv] = useState(false);
   // RDV annulé à l'instant : on garde ses infos pour prévenir le client par message.
   const [rdvAnnule, setRdvAnnule] = useState<RendezVous | null>(null);
+  // Lot 2 bis — texte du devis affiché pour copie manuelle si le presse-papiers refuse.
+  const [texteDevisManuel, setTexteDevisManuel] = useState<string | null>(null);
 
   // Interventions (chantiers programmés) — distinct des RDV exploratoires
   const [interventions, setInterventions] = useState<Intervention[]>([]);
@@ -1040,6 +1031,30 @@ const LeadDetail = () => {
     new Date(s).toLocaleString("fr-BE", { dateStyle: "long", timeStyle: "short" });
 
   const info = leadInfo()!;
+
+  // Lot 2 bis — « Préparer le devis avec Claude » : tout ce que la fiche sait,
+  // en texte brut, à coller dans la discussion Claude. Aucun appel d'API.
+  const partagePossible = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const preparerDevis = async (partager: boolean) => {
+    const texte = texteDevisPourClaude(lead, rdv, photoUrls);
+    if (partager && partagePossible) {
+      try {
+        await navigator.share({ title: `Devis — ${lead.name}`, text: texte });
+        return;
+      } catch (e: unknown) {
+        // Feuille de partage refermée : rien à faire. Autre échec : on copie.
+        if (e instanceof Error && e.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(texte);
+      setTexteDevisManuel(null);
+      toast.success("Texte du devis copié", { description: "Colle-le dans ta discussion Claude." });
+    } catch {
+      setTexteDevisManuel(texte);
+      toast.warning("Copie automatique impossible", { description: "Le texte est affiché : sélectionne-le et copie-le." });
+    }
+  };
   // Libellé du badge d'en-tête : « RDV passé » (orange, comme partout) quand le
   // lead est en « RDV confirmé » / rdv_pris sans RDV à venir.
   const libelleEntete = libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv));
@@ -1280,6 +1295,44 @@ const LeadDetail = () => {
       <ErrorBoundary label="MessagesCard">
         <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} onTrace={tracer} />
       </ErrorBoundary>
+
+      {/* Lot 2 bis — Préparer le devis avec Claude (texte brut, aucun appel d'API). */}
+      <Card className="p-4 sm:p-6 space-y-3">
+        <div>
+          <h2 className="font-semibold text-lg">Devis</h2>
+          <p className="text-sm text-muted-foreground">
+            Copie tout ce que la fiche sait du client (coordonnées, besoin, visite, notes, photos,
+            simulateur) pour le coller dans Claude.
+          </p>
+        </div>
+        <div className={`grid gap-2 ${partagePossible ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+          <Button onClick={() => preparerDevis(false)} variant="copper" size="lg" className="min-h-[48px] min-w-0 px-3">
+            <ClipboardList className="w-4 h-4 shrink-0" />
+            <span className="truncate">Préparer le devis avec Claude</span>
+          </Button>
+          {partagePossible && (
+            <Button
+              onClick={() => preparerDevis(true)}
+              variant="outline"
+              size="lg"
+              className="min-h-[48px] px-4"
+              aria-label="Partager le texte du devis"
+            >
+              <Share2 className="w-4 h-4" /> Partager
+            </Button>
+          )}
+        </div>
+        {texteDevisManuel && (
+          <Textarea
+            readOnly
+            value={texteDevisManuel}
+            rows={8}
+            className="text-sm"
+            aria-label="Texte du devis à copier"
+            onFocus={(e) => e.currentTarget.select()}
+          />
+        )}
+      </Card>
 
       {/* 4 — Le reste, replié par défaut. */}
       {/* Notes internes, avec dictée (repliées) */}

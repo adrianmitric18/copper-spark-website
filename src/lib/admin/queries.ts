@@ -12,7 +12,7 @@ import {
   type Testimonial,
   type UpcomingByLead,
 } from "@/lib/admin/types";
-import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
+import { ajouterTrace, formatTraceEnvoi, formatTraceNote, type CanalEnvoi } from "@/lib/admin/envois";
 
 // Source unique de « l'email est-il réel ? » pour toutes les pages admin.
 export { hasUsableEmail } from "@/lib/admin/envois";
@@ -208,7 +208,18 @@ export async function updateLeadNotes(leadId: string, notes: string): Promise<vo
  * l'ouverture du message. Retourne la ligne ajoutée, ou null si non écrite.
  */
 export async function traceEnvoi(leadId: string, canal: CanalEnvoi, titre: string): Promise<string | null> {
-  const ligne = formatTraceEnvoi(canal, titre);
+  return ajouterLigneAuxNotes(leadId, formatTraceEnvoi(canal, titre));
+}
+
+/**
+ * Trace d'une décision sans envoi (ex. « Avis : non ») : même ligne horodatée
+ * dans les notes internes, sans canal. Ne lève jamais.
+ */
+export async function traceNote(leadId: string, texte: string): Promise<string | null> {
+  return ajouterLigneAuxNotes(leadId, formatTraceNote(texte));
+}
+
+async function ajouterLigneAuxNotes(leadId: string, ligne: string): Promise<string | null> {
   try {
     return await enFileNotes(async () => {
       const { data, error } = await supabase
