@@ -1305,17 +1305,18 @@ const LeadDetail = () => {
             simulateur) pour le coller dans Claude.
           </p>
         </div>
-        <div className={`grid gap-2 ${partagePossible ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+        {/* L'un sous l'autre : sur un téléphone, côte à côte, le libellé principal était coupé. */}
+        <div className="grid grid-cols-1 gap-2">
           <Button onClick={() => preparerDevis(false)} variant="copper" size="lg" className="min-h-[48px] min-w-0 px-3">
             <ClipboardList className="w-4 h-4 shrink-0" />
-            <span className="truncate">Préparer le devis avec Claude</span>
+            Préparer le devis avec Claude
           </Button>
           {partagePossible && (
             <Button
               onClick={() => preparerDevis(true)}
               variant="outline"
               size="lg"
-              className="min-h-[48px] px-4"
+              className="min-h-[44px] px-4"
               aria-label="Partager le texte du devis"
             >
               <Share2 className="w-4 h-4" /> Partager
