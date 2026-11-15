@@ -4,6 +4,39 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 import { imagetools } from "vite-imagetools";
+import { existsSync, readFileSync } from "node:fs";
+
+/**
+ * Module virtuel `virtual:realisations` : les réalisations publiées, figées au
+ * build par scripts/fetch-realisations.mjs dans .generated/realisations.json.
+ * Données initiales des pages /realisations et /realisations/:slug, pour que
+ * leur HTML pré-rendu soit complet sans requête Supabase.
+ * Fichier absent ou illisible = snapshot vide, jamais une erreur de build.
+ */
+function realisationsSnapshot() {
+  const id = "virtual:realisations";
+  const resolved = "\0" + id;
+  const file = path.resolve(__dirname, ".generated/realisations.json");
+  const vide = '{"generatedAt":null,"supabaseUrl":null,"projects":[]}';
+  return {
+    name: "realisations-snapshot",
+    resolveId(source: string) {
+      return source === id ? resolved : null;
+    },
+    load(source: string) {
+      if (source !== resolved) return null;
+      let json = vide;
+      if (existsSync(file)) {
+        try {
+          json = JSON.stringify(JSON.parse(readFileSync(file, "utf8")));
+        } catch {
+          /* snapshot illisible : liste vide */
+        }
+      }
+      return `export default ${json};`;
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -12,6 +45,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    realisationsSnapshot(),
     mode === "development" && componentTagger(),
     imagetools(),
     VitePWA({

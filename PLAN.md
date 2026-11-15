@@ -1,5 +1,7 @@
 # PLAN.md — Redesign & extension de l'admin (Le Cuivre Électrique)
 
+> **Chantier SEO/GEO (2026-11)** : voir `PLAN-SEO-GEO.md` (lots, faits métier, vérifications). Ce fichier-ci reste le plan de l'admin.
+
 > **Source de vérité unique.** En cas de doute, ce fichier tranche (pas la mémoire de conversation).
 > Branche de travail : `feat/intake-telephone` (PHASE 6, créée depuis `main` à jour ;
 > `redesign/admin-cockpit` déjà mergée dans `main`). **Jamais de merge sur `main` sans OK explicite d'Adrian.**

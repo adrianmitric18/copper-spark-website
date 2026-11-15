@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
-    "build:dev": "node scripts/generate-sitemap.mjs && vite build --mode development",
+    "build": "node scripts/fetch-realisations.mjs && node scripts/generate-sitemap.mjs && vite build && node scripts/prerender.mjs",
+    "build:dev": "node scripts/fetch-realisations.mjs && node scripts/generate-sitemap.mjs && vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "sitemap": "node scripts/generate-sitemap.mjs",
     "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "realisations": "node scripts/fetch-realisations.mjs",
+    "predev": "node scripts/fetch-realisations.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

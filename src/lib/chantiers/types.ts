@@ -56,6 +56,19 @@ export interface ProjectTag {
   tag: string;
 }
 
+/** Réalisation telle que figée au build (scripts/fetch-realisations.mjs). */
+export interface SnapshotProject extends Project {
+  tags: string[];
+  images: ProjectImage[];
+}
+
+/** Contenu de .generated/realisations.json, exposé par `virtual:realisations`. */
+export interface RealisationsSnapshot {
+  generatedAt: string | null;
+  supabaseUrl: string | null;
+  projects: SnapshotProject[];
+}
+
 /**
  * Liste fixe de tags du CMS, validée le 2026-04-28.
  * Sert à l'autocomplete admin et aux filtres front public.

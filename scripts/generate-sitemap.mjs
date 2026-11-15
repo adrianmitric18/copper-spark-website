@@ -16,28 +16,18 @@
 // vivent dans NOINDEX_ROUTES : elles sont pré-rendues mais pas listées ici,
 // pour ne pas envoyer de signal contradictoire à Google.
 
-import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
-import { createClient } from "@supabase/supabase-js";
 import { SITEMAP_ROUTES } from "./routes.mjs";
+import { loadRealisations } from "./realisations-data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const OUT = resolve(ROOT, "public/sitemap.xml");
 
 const HOST = "https://cuivre-electrique.com";
-
-// Charge .env manuellement — Vite expose VITE_* mais ce script tourne
-// hors du contexte Vite donc process.env n'a pas accès aux vars sans aide.
-const envPath = resolve(ROOT, ".env");
-if (existsSync(envPath)) {
-  for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
-    const m = line.match(/^\s*(VITE_[A-Z_0-9]+)\s*=\s*"?([^"#\r\n]*?)"?\s*$/);
-    if (m) process.env[m[1]] = m[2];
-  }
-}
 
 /**
  * Récupère la date de dernier commit qui a touché le fichier source d'une
@@ -60,40 +50,16 @@ const getLastModForFile = (relPath) => {
 };
 
 /**
- * Fetch les chantiers publiés (CMS Supabase) pour les inclure dans le
- * sitemap. Le sitemap doit refléter les URLs vivantes du site.
- *
- * Fallback silencieux : si Supabase est indisponible (réseau coupé, env
- * vars manquantes en CI, projet en pause), on continue avec un sitemap
- * partiel plutôt que de casser le build.
+ * Les réalisations publiées viennent du snapshot figé par
+ * scripts/fetch-realisations.mjs (1er pas du build) : même source que le
+ * pré-rendu, donc chaque URL listée ici a bien son HTML statique.
+ * Snapshot vide (Supabase injoignable au build) = sitemap sans chantiers,
+ * jamais un build rouge.
  */
-async function fetchPublishedChantiers() {
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    console.warn(
-      "  ⚠ VITE_SUPABASE_URL/KEY absents — sitemap généré SANS les chantiers Supabase",
-    );
-    return [];
-  }
-  try {
-    const supabase = createClient(url, key);
-    const { data, error } = await supabase
-      .from("projects")
-      .select("slug, updated_at")
-      .eq("status", "published")
-      .is("deleted_at", null);
-    if (error) throw error;
-    return data ?? [];
-  } catch (err) {
-    console.warn(
-      `  ⚠ Fetch chantiers Supabase a échoué (${err.message}) — sitemap généré SANS les chantiers`,
-    );
-    return [];
-  }
+const chantiers = loadRealisations().projects;
+if (chantiers.length === 0) {
+  console.warn("  ⚠ snapshot sans réalisation — sitemap généré SANS les chantiers");
 }
-
-const chantiers = await fetchPublishedChantiers();
 
 const chantierUrls = chantiers
   .filter((c) => c.slug)

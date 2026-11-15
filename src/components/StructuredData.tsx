@@ -55,6 +55,9 @@ interface ProjectArticleProps {
   locationName: string;
   /** Tags utilisés comme keywords. */
   tags: string[];
+  /** Page service dont relève le chantier (→ `about`). */
+  serviceName?: string;
+  serviceUrl?: string;
 }
 
 type StructuredDataProps = LocalBusinessProps | LocalBusinessZoneProps | FAQPageProps | ServiceProps | BreadcrumbProps | ProjectArticleProps;
@@ -299,6 +302,24 @@ const StructuredData = (props: StructuredDataProps) => {
             "@type": "Place",
             "name": props.locationName
           },
+          "locationCreated": {
+            "@type": "Place",
+            "name": props.locationName
+          },
+          ...(props.serviceName
+            ? {
+                "about": {
+                  "@type": "Service",
+                  "name": props.serviceName,
+                  ...(props.serviceUrl ? { "url": props.serviceUrl } : {}),
+                  "provider": {
+                    "@type": "Electrician",
+                    "name": "Le Cuivre Électrique",
+                    "url": "https://cuivre-electrique.com"
+                  }
+                }
+              }
+            : {}),
           "keywords": props.tags.join(", ")
         };
         break;

@@ -55,8 +55,11 @@ const ProjectGallery = ({ images }: ProjectGalleryProps) => {
             <img
               src={getChantierImageUrl(img.storage_path)}
               alt={img.caption ?? ""}
+              width={img.width ?? undefined}
+              height={img.height ?? undefined}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              decoding="async"
             />
           </button>
         ))}

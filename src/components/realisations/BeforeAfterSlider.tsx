@@ -9,6 +9,7 @@ interface BeforeAfterSliderProps {
 
 /**
  * Slider Avant/Après. Utilise react-compare-image (~3 Ko).
+ * Chaque image porte sa légende en alt (lisible par Google et les IA).
  * On laisse le composant gérer le ratio nativement, pas besoin de
  * forcer un aspect-ratio si les deux images ont la même résolution.
  */
@@ -18,6 +19,8 @@ const BeforeAfterSlider = ({ before, after }: BeforeAfterSliderProps) => {
       <ReactCompareImage
         leftImage={getChantierImageUrl(before.storage_path)}
         rightImage={getChantierImageUrl(after.storage_path)}
+        leftImageAlt={before.caption ?? "Avant les travaux"}
+        rightImageAlt={after.caption ?? "Après les travaux"}
         leftImageLabel="Avant"
         rightImageLabel="Après"
         sliderLineColor="hsl(var(--primary))"
