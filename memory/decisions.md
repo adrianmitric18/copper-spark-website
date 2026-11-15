@@ -14,6 +14,29 @@
 
 ## Journal
 
+### 2026-11-15 — SEO/GEO lot 1 : réalisations pré-rendues depuis un snapshot du build
+- **Décision :** les réalisations publiées sont figées au build dans `.generated/realisations.json`
+  (`scripts/fetch-realisations.mjs`, 1er pas de `npm run build` et de `npm run dev`), exposées au
+  code par le module virtuel `virtual:realisations` (vite.config.ts). Sitemap, pré-rendu et pages
+  React lisent ce même snapshot. Branche `feat/seo-realisations-indexables`. Aucune migration.
+- **Pourquoi :** le HTML brut de `/realisations/<slug>` renvoyait la home (title, description,
+  aucun contenu) ; le sitemap n'était à jour qu'au déploiement. Brief SEO/GEO d'Adrian du 15/11.
+- **Conséquences / pièges à ne pas réapprendre :**
+  - Le pré-rendu garde Supabase coupé : les pages réalisation lisent le snapshot en `initialData`
+    (React Query, `initialDataUpdatedAt` = date du build) puis rafraîchissent depuis Supabase.
+    Une erreur réseau n'efface pas une fiche affichée depuis le snapshot.
+  - **Une réalisation publiée n'apparaît dans le HTML brut et le sitemap qu'au prochain build** :
+    d'où le webhook Supabase (table `projects`) → Deploy Hook Cloudflare, à créer par Adrian.
+    Le site React, lui, l'affiche tout de suite.
+  - `.generated/` est ignoré par git ; snapshot vide = retour au mode SPA, jamais un build rouge.
+  - Les chantiers fictifs (placeholders photovoltaïque/Vinçotte) de `/realisations` sont supprimés :
+    on n'invente jamais de chantier.
+  - Maillage : `src/lib/chantiers/liens.ts` (tag → page service, commune → page zone). Une
+    réalisation « Brabant wallon » ou « Dinant » n'a pas de page zone, c'est voulu.
+  - Les vignettes des pages services/zones construisent l'URL d'image sans le SDK Supabase
+    (`snapshotImageUrl`), pour ne pas alourdir ces pages.
+  - Le title d'une réalisation n'ajoute la commune que si le titre ne la cite pas déjà.
+
 ### 2026-11-06 — Admin : devis pour Claude, avis à demander, dépannage au téléphone (lot 2 bis)
 - **Décision :** trois ajouts sur `feat/admin-rapporte`, aucune migration :
   bouton « Préparer le devis avec Claude » sur la fiche (texte brut copié ou partagé, aucun

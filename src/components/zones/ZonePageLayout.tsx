@@ -9,6 +9,8 @@ import SEO from "@/components/SEO";
 import StructuredData from "@/components/StructuredData";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import InternalLinks from "@/components/InternalLinks";
+import RealisationsLiees from "@/components/realisations/RealisationsLiees";
+import { realisationsPourZone } from "@/lib/chantiers/liens";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -129,6 +131,13 @@ const ZonePageLayout = ({
             </div>
           </div>
         </section>
+
+        {/* Réalisations dans la commune — snapshot du build, lisible sans JavaScript */}
+        <RealisationsLiees
+          items={realisationsPourZone(slug)}
+          titre={`Nos chantiers à ${cityName}`}
+          intro="Des exemples réels dans la commune, avec photos et contexte."
+        />
 
         {/* Accès au simulateur, contextualisé sur la commune */}
         <section className="pb-4">

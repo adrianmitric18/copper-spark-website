@@ -10,6 +10,8 @@ import StructuredData from "@/components/StructuredData";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import HomeReviewsBanner from "@/components/HomeReviewsBanner";
 import InternalLinks from "@/components/InternalLinks";
+import RealisationsLiees from "@/components/realisations/RealisationsLiees";
+import { realisationsPourService } from "@/lib/chantiers/liens";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -229,6 +231,13 @@ const ServicePageLayout = ({
             </div>
           </div>
         </section>
+
+        {/* Réalisations liées à ce service — snapshot du build, lisible sans JavaScript */}
+        <RealisationsLiees
+          items={realisationsPourService(slug)}
+          titre="Quelques chantiers récents"
+          intro="Des exemples réels de ce service : photos, commune et contexte de chaque intervention."
+        />
 
         {/* Maillage interne : zones desservies */}
         <InternalLinks

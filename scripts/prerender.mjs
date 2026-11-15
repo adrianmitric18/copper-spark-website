@@ -55,7 +55,15 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname, join, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PRERENDER_PATHS } from "./routes.mjs";
+import { PRERENDER_PATHS as STATIC_PATHS } from "./routes.mjs";
+import { loadRealisations, realisationPaths } from "./realisations-data.mjs";
+
+// Routes fixes + une page par réalisation publiée (snapshot figé par
+// scripts/fetch-realisations.mjs). Les pages réalisation lisent ce même
+// snapshot comme données initiales (module virtuel `virtual:realisations`) :
+// leur HTML est donc complet sans aucune requête Supabase pendant le rendu.
+const REALISATION_PATHS = realisationPaths(loadRealisations());
+const PRERENDER_PATHS = [...STATIC_PATHS, ...REALISATION_PATHS];
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -88,9 +96,10 @@ const BLOCKED = [
   // Supabase est coupé DÉLIBÉRÉMENT :
   //   1. déterminisme — sinon le HTML capturé dépend d'une course entre la
   //      réponse réseau et le snapshot, et varie d'un build à l'autre ;
-  //   2. fraîcheur — figer des avis ou des chantiers dans un fichier statique
-  //      les gèlerait jusqu'au prochain déploiement (c'est exactement la
-  //      raison pour laquelle /realisations/:slug est exclu du pré-rendu) ;
+  //   2. fraîcheur — figer des avis dans un fichier statique les gèlerait
+  //      jusqu'au prochain déploiement. Les réalisations, elles, sont figées
+  //      EXPRÈS via le snapshot .generated/realisations.json (module virtuel
+  //      virtual:realisations), et un rebuild part à chaque publication ;
   //   3. la note Google retombe alors sur FALLBACK_RATING (5,0 / 32 avis),
   //      qui se retrouve donc bien dans le HTML statique, comme voulu.
   // Le client, lui, refait les requêtes normalement au montage de React.
@@ -430,7 +439,12 @@ async function renderRoute(route) {
 // ---------------------------------------------------------------------------
 // Boucle principale (petit pool de concurrence)
 // ---------------------------------------------------------------------------
-console.log(`\nPré-rendu de ${PRERENDER_PATHS.length} routes (concurrence ${CONCURRENCY})…\n`);
+console.log(
+  `\nPré-rendu de ${PRERENDER_PATHS.length} routes dont ${REALISATION_PATHS.length} réalisation(s) (concurrence ${CONCURRENCY})…\n`,
+);
+if (REALISATION_PATHS.length === 0) {
+  console.warn("  ⚠ snapshot sans réalisation : /realisations/<slug> restera en mode SPA\n");
+}
 
 const queue = [...PRERENDER_PATHS];
 const results = [];

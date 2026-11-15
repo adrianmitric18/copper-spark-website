@@ -22,15 +22,23 @@ import ProjectFAQ from "@/components/realisations/ProjectFAQ";
 import ProjectGallery from "@/components/realisations/ProjectGallery";
 import { fetchProjectBySlug } from "@/lib/chantiers/queries";
 import { getChantierImageUrl } from "@/lib/chantiers/upload";
+import { SNAPSHOT_UPDATED_AT, snapshotProjectBySlug } from "@/lib/chantiers/snapshot";
+import { serviceDeRealisation, zoneDeRealisation } from "@/lib/chantiers/liens";
 
 const ChantierDetail = () => {
   const { slug } = useParams<{ slug: string }>();
 
+  // Données figées au build : le HTML pré-rendu est complet et le visiteur ne
+  // voit pas de spinner. React Query les tient pour périmées
+  // (initialDataUpdatedAt = date du build) et rafraîchit depuis Supabase.
+  const initial = snapshotProjectBySlug(slug);
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-chantier", slug],
     queryFn: () => (slug ? fetchProjectBySlug(slug) : Promise.resolve(null)),
     enabled: !!slug,
     staleTime: 60_000,
+    initialData: initial,
+    initialDataUpdatedAt: initial ? SNAPSHOT_UPDATED_AT : undefined,
   });
 
   useEffect(() => {
@@ -48,7 +56,10 @@ const ChantierDetail = () => {
     );
   }
 
-  if (error || !data) {
+  // Une erreur réseau ne doit pas effacer une fiche déjà affichée depuis le
+  // snapshot (pendant le pré-rendu, Supabase est coupé exprès). Seule une
+  // réponse « aucun chantier » mène à l'écran introuvable.
+  if (!data || (error && !initial)) {
     return (
       <div className="min-h-screen bg-background">
         <SEO
@@ -77,6 +88,8 @@ const ChantierDetail = () => {
   }
 
   const { project, images, tags } = data;
+  const service = serviceDeRealisation(tags);
+  const zone = zoneDeRealisation(project.location);
 
   const befores = images.filter((i) => i.kind === "before");
   const afters = images.filter((i) => i.kind === "after");
@@ -98,8 +111,15 @@ const ChantierDetail = () => {
   });
 
   const canonicalUrl = `https://cuivre-electrique.com/realisations/${project.slug}`;
+  // Commune ajoutée au title seulement si le titre ne la cite pas déjà.
+  const titreCiteCommune = project.title
+    .toLocaleLowerCase("fr")
+    .includes(project.location.toLocaleLowerCase("fr"));
   const seoTitle =
-    project.meta_title ?? `${project.title} – ${project.location} | Le Cuivre Électrique`;
+    project.meta_title ??
+    (titreCiteCommune
+      ? `${project.title} | Le Cuivre Électrique`
+      : `${project.title} – ${project.location} | Le Cuivre Électrique`);
   const seoDescription = project.meta_description ?? project.summary;
   const ogImage = cover
     ? getChantierImageUrl(cover.storage_path)
@@ -113,6 +133,8 @@ const ChantierDetail = () => {
         keywords={tags.join(", ")}
         canonical={canonicalUrl}
         ogImage={ogImage}
+        ogImageWidth={cover?.width ?? undefined}
+        ogImageHeight={cover?.height ?? undefined}
       />
       <StructuredData
         type="BreadcrumbList"
@@ -131,6 +153,8 @@ const ChantierDetail = () => {
         datePublished={project.completed_at}
         locationName={project.location}
         tags={tags}
+        serviceName={service?.label}
+        serviceUrl={service ? `https://cuivre-electrique.com${service.href}` : undefined}
       />
       {project.faq && project.faq.length > 0 && (
         <StructuredData type="FAQPage" questions={project.faq} />
@@ -215,6 +239,10 @@ const ChantierDetail = () => {
               <img
                 src={getChantierImageUrl(cover.storage_path)}
                 alt={cover.caption ?? project.title}
+                width={cover.width ?? undefined}
+                height={cover.height ?? undefined}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-auto"
               />
             </div>
@@ -278,6 +306,57 @@ const ChantierDetail = () => {
           )}
         </article>
       </main>
+
+      {/* Pour aller plus loin : service, commune, simulateur — liens en texte,
+          présents dans le HTML pré-rendu */}
+      <section className="pb-16 md:pb-20" aria-labelledby="aller-plus-loin">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h2
+            id="aller-plus-loin"
+            className="font-display text-2xl md:text-3xl font-bold mb-4 text-foreground"
+          >
+            Pour aller plus loin
+          </h2>
+          <ul className="space-y-3 text-foreground/90 leading-relaxed list-disc pl-5">
+            {service && (
+              <li>
+                Ce chantier relève de notre service{" "}
+                <Link to={service.href} className="text-primary font-semibold hover:underline">
+                  {service.label}
+                </Link>
+                {" "}: {service.description}
+              </li>
+            )}
+            {zone && (
+              <li>
+                Nous intervenons régulièrement dans cette commune : voir la page{" "}
+                <Link to={zone.href} className="text-primary font-semibold hover:underline">
+                  électricien à {zone.label}
+                </Link>
+                .
+              </li>
+            )}
+            {(service?.slug === "bornes-de-recharge" || service?.slug === "mise-en-conformite-rgie") && (
+              <li>
+                Un projet similaire ?{" "}
+                <Link
+                  to={`/simulateur?besoin=${service.slug === "bornes-de-recharge" ? "borne" : "rgie"}`}
+                  className="text-primary font-semibold hover:underline"
+                >
+                  Estimez votre prix en 1 minute
+                </Link>
+                , sans engagement.
+              </li>
+            )}
+            <li>
+              <Link to="/realisations" className="text-primary font-semibold hover:underline">
+                Toutes nos réalisations
+              </Link>
+              , avec photos, commune et contexte.
+            </li>
+          </ul>
+        </div>
+      </section>
 
       {/* CTA final sombre, rappel du Hero */}
       <section className="relative bg-anthracite py-16 md:py-20 overflow-hidden">

@@ -7,6 +7,9 @@ interface SEOProps {
   ogImage?: string;
   canonical?: string;
   noindex?: boolean;
+  /** Dimensions réelles de l'image OG (défaut : og-image.jpg, 1200×630). */
+  ogImageWidth?: number;
+  ogImageHeight?: number;
 }
 
 const SEO = ({ 
@@ -15,7 +18,9 @@ const SEO = ({
   keywords,
   ogImage = "https://cuivre-electrique.com/og-image.jpg",
   canonical,
-  noindex = false
+  noindex = false,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
 }: SEOProps) => {
   useEffect(() => {
     // Update document title
@@ -51,8 +56,8 @@ const SEO = ({
     updateMetaTag("og:title", title, true);
     updateMetaTag("og:description", description, true);
     updateMetaTag("og:image", ogImage, true);
-    updateMetaTag("og:image:width", "1200", true);
-    updateMetaTag("og:image:height", "630", true);
+    updateMetaTag("og:image:width", String(ogImageWidth), true);
+    updateMetaTag("og:image:height", String(ogImageHeight), true);
     updateMetaTag("og:type", "website", true);
     updateMetaTag("og:site_name", "Le Cuivre Électrique", true);
     updateMetaTag("og:locale", "fr_BE", true);
@@ -81,7 +86,7 @@ const SEO = ({
     return () => {
       document.title = "Le Cuivre Électrique | Électricien indépendant en Brabant wallon & Wallonie";
     };
-  }, [title, description, keywords, ogImage, canonical, noindex]);
+  }, [title, description, keywords, ogImage, canonical, noindex, ogImageWidth, ogImageHeight]);
 
   return null;
 };

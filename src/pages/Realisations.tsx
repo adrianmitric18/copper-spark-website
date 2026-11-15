@@ -11,8 +11,8 @@ const Realisations = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title="Réalisations | Chantiers électriques en Brabant wallon — Le Cuivre Électrique"
-        description="Chantiers réalisés en Brabant wallon : bornes de recharge, panneaux photovoltaïques, mise en conformité RGIE, installations et rénovations électriques."
-        keywords="réalisations électricien, chantiers, bornes recharge, photovoltaïque, RGIE, Brabant wallon"
+        description="Chantiers réalisés en Brabant wallon, à Namur et à Bruxelles : bornes de recharge, tableaux électriques, conformité RGIE, rénovations complètes, avec photos."
+        keywords="réalisations électricien, chantiers, bornes recharge, tableau électrique, RGIE, Brabant wallon"
         canonical="https://cuivre-electrique.com/realisations"
       />
       <StructuredData
@@ -39,9 +39,10 @@ const Realisations = () => {
               Quelques chantiers récents
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed">
-              Bornes de recharge, panneaux photovoltaïques, mise en conformité
+              Bornes de recharge, tableaux électriques, mise en conformité
               RGIE, rénovations complètes. Chaque chantier est documenté avec
-              le contexte, les marques posées et le résultat.
+              le contexte, les marques posées, la commune et le résultat, photos
+              avant/après comprises quand il y en a.
             </p>
           </div>
         </section>

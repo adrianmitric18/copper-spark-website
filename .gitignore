@@ -17,6 +17,9 @@ dist-ssr
 # conserve pas le home directory entre `npm install` et `npm run build`.
 .cache/
 
+# Réalisations figées au build (scripts/fetch-realisations.mjs), reconstruites à chaque build
+.generated/
+
 # Lighthouse audit reports (generated locally, not versioned)
 lh-*.json
 
