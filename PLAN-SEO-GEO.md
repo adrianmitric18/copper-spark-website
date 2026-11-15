@@ -45,6 +45,12 @@
       zones, FAQ, simulateur ; pas l'admin), Zaptec en avant, horaires/délais en une constante, JSON-LD
       Electrician (sameAs fiche Google, founder, foundingDate 2023, areaServed Namur + Bruxelles,
       knowsAbout).
+  - **Note d'Adrian du 2026-11-16 : plus de dépannage le soir ni le dimanche.** Retirer « 7j/7 » et
+    « 24h/24 » partout (title de l'accueil, pages, FAQ, simulateur, données structurées, noscript,
+    `SERVICES_LINKS`). Horaires uniques : **lundi–samedi 7h–19h**. La grille dépannage
+    (`src/lib/simulateur/config.ts`) a une colonne « Soir / nuit / dimanche » à 210/230/250 € :
+    **⛔ demander à Adrian** (supprimer la colonne ? garder un tarif samedi ?) avant d'y toucher.
+    Mémoire à mettre à jour ensuite : la décision du 2026-10 « 7j/7 » devient caduque.
 - [ ] **Lot 4 — Textes pour les IA** : premier paragraphe « réponse directe » (accueil, services,
       zones), FAQ + 8 questions, À propos factuel, section « ce qui nous distingue », avis dans le HTML
       brut (/avis, accueil, services). Gates contenu : devils-advocate → sentinel → eagle-supervisor.
