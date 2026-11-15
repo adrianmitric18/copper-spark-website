@@ -36,6 +36,9 @@
   - Les vignettes des pages services/zones construisent l'URL d'image sans le SDK Supabase
     (`snapshotImageUrl`), pour ne pas alourdir ces pages.
   - Le title d'une réalisation n'ajoute la commune que si le titre ne la cite pas déjà.
+  - Slider Avant/Après : `leftImageAlt` / `rightImageAlt` = légende de la photo (retour d'Adrian
+    sur la preview : les 4 photos avaient un alt vide).
+  - Validé sur la preview Cloudflare et mergé dans `main` le 2026-11-15.
 
 ### 2026-11-06 — Admin : devis pour Claude, avis à demander, dépannage au téléphone (lot 2 bis)
 - **Décision :** trois ajouts sur `feat/admin-rapporte`, aucune migration :

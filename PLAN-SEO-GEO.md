@@ -25,7 +25,8 @@
 
 ## Lots (ordre = impact sur les appels)
 
-- [x] **Lot 1 — Réalisations indexables** (branche `feat/seo-realisations-indexables`)
+- [x] **Lot 1 — Réalisations indexables** (branche `feat/seo-realisations-indexables`, validé par Adrian
+      sur la preview et mergé dans `main` le 2026-11-15)
   - [x] Snapshot des réalisations publiées au build (`scripts/fetch-realisations.mjs` →
         `.generated/realisations.json`, module virtuel `virtual:realisations`).
   - [x] Pré-rendu d'une page HTML par réalisation + liste `/realisations` complète dans le HTML.
@@ -34,6 +35,7 @@
         JSON-LD Article enrichi (`about` = service, `locationCreated`).
   - [x] Maillage : fiche → service + zone + simulateur ; pages services et zones → réalisations liées.
   - [x] Chantiers fictifs (placeholders) retirés de `/realisations`.
+  - [x] Photos Avant/Après : légende de la photo en alt (retour d'Adrian sur la preview).
   - [ ] ⛔ **Adrian** : créer le Deploy Hook Cloudflare + le webhook Supabase (clics fournis le 15/11).
   - [ ] ⛔ **Adrian** : Search Console → soumettre le sitemap ; Bing Webmaster Tools → importer le site.
 - [ ] **Lot 2 — Vitesse mobile** : pas d'animation d'entrée quand le HTML est déjà rendu, Supabase et
