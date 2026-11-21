@@ -105,10 +105,15 @@ export function chargerMesure() {
 
 /** Efface les cookies posés par Google (_ga, _ga_<id>, _gid, _gat, _gcl_*). */
 function effacerCookiesGoogle() {
-  const hote = window.location.hostname;
-  const morceaux = hote.split(".");
-  const domaines = new Set<string>(["", hote, `.${hote}`]);
-  if (morceaux.length >= 2) domaines.add(`.${morceaux.slice(-2).join(".")}`);
+  // Google pose ses cookies sur le domaine le plus large qu'il peut : on tente
+  // donc l'hôte et chacun de ses domaines parents (a.b.c.d, .b.c.d, .c.d).
+  const morceaux = window.location.hostname.split(".");
+  const domaines = new Set<string>([""]);
+  for (let i = 0; i <= morceaux.length - 2; i++) {
+    const suffixe = morceaux.slice(i).join(".");
+    domaines.add(suffixe);
+    domaines.add(`.${suffixe}`);
+  }
 
   for (const paire of document.cookie.split(";")) {
     const nom = paire.split("=")[0].trim();
