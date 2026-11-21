@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import ServicePageLayout from "@/components/services/ServicePageLayout";
@@ -6,6 +6,7 @@ import RealisationsLiees from "@/components/realisations/RealisationsLiees";
 import { Button } from "@/components/ui/button";
 import { useDisplayRating } from "@/hooks/useDisplayRating";
 import { realisationsPourService } from "@/lib/chantiers/liens";
+import { actionDuLien, compterClic } from "@/lib/compteur";
 import { BORNE, NB_QUESTIONS, type Fourchette } from "@/lib/simulateur/config";
 // Certificat fourni par Adrian le 2026-11-21 (1241 × 1754). La vignette (360 px
 // de large, affichée en 180 px) est seule chargée avec la page ; l'original ne
@@ -205,6 +206,20 @@ const Commune = ({ href, children }: { href: string; children: ReactNode }) => (
 
 const BornesDeRecharge = () => {
   const { data: rating } = useDisplayRating();
+
+  // Compteur anonyme : chaque clic sur un lien WhatsApp ou téléphone de cette
+  // page (boutons du haut, bloc final, menu, pied de page, bouton flottant)
+  // ajoute 1 au compteur du jour. Rien n'est déposé sur l'appareil et rien
+  // n'est envoyé sur la personne : voir src/lib/compteur.ts.
+  useEffect(() => {
+    const surClic = (e: MouseEvent) => {
+      const lienClique = (e.target as Element | null)?.closest?.("a[href]");
+      const action = actionDuLien(lienClique?.getAttribute("href"));
+      if (action) compterClic("bornes", action);
+    };
+    document.addEventListener("click", surClic);
+    return () => document.removeEventListener("click", surClic);
+  }, []);
   const noteGoogle = `Note Google : ${rating.ratingValueFormatted} sur 5, sur ${rating.reviewCount} avis.`;
 
   // « Nos dernières bornes » : les deux fiches citées dans le texte, dans cet ordre.
