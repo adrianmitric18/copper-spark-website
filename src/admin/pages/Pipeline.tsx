@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchLeadsWithUpcomingRdvs } from "@/lib/admin/queries";
+import { fetchLeadsWithUpcomingRdvs, traceAppel } from "@/lib/admin/queries";
 import {
   type Lead,
   STATUT_REACTIVATION,
@@ -30,7 +30,6 @@ import { formaterDateCourte } from "@/lib/admin/heures";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
-import ArchiverAnciensDialog from "@/components/admin/ArchiverAnciensDialog";
 import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
 import { TON } from "@/lib/admin/badges";
 import { cn } from "@/lib/utils";
@@ -81,9 +80,11 @@ interface LeadCardProps {
   lead: Lead;
   upcoming?: { date_rdv: string; heure_rdv: string };
   onStatusChange: (lead: Lead, newStatus: string) => void;
+  /** Taper « Appeler » : trace l'appel (un lead « nouveau » passe en « traité »). */
+  onAppel: (lead: Lead) => void;
 }
 
-const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
+const LeadCard = ({ lead, upcoming, onStatusChange, onAppel }: LeadCardProps) => {
   const hours = ageInHours(lead.created_at);
   const isOld = hours >= 48 && !isTerminal(lead.status);
   // « RDV confirmé » sans RDV à venir = RDV passé : on ne l'affiche jamais confirmé.
@@ -159,6 +160,7 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
           href={`tel:${lead.phone}`}
           className="flex items-center justify-center flex-1 h-9 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           aria-label={`Appeler ${lead.name}`}
+          onClick={() => onAppel(lead)}
         >
           <Phone className="w-3.5 h-3.5" />
           <span className="ml-1">Appeler</span>
@@ -285,6 +287,12 @@ const Pipeline = () => {
   const handleStatusChange = (lead: Lead, newStatus: string) => {
     void changerStatut(lead, newStatus);
   };
+  // Lot « statuts auto » : l'appel est tracé, un lead « nouveau » devient « traité ».
+  const handleAppel = (lead: Lead) => {
+    void traceAppel(lead.id).then(() => {
+      if (lead.status === "nouveau") reload();
+    });
+  };
 
   return (
     <AdminShell email={user?.email} mobileTitle="Leads">
@@ -323,7 +331,6 @@ const Pipeline = () => {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
             </Button>
-            <ArchiverAnciensDialog leads={leads} upcomingByLead={upcomingByLead} />
             <ManualLeadDialog />
           </div>
         </div>
@@ -393,6 +400,7 @@ const Pipeline = () => {
                 lead={lead}
                 upcoming={upcomingByLead[lead.id]}
                 onStatusChange={handleStatusChange}
+                onAppel={handleAppel}
               />
             ))}
           </div>
