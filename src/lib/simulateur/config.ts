@@ -493,6 +493,12 @@ export interface Fourchette {
 
 export const BORNE = {
   /**
+   * Borne Zaptec Go 2 fournie ET posée : notre premier choix.
+   * Fourchette donnée par Adrian le 2026-11-21. Comprend le module
+   * d'équilibrage, le dossier technique et le passage de l'organisme de contrôle.
+   */
+  zaptec: { min: 2000, max: 2400 } as Fourchette,
+  /**
    * Borne Alfen fournie ET posée.
    * Calée sur des chantiers réels : une Alfen posée facturée 2 834 € TTC,
    * poste dossier + contrôle de 300 € compris dedans.

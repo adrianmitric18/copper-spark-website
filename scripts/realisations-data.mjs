@@ -103,9 +103,27 @@ export async function fetchRealisations() {
     .order("completed_at", { ascending: false });
   if (error) throw error;
 
+  // Note et nombre d'avis de la fiche Google (table `google_rating`, saisie
+  // dans /admin/avis). Figés ici pour que le HTML pré-rendu porte le vrai
+  // nombre d'avis. Table vide ou erreur = null : le site retombe sur sa valeur
+  // de secours, le build reste vert.
+  let googleRating = null;
+  const ratingRes = await supabase
+    .from("google_rating")
+    .select("rating, user_ratings_total")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!ratingRes.error && ratingRes.data) {
+    const rating = Number(ratingRes.data.rating);
+    const total = Number(ratingRes.data.user_ratings_total);
+    if (Number.isFinite(rating) && Number.isFinite(total) && total > 0) {
+      googleRating = { rating, total };
+    }
+  }
+
   const list = projects ?? [];
   if (list.length === 0) {
-    return { generatedAt: new Date().toISOString(), supabaseUrl: url, projects: [] };
+    return { generatedAt: new Date().toISOString(), supabaseUrl: url, googleRating, projects: [] };
   }
 
   const ids = list.map((p) => p.id);
@@ -136,6 +154,7 @@ export async function fetchRealisations() {
   return {
     generatedAt: new Date().toISOString(),
     supabaseUrl: url,
+    googleRating,
     projects: list.map((p) => ({
       ...p,
       tags: tagsByProject.get(p.id) ?? [],

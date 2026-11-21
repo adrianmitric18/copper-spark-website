@@ -66,6 +66,8 @@ export interface SnapshotProject extends Project {
 export interface RealisationsSnapshot {
   generatedAt: string | null;
   supabaseUrl: string | null;
+  /** Note de la fiche Google au moment du build (table `google_rating`). */
+  googleRating?: { rating: number; total: number } | null;
   projects: SnapshotProject[];
 }
 

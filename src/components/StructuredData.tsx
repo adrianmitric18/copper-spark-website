@@ -29,6 +29,10 @@ interface ServiceProps {
   serviceDescription: string;
   /** Communes desservies pour ce service ; à défaut, la zone générique. */
   areaServed?: string[];
+  /** Régions desservies ; à défaut, Brabant wallon + Wallonie. */
+  regions?: string[];
+  /** URL canonique de la page du service. */
+  url?: string;
 }
 
 interface BreadcrumbItem {
@@ -237,24 +241,30 @@ const StructuredData = (props: StructuredDataProps) => {
         jsonLd = {
           "@context": "https://schema.org",
           "@type": "Service",
+          "name": props.serviceName,
           "serviceType": props.serviceName,
           "description": props.serviceDescription,
+          ...(props.url ? { "url": props.url } : {}),
           "provider": {
             "@type": "Electrician",
             "name": "Le Cuivre Électrique",
             "url": "https://cuivre-electrique.com"
           },
           "areaServed": [
-            { "@type": "AdministrativeArea", "name": "Brabant wallon" },
-            { "@type": "AdministrativeArea", "name": "Wallonie" },
+            ...(props.regions ?? ["Brabant wallon", "Wallonie"]).map((name) => ({
+              "@type": "AdministrativeArea",
+              "name": name
+            })),
             // Liste propre au service quand elle existe (la page dépannage
             // passe les communes de sa grille), sinon la zone générique.
             ...(props.areaServed
               ? props.areaServed.map((name) => ({ "@type": "City", "name": name }))
-              : [
-                  { "@type": "City", "name": "Court-Saint-Étienne" },
-                  { "@type": "City", "name": "Bruxelles" }
-                ])
+              : props.regions
+                ? []
+                : [
+                    { "@type": "City", "name": "Court-Saint-Étienne" },
+                    { "@type": "City", "name": "Bruxelles" }
+                  ])
           ]
         };
         break;

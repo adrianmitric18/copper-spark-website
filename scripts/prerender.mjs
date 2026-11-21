@@ -100,8 +100,9 @@ const BLOCKED = [
   //      jusqu'au prochain déploiement. Les réalisations, elles, sont figées
   //      EXPRÈS via le snapshot .generated/realisations.json (module virtuel
   //      virtual:realisations), et un rebuild part à chaque publication ;
-  //   3. la note Google retombe alors sur FALLBACK_RATING (5,0 / 32 avis),
-  //      qui se retrouve donc bien dans le HTML statique, comme voulu.
+  //   3. la note Google affichée est alors celle lue dans la table
+  //      `google_rating` au début du build (constante __GOOGLE_RATING__), et
+  //      se retrouve donc bien dans le HTML statique, comme voulu.
   // Le client, lui, refait les requêtes normalement au montage de React.
   ".supabase.co",
   "api.emailjs.com",
