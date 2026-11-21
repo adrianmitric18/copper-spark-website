@@ -33,6 +33,13 @@
   - **Le statut avance dans `traceEnvoi`** (même écriture que la trace) : tout bouton de message
     en profite sans code en plus. La cible dépend du TITRE tracé (`cibleDuMessage`) : renommer
     « Confirmation RDV », « Démarrage chantier », « Avis Google » ou « Avis demandé » casse la règle.
+  - **Un appel ne prouve rien** (décision d'Adrian du 21/11, pour ne pas oublier un client qui
+    n'a pas décroché) : « Appeler » trace l'appel sans changer le statut. Sur un lead Nouveau,
+    « Tu l'as eu ? » reste posée tant qu'il n'a pas répondu : « Oui » → Traité, « Pas de réponse »
+    → reste Nouveau, mention « à rappeler · N essais · dernier le JJ/MM ». Tout est déduit des
+    lignes des notes (`etatAppel`) : renommer « Appel », « Appel : client joint » ou « Appel sans
+    réponse » casse la règle. Un message écrit et « Déjà répondu » passent toujours en Traité.
+  - **Au merge, `AUTO_DEPUIS` se cale sur le jour du merge** (décision d'Adrian du 21/11).
   - Adrian envoie ses devis depuis **Vertuoza** : « Devis envoyé » sur l'accueil date l'envoi sans
     message. Règle générale : tout ce que l'automatique laisse à faire se règle en 1 tap sur l'accueil.
   - L'écriture automatique d'un statut est conditionnée au statut vu au calcul

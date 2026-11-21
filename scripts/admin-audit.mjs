@@ -74,9 +74,29 @@ const lead = (id, name, status, p = {}) => ({
   ...p,
 });
 
+// Ligne de trace datée de `decalage` jours : « 21/11/2026 09:20 — Appel ».
+const trace = (decalage, heure, texte) => {
+  const d = new Date(MAINTENANT + decalage * 86_400_000);
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${heure} — ${texte}`;
+};
+
 const LEADS = [
-  lead("l-nouveau", "Marie Dupont", "nouveau", { created_at: instant(-1) }),
-  lead("l-nouveau2", "Karim Benali", "nouveau", { created_at: instant(-4), commune: "Jette", email: null }),
+  // Appel lancé, pas encore de réponse à « Tu l'as eu ? ».
+  lead("l-nouveau", "Marie Dupont", "nouveau", { created_at: instant(-1), notes_internes: trace(0, "09:20", "Appel") }),
+  // Deux appels sans réponse (« À rappeler · 2 essais · dernier le … »), puis un
+  // troisième appel en attente de réponse à « Tu l'as eu ? ».
+  lead("l-nouveau2", "Karim Benali", "nouveau", {
+    created_at: instant(-4),
+    commune: "Jette",
+    email: null,
+    notes_internes: [
+      trace(-2, "17:05", "Appel"),
+      trace(-2, "17:06", "Appel sans réponse"),
+      trace(-1, "12:30", "Appel"),
+      trace(-1, "12:31", "Appel sans réponse"),
+      trace(0, "09:20", "Appel"),
+    ].join("\n"),
+  }),
   lead("l-traite", "Jean Peeters", "traité", { created_at: instant(-10), commune: "Grimbergen" }),
   lead("l-devis", "Sophie Lambert", "devis envoyé", { created_at: instant(-15), devis_envoye_at: jour(-8) }),
   lead("l-converti", "Luc Janssens", "converti", { created_at: instant(-40) }),
@@ -664,6 +684,8 @@ const ECRANS = [
   { nom: "fiche-replanifier", url: "/admin/lead/l-rdvpasse?replanifier=1" },
   { nom: "fiche-lead-termine", url: "/admin/lead/l-sanssuite" },
   { nom: "fiche-formulaire-rdv", url: "/admin/lead/l-nouveau?rdv=1" },
+  { nom: "fiche-appel-question", url: "/admin/lead/l-nouveau" },
+  { nom: "fiche-a-rappeler", url: "/admin/lead/l-nouveau2" },
   { nom: "rdv-rapide", url: "/admin/rdv-rapide" },
   { nom: "depannage", url: "/admin/depannage" },
   { nom: "depannage-soir-zone-3", url: "/admin/depannage", apres: async (p) => { await cliquer(p, "Zone 3", "[role='radio']"); await cliquer(p, "Soir", "[role='radio']"); } },

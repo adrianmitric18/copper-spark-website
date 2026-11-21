@@ -5,6 +5,7 @@ import {
   calculerActionsAuto,
   calculerPropositions,
   estArchivableAuto,
+  etatAppel,
   genreRdv,
   joursEntre,
   leadsDevisAFaire,
@@ -70,11 +71,46 @@ describe("un message envoyé fait avancer le statut", () => {
     expect(statutApresMessage("RDV confirmé", "Bien reçu")).toBeNull();
   });
 
-  it("un appel, un message quelconque ou « Déjà répondu » : nouveau → traité", () => {
-    expect(statutApresMessage("nouveau", "Appel")).toBe("traité");
+  it("un message quelconque, « Déjà répondu » ou un appel abouti : nouveau → traité", () => {
     expect(statutApresMessage("nouveau", "Message rapide")).toBe("traité");
     expect(statutApresMessage("nouveau", "Déjà répondu (hors admin)")).toBe("traité");
+    expect(statutApresMessage("nouveau", "Appel : client joint")).toBe("traité");
+    expect(statutApresMessage("traité", "Appel : client joint")).toBeNull();
+  });
+
+  it("taper « Appeler » ou « Pas de réponse » ne change pas le statut", () => {
+    expect(statutApresMessage("nouveau", "Appel")).toBeNull();
+    expect(statutApresMessage("nouveau", "Appel sans réponse")).toBeNull();
     expect(statutApresMessage("traité", "Appel")).toBeNull();
+  });
+
+  it("« Tu l'as eu ? » reste posée tant que le dernier appel n'a pas de réponse", () => {
+    const nouveau = (notes: string | null) => etatAppel({ status: "nouveau", notes_internes: notes });
+    expect(nouveau(null)).toEqual({ question: false, essais: 0, mention: null });
+    expect(nouveau("Client rencontré au salon\n21/11/2026 09:10 — Appel").question).toBe(true);
+    // Répondu « Pas de réponse » : plus de question, un essai compté.
+    expect(nouveau("21/11/2026 09:10 — Appel\n21/11/2026 09:11 — Appel sans réponse")).toEqual({
+      question: false,
+      essais: 1,
+      mention: "à rappeler · 1 essai · le 21/11",
+    });
+    // Deuxième appel lancé : la question revient, l'essai précédent reste compté.
+    const rappel = nouveau(
+      "21/11/2026 09:10 — Appel\r\n21/11/2026 09:11 — Appel sans réponse\r\n23/11/2026 17:00 — Appel",
+    );
+    expect(rappel.question).toBe(true);
+    expect(rappel.essais).toBe(1);
+    expect(
+      nouveau(
+        "21/11/2026 09:10 — Appel\n21/11/2026 09:11 — Appel sans réponse\n23/11/2026 17:00 — Appel\n23/11/2026 17:01 — Appel sans réponse",
+      ).mention,
+    ).toBe("à rappeler · 2 essais · dernier le 23/11");
+  });
+
+  it("le suivi des appels ne concerne que les leads nouveaux", () => {
+    const notes = "21/11/2026 09:10 — Appel\n21/11/2026 09:11 — Appel sans réponse\n22/11/2026 08:00 — Appel";
+    expect(etatAppel({ status: "traité", notes_internes: notes })).toEqual({ question: false, essais: 0, mention: null });
+    expect(etatAppel({ status: "devis envoyé", notes_internes: notes }).question).toBe(false);
   });
 
   it("« Confirmation RDV » (fiche ou RDV rapide) → RDV confirmé, jamais en arrière", () => {

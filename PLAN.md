@@ -210,9 +210,14 @@ si Adrian veut des rappels datés explicites.
 - [x] **S6 — Ménage** : retirés « Archiver les anciens », le bloc « RDV passé — À clôturer », le
       sélecteur de statut de la fiche. `AujourdhuiCockpit.tsx` et le type RDV photovoltaïque
       attendent le lot 3 admin.
+- [x] **S6 bis — Appel sans réponse** (demande d'Adrian du 21/11) : « Appeler » ne passe plus un
+      lead Nouveau en Traité. Question « Tu l'as eu ? » (accueil, Leads, fiche) : « Oui » → Traité ;
+      « Pas de réponse » → le lead reste dans « À faire » avec « à rappeler · N essais · dernier
+      le JJ/MM ». Déduit des notes (`etatAppel`), aucune colonne.
 - [ ] **S7 — Aperçu sur le téléphone d'Adrian, puis merge sur son OK.** ⚠️ L'aperçu écrit dans la
       vraie base : les RDV datés du 21/11 ou après y seront traités automatiquement.
-- [ ] **Au merge** : vérifier `AUTO_DEPUIS` (date de mise en service) dans `statuts-auto.ts`.
+- [ ] **Au merge** : caler `AUTO_DEPUIS` sur le jour du merge (décidé par Adrian le 21/11) dans
+      `statuts-auto.ts`, et relancer les tests.
 
 ## ❌ Hors-scope (acté)
 Facturation maison (Peppol B2B obligatoire en Belgique → outil externe certifié), stats vanity,

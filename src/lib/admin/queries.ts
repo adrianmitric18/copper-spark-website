@@ -19,6 +19,8 @@ import { ajouterTrace, formatTraceEnvoi, formatTraceNote, type CanalEnvoi } from
 import {
   LIBELLE_RATTRAPAGE,
   TRACE_APPEL,
+  TRACE_APPEL_JOINT,
+  TRACE_APPEL_SANS_REPONSE,
   TRACE_DEJA_REPONDU,
   genreRdv,
   jourMois,
@@ -202,9 +204,22 @@ export async function traceEnvoi(leadId: string, canal: CanalEnvoi, titre: strin
   return ajouterLigneAuxNotes(leadId, formatTraceEnvoi(canal, titre), titre);
 }
 
-/** Taper « Appeler » : trace l'appel ; un lead « nouveau » passe en « traité ». Ne lève jamais. */
+/**
+ * Taper « Appeler » : trace l'appel, sans toucher au statut (le client n'a
+ * peut-être pas décroché). Sur un lead « nouveau », l'écran pose ensuite
+ * « Tu l'as eu ? » (`repondreAppel`). Ne lève jamais.
+ */
 export async function traceAppel(leadId: string): Promise<string | null> {
   return ajouterLigneAuxNotes(leadId, formatTraceNote(TRACE_APPEL), TRACE_APPEL);
+}
+
+/**
+ * Réponse à « Tu l'as eu ? » : « Oui » → traité ; « Pas de réponse » → le lead
+ * reste « nouveau », l'essai est compté dans ses notes. Ne lève jamais.
+ */
+export async function repondreAppel(leadId: string, joint: boolean): Promise<string | null> {
+  const titre = joint ? TRACE_APPEL_JOINT : TRACE_APPEL_SANS_REPONSE;
+  return ajouterLigneAuxNotes(leadId, formatTraceNote(titre), titre);
 }
 
 /** Bouton « Déjà répondu » de l'accueil : réponse donnée hors admin → « traité ». */

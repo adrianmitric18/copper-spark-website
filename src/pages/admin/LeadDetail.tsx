@@ -50,13 +50,23 @@ import {
   setLeadDevisEnvoye,
   deleteLeadWithPhotos,
   hasUsableEmail,
+  repondreAppel,
   traceAppel,
   traceEnvoi,
   traceNote,
   terminerLead,
 } from "@/lib/admin/queries";
 import { ajouterTrace, formatTraceEnvoi, formatTraceNote, type CanalEnvoi } from "@/lib/admin/envois";
-import { AUTO_DEPUIS, TRACE_APPEL, genreRdv, statutApresMessage } from "@/lib/admin/statuts-auto";
+import {
+  AUTO_DEPUIS,
+  TRACE_APPEL,
+  TRACE_APPEL_JOINT,
+  TRACE_APPEL_SANS_REPONSE,
+  etatAppel,
+  genreRdv,
+  statutApresMessage,
+} from "@/lib/admin/statuts-auto";
+import QuestionAppel from "@/components/admin/QuestionAppel";
 import { TON } from "@/lib/admin/badges";
 import { adresseComplete, texteDevisPourClaude } from "@/lib/admin/devis-claude";
 import {
@@ -611,7 +621,30 @@ const LeadDetail = () => {
     void traceEnvoi(lead.id, canal, titre).then(rafraichirListes);
   };
 
-  // Taper « Appeler » : l'appel est tracé ; un lead « nouveau » passe en « traité ».
+  // Réponse à « Tu l'as eu ? » : « Oui » → traité ; « Pas de réponse » → le
+  // lead reste « nouveau », l'essai est compté. Écran d'abord, base ensuite.
+  const repondreALAppel = (joint: boolean) => {
+    if (!lead) return;
+    const titre = joint ? TRACE_APPEL_JOINT : TRACE_APPEL_SANS_REPONSE;
+    const ligne = formatTraceNote(titre);
+    setNotes((prev) => ajouterTrace(prev, ligne));
+    setLead((prev) =>
+      prev
+        ? {
+            ...prev,
+            notes_internes: ajouterTrace(prev.notes_internes, ligne),
+            status: statutApresMessage(prev.status, titre) ?? prev.status,
+          }
+        : prev,
+    );
+    void repondreAppel(lead.id, joint).then((ecrite) => {
+      if (!ecrite) toast.warning("Réponse non enregistrée, réessaie dans un instant.");
+      rafraichirListes();
+    });
+  };
+
+  // Taper « Appeler » : l'appel est tracé ; sur un lead « nouveau », la fiche
+  // pose ensuite « Tu l'as eu ? » (le statut ne bouge pas tout seul).
   const tracerAppel = () => {
     if (!lead) return;
     const ligne = formatTraceNote(TRACE_APPEL);
@@ -1065,6 +1098,8 @@ const LeadDetail = () => {
   // Libellé du badge d'en-tête : « RDV passé » (orange, comme partout) quand le
   // lead est en « RDV confirmé » / rdv_pris sans RDV à venir.
   const libelleEntete = libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv));
+  // Lead « nouveau » : question « Tu l'as eu ? » et nombre d'appels sans réponse.
+  const appel = etatAppel(lead);
   const quickMessage = communicationMessage();
   const encodedBody = encodeURIComponent(quickMessage.body);
   const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
@@ -1110,6 +1145,7 @@ const LeadDetail = () => {
               </>
             )}
           </p>
+          {appel.mention && <p className="text-sm font-medium first-letter:uppercase">{appel.mention}</p>}
         </div>
         <Badge
           variant="outline"
@@ -1164,6 +1200,8 @@ const LeadDetail = () => {
           </Button>
         )}
       </div>
+
+      {appel.question && <QuestionAppel leadName={lead.name} onReponse={repondreALAppel} />}
 
       {/* 2 — Rendez-vous : créer / modifier / annuler / terminer, puis les boutons de message. */}
       {/* RDV passé encore ouvert : plus de bloc « À clôturer » (lot statuts

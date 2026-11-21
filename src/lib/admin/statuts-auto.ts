@@ -129,6 +129,12 @@ export const avancerStatut = (actuel: string | null | undefined, cible: string):
 /** Titre de la trace laissée quand Adrian tape « Appeler ». */
 export const TRACE_APPEL = "Appel";
 
+/** Réponse « Oui » à « Tu l'as eu ? » : le client a décroché → traité. */
+export const TRACE_APPEL_JOINT = "Appel : client joint";
+
+/** Réponse « Pas de réponse » : le lead reste « nouveau », à rappeler. */
+export const TRACE_APPEL_SANS_REPONSE = "Appel sans réponse";
+
 /** Titre de la trace du bouton « Déjà répondu » de l'accueil. */
 export const TRACE_DEJA_REPONDU = "Déjà répondu (hors admin)";
 
@@ -136,9 +142,10 @@ export const TRACE_DEJA_REPONDU = "Déjà répondu (hors admin)";
  * Statut visé par un message, d'après le titre tracé dans les notes :
  *  - « Confirmation RDV » (fiche, RDV rapide, courte ou complète) → RDV confirmé
  *  - « Démarrage chantier », « Avis Google », « Avis demandé » → converti
- *  - tout autre message, un appel, « Déjà répondu » → traité (un lead « nouveau »
- *    à qui on a écrit n'est plus nouveau)
+ *  - tout autre message, « Déjà répondu », un appel abouti → traité (un lead
+ *    « nouveau » à qui on a parlé n'est plus nouveau)
  * « Devis envoyé » est géré à part : il date aussi l'envoi (`setLeadDevisEnvoye`).
+ * Taper « Appeler » ne change rien à lui seul : voir `statutApresMessage`.
  */
 export const cibleDuMessage = (titre: string): string => {
   const t = titre.trim();
@@ -147,9 +154,58 @@ export const cibleDuMessage = (titre: string): string => {
   return "traité";
 };
 
-/** Nouveau statut du lead après l'envoi du message `titre`, ou null s'il ne change pas. */
-export const statutApresMessage = (actuel: string | null | undefined, titre: string): string | null =>
-  avancerStatut(actuel, cibleDuMessage(titre));
+/**
+ * Nouveau statut du lead après l'envoi du message `titre`, ou null s'il ne
+ * change pas. Un appel seul ne prouve rien (le client n'a peut-être pas
+ * décroché) : ni « Appel » ni « Appel sans réponse » ne font avancer le statut.
+ */
+export const statutApresMessage = (actuel: string | null | undefined, titre: string): string | null => {
+  const t = titre.trim();
+  if (t === TRACE_APPEL || t === TRACE_APPEL_SANS_REPONSE) return null;
+  return avancerStatut(actuel, cibleDuMessage(t));
+};
+
+export interface EtatAppel {
+  /** Un appel a été lancé et Adrian n'a pas encore dit s'il a eu le client. */
+  question: boolean;
+  /** Nombre d'appels restés sans réponse. */
+  essais: number;
+  /** « à rappeler · 2 essais · dernier le 21/11 », ou null sans essai. */
+  mention: string | null;
+}
+
+const AUCUN_APPEL: EtatAppel = { question: false, essais: 0, mention: null };
+
+/**
+ * Suivi des appels d'un lead « nouveau », déduit des lignes de ses notes
+ * (aucune colonne) : la question « Tu l'as eu ? » reste posée tant que le
+ * dernier appel n'a pas de réponse ; chaque « Pas de réponse » compte un essai.
+ */
+export const etatAppel = (lead: Pick<Lead, "status" | "notes_internes">): EtatAppel => {
+  if (lead.status !== "nouveau" || !lead.notes_internes) return AUCUN_APPEL;
+  let question = false;
+  let essais = 0;
+  let dernier: string | null = null;
+  const re = /^(\d{2})\/(\d{2})\/\d{4} \d{2}:\d{2} — (.+)$/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(lead.notes_internes)) !== null) {
+    const texte = m[3].trim();
+    if (texte === TRACE_APPEL) question = true;
+    else if (texte === TRACE_APPEL_JOINT) question = false;
+    else if (texte === TRACE_APPEL_SANS_REPONSE) {
+      question = false;
+      essais += 1;
+      dernier = `${m[1]}/${m[2]}`;
+    }
+  }
+  const mention =
+    essais === 0
+      ? null
+      : essais === 1
+        ? `à rappeler · 1 essai · le ${dernier}`
+        : `à rappeler · ${essais} essais · dernier le ${dernier}`;
+  return { question, essais, mention };
+};
 
 // ---------------------------------------------------------------------
 //  Regroupements

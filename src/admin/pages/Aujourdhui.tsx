@@ -57,13 +57,15 @@ import {
   hasUsableEmail,
   marquerDejaRepondu,
   marquerRdvFait,
+  repondreAppel,
   setLeadDevisEnvoye,
   traceAppel,
   traceEnvoi,
   traceNote,
   type RdvWithLead,
 } from "@/lib/admin/queries";
-import { calculerPropositions, jourMois, leadsDevisAFaire, rdvsAConfirmer } from "@/lib/admin/statuts-auto";
+import { calculerPropositions, etatAppel, jourMois, leadsDevisAFaire, rdvsAConfirmer } from "@/lib/admin/statuts-auto";
+import QuestionAppel from "@/components/admin/QuestionAppel";
 import { marquerJournalVu } from "@/lib/admin/journal-auto";
 import { useJournalAuto } from "@/admin/hooks/useStatutsAuto";
 import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
@@ -288,7 +290,15 @@ const Aujourdhui = () => {
     const rappels: AFaire[] = leads
       .filter((l) => estARappeler(l, Boolean(upcomingByLead[l.id])))
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map((l) => ({ genre: "rappel", lead: l, detail: `Nouveau · ${ageTexte(l.created_at)}` }));
+      .map((l) => {
+        // Appels restés sans réponse : « À rappeler · 2 essais · dernier le 21/11 ».
+        const mention = etatAppel(l).mention;
+        return {
+          genre: "rappel",
+          lead: l,
+          detail: mention ? mention.charAt(0).toUpperCase() + mention.slice(1) : `Nouveau · ${ageTexte(l.created_at)}`,
+        };
+      });
     const relances: AFaire[] = [];
     for (const l of leads) {
       if (l.status !== "devis envoyé" || !l.devis_envoye_at) continue;
@@ -383,8 +393,23 @@ const Aujourdhui = () => {
     }
   };
 
-  // Un message ou un appel fait avancer le statut (écrit avec la trace) : la
-  // liste est rechargée une fois la trace enregistrée.
+  // « Tu l'as eu ? » : « Oui » → traité ; « Pas de réponse » → le lead reste
+  // dans « À faire », avec le nombre d'essais.
+  const reponseAppel = async (l: Lead, joint: boolean) => {
+    setOccupe(l.id);
+    try {
+      const ligne = await repondreAppel(l.id, joint);
+      if (!ligne) toast.warning("Non enregistré, réessaie dans un instant.");
+      else if (joint) toast.success(`${l.name} → traité`);
+      else toast.success(`${l.name} : à rappeler`, { description: "Il reste dans « À faire »." });
+      rafraichir();
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  // Un message fait avancer le statut, un appel pose « Tu l'as eu ? » (écrits
+  // avec la trace) : la liste est rechargée une fois la trace enregistrée.
   const tracerPuisRafraichir = (p: Promise<unknown>) => void p.then(rafraichir);
 
   // Compté seulement quand les chantiers sont chargés : sans eux il serait trop bas.
@@ -778,6 +803,13 @@ const Aujourdhui = () => {
                             </span>
                             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
                           </Link>
+                          {item.genre === "rappel" && etatAppel(l).question && (
+                            <QuestionAppel
+                              leadName={l.name}
+                              occupe={occupe === l.id}
+                              onReponse={(joint) => reponseAppel(l, joint)}
+                            />
+                          )}
                           <div className={`grid gap-2 ${item.genre === "rappel" ? "grid-cols-2" : "grid-cols-3"}`}>
                             <Button asChild size="sm" variant="copper" className={ACTION}>
                               <a
