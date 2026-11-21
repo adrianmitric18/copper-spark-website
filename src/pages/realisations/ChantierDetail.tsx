@@ -235,7 +235,11 @@ const ChantierDetail = () => {
       {cover && (
         <div className="bg-anthracite">
           <div className="container mx-auto px-4 pb-12 md:pb-16">
-            <div className="rounded-2xl overflow-hidden bg-anthracite-light shadow-2xl">
+            {/* Sur PC (lg et plus), la couverture ne dépasse pas 70 % de la hauteur
+                de l'écran : une photo en portrait occupait 1248 × 1664 px sur un
+                écran de 900 px de haut. Le cadre épouse alors la photo et se
+                centre. Sous lg, rien ne change : pleine largeur. */}
+            <div className="rounded-2xl overflow-hidden bg-anthracite-light shadow-2xl lg:w-fit lg:max-w-full lg:mx-auto">
               <img
                 src={getChantierImageUrl(cover.storage_path)}
                 alt={cover.caption ?? project.title}
@@ -243,7 +247,7 @@ const ChantierDetail = () => {
                 height={cover.height ?? undefined}
                 fetchPriority="high"
                 decoding="async"
-                className="w-full h-auto"
+                className="w-full h-auto lg:w-auto lg:max-w-full lg:max-h-[70vh]"
               />
             </div>
           </div>
