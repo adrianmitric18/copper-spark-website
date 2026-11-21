@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CookiePreferencesModal from "./CookiePreferencesModal";
@@ -18,7 +19,8 @@ const CookieConsentBanner = () => {
     return () => window.removeEventListener(OPEN_PREFERENCES_EVENT, handler);
   }, []);
 
-  const initialChoices: CookieChoices = stored?.choices ?? { analytics: true, marketing: true };
+  // Rien n'est pré-coché : sans choix enregistré, la mesure est proposée décochée.
+  const initialChoices: CookieChoices = stored?.choices ?? { analytics: false };
 
   const handleSave = (choices: CookieChoices) => {
     savePreferences(choices);
@@ -43,18 +45,23 @@ const CookieConsentBanner = () => {
                   className="font-display font-bold text-foreground text-base sm:text-lg mb-1 flex items-center gap-2"
                 >
                   <Cookie className="w-5 h-5 text-primary" aria-hidden="true" />
-                  Cookies & confidentialité
+                  Cookies et vie privée
                 </h2>
                 <p id="cookie-banner-desc" className="text-sm text-muted-foreground leading-relaxed">
-                  Nous utilisons des cookies pour analyser le trafic et améliorer votre expérience.
-                  Vous pouvez accepter, refuser ou personnaliser votre choix.
+                  Avec votre accord, nous utilisons des cookies pour mesurer la fréquentation du
+                  site. Sans votre accord, aucun n'est déposé et le site fonctionne de la même
+                  façon.{" "}
+                  <Link to="/cookies" className="text-copper-deep underline underline-offset-4 hover:no-underline">
+                    Politique cookies
+                  </Link>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {/* « Refuser » est aussi visible que « Tout accepter » : même style, même taille. */}
                 <Button onClick={acceptAll} variant="copper" size="sm" className="flex-1 sm:flex-none">
                   Tout accepter
                 </Button>
-                <Button onClick={rejectAll} variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <Button onClick={rejectAll} variant="copper" size="sm" className="flex-1 sm:flex-none">
                   Refuser
                 </Button>
                 <button

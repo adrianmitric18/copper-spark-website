@@ -18,11 +18,13 @@
   # HSTS — force HTTPS pendant 1 an, inclut les sous-domaines, opt-in preload
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
-  # CSP — restrictive mais compatible avec GA4, Google Ads, EmailJS, Supabase,
-  # Google Fonts, et l'embed Maps si besoin. 'unsafe-inline' sur script-src
-  # est nécessaire pour les snippets gtag inline dans index.html : à supprimer
-  # quand ils seront extraits ou attachés à une nonce.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://www.google-analytics.com; connect-src 'self' https://*.supabase.co https://api.emailjs.com https://www.google-analytics.com https://www.googletagmanager.com; frame-src https://www.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+  # CSP — restrictive mais compatible avec GA4 (chargé seulement après l'accord
+  # du visiteur, voir src/lib/analytics/gtag.ts), EmailJS, Supabase, Google
+  # Fonts, et l'embed Maps si besoin. GA4 envoie ses mesures à
+  # region1.google-analytics.com (Europe) : d'où les jokers *.google-analytics.com
+  # et *.analytics.google.com dans connect-src. Sans eux, la mesure est bloquée
+  # en silence (constaté le 2026-11-21). Google Ads n'est plus autorisé.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.supabase.co https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://www.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
 
 # === Assets versionnés (fingerprint Vite) — cache 1 an immutable ===
 /assets/*

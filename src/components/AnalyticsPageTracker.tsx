@@ -1,27 +1,17 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { envoyerVueDePage } from "@/lib/analytics/gtag";
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    gtag?: (...args: any[]) => void;
-  }
-}
-
+/**
+ * Une vue de page par changement d'adresse. Sans effet tant que le visiteur
+ * n'a pas accepté la mesure d'audience (voir src/lib/analytics/gtag.ts) ; la
+ * page sur laquelle il accepte est comptée au moment de l'accord.
+ */
 const AnalyticsPageTracker = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (typeof window.gtag !== "function") return;
-    const path = location.pathname + location.search;
-    const url = window.location.origin + path;
-
-    window.gtag("event", "page_view", {
-      page_path: path,
-      page_location: url,
-      page_title: document.title,
-      send_to: "G-FVMP3D980B",
-    });
+    envoyerVueDePage();
   }, [location]);
 
   return null;

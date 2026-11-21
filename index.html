@@ -113,7 +113,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://www.googletagmanager.com" />
     <link rel="dns-prefetch" href="https://wa.me" />
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet" />
@@ -126,35 +125,11 @@
       Le canonical est lui aussi injecté dynamiquement par <SEO />.
     -->
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17861698648"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-
-      // Google Consent Mode v2 — denied by default for EEA
-      gtag('consent', 'default', {
-        'ad_storage': 'denied',
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'analytics_storage': 'denied',
-        'functionality_storage': 'granted',
-        'security_storage': 'granted',
-        'wait_for_update': 500,
-        'region': ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','IS','LI','NO','GB','CH']
-      });
-
-      gtag('js', new Date());
-      gtag('config', 'AW-17861698648');
-    </script>
-
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FVMP3D980B"></script>
-    <script>
-      gtag('config', 'G-FVMP3D980B', {
-        'anonymize_ip': true,
-        'send_page_view': true
-      });
-    </script>
+    <!--
+      Aucune balise Google ici : Google Analytics n'est chargé qu'après l'accord
+      du visiteur, par src/lib/analytics/gtag.ts. Ne rien ajouter qui appelle
+      googletagmanager ou googlesyndication dans ce fichier.
+    -->
   </head>
 
   <body>

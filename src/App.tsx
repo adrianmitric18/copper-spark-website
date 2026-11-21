@@ -29,6 +29,7 @@ const Merci = lazy(() => import("./pages/Merci"));
 const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
 const CGV = lazy(() => import("./pages/CGV"));
 const Confidentialite = lazy(() => import("./pages/Confidentialite"));
+const Cookies = lazy(() => import("./pages/Cookies"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin — bundle séparé (téléchargé uniquement à l'arrivée sur /admin)
@@ -129,6 +130,7 @@ const App = () => (
             <Route path="/mentions-legales" element={<MentionsLegales />} />
             <Route path="/cgv" element={<CGV />} />
             <Route path="/confidentialite" element={<Confidentialite />} />
+            <Route path="/cookies" element={<Cookies />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminAujourdhui />} />
             <Route path="/admin/pipeline" element={<AdminPipeline />} />
