@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CookiePreferencesModal from "./CookiePreferencesModal";
@@ -51,9 +50,11 @@ const CookieConsentBanner = () => {
                   Avec votre accord, nous utilisons des cookies pour mesurer la fréquentation du
                   site. Sans votre accord, aucun n'est déposé et le site fonctionne de la même
                   façon.{" "}
-                  <Link to="/cookies" className="text-copper-deep underline underline-offset-4 hover:no-underline">
+                  {/* Lien classique et non <Link> : le bandeau est monté en dehors du
+                      routeur (App.tsx), un <Link> y fait planter toute l'application. */}
+                  <a href="/cookies" className="text-copper-deep underline underline-offset-4 hover:no-underline">
                     Politique cookies
-                  </Link>
+                  </a>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
