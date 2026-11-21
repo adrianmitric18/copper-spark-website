@@ -14,6 +14,36 @@
 
 ## Journal
 
+### 2026-11-21 — Priorité du site : les bornes de recharge d'abord
+- **Décision (brief d'Adrian du 21/11, avis demandé, rien codé à cette date) :** ordre à
+  appliquer partout (accueil, menu, pied de page, données structurées) : 1. Bornes de recharge ·
+  2. Installations neuves et rénovations complètes · 3. Mise en conformité et tableaux ·
+  4. Dépannage (page gardée à la même adresse, plus mise en avant : plus de bandeau « Panne ? »,
+  plus de dépannage dans le title de l'accueil, dernière carte des services).
+- **Fait nouveau :** Adrian est **installateur certifié Zaptec depuis le 2 novembre 2026**
+  (Zaptec Academy). Écrire « certifié Zaptec », **jamais « agréé »**. La ligne « Aucune
+  certification » de `PLAN-SEO-GEO.md` est donc caduque pour Zaptec.
+- **Pourquoi :** choix commercial d'Adrian ; plus de dépannage le soir ni le dimanche (note du 16/11).
+- **Conséquences :**
+  - Texte de la page bornes fourni par Adrian, enregistré tel quel dans `docs/page-bornes-texte.md`
+    (version du 21/11) : il fait foi. Ne publier aucun passage marqué « à confirmer » ; aucun prix
+    en haut de page.
+  - Marques : Zaptec en premier, Alfen en haut de gamme, Hager pour les chantiers à plusieurs
+    bornes ; Wallbox cité seulement dans « borne déjà achetée » (remplace l'ordre du 15/11).
+  - Simulateur : Zaptec en premier choix, 2 000 – 2 400 € TVA 6 % comprise, module d'équilibrage,
+    dossier technique et contrôle compris ; Alfen en second choix, 2 650 – 3 000 € inchangé.
+    Une seule constante pour les fourchettes (page, FAQ, simulateur).
+  - Grille soir / nuit / dimanche : sort du site, reste dans l'admin (« Dépannage au téléphone »).
+    Adrian accepte le recul de la page dépannage dans Google.
+  - Lots, un à la fois, sur une branche, aperçu + 5 lignes à tester, merge quand Adrian écrit
+    « fusionne » : 1. photos réalisations sur PC · 2. page bornes (google_rating lu au build, FAQ
+    dans le HTML visible, en-tête de secours de `index.html`) · 3. simulateur + 4 photos au
+    formulaire · 4. bornes d'abord partout (quelques jours après le lot 2) · 5. dépannage.
+    `llms.txt` en dernier, priorité basse. Export Search Console attendu avant le lot 2.
+  - Skills locaux dans `.claude/skills/` (ignorés par git) : cro, copywriting, schema, analytics,
+    handoff, grill-me, grilling, diagnosing-bugs, mobile-native, break-ui. `code-review` et
+    `seo-audit` retirés (doublons). `break-ui` : développement uniquement, jamais en ligne.
+
 ### 2026-11-21 — Admin : statuts automatiques (branche `feat/admin-statuts-auto`)
 - **Décision :** l'admin suit le travail tout seul. Visite devis passée → RDV terminé dès le
   lendemain, lead dans « Devis à faire » (déduit, pas de nouveau statut). Intervention passée →
