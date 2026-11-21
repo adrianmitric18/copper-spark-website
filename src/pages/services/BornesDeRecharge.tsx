@@ -232,7 +232,7 @@ const BornesDeRecharge = () => {
         intro: INTRO,
         points: [
           "Installateur certifié Zaptec. Bornes Zaptec, Alfen et Hager, ou la vôtre.",
-          "Tout compris, de A à Z, contrôle par un organisme agréé compris.",
+          "Tout est compris pour une installation standard, contrôle par un organisme agréé compris.",
           "Réponse sous 24 h, devis gratuit sous 48 h, le plus souvent sur simples photos.",
           "Pose en une journée dans la plupart des maisons.",
           noteGoogle,
