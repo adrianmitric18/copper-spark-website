@@ -56,6 +56,25 @@
       Vérification du HTML : `node <script> dist/services/bornes-de-recharge.html` (titre, h1,
       aucun prix avant « Combien coûte », FAQ visible = FAQPage, aucun « à confirmer »).
     - La policy des leads limite `photo_urls` à 3 : passer à 4 photos demande une migration (lot 3).
+  - **Lot 2 mergé dans `main` le 2026-11-21** (merge 72cfb3d), vérifié en prod au curl. Ajouts
+    faits à la demande d'Adrian avant le merge : un seul h1 par page (l'en-tête de secours de
+    `index.html`, recopié dans chaque page pré-rendue, est un `<p>` ; ne pas y remettre de h1,
+    ni écrire « <h1 » dans son commentaire) ; pied de page sans « dépannage 7j/7 » ; bouton
+    « Envoyer mes photos pour un devis » vers WhatsApp tant que le formulaire est limité à 3
+    photos (à rebrancher sur le formulaire au lot 3) ; certificat Zaptec (vignette 360 px +
+    original au clic, aucune date dans l'image) ; « En bref » : « Tout est compris pour une
+    installation standard… » (docs/page-bornes-texte.md mis à jour).
+  - **Suite convenue avec Adrian le 21/11, dans cet ordre :** 1. lot « mesure d'audience » (la CSP
+    de `public/_headers` bloque `region1.google-analytics.com` et
+    `pagead2.googlesyndication.com` ; il veut compter les demandes de bornes sur 2 mois) ·
+    2. lot « vraie 404 » (code 404 pour les adresses inconnues, en gardant /admin/*, /merci et
+    /realisations/* servis par l'application ; y joindre : fiches `archives-*` en noindex et hors
+    sitemap, accord d'Adrian) · 3. lot 3 simulateur + 4 photos · 4. lot 4 accueil/menu/pied de
+    page (lui proposer 2 titres + 2 descriptions gardant « électricien » et « Brabant wallon » ;
+    écrire les liens du sous-menu Services dans le HTML brut : la page bornes n'est liée que par
+    10 pages sur 26 et Google ne la connaissait pas) · 5. dépannage · 6. lot « communes »
+    (Nivelles, Wavre, Genappe). Point 10 du texte toujours non publié (Adrian vérifie la
+    puissance : la fiche Zaptec donne 12,7 kW en 3 × 230 V).
   - Skills locaux dans `.claude/skills/` (ignorés par git) : cro, copywriting, schema, analytics,
     handoff, grill-me, grilling, diagnosing-bugs, mobile-native, break-ui. `code-review` et
     `seo-audit` retirés (doublons). `break-ui` : développement uniquement, jamais en ligne.
