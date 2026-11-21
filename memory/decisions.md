@@ -42,6 +42,16 @@
     User-Agent normal (le User-Agent « Headless » est traité comme un robot : rien ne se charge).
   - La phrase « aucun outil de Google n'est chargé » de `/cookies` est limitée à l'outil de
     mesure tant que les polices viennent de Google Fonts : à rétablir au lot « polices ».
+- **Lot « cookies et mesure » mergé dans `main` le 2026-11-21** (merge 83499b0), vérifié en prod.
+- **Lot « compteur » (branche `feat/compteur-bornes`, en attente du test d'Adrian) :** table
+  `compteur_clics` (jour, page, action, nombre — rien sur la personne) et fonction
+  `compter_clic` (migration `20261122090000_compteur_clics.sql`, **à appliquer à la main par
+  Adrian** ; tant qu'elle ne l'est pas, l'appel répond 404 sans gêner le visiteur). La page bornes
+  compte tout clic sur un lien `tel:` ou `wa.me` (`src/lib/compteur.ts` : ne jamais y ajouter
+  d'argument). Écran `/admin/demandes-bornes` (menu « Plus ») : par mois, leads « Borne de
+  recharge voiture électrique » du formulaire et du simulateur + clics. Logique testée dans
+  `src/lib/admin/demandes-bornes.ts`. L'écran admin n'est pas couvert par
+  `scripts/admin-audit.mjs` et n'a pas été vu connecté par Claude.
 - **Suite du chantier légal (ordre validé par Adrian) :** 2. polices hébergées · 3. pages légales
   (mentions, confidentialité, CGV : publier `cgv-site-version-2026-11-21.md`, PAS la version du
   17/07, sans toucher au fond ; sans les passages [À CONFIRMER] ; Supabase = « Union européenne
