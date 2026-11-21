@@ -14,6 +14,43 @@
 
 ## Journal
 
+### 2026-11-21 — Admin : statuts automatiques (branche `feat/admin-statuts-auto`)
+- **Décision :** l'admin suit le travail tout seul. Visite devis passée → RDV terminé dès le
+  lendemain, lead dans « Devis à faire » (déduit, pas de nouveau statut). Intervention passée →
+  2 jours sur l'accueil (« C'est fait » / « À replanifier ») puis clôture, lead Converti. RDV
+  « Autre » : rien d'automatique. Archivage à 60 jours sans action, sauf devis envoyé depuis
+  moins de 90 jours. Un message envoyé fait avancer le statut ; un statut terminé ne bouge plus.
+  Déclenchement à l'ouverture de l'admin et au retour sur l'app, pas de pg_cron. Aucune migration.
+- **Pourquoi :** « je réponds aux clients, mais l'admin reste faux » (16 leads en « RDV passé »
+  depuis 20 à 150 jours le 15/11/2026). Brief du 15/11, ajustements validés par Adrian le 21/11.
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **Toutes les règles sont dans `src/lib/admin/statuts-auto.ts`** (pur, testé). Les écritures
+    sont dans `queries.ts` (`appliquerActionsAuto`, `marquerRdvFait`, `appliquerRattrapage`).
+  - **`AUTO_DEPUIS` (2026-11-21) = date de mise en service.** Un RDV daté d'avant, ou un lead
+    dont la dernière action est antérieure, n'est JAMAIS modifié automatiquement : il est proposé
+    dans `/admin/mise-a-jour` et rien ne s'applique sans « Appliquer ». Ne pas contourner ce
+    garde-fou : c'est la promesse faite à Adrian pour ses fiches existantes.
+  - **Le statut avance dans `traceEnvoi`** (même écriture que la trace) : tout bouton de message
+    en profite sans code en plus. La cible dépend du TITRE tracé (`cibleDuMessage`) : renommer
+    « Confirmation RDV », « Démarrage chantier », « Avis Google » ou « Avis demandé » casse la règle.
+  - **Un appel ne prouve rien** (décision d'Adrian du 21/11, pour ne pas oublier un client qui
+    n'a pas décroché) : « Appeler » trace l'appel sans changer le statut. Sur un lead Nouveau,
+    « Tu l'as eu ? » reste posée tant qu'il n'a pas répondu : « Oui » → Traité, « Pas de réponse »
+    → reste Nouveau, mention « à rappeler · N essais · dernier le JJ/MM ». Tout est déduit des
+    lignes des notes (`etatAppel`) : renommer « Appel », « Appel : client joint » ou « Appel sans
+    réponse » casse la règle. Un message écrit et « Déjà répondu » passent toujours en Traité.
+  - **Au merge, `AUTO_DEPUIS` se cale sur le jour du merge** (décision d'Adrian du 21/11).
+  - Adrian envoie ses devis depuis **Vertuoza** : « Devis envoyé » sur l'accueil date l'envoi sans
+    message. Règle générale : tout ce que l'automatique laisse à faire se règle en 1 tap sur l'accueil.
+  - L'écriture automatique d'un statut est conditionnée au statut vu au calcul
+    (`.eq("status", avant)`) : un changement fait entre-temps gagne.
+  - Le journal « Fait automatiquement » est en localStorage (par appareil) ; la trace durable est
+    la ligne dans les notes du lead.
+  - Rattrapage « Devis envoyé » : le devis est daté du jour de la visite, donc la relance 3
+    apparaît aussitôt dans « À faire ».
+  - `scripts/admin-audit.mjs` avance l'horloge du navigateur de 14 jours après `AUTO_DEPUIS` et
+    applique les PATCH aux données factices en mémoire.
+
 ### 2026-11-15 — SEO/GEO lot 1 : réalisations pré-rendues depuis un snapshot du build
 - **Décision :** les réalisations publiées sont figées au build dans `.generated/realisations.json`
   (`scripts/fetch-realisations.mjs`, 1er pas de `npm run build` et de `npm run dev`), exposées au

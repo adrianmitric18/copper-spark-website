@@ -7,6 +7,16 @@
  *   3. À faire     : nouveaux leads à rappeler (< 30 jours) et devis à
  *                    relancer, 5 maximum → Appeler · WhatsApp · Terminer
  *
+ * Lot « statuts automatiques » (2026-11) : tout ce que l'automatique laisse à
+ * faire se règle ici en 1 tap, en tête du bloc « À faire » :
+ *   - RDV passé à confirmer (intervention pendant 2 jours, RDV « Autre ») →
+ *     « C'est fait » · « À replanifier » ;
+ *   - Devis à faire (visite passée, pas de devis daté) → « Devis envoyé »
+ *     (date l'envoi, aucun message) · « Pas de devis » (→ sans suite) ;
+ *   - lead nouveau → « Déjà répondu » (→ traité).
+ * Un bandeau en haut signale ce qui a été mis à jour tout seul et les
+ * anciennes fiches à valider (écran « Mise à jour proposée »).
+ *
  * Pas de salutation, pas de statistiques, pas de « Sources ce mois », pas de
  * « 7 prochains jours » (le calendrier les montre). L'ancien cockpit est
  * conservé tel quel, non routé, dans AujourdhuiCockpit.tsx (rail 4 : on ne
@@ -18,7 +28,11 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
+  CalendarPlus,
+  Check,
+  CheckCircle2,
   ChevronRight,
+  FileText,
   ListChecks,
   Loader2,
   Mail,
@@ -28,6 +42,7 @@ import {
   Smartphone,
   Star,
   Sun,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -40,9 +55,20 @@ import {
   fetchAllRdvs,
   fetchLeadsWithUpcomingRdvs,
   hasUsableEmail,
+  marquerDejaRepondu,
+  marquerRdvFait,
+  repondreAppel,
+  setLeadDevisEnvoye,
+  traceAppel,
   traceEnvoi,
+  traceNote,
   type RdvWithLead,
 } from "@/lib/admin/queries";
+import { calculerPropositions, etatAppel, jourMois, leadsDevisAFaire, rdvsAConfirmer } from "@/lib/admin/statuts-auto";
+import QuestionAppel from "@/components/admin/QuestionAppel";
+import { marquerJournalVu } from "@/lib/admin/journal-auto";
+import { useJournalAuto } from "@/admin/hooks/useStatutsAuto";
+import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
 import type { CanalEnvoi } from "@/lib/admin/envois";
 import { estARappeler, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
@@ -156,6 +182,9 @@ const Bloc = ({
   </Card>
 );
 
+/** « Visite devis - Borne de recharge… » → « Borne de recharge… » (la ligne dit déjà « visite »). */
+const typeCourt = (type: string): string => type.replace(/^(Visite devis|Intervention) - /, "") || type;
+
 const Vide = ({ children }: { children: ReactNode }) => (
   <p className="text-sm text-muted-foreground py-2">{children}</p>
 );
@@ -164,6 +193,10 @@ const Aujourdhui = () => {
   const { user, ready } = useAdminGuard();
   const queryClient = useQueryClient();
   const [emailEnCours, setEmailEnCours] = useState<string | null>(null);
+  // Ligne en cours d'écriture (id du RDV ou du lead) : boutons désactivés.
+  const [occupe, setOccupe] = useState<string | null>(null);
+  const journal = useJournalAuto();
+  const changerStatut = useChangerStatutLead();
 
   useEffect(() => {
     document.title = "Aujourd'hui – Le Cuivre Admin";
@@ -213,7 +246,18 @@ const Aujourdhui = () => {
   const rdvs = useMemo(() => rdvsQuery.data ?? [], [rdvsQuery.data]);
   const loading = leadsQuery.isLoading || rdvsQuery.isLoading;
 
-  const aujourdhui = todayIsoLocal();
+  // L'app reste ouverte sur le téléphone : au retour dessus, « aujourd'hui »
+  // doit être le vrai jour (les données, elles, sont rechargées par useStatutsAuto).
+  const [aujourdhui, setAujourdhui] = useState(todayIsoLocal);
+  useEffect(() => {
+    const majJour = () => setAujourdhui(todayIsoLocal());
+    document.addEventListener("visibilitychange", majJour);
+    window.addEventListener("focus", majJour);
+    return () => {
+      document.removeEventListener("visibilitychange", majJour);
+      window.removeEventListener("focus", majJour);
+    };
+  }, []);
   // Par calendrier (pas « maintenant + 24 h » : le jour de 25 h du changement
   // d'heure donnerait encore aujourd'hui entre minuit et 1 h).
   const demain = addDays(aujourdhui, 1);
@@ -246,7 +290,15 @@ const Aujourdhui = () => {
     const rappels: AFaire[] = leads
       .filter((l) => estARappeler(l, Boolean(upcomingByLead[l.id])))
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map((l) => ({ genre: "rappel", lead: l, detail: `Nouveau · ${ageTexte(l.created_at)}` }));
+      .map((l) => {
+        // Appels restés sans réponse : « À rappeler · 2 essais · dernier le 21/11 ».
+        const mention = etatAppel(l).mention;
+        return {
+          genre: "rappel",
+          lead: l,
+          detail: mention ? mention.charAt(0).toUpperCase() + mention.slice(1) : `Nouveau · ${ageTexte(l.created_at)}`,
+        };
+      });
     const relances: AFaire[] = [];
     for (const l of leads) {
       if (l.status !== "devis envoyé" || !l.devis_envoye_at) continue;
@@ -266,6 +318,99 @@ const Aujourdhui = () => {
     return tous;
   }, [leads, upcomingByLead]);
   const aFaire = aFaireTous.slice(0, A_FAIRE_MAX);
+
+  // Lot « statuts auto » — ce que l'automatique laisse à faire. `aujourdhui`
+  // en dépendance : les listes se recalculent quand le jour change.
+  const aConfirmer = useMemo(() => (aujourdhui ? rdvsAConfirmer(rdvs) : []), [rdvs, aujourdhui]);
+  const chantiers = chantiersQuery.data;
+  // Sans les chantiers, la liste serait fausse (un lead avec chantier n'a plus
+  // de devis à faire) : on attend.
+  const devisAFaire = useMemo(
+    () => (chantiers && aujourdhui ? leadsDevisAFaire(leads, rdvs, chantiers) : []),
+    [leads, rdvs, chantiers, aujourdhui],
+  );
+  const nbPropositions = useMemo(
+    () => (chantiers && aujourdhui ? calculerPropositions(leads, rdvs, chantiers).length : 0),
+    [leads, rdvs, chantiers, aujourdhui],
+  );
+  const nbAFaire = aConfirmer.length + devisAFaire.length + aFaireTous.length;
+
+  const rafraichir = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin-leads-overview"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
+  };
+  const signalerErreur = (e: unknown) =>
+    toast.error("Erreur : " + (e instanceof Error ? e.message : "mise à jour impossible"));
+
+  // « C'est fait » : RDV terminé ; une intervention convertit le lead.
+  const rdvFait = async (r: RdvWithLead) => {
+    setOccupe(r.id);
+    try {
+      const statut = await marquerRdvFait(r);
+      toast.success(`${r.lead_name} : c'est noté`, statut ? { description: `Lead → ${statut}` } : undefined);
+      rafraichir();
+    } catch (e: unknown) {
+      signalerErreur(e);
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  // « Devis envoyé » (parti de Vertuoza) : date l'envoi, aucun message au client.
+  const devisEnvoye = async (l: Lead) => {
+    setOccupe(l.id);
+    try {
+      await setLeadDevisEnvoye(l.id, todayIsoLocal());
+      void traceNote(l.id, "Devis envoyé (Vertuoza)");
+      toast.success(`${l.name} : devis envoyé`, { description: "Première relance proposée dans 3 jours." });
+      rafraichir();
+    } catch (e: unknown) {
+      signalerErreur(e);
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  const pasDeDevis = async (l: Lead) => {
+    setOccupe(l.id);
+    try {
+      if (await changerStatut(l, "sans suite")) void traceNote(l.id, "Pas de devis");
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  // « Déjà répondu » : j'ai répondu depuis mon téléphone, hors admin → traité.
+  const dejaRepondu = async (l: Lead) => {
+    setOccupe(l.id);
+    try {
+      const ligne = await marquerDejaRepondu(l.id);
+      if (ligne) toast.success(`${l.name} → traité`);
+      else toast.warning("Non enregistré, réessaie dans un instant.");
+      rafraichir();
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  // « Tu l'as eu ? » : « Oui » → traité ; « Pas de réponse » → le lead reste
+  // dans « À faire », avec le nombre d'essais.
+  const reponseAppel = async (l: Lead, joint: boolean) => {
+    setOccupe(l.id);
+    try {
+      const ligne = await repondreAppel(l.id, joint);
+      if (!ligne) toast.warning("Non enregistré, réessaie dans un instant.");
+      else if (joint) toast.success(`${l.name} → traité`);
+      else toast.success(`${l.name} : à rappeler`, { description: "Il reste dans « À faire »." });
+      rafraichir();
+    } finally {
+      setOccupe(null);
+    }
+  };
+
+  // Un message fait avancer le statut, un appel pose « Tu l'as eu ? » (écrits
+  // avec la trace) : la liste est rechargée une fois la trace enregistrée.
+  const tracerPuisRafraichir = (p: Promise<unknown>) => void p.then(rafraichir);
 
   // Compté seulement quand les chantiers sont chargés : sans eux il serait trop bas.
   const nbAvis = useMemo(
@@ -336,6 +481,44 @@ const Aujourdhui = () => {
     <AdminShell email={user?.email} mobileTitle="Aujourd'hui">
       <div className="p-4 md:p-8 space-y-4 max-w-3xl mx-auto">
         <h1 className="sr-only">Accueil</h1>
+
+        {/* Lot « statuts auto » — bandeaux : ce qui a bougé tout seul, et les
+            anciennes fiches à valider. */}
+        {journal.nonVus > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 pl-3 pr-1 py-1">
+            <Link to="/admin/mise-a-jour" className="min-w-0 flex-1 py-2 text-sm font-medium flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" aria-hidden="true" />
+              <span className="min-w-0">
+                {journal.nonVus} fiche{journal.nonVus > 1 ? "s" : ""} mise{journal.nonVus > 1 ? "s" : ""} à jour
+                automatiquement · <span className="underline">voir</span>
+              </span>
+            </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="min-h-[44px] min-w-[44px] shrink-0"
+              onClick={marquerJournalVu}
+              aria-label="Masquer ce bandeau"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+        {!loading && nbPropositions > 0 && (
+          <Button asChild variant="outline" className="w-full min-h-[48px] justify-between border-primary/40">
+            <Link to="/admin/mise-a-jour">
+              <span className="flex items-center gap-2 min-w-0">
+                <ListChecks className="w-4 h-4 shrink-0" />
+                <span className="truncate">
+                  À valider : {nbPropositions} ancienne{nbPropositions > 1 ? "s" : ""} fiche
+                  {nbPropositions > 1 ? "s" : ""}
+                </span>
+              </span>
+              <ChevronRight className="w-4 h-4 shrink-0" />
+            </Link>
+          </Button>
+        )}
 
         {loading ? (
           <div className="space-y-4" aria-busy="true">
@@ -502,11 +685,99 @@ const Aujourdhui = () => {
 
             {/* 3 — À faire */}
             <Bloc
-              titre={`À faire${aFaireTous.length ? ` (${aFaireTous.length})` : ""}`}
+              titre={`À faire${nbAFaire ? ` (${nbAFaire})` : ""}`}
               icone={<ListChecks className="w-5 h-5 text-primary" aria-hidden="true" />}
             >
+              {/* RDV passés à confirmer : intervention (2 jours avant la clôture
+                  automatique) ou RDV « Autre » (jamais clôturé tout seul). */}
+              {aConfirmer.length > 0 && (
+                <ul className="space-y-2">
+                  {aConfirmer.map(({ rdv: r, joursRestants }) => (
+                    <li key={`rdv-${r.id}`} className="rounded-lg border bg-background p-2.5 sm:p-3 space-y-2">
+                      <Link to={`/admin/lead/${r.lead_id}`} className="flex items-center gap-3 group">
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium truncate group-hover:underline">{r.lead_name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            RDV passé · {typeCourt(r.type_visite)} du {jourMois(r.date_rdv)}
+                            {joursRestants !== null &&
+                              (joursRestants <= 1
+                                ? " · clôture automatique demain"
+                                : ` · clôture automatique dans ${joursRestants} jours`)}
+                          </span>
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                      </Link>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="copper"
+                          className={ACTION}
+                          disabled={occupe === r.id}
+                          onClick={() => rdvFait(r)}
+                          aria-label={`RDV de ${r.lead_name} : c'est fait`}
+                        >
+                          {occupe === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          C'est fait
+                        </Button>
+                        <Button asChild size="sm" variant="outline" className={ACTION}>
+                          <Link
+                            to={`/admin/lead/${r.lead_id}?replanifier=1`}
+                            aria-label={`Replanifier le RDV de ${r.lead_name}`}
+                          >
+                            <CalendarPlus className="w-4 h-4" /> À replanifier
+                          </Link>
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Devis à faire : la visite est passée, le devis part de Vertuoza. */}
+              {devisAFaire.length > 0 && (
+                <ul className="space-y-2">
+                  {devisAFaire.map(({ lead: l, visite }) => (
+                    <li key={`devis-${l.id}`} className="rounded-lg border bg-background p-2.5 sm:p-3 space-y-2">
+                      <Link to={`/admin/lead/${l.id}`} className="flex items-center gap-3 group">
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-medium truncate group-hover:underline">{l.name}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            Devis à faire · visite {typeCourt(visite.type_visite)} du {jourMois(visite.date_rdv)}
+                            {l.commune && ` · ${l.commune}`}
+                          </span>
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                      </Link>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="copper"
+                          className={ACTION}
+                          disabled={occupe === l.id}
+                          onClick={() => devisEnvoye(l)}
+                          aria-label={`Devis envoyé à ${l.name}`}
+                        >
+                          {occupe === l.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                          Devis envoyé
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={ACTION}
+                          disabled={occupe === l.id}
+                          onClick={() => pasDeDevis(l)}
+                          aria-label={`Pas de devis pour ${l.name}`}
+                        >
+                          <X className="w-4 h-4" /> Pas de devis
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {aFaire.length === 0 ? (
-                <Vide>Rien à rappeler, rien à relancer.</Vide>
+                aConfirmer.length + devisAFaire.length === 0 && <Vide>Rien à rappeler, rien à relancer.</Vide>
               ) : (
                 <>
                   <ul className="space-y-2">
@@ -532,9 +803,20 @@ const Aujourdhui = () => {
                             </span>
                             <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
                           </Link>
-                          <div className="grid grid-cols-3 gap-2">
+                          {item.genre === "rappel" && etatAppel(l).question && (
+                            <QuestionAppel
+                              leadName={l.name}
+                              occupe={occupe === l.id}
+                              onReponse={(joint) => reponseAppel(l, joint)}
+                            />
+                          )}
+                          <div className={`grid gap-2 ${item.genre === "rappel" ? "grid-cols-2" : "grid-cols-3"}`}>
                             <Button asChild size="sm" variant="copper" className={ACTION}>
-                              <a href={`tel:${l.phone}`} aria-label={`Appeler ${l.name}`}>
+                              <a
+                                href={`tel:${l.phone}`}
+                                onClick={() => tracerPuisRafraichir(traceAppel(l.id))}
+                                aria-label={`Appeler ${l.name}`}
+                              >
                                 <Phone className="w-4 h-4" /> Appeler
                               </a>
                             </Button>
@@ -547,12 +829,29 @@ const Aujourdhui = () => {
                                 href={buildWhatsappHref(l.phone, texte)}
                                 target="_blank"
                                 rel="noreferrer"
-                                onClick={() => void traceEnvoi(l.id, "WhatsApp", titreTrace)}
+                                onClick={() => tracerPuisRafraichir(traceEnvoi(l.id, "WhatsApp", titreTrace))}
                                 aria-label={`WhatsApp à ${l.name}`}
                               >
                                 <MessageCircle className="w-4 h-4" /> WhatsApp
                               </a>
                             </Button>
+                            {item.genre === "rappel" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className={ACTION}
+                                disabled={occupe === l.id}
+                                onClick={() => dejaRepondu(l)}
+                                aria-label={`Déjà répondu à ${l.name}`}
+                              >
+                                {occupe === l.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Check className="w-4 h-4" />
+                                )}
+                                Déjà répondu
+                              </Button>
+                            )}
                             <TerminerLeadButton lead={l} className={`${ACTION} w-full`} />
                           </div>
                         </li>

@@ -189,6 +189,36 @@ D1 (hors-ligne) → D2-D4 (à décider). A3 (QR paiement) ne demande rien en bas
 **Rien à appliquer en base pour démarrer.** Seul SQL optionnel du lot : `leads.rappel_le` (T7), et seulement
 si Adrian veut des rappels datés explicites.
 
+## LOT « Statuts automatiques » (2026-11-21) — branche `feat/admin-statuts-auto` — 🟡 aperçu téléphone, merge sur OK d'Adrian
+> Brief du 15/11/2026 (« les statuts doivent suivre tout seuls ») + ajustements validés le 21/11.
+> Un seul lot, aucune migration, aucune table, aucun changement sur le site public.
+
+- [x] **S1 — Règles pures + tests** : `src/lib/admin/statuts-auto.ts` (36 tests). Visite passée →
+      clôturée le lendemain ; intervention → 2 jours sur l'accueil puis clôture, lead Converti ;
+      « Autre » → rien d'automatique ; archivage 60 j sauf devis envoyé < 90 j ; statut terminé figé.
+- [x] **S2 — Déclenchement** : `useStatutsAuto` monté dans AdminShell — à l'ouverture ET au retour
+      sur l'app (visibilitychange / focus / pageshow), au plus toutes les 5 min. Bandeau sur
+      l'accueil + ligne tracée dans les notes. Pas de pg_cron.
+- [x] **S3 — Le statut suit les messages** (dans `traceEnvoi`) : Bien reçu / appel / tout message →
+      Traité ; Confirmation RDV → RDV confirmé (fiche et RDV rapide) ; Démarrage chantier et
+      Avis → Converti. Jamais en arrière.
+- [x] **S4 — Accueil, tout en 1 tap** : RDV passé « C'est fait » / « À replanifier » ; « Devis à
+      faire » (déduit) « Devis envoyé » / « Pas de devis » ; « Déjà répondu » sur un lead nouveau.
+- [x] **S5 — Écran « Mise à jour proposée »** (`/admin/mise-a-jour`) : rattrapage des fiches
+      d'avant `AUTO_DEPUIS` (2026-11-21). Rien ne s'applique sans « Appliquer » ; statut modifiable
+      par ligne (Converti / Devis envoyé / Sans suite / Perdu).
+- [x] **S6 — Ménage** : retirés « Archiver les anciens », le bloc « RDV passé — À clôturer », le
+      sélecteur de statut de la fiche. `AujourdhuiCockpit.tsx` et le type RDV photovoltaïque
+      attendent le lot 3 admin.
+- [x] **S6 bis — Appel sans réponse** (demande d'Adrian du 21/11) : « Appeler » ne passe plus un
+      lead Nouveau en Traité. Question « Tu l'as eu ? » (accueil, Leads, fiche) : « Oui » → Traité ;
+      « Pas de réponse » → le lead reste dans « À faire » avec « à rappeler · N essais · dernier
+      le JJ/MM ». Déduit des notes (`etatAppel`), aucune colonne.
+- [x] **S7 — Aperçu sur le téléphone d'Adrian, puis merge sur son OK.** Testé par Adrian le 21/11 (5 étapes de l'appel sans réponse, deux leads de test), « fusionne » reçu, mergé dans main le 2026-11-21. ⚠️ L'aperçu écrit dans la
+      vraie base : les RDV datés du 21/11 ou après y seront traités automatiquement.
+- [x] **Au merge** (fait le 2026-11-21 : merge le jour même, `AUTO_DEPUIS` reste "2026-11-21", 107 tests OK) : caler `AUTO_DEPUIS` sur le jour du merge (décidé par Adrian le 21/11) dans
+      `statuts-auto.ts`, et relancer les tests.
+
 ## ❌ Hors-scope (acté)
 Facturation maison (Peppol B2B obligatoire en Belgique → outil externe certifié), stats vanity,
 notifications push, multi-utilisateur, sync Google Agenda OAuth bidirectionnelle.

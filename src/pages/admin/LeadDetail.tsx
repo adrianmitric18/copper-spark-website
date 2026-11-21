@@ -8,13 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, CheckCircle2, RotateCcw, X, ClipboardList, Share2 } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, RotateCcw, ClipboardList, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
@@ -53,21 +50,31 @@ import {
   setLeadDevisEnvoye,
   deleteLeadWithPhotos,
   hasUsableEmail,
+  repondreAppel,
+  traceAppel,
   traceEnvoi,
+  traceNote,
   terminerLead,
-  terminerRdv,
 } from "@/lib/admin/queries";
-import { ajouterTrace, formatTraceEnvoi, type CanalEnvoi } from "@/lib/admin/envois";
+import { ajouterTrace, formatTraceEnvoi, formatTraceNote, type CanalEnvoi } from "@/lib/admin/envois";
+import {
+  AUTO_DEPUIS,
+  TRACE_APPEL,
+  TRACE_APPEL_JOINT,
+  TRACE_APPEL_SANS_REPONSE,
+  etatAppel,
+  genreRdv,
+  statutApresMessage,
+} from "@/lib/admin/statuts-auto";
+import QuestionAppel from "@/components/admin/QuestionAppel";
 import { TON } from "@/lib/admin/badges";
 import { adresseComplete, texteDevisPourClaude } from "@/lib/admin/devis-claude";
 import {
   type Lead,
   type TerminalLeadStatus,
-  LEAD_STATUSES,
   STATUT_REACTIVATION,
   TERMINER_CHOIX,
   isRdvPasse,
-  isStatutAvecRdv,
   isTerminal,
   leadSourceLabel,
   leadStatusColor,
@@ -497,13 +504,20 @@ const LeadDetail = () => {
   useEffect(() => {
     if (rdvParamHandled.current) return;
     if (loading || !lead) return;
-    if (searchParams.get("rdv") !== "1") return;
+    // « À replanifier » de l'accueil : ?replanifier=1 ouvre le formulaire sur le
+    // RDV passé (modification), ou un nouveau RDV s'il n'y en a plus d'ouvert.
+    const replanifier = searchParams.get("replanifier") === "1";
+    if (searchParams.get("rdv") !== "1" && !replanifier) return;
     rdvParamHandled.current = true;
-    if (!rdv) {
+    if (replanifier) {
+      setEditing(Boolean(rdv));
+      setShowForm(true);
+    } else if (!rdv) {
       setEditing(false);
       setShowForm(true);
     }
     searchParams.delete("rdv");
+    searchParams.delete("replanifier");
     setSearchParams(searchParams, { replace: true });
   }, [loading, lead, rdv, searchParams, setSearchParams]);
 
@@ -519,7 +533,13 @@ const LeadDetail = () => {
         setLead((prev) => (prev ? { ...prev, status: newStatus, devis_envoye_at: today } : prev));
       } else {
         await updateLeadStatus(lead.id, newStatus);
-        setLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
+        // Trace = action : un lead réactivé n'est pas ré-archivé au passage suivant.
+        const ligne = formatTraceNote(`Statut : ${lead.status} → ${newStatus}`);
+        setNotes((prev) => ajouterTrace(prev, ligne));
+        setLead((prev) =>
+          prev ? { ...prev, status: newStatus, notes_internes: ajouterTrace(prev.notes_internes, ligne) } : prev,
+        );
+        void traceNote(lead.id, `Statut : ${lead.status} → ${newStatus}`);
       }
       rafraichirListes();
       toast.success("Statut mis à jour");
@@ -587,8 +607,58 @@ const LeadDetail = () => {
     if (!lead) return;
     const ligne = formatTraceEnvoi(canal, titre);
     setNotes((prev) => ajouterTrace(prev, ligne));
-    setLead((prev) => (prev ? { ...prev, notes_internes: ajouterTrace(prev.notes_internes, ligne) } : prev));
-    void traceEnvoi(lead.id, canal, titre);
+    // Lot « statuts auto » : le message fait avancer le statut (même règle que
+    // l'écriture en base, statutApresMessage) — visible tout de suite.
+    setLead((prev) =>
+      prev
+        ? {
+            ...prev,
+            notes_internes: ajouterTrace(prev.notes_internes, ligne),
+            status: statutApresMessage(prev.status, titre) ?? prev.status,
+          }
+        : prev,
+    );
+    void traceEnvoi(lead.id, canal, titre).then(rafraichirListes);
+  };
+
+  // Réponse à « Tu l'as eu ? » : « Oui » → traité ; « Pas de réponse » → le
+  // lead reste « nouveau », l'essai est compté. Écran d'abord, base ensuite.
+  const repondreALAppel = (joint: boolean) => {
+    if (!lead) return;
+    const titre = joint ? TRACE_APPEL_JOINT : TRACE_APPEL_SANS_REPONSE;
+    const ligne = formatTraceNote(titre);
+    setNotes((prev) => ajouterTrace(prev, ligne));
+    setLead((prev) =>
+      prev
+        ? {
+            ...prev,
+            notes_internes: ajouterTrace(prev.notes_internes, ligne),
+            status: statutApresMessage(prev.status, titre) ?? prev.status,
+          }
+        : prev,
+    );
+    void repondreAppel(lead.id, joint).then((ecrite) => {
+      if (!ecrite) toast.warning("Réponse non enregistrée, réessaie dans un instant.");
+      rafraichirListes();
+    });
+  };
+
+  // Taper « Appeler » : l'appel est tracé ; sur un lead « nouveau », la fiche
+  // pose ensuite « Tu l'as eu ? » (le statut ne bouge pas tout seul).
+  const tracerAppel = () => {
+    if (!lead) return;
+    const ligne = formatTraceNote(TRACE_APPEL);
+    setNotes((prev) => ajouterTrace(prev, ligne));
+    setLead((prev) =>
+      prev
+        ? {
+            ...prev,
+            notes_internes: ajouterTrace(prev.notes_internes, ligne),
+            status: statutApresMessage(prev.status, TRACE_APPEL) ?? prev.status,
+          }
+        : prev,
+    );
+    void traceAppel(lead.id).then(rafraichirListes);
   };
 
   // Règle 3 : un seul endroit pour dire ce qui s'est passé côté email. Jamais
@@ -953,39 +1023,6 @@ const LeadDetail = () => {
     }
   };
 
-  // Lot 1B — bloc « RDV passé » : clôturer le RDV (statut `termine`). Le lead
-  // quitte « RDV confirmé » (plus aucun RDV ouvert) pour « traité » ; il reste
-  // ouvert pour le devis, la relance ou « Terminer ce lead ».
-  const [terminantRdv, setTerminantRdv] = useState(false);
-  const handleRdvTermine = async () => {
-    if (!lead || !rdv) return;
-    setTerminantRdv(true);
-    try {
-      await terminerRdv(rdv.id);
-      setRdv(null);
-      setRdvAnnule(null);
-      // « RDV confirmé » (fiche) ou `rdv_pris` (RDV rapide) → « traité ».
-      if (isStatutAvecRdv(lead.status)) {
-        try {
-          await updateLeadStatus(lead.id, STATUT_REACTIVATION);
-          setLead((prev) => (prev ? { ...prev, status: STATUT_REACTIVATION } : prev));
-        } catch (stErr: unknown) {
-          const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
-          toast.warning("RDV terminé, mais le statut du lead n'a pas changé", { description: m });
-        }
-      }
-      rafraichirListes();
-      toast.success("RDV terminé", {
-        description: "Le lead reste ouvert : devis, relance, ou « Terminer ce lead » en bas.",
-      });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "clôture impossible";
-      toast.error("Erreur : " + msg);
-    } finally {
-      setTerminantRdv(false);
-    }
-  };
-
   // Lot 1B — « Terminer ce lead » (bas de fiche) : applicable quel que soit
   // l'état (avec ou sans RDV, email, devis). Clôt aussi un RDV passé ouvert.
   const [terminantLead, setTerminantLead] = useState(false);
@@ -1061,6 +1098,8 @@ const LeadDetail = () => {
   // Libellé du badge d'en-tête : « RDV passé » (orange, comme partout) quand le
   // lead est en « RDV confirmé » / rdv_pris sans RDV à venir.
   const libelleEntete = libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv));
+  // Lead « nouveau » : question « Tu l'as eu ? » et nombre d'appels sans réponse.
+  const appel = etatAppel(lead);
   const quickMessage = communicationMessage();
   const encodedBody = encodeURIComponent(quickMessage.body);
   const whatsappHref = `https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${encodedBody}`;
@@ -1106,6 +1145,7 @@ const LeadDetail = () => {
               </>
             )}
           </p>
+          {appel.mention && <p className="text-sm font-medium first-letter:uppercase">{appel.mention}</p>}
         </div>
         <Badge
           variant="outline"
@@ -1124,7 +1164,7 @@ const LeadDetail = () => {
         }`}
       >
         <Button asChild size="sm" variant="copper" className="min-h-[44px] min-w-0 px-1 gap-1 text-xs sm:text-sm">
-          <a href={`tel:${lead.phone}`} aria-label={`Appeler ${lead.name}`}>
+          <a href={`tel:${lead.phone}`} onClick={tracerAppel} aria-label={`Appeler ${lead.name}`}>
             <Phone className="w-4 h-4" /> Appeler
           </a>
         </Button>
@@ -1161,52 +1201,44 @@ const LeadDetail = () => {
         )}
       </div>
 
+      {appel.question && <QuestionAppel leadName={lead.name} onReponse={repondreALAppel} />}
+
       {/* 2 — Rendez-vous : créer / modifier / annuler / terminer, puis les boutons de message. */}
-      {/* Lot 1B — RDV passé encore ouvert : plus aucune mention « RDV confirmé »,
-          trois gestes pour le fermer. */}
+      {/* RDV passé encore ouvert : plus de bloc « À clôturer » (lot statuts
+          auto). Il se clôture tout seul ou depuis l'accueil ; ici, on peut
+          seulement le replanifier. */}
       {rdv && !showForm && isRdvPasse(rdv) && (
-        <Card className="p-4 sm:p-6 space-y-3 border-2 border-orange-500/50 bg-orange-500/5">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <h2 className="font-semibold text-lg">RDV passé</h2>
-            <Badge variant="outline" className={TON.orange}>
-              À clôturer
-            </Badge>
-          </div>
+        <Card className="p-4 sm:p-6 space-y-3">
+          <h2 className="font-semibold text-lg">Rendez-vous passé</h2>
           <p className="text-sm">
             <span className="font-medium capitalize">{formatRdvDateShort(rdv.date_rdv)}</span> à{" "}
             {formatHeure(rdv.heure_rdv)} · {rdv.type_visite}
           </p>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              onClick={handleRdvTermine}
-              disabled={terminantRdv || cancellingRdv}
-              variant="copper"
-              size="lg"
-              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base"
-            >
-              {terminantRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-              Terminer
-            </Button>
-            <Button
-              onClick={() => { setEditing(true); setShowForm(true); }}
-              disabled={terminantRdv || cancellingRdv}
-              variant="outline"
-              size="lg"
-              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base"
-            >
-              <CalendarPlus className="w-4 h-4" /> Replanifier
-            </Button>
-            <Button
-              onClick={handleRdvCancel}
-              disabled={terminantRdv || cancellingRdv}
-              variant="outline"
-              size="lg"
-              className="min-h-[48px] min-w-0 px-1 gap-1 text-[13px] sm:px-2 sm:gap-2 sm:text-base text-destructive hover:bg-destructive/10"
-            >
-              {cancellingRdv ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-              Annuler
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {rdv.date_rdv < AUTO_DEPUIS ? (
+              <>
+                Ancien rendez-vous : à régler dans{" "}
+                <Link to="/admin/mise-a-jour" className="text-primary underline">
+                  Mise à jour proposée
+                </Link>
+                .
+              </>
+            ) : genreRdv(rdv.type_visite) === "visite" ? (
+              "Il se clôture tout seul, puis le lead passe dans « Devis à faire » sur l'accueil."
+            ) : genreRdv(rdv.type_visite) === "intervention" ? (
+              "« C'est fait » sur l'accueil, ou clôture automatique 2 jours après (lead converti)."
+            ) : (
+              "À confirmer sur l'accueil : « C'est fait » ou « À replanifier »."
+            )}
+          </p>
+          <Button
+            onClick={() => { setEditing(true); setShowForm(true); }}
+            variant="outline"
+            size="lg"
+            className="min-h-[48px]"
+          >
+            <CalendarPlus className="w-4 h-4" /> Replanifier
+          </Button>
         </Card>
       )}
 
@@ -1480,7 +1512,7 @@ const LeadDetail = () => {
         </div>
         <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button asChild variant="copper" size="lg" className="flex-1 min-h-[48px]">
-            <a href={`tel:${lead.phone}`}><Phone className="w-4 h-4" /> Appeler ce client</a>
+            <a href={`tel:${lead.phone}`} onClick={tracerAppel}><Phone className="w-4 h-4" /> Appeler ce client</a>
           </Button>
           {hasUsableEmail(lead.email) && (
             <Button asChild variant="outline" size="lg" className="flex-1 min-h-[48px]">
@@ -1534,17 +1566,10 @@ const LeadDetail = () => {
         </CollapsibleCard>
       )}
 
-      {/* Statut et devis (repliés) */}
-      <CollapsibleCard title="Statut et devis">
-        <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Statut</label>
-          <Select value={lead.status} onValueChange={updateStatus}>
-            <SelectTrigger className="w-full sm:w-64"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Suivi du devis (replié). Lot « statuts auto » : le sélecteur de statut
+          est retiré — le statut suit les messages et les RDV ; l'exception se
+          règle en bas (« Terminer ce lead » / « Réactiver »). */}
+      <CollapsibleCard title="Suivi du devis">
 
         {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
             J+3/7/14 (carte « Relances devis » du cockpit). */}

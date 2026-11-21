@@ -6,7 +6,10 @@
 // Ouvre chaque écran de /admin dans Chromium (viewport téléphone 390 × 844), en
 // mode sombre puis clair, avec une session et des données FACTICES : toutes les
 // requêtes vers Supabase sont interceptées, rien ne part vers la production et
-// rien n'est écrit. Pour chaque écran :
+// rien n'est écrit en base (les PATCH modifient seulement les données factices
+// en mémoire, pour que les statuts automatiques se voient d'un écran à l'autre).
+// L'horloge du navigateur est avancée au besoin pour que « hier » tombe après la
+// mise en service des statuts automatiques (AUTO_DEPUIS). Pour chaque écran :
 //   - une capture pleine page (<écran>-<thème>.jpg) ;
 //   - le contraste de CHAQUE texte visible, calculé (WCAG 2.x) à partir des
 //     couleurs réellement rendues : couleur du texte composée sur le fond
@@ -35,8 +38,15 @@ fs.mkdirSync(OUT, { recursive: true });
 // ---------------------------------------------------------------------------
 const pad = (n) => String(n).padStart(2, "0");
 const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const jour = (n) => iso(new Date(Date.now() + n * 86400000));
-const instant = (n) => new Date(Date.now() + n * 86400000).toISOString();
+// Statuts automatiques : rien d'antérieur à AUTO_DEPUIS (src/lib/admin/statuts-auto.ts)
+// n'est traité tout seul. L'audit se place au moins 14 jours après, pour montrer
+// à la fois l'automatique (RDV récents) et le rattrapage (RDV d'octobre 2026).
+const AUTO_DEPUIS = "2026-11-21";
+const AU_PLUS_TOT = new Date(`${AUTO_DEPUIS}T12:00:00`).getTime() + 14 * 86400000;
+const DECALAGE_MS = Math.max(0, Math.ceil((AU_PLUS_TOT - Date.now()) / 86400000)) * 86400000;
+const MAINTENANT = Date.now() + DECALAGE_MS;
+const jour = (n) => iso(new Date(MAINTENANT + n * 86400000));
+const instant = (n) => new Date(MAINTENANT + n * 86400000).toISOString();
 
 const lead = (id, name, status, p = {}) => ({
   id,
@@ -55,7 +65,7 @@ const lead = (id, name, status, p = {}) => ({
   timing: "Dans le mois",
   source: "formulaire_site",
   notes: null,
-  notes_internes: `${pad(new Date().getDate())}/${pad(new Date().getMonth() + 1)}/${new Date().getFullYear()} 09:12 — WhatsApp : Bien reçu`,
+  notes_internes: `${pad(new Date(MAINTENANT).getDate())}/${pad(new Date(MAINTENANT).getMonth() + 1)}/${new Date(MAINTENANT).getFullYear()} 09:12 — WhatsApp : Bien reçu`,
   payload: null,
   photo_urls: null,
   gdpr_consent: true,
@@ -64,9 +74,29 @@ const lead = (id, name, status, p = {}) => ({
   ...p,
 });
 
+// Ligne de trace datée de `decalage` jours : « 21/11/2026 09:20 — Appel ».
+const trace = (decalage, heure, texte) => {
+  const d = new Date(MAINTENANT + decalage * 86_400_000);
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${heure} — ${texte}`;
+};
+
 const LEADS = [
-  lead("l-nouveau", "Marie Dupont", "nouveau", { created_at: instant(-1) }),
-  lead("l-nouveau2", "Karim Benali", "nouveau", { created_at: instant(-4), commune: "Jette", email: null }),
+  // Appel lancé, pas encore de réponse à « Tu l'as eu ? ».
+  lead("l-nouveau", "Marie Dupont", "nouveau", { created_at: instant(-1), notes_internes: trace(0, "09:20", "Appel") }),
+  // Deux appels sans réponse (« À rappeler · 2 essais · dernier le … »), puis un
+  // troisième appel en attente de réponse à « Tu l'as eu ? ».
+  lead("l-nouveau2", "Karim Benali", "nouveau", {
+    created_at: instant(-4),
+    commune: "Jette",
+    email: null,
+    notes_internes: [
+      trace(-2, "17:05", "Appel"),
+      trace(-2, "17:06", "Appel sans réponse"),
+      trace(-1, "12:30", "Appel"),
+      trace(-1, "12:31", "Appel sans réponse"),
+      trace(0, "09:20", "Appel"),
+    ].join("\n"),
+  }),
   lead("l-traite", "Jean Peeters", "traité", { created_at: instant(-10), commune: "Grimbergen" }),
   lead("l-devis", "Sophie Lambert", "devis envoyé", { created_at: instant(-15), devis_envoye_at: jour(-8) }),
   lead("l-converti", "Luc Janssens", "converti", { created_at: instant(-40) }),
@@ -76,10 +106,22 @@ const LEADS = [
   lead("l-rdvpris", "Thomas Willems", "rdv_pris", { created_at: instant(-3), email: null, source: "rdv_rapide", services: [], message: null, client_type: null }),
   lead("l-rdvpasse", "Emma Jacobs", "RDV confirmé", { created_at: instant(-12), commune: "Asse" }),
   lead("l-vieux", "Hugo Mertens", "traité", { created_at: instant(-95), notes_internes: null, commune: "Meise" }),
+  // Statuts automatiques — RDV récents (après la mise en service).
+  lead("l-visite", "Lina Dubois", "RDV confirmé", { created_at: instant(-5), notes_internes: null, commune: "Zellik" }),
+  lead("l-autre", "Olivier Simon", "rdv_pris", { created_at: instant(-6), notes_internes: null, commune: "Strombeek" }),
+  lead("l-interv", "Chloé Martin", "RDV confirmé", { created_at: instant(-7), notes_internes: null, commune: "Dilbeek" }),
+  // Rattrapage — fiches d'avant la mise en service (écran « Mise à jour proposée »).
+  lead("l-ancien1", "Bruno Lefèvre", "RDV confirmé", { created_at: "2026-09-20T09:00:00.000Z", notes_internes: null, commune: "Vilvorde" }),
+  lead("l-ancien2", "Inès Dumont", "rdv_pris", { created_at: "2026-09-28T09:00:00.000Z", notes_internes: null, commune: "Ganshoren", email: null }),
+  lead("l-ancien3", "Élise Vandenberghe-Desmet", "RDV confirmé", { created_at: "2026-11-02T09:00:00.000Z", notes_internes: null, commune: "Woluwe-Saint-Lambert" }),
 ];
 const leadPar = Object.fromEntries(LEADS.map((l) => [l.id, l]));
 
-const rdv = (id, lead_id, date_rdv, heure_rdv, statut, type_visite = "Devis") => ({
+const VISITE_BORNE = "Visite devis - Borne de recharge voiture électrique";
+const VISITE_RGIE = "Visite devis - Mise en conformité RGIE";
+const DEPANNAGE = "Intervention - Dépannage";
+const CHANTIER = "Intervention - Chantier confirmé";
+const rdv = (id, lead_id, date_rdv, heure_rdv, statut, type_visite = VISITE_BORNE) => ({
   id,
   lead_id,
   date_rdv,
@@ -95,14 +137,25 @@ const rdv = (id, lead_id, date_rdv, heure_rdv, statut, type_visite = "Devis") =>
   leads: leadPar[lead_id],
 });
 const RDVS = [
-  rdv("r-jour", "l-rdvconf", jour(0), "09:30:00", "confirme", "Visite technique"),
-  rdv("r-jour2", "l-traite", jour(0), "14:00:00", "rappel_envoye", "Dépannage"),
-  rdv("r-demain", "l-rdvpris", jour(1), "08:00:00", "confirme", "Inspection RGIE"),
-  rdv("r-demain2", "l-nouveau", jour(1), "16:30:00", "confirme", "Devis"),
-  rdv("r-passe", "l-rdvpasse", jour(-1), "10:00:00", "confirme", "Devis"),
-  rdv("r-annule", "l-perdu", jour(-5), "11:00:00", "annule", "Devis"),
-  rdv("r-termine", "l-converti", jour(-20), "09:00:00", "termine", "Installation borne de recharge"),
-  rdv("r-futur", "l-devis", jour(5), "13:30:00", "confirme", "Visite technique"),
+  rdv("r-jour", "l-rdvconf", jour(0), "09:30:00", "confirme", CHANTIER),
+  rdv("r-jour2", "l-traite", jour(0), "14:00:00", "rappel_envoye", DEPANNAGE),
+  rdv("r-demain", "l-rdvpris", jour(1), "08:00:00", "confirme", VISITE_RGIE),
+  rdv("r-demain2", "l-nouveau", jour(1), "16:30:00", "confirme", VISITE_BORNE),
+  // Intervention d'hier : sur l'accueil pendant 2 jours (« C'est fait » / « À replanifier »).
+  rdv("r-passe", "l-rdvpasse", jour(-1), "10:00:00", "confirme", DEPANNAGE),
+  rdv("r-annule", "l-perdu", jour(-5), "11:00:00", "annule", VISITE_BORNE),
+  rdv("r-termine", "l-converti", jour(-20), "09:00:00", "termine", CHANTIER),
+  rdv("r-futur", "l-devis", jour(5), "13:30:00", "confirme", CHANTIER),
+  // Visite d'hier : clôturée toute seule → « Devis à faire ».
+  rdv("r-visite", "l-visite", jour(-1), "11:00:00", "confirme", VISITE_RGIE),
+  // « Autre » : jamais clôturé tout seul, reste sur l'accueil.
+  rdv("r-autre", "l-autre", jour(-3), "15:00:00", "confirme", "Autre"),
+  // Intervention d'il y a 4 jours : clôturée toute seule → converti (bandeau).
+  rdv("r-interv", "l-interv", jour(-4), "08:30:00", "confirme", CHANTIER),
+  // Avant la mise en service : jamais touchés, proposés au rattrapage.
+  rdv("r-ancien1", "l-ancien1", "2026-10-03", "09:00:00", "confirme", DEPANNAGE),
+  rdv("r-ancien2", "l-ancien2", "2026-10-05", "14:00:00", "confirme", VISITE_BORNE),
+  rdv("r-ancien3", "l-ancien3", "2026-11-12", "10:00:00", "rappel_envoye", "Visite devis - Remplacement tableau électrique"),
 ];
 
 const chantier = (id, lead_id, debut, fin, statut, type = "Installation borne de recharge") => ({
@@ -250,7 +303,7 @@ function teste(valeur, expr) {
   return neg ? !ok : ok;
 }
 
-function repondreRest(url, methode, entetes) {
+function repondreRest(url, methode, entetes, corps) {
   const table = url.pathname.replace(/^\/rest\/v1\//, "").split("/")[0];
   let lignes = [...(TABLES[table] ?? [])];
   for (const [cle, val] of url.searchParams) {
@@ -279,8 +332,20 @@ function repondreRest(url, methode, entetes) {
     "content-type": "application/json",
     "content-range": `0-${Math.max(lignes.length - 1, 0)}/${lignes.length}`,
   };
+  if (methode === "PATCH") {
+    // Écriture en mémoire seulement (données factices) : les lignes filtrées
+    // reçoivent le correctif et sont renvoyées, comme PostgREST.
+    let correctif = {};
+    try {
+      correctif = JSON.parse(corps || "{}");
+    } catch {
+      correctif = {};
+    }
+    for (const l of lignes) Object.assign(l, correctif);
+    return { status: 200, headers: base, body: JSON.stringify(objet ? lignes[0] ?? {} : lignes) };
+  }
   if (methode !== "GET" && methode !== "HEAD") {
-    // Aucune écriture : on fait semblant que tout va bien.
+    // Aucune autre écriture : on fait semblant que tout va bien.
     return { status: 200, headers: base, body: JSON.stringify(objet ? lignes[0] ?? {} : []) };
   }
   if (objet) {
@@ -331,7 +396,7 @@ async function intercepter(page) {
       if (url.pathname.startsWith("/rest/v1/rpc/")) {
         return req.respond({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: "[]" });
       }
-      if (url.pathname.startsWith("/rest/v1/")) return req.respond(repondreRest(url, req.method(), req.headers()));
+      if (url.pathname.startsWith("/rest/v1/")) return req.respond(repondreRest(url, req.method(), req.headers(), req.postData()));
       if (url.pathname.startsWith("/auth/v1/user")) {
         return req.respond({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify(UTILISATEUR) });
       }
@@ -602,7 +667,6 @@ const ECRANS = [
   { nom: "leads", url: "/admin/pipeline" },
   { nom: "leads-termines", url: "/admin/pipeline", apres: (p) => cliquer(p, "Terminés") },
   { nom: "leads-menu-terminer", url: "/admin/pipeline", apres: (p) => cliquer(p, "Terminer", "button[aria-label^='Terminer le lead']") },
-  { nom: "leads-archiver", url: "/admin/pipeline", apres: (p) => cliquer(p, "Archiver les anciens") },
   { nom: "leads-nouveau-lead", url: "/admin/pipeline", apres: (p) => cliquer(p, "Nouveau lead") },
   { nom: "fiche-rdv-planifie", url: "/admin/lead/l-rdvconf" },
   {
@@ -617,8 +681,11 @@ const ECRANS = [
     },
   },
   { nom: "fiche-rdv-passe", url: "/admin/lead/l-rdvpasse" },
+  { nom: "fiche-replanifier", url: "/admin/lead/l-rdvpasse?replanifier=1" },
   { nom: "fiche-lead-termine", url: "/admin/lead/l-sanssuite" },
   { nom: "fiche-formulaire-rdv", url: "/admin/lead/l-nouveau?rdv=1" },
+  { nom: "fiche-appel-question", url: "/admin/lead/l-nouveau" },
+  { nom: "fiche-a-rappeler", url: "/admin/lead/l-nouveau2" },
   { nom: "rdv-rapide", url: "/admin/rdv-rapide" },
   { nom: "depannage", url: "/admin/depannage" },
   { nom: "depannage-soir-zone-3", url: "/admin/depannage", apres: async (p) => { await cliquer(p, "Zone 3", "[role='radio']"); await cliquer(p, "Soir", "[role='radio']"); } },
@@ -637,6 +704,9 @@ const ECRANS = [
   { nom: "heures-mois", url: "/admin/heures", apres: (p) => cliquer(p, "Mois", "[role='tab']") },
   { nom: "heures-export", url: "/admin/heures", apres: (p) => cliquer(p, "Exporter CSV") },
   { nom: "bureau-menu-lateral", url: "/admin/pipeline", bureau: true },
+  { nom: "bureau-mise-a-jour", url: "/admin/mise-a-jour", bureau: true },
+  // En dernier : ouvrir cet écran marque le bandeau de l'accueil comme vu.
+  { nom: "mise-a-jour", url: "/admin/mise-a-jour" },
 ];
 
 const THEMES = ["dark", "light"];
@@ -668,6 +738,20 @@ for (const theme of THEMES) {
     await intercepter(page);
     const erreursPage = [];
     page.on("pageerror", (e) => erreursPage.push(String(e.message || e)));
+    await page.evaluateOnNewDocument((decalage) => {
+      if (!decalage) return;
+      const Vraie = Date;
+      class DateDecalee extends Vraie {
+        constructor(...args) {
+          if (args.length === 0) super(Vraie.now() + decalage);
+          else super(...args);
+        }
+        static now() {
+          return Vraie.now() + decalage;
+        }
+      }
+      window.Date = DateDecalee;
+    }, DECALAGE_MS);
     await page.evaluateOnNewDocument(
       (cle, session, t, avecSession) => {
         localStorage.setItem("ce_admin_theme", t);

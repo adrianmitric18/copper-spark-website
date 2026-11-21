@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchLeadsWithUpcomingRdvs } from "@/lib/admin/queries";
+import { fetchLeadsWithUpcomingRdvs, repondreAppel, traceAppel } from "@/lib/admin/queries";
+import { etatAppel } from "@/lib/admin/statuts-auto";
+import QuestionAppel from "@/components/admin/QuestionAppel";
 import {
   type Lead,
   STATUT_REACTIVATION,
@@ -30,7 +32,6 @@ import { formaterDateCourte } from "@/lib/admin/heures";
 import AdminShell from "@/admin/layout/AdminShell";
 import ManualLeadDialog from "@/components/admin/ManualLeadDialog";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
-import ArchiverAnciensDialog from "@/components/admin/ArchiverAnciensDialog";
 import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
 import { TON } from "@/lib/admin/badges";
 import { cn } from "@/lib/utils";
@@ -81,9 +82,16 @@ interface LeadCardProps {
   lead: Lead;
   upcoming?: { date_rdv: string; heure_rdv: string };
   onStatusChange: (lead: Lead, newStatus: string) => void;
+  /** Taper « Appeler » : trace l'appel ; un lead « nouveau » reçoit « Tu l'as eu ? ». */
+  onAppel: (lead: Lead) => void;
+  /** Réponse à « Tu l'as eu ? » : true = joint (traité), false = pas de réponse. */
+  onReponseAppel: (lead: Lead, joint: boolean) => void;
+  /** Réponse en cours d'enregistrement pour ce lead. */
+  appelOccupe: boolean;
 }
 
-const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
+const LeadCard = ({ lead, upcoming, onStatusChange, onAppel, onReponseAppel, appelOccupe }: LeadCardProps) => {
+  const appel = etatAppel(lead);
   const hours = ageInHours(lead.created_at);
   const isOld = hours >= 48 && !isTerminal(lead.status);
   // « RDV confirmé » sans RDV à venir = RDV passé : on ne l'affiche jamais confirmé.
@@ -116,6 +124,9 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
             )}
             {lead.commune && (
               <p className="text-xs text-muted-foreground truncate">{lead.commune}</p>
+            )}
+            {appel.mention && (
+              <p className="text-xs font-medium first-letter:uppercase">{appel.mention}</p>
             )}
           </div>
           <Badge
@@ -154,11 +165,20 @@ const LeadCard = ({ lead, upcoming, onStatusChange }: LeadCardProps) => {
         </div>
       </Link>
 
+      {appel.question && (
+        <QuestionAppel
+          leadName={lead.name}
+          occupe={appelOccupe}
+          onReponse={(joint) => onReponseAppel(lead, joint)}
+        />
+      )}
+
       <div className="flex items-center gap-1 pt-1 border-t border-border/40">
         <a
           href={`tel:${lead.phone}`}
           className="flex items-center justify-center flex-1 h-9 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           aria-label={`Appeler ${lead.name}`}
+          onClick={() => onAppel(lead)}
         >
           <Phone className="w-3.5 h-3.5" />
           <span className="ml-1">Appeler</span>
@@ -285,6 +305,26 @@ const Pipeline = () => {
   const handleStatusChange = (lead: Lead, newStatus: string) => {
     void changerStatut(lead, newStatus);
   };
+  // Lot « statuts auto » : l'appel est tracé ; sur un lead « nouveau », la carte
+  // pose ensuite « Tu l'as eu ? » (la liste est rechargée pour l'afficher).
+  const handleAppel = (lead: Lead) => {
+    void traceAppel(lead.id).then(() => {
+      if (lead.status === "nouveau") reload();
+    });
+  };
+  const [appelOccupe, setAppelOccupe] = useState<string | null>(null);
+  const handleReponseAppel = async (lead: Lead, joint: boolean) => {
+    setAppelOccupe(lead.id);
+    try {
+      const ligne = await repondreAppel(lead.id, joint);
+      if (!ligne) toast.warning("Non enregistré, réessaie dans un instant.");
+      else if (joint) toast.success(`${lead.name} → traité`);
+      else toast.success(`${lead.name} : à rappeler`);
+      reload();
+    } finally {
+      setAppelOccupe(null);
+    }
+  };
 
   return (
     <AdminShell email={user?.email} mobileTitle="Leads">
@@ -323,7 +363,6 @@ const Pipeline = () => {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
             </Button>
-            <ArchiverAnciensDialog leads={leads} upcomingByLead={upcomingByLead} />
             <ManualLeadDialog />
           </div>
         </div>
@@ -393,6 +432,9 @@ const Pipeline = () => {
                 lead={lead}
                 upcoming={upcomingByLead[lead.id]}
                 onStatusChange={handleStatusChange}
+                onAppel={handleAppel}
+                onReponseAppel={handleReponseAppel}
+                appelOccupe={appelOccupe === lead.id}
               />
             ))}
           </div>

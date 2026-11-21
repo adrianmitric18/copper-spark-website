@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
   fetchLeadsWithUpcomingRdvs,
   terminerLead,
+  traceNote,
   updateLeadStatus,
 } from "@/lib/admin/queries";
 import { isTerminal, type TerminalLeadStatus } from "@/lib/admin/types";
@@ -46,7 +47,12 @@ export const useChangerStatutLead = () => {
     appliquer(status);
     try {
       if (isTerminal(status)) await terminerLead(lead.id, status as TerminalLeadStatus);
-      else await updateLeadStatus(lead.id, status);
+      else {
+        await updateLeadStatus(lead.id, status);
+        // Un changement fait à la main compte comme une action : sans cette
+        // trace, un lead réactivé serait ré-archivé au passage automatique suivant.
+        void traceNote(lead.id, `Statut : ${lead.status} → ${status}`);
+      }
       toast.success(`${lead.name} → ${status}`);
       // Le calendrier affiche le statut du lead et les RDV clôturés.
       void queryClient.invalidateQueries({ queryKey: CLE_RDVS });

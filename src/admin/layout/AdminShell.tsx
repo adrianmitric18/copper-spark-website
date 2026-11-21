@@ -9,6 +9,7 @@ import CommandPalette from "@/admin/components/CommandPalette";
 // de la barre du bas (doublon). Composant conservé, non monté (rail 4).
 // import RdvRapideFab from "@/admin/components/RdvRapideFab";
 import { useDarkMode } from "@/admin/hooks/useDarkMode";
+import { useStatutsAuto } from "@/admin/hooks/useStatutsAuto";
 
 interface AdminShellProps {
   email?: string | null;
@@ -49,6 +50,9 @@ const AdminShell = ({ email, mobileTitle, children }: AdminShellProps) => {
   // Applique le thème (sombre par défaut) à tout écran admin, même avant que
   // le menu ne soit monté.
   useDarkMode();
+  // Statuts automatiques : à l'ouverture et à chaque retour sur l'app, une
+  // fois l'admin connecté (email connu).
+  useStatutsAuto(Boolean(email));
   const location = useLocation();
   const navigate = useNavigate();
   const isRootRoute = ROOT_ADMIN_ROUTES.has(location.pathname);

@@ -11,8 +11,8 @@ import { Eye, Calendar, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatHeure } from "@/lib/rdv/formatters";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
-import { fetchAllRdvs, terminerRdv, updateLeadStatus, type RdvWithLead } from "@/lib/admin/queries";
-import { STATUT_REACTIVATION, isRdvPasse, isStatutAvecRdv, isTerminal } from "@/lib/admin/types";
+import { fetchAllRdvs, marquerRdvFait, type RdvWithLead } from "@/lib/admin/queries";
+import { isRdvPasse, isTerminal } from "@/lib/admin/types";
 import TerminerLeadButton from "@/components/admin/TerminerLeadButton";
 import { TON } from "@/lib/admin/badges";
 import AdminShell from "@/admin/layout/AdminShell";
@@ -65,22 +65,14 @@ const AdminRdv = () => {
   const queryClient = useQueryClient();
   const [terminant, setTerminant] = useState<string | null>(null);
 
-  // Lot 2.5 — clôturer un RDV passé depuis le calendrier. Même règle que sur la
-  // fiche : le RDV passe en « terminé » et le lead quitte « RDV confirmé » /
-  // rdv_pris pour « traité » (il reste ouvert pour le devis).
+  // Clôturer un RDV passé depuis le calendrier. Même règle que « C'est fait »
+  // sur l'accueil (marquerRdvFait) : le RDV passe en « terminé » ; une
+  // intervention convertit le lead, sinon il repasse en « traité ».
   const terminerRdvPasse = async (r: RdvWithLead) => {
     setTerminant(r.id);
     try {
-      await terminerRdv(r.id);
-      if (isStatutAvecRdv(r.lead_status)) {
-        try {
-          await updateLeadStatus(r.lead_id, STATUT_REACTIVATION);
-        } catch (stErr: unknown) {
-          const m = stErr instanceof Error ? stErr.message : "mise à jour impossible";
-          toast.warning("RDV terminé, mais le statut du lead n'a pas changé", { description: m });
-        }
-      }
-      toast.success(`RDV terminé — ${r.lead_name}`);
+      const statut = await marquerRdvFait(r);
+      toast.success(`RDV terminé — ${r.lead_name}`, statut ? { description: `Lead → ${statut}` } : undefined);
       void queryClient.invalidateQueries({ queryKey: ["admin-rdvs-all"] });
       void queryClient.invalidateQueries({ queryKey: ["admin-leads-overview"] });
     } catch (e: unknown) {
