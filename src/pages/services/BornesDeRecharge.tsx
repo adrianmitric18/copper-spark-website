@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { useDisplayRating } from "@/hooks/useDisplayRating";
 import { realisationsPourService } from "@/lib/chantiers/liens";
 import { BORNE, NB_QUESTIONS, type Fourchette } from "@/lib/simulateur/config";
+// Certificat fourni par Adrian le 2026-11-21 (1241 × 1754). La vignette (360 px
+// de large, affichée en 180 px) est seule chargée avec la page ; l'original ne
+// se télécharge qu'au clic. Le certificat ne porte pas de date : elle n'est
+// écrite que dans la légende.
+import certificatZaptec from "@/assets/certificat-zaptec-adrian-mitric.webp";
+import certificatZaptecVignette from "@/assets/certificat-zaptec-adrian-mitric-360.webp";
 
 /**
  * Page /services/bornes-de-recharge.
@@ -251,8 +257,10 @@ const BornesDeRecharge = () => {
                   Pourquoi nous faire confiance
                 </h2>
                 {/* Non publié : nombre de bornes posées depuis 2023 [à confirmer 11].
-                    À ajouter quand Adrian les fournit : image du diplôme Zaptec,
-                    deux ou trois avis qui parlent d'une borne. */}
+                    À ajouter quand Adrian les choisit : deux ou trois avis qui
+                    parlent d'une borne. */}
+                <div className="flex flex-col md:flex-row md:items-start gap-8">
+                <div className="min-w-0 flex-1">
                 <Puces
                   items={[
                     "Installateur certifié Zaptec : certification de la Zaptec Academy obtenue le 2 novembre 2026.",
@@ -265,6 +273,31 @@ const BornesDeRecharge = () => {
                     "Électricien indépendant à Court-Saint-Étienne depuis 2023. TVA BE 0805 376 944.",
                   ]}
                 />
+                </div>
+                <figure className="shrink-0 w-[180px] mx-auto md:mx-0">
+                  <a
+                    href={certificatZaptec}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Agrandir le certificat Zaptec d'Adrian Mitric"
+                    className="block rounded-xl overflow-hidden border border-border/60 bg-white shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
+                    <img
+                      src={certificatZaptecVignette}
+                      alt="Certificat Zaptec d'Adrian Mitric – formation technique Zaptec réussie"
+                      width={180}
+                      height={254}
+                      loading="lazy"
+                      decoding="async"
+                      className="block w-full h-auto"
+                    />
+                  </a>
+                  <figcaption className="mt-3 text-sm text-muted-foreground leading-relaxed text-center">
+                    Certification Zaptec obtenue le 2 novembre 2026 (Zaptec Academy).{" "}
+                    <span className="text-xs">Cliquez sur l'image pour l'agrandir.</span>
+                  </figcaption>
+                </figure>
+                </div>
               </div>
             </div>
           </section>
