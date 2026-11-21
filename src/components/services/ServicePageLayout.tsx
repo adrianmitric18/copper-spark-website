@@ -70,7 +70,19 @@ export interface ServicePageProps {
      * boutons (devis, simulateur, appel, WhatsApp) et plus le lien discret
      * vers le simulateur.
      */
-    boutons?: { devis: string; simulateur: string; appel: string };
+    boutons?: {
+      devis: string;
+      simulateur: string;
+      appel: string;
+      /**
+       * Lien WhatsApp pré-rempli. Quand il est fourni, le bouton « devis »
+       * ouvre WhatsApp et le formulaire est proposé en second, à la place du
+       * bouton WhatsApp générique.
+       */
+      devisWhatsapp?: string;
+      /** Libellé du lien vers le formulaire (avec `devisWhatsapp`). */
+      formulaire?: string;
+    };
   };
   /**
    * Affiche un accès discret au simulateur juste sous les boutons du hero,
@@ -186,16 +198,32 @@ const ServicePageLayout = ({
 
               {hero.boutons ? (
                 <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3">
-                  <Button variant="copper" size="lg" asChild>
-                    <Link
-                      to="/contact"
-                      data-analytics="quote_request"
-                      onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
-                    >
-                      {hero.boutons.devis}
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Link>
-                  </Button>
+                  {hero.boutons.devisWhatsapp ? (
+                    <Button variant="copper" size="lg" asChild>
+                      <a
+                        href={hero.boutons.devisWhatsapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-analytics="whatsapp_click"
+                        onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        {hero.boutons.devis}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="copper" size="lg" asChild>
+                      <Link
+                        to="/contact"
+                        data-analytics="quote_request"
+                        onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
+                      >
+                        {hero.boutons.devis}
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="copperOutline" size="lg" asChild>
                     <Link to={`/simulateur?besoin=${simulateurCta ?? "borne"}`}>
                       {hero.boutons.simulateur}
@@ -212,19 +240,32 @@ const ServicePageLayout = ({
                       {hero.boutons.appel}
                     </a>
                   </Button>
-                  <Button variant="ghost" size="lg" asChild>
-                    <a
-                      href={whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      data-analytics="whatsapp_click"
-                      onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
-                      className="flex items-center gap-2"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      WhatsApp
-                    </a>
-                  </Button>
+                  {hero.boutons.devisWhatsapp ? (
+                    <Button variant="ghost" size="lg" asChild>
+                      <Link
+                        to="/contact"
+                        data-analytics="quote_request"
+                        onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
+                      >
+                        {hero.boutons.formulaire ?? "Formulaire de devis"}
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="lg" asChild>
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-analytics="whatsapp_click"
+                        onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
                 </div>
               ) : (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

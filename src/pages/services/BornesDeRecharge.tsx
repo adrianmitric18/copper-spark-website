@@ -36,9 +36,16 @@ const PRIX_ZAPTEC = prix(BORNE.zaptec);
 const PRIX_ALFEN = prix(BORNE.alfen);
 const PRIX_POSE_SEULE = prix(BORNE.poseSeule);
 
+/**
+ * Tant que le formulaire de contact n'accepte que 3 photos (limite de la
+ * policy Supabase, levée au lot 3), « Envoyer mes photos » ouvre WhatsApp, où
+ * les quatre photos passent. Le formulaire reste proposé en second.
+ */
 const WHATSAPP_PHOTOS =
   "https://wa.me/32485755227?text=" +
-  encodeURIComponent("Bonjour, voici mes photos pour un devis de borne de recharge.");
+  encodeURIComponent(
+    "Bonjour, je souhaite un devis pour une borne de recharge. Je vous envoie mes 4 photos : compteur, tableau porte ouverte, emplacement de la borne, trajet entre les deux. Voiture : … Commune : … Maison de plus de 10 ans : oui / non.",
+  );
 
 const INTRO =
   "Le Cuivre Électrique installe des bornes de recharge pour voitures électriques à domicile, en copropriété et en entreprise, en Brabant wallon, en province de Namur et à Bruxelles. Adrian Mitric, électricien indépendant à Court-Saint-Étienne, est installateur certifié Zaptec depuis novembre 2026 et pose aussi les bornes Alfen et Hager. Tout est compris, de A à Z : le câble, les protections dans le tableau, la pose et le réglage de la borne, puis le contrôle par un organisme agréé.";
@@ -226,6 +233,8 @@ const BornesDeRecharge = () => {
         ],
         boutons: {
           devis: "Envoyer mes photos pour un devis",
+          devisWhatsapp: WHATSAPP_PHOTOS,
+          formulaire: "Ou par le formulaire",
           simulateur: "Estimer mon prix en 1 minute",
           appel: "Appeler le 0485 75 52 27",
         },
