@@ -21,14 +21,14 @@ const Footer = () => {
               <div className="flex flex-col">
                 <span className="font-display text-lg font-bold text-foreground leading-tight">
                   Le Cuivre
-                </span>
+                </span>{" "}
                 <span className="font-display text-sm font-semibold text-copper-deep leading-tight">
                   Électrique
                 </span>
               </div>
             </Link>
             <p className="text-muted-foreground mb-3 max-w-md leading-relaxed">
-              Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation, conformité RGIE et dépannage 7j/7.
+              Électricien artisan de confiance basé à <strong className="text-foreground">Court-Saint-Étienne</strong>. Intervient dans tout le Brabant wallon, en Wallonie et à Bruxelles : installation et conformité RGIE.
             </p>
             <p className="text-copper-deep font-medium text-lg italic">
               "On alimente vos idées, sans court-circuiter votre journée !"

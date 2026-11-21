@@ -18,7 +18,7 @@ Le Cuivre Électrique installe des bornes de recharge pour voitures électriques
 
 En bref (aucun prix ici) :
 - Installateur certifié Zaptec. Bornes Zaptec, Alfen et Hager, ou la vôtre.
-- Tout compris, de A à Z, contrôle par un organisme agréé compris.
+- Tout est compris pour une installation standard, contrôle par un organisme agréé compris. (modifié par Adrian le 21/11 au soir ; avant : « Tout compris, de A à Z, contrôle par un organisme agréé compris. »)
 - Réponse sous 24 h, devis gratuit sous 48 h, le plus souvent sur simples photos.
 - Pose en une journée dans la plupart des maisons.
 - Note Google : 5,0 sur 5 (note et nombre d'avis tirés de la table google_rating).

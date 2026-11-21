@@ -38,7 +38,27 @@ function realisationsSnapshot() {
   };
 }
 
+/**
+ * Note Google figée au build (même fichier que les réalisations), exposée par
+ * la constante `__GOOGLE_RATING__`. Une constante plutôt que le module
+ * virtuel : l'accueil lit la note, et n'a pas à embarquer tout le snapshot des
+ * réalisations pour deux nombres.
+ */
+function googleRatingDuBuild(): { rating: number; total: number } | null {
+  const file = path.resolve(__dirname, ".generated/realisations.json");
+  if (!existsSync(file)) return null;
+  try {
+    const r = JSON.parse(readFileSync(file, "utf8")).googleRating;
+    return r && Number.isFinite(r.rating) && Number.isFinite(r.total) ? { rating: r.rating, total: r.total } : null;
+  } catch {
+    return null;
+  }
+}
+
 export default defineConfig(({ mode }) => ({
+  define: {
+    __GOOGLE_RATING__: JSON.stringify(googleRatingDuBuild()),
+  },
   server: {
     host: "::",
     port: 8080,

@@ -40,6 +40,22 @@
     dans le HTML visible, en-tête de secours de `index.html`) · 3. simulateur + 4 photos au
     formulaire · 4. bornes d'abord partout (quelques jours après le lot 2) · 5. dépannage.
     `llms.txt` en dernier, priorité basse. Export Search Console attendu avant le lot 2.
+  - **Lot 2 (branche `feat/page-bornes`), pièges à ne pas réapprendre :**
+    - Le nombre d'avis du HTML pré-rendu vient de la table `google_rating`, lue au début du build
+      (`scripts/realisations-data.mjs` → `googleRating` du snapshot → constante `__GOOGLE_RATING__`
+      de `vite.config.ts` → `BUILD_RATING` dans `useDisplayRating`). Une constante et pas le module
+      virtuel, pour que l'accueil n'embarque pas le snapshot des réalisations. `FALLBACK_RATING`
+      ne sert plus qu'en dernier recours. Le chiffre du HTML ne bouge qu'au prochain build.
+    - Le 21/11 la table contenait **28 avis** (Adrian annonce 39 sur Google) : c'est la saisie
+      dans `/admin/avis` qui fait foi, le site ne devine rien.
+    - FAQ des pages services en `<details>` natif : l'accordéon Radix n'écrivait pas la réponse
+      dans le HTML tant que la question était fermée. Ne pas revenir à l'accordéon.
+    - `ServicePageLayout` : `piedDePage` remplace les blocs standard après la FAQ ; `hero.boutons`
+      affiche quatre boutons. La page bornes compose le reste elle-même.
+    - Prix de la page bornes : uniquement depuis `BORNE` (`config.ts`), `BORNE.zaptec` ajouté.
+      Vérification du HTML : `node <script> dist/services/bornes-de-recharge.html` (titre, h1,
+      aucun prix avant « Combien coûte », FAQ visible = FAQPage, aucun « à confirmer »).
+    - La policy des leads limite `photo_urls` à 3 : passer à 4 photos demande une migration (lot 3).
   - Skills locaux dans `.claude/skills/` (ignorés par git) : cro, copywriting, schema, analytics,
     handoff, grill-me, grilling, diagnosing-bugs, mobile-native, break-ui. `code-review` et
     `seo-audit` retirés (doublons). `break-ui` : développement uniquement, jamais en ligne.

@@ -13,12 +13,6 @@ import InternalLinks from "@/components/InternalLinks";
 import RealisationsLiees from "@/components/realisations/RealisationsLiees";
 import { realisationsPourService } from "@/lib/chantiers/liens";
 import { Button } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { NB_QUESTIONS, PAGE_DEPANNAGE, type Parcours } from "@/lib/simulateur/config";
 
@@ -60,11 +54,35 @@ export interface ServicePageProps {
   schemaServiceDescription: string;
   /** Communes citées dans l'areaServed du schema Service (sinon la zone générique). */
   schemaAreaServed?: string[];
+  /** Régions de l'areaServed du schema Service (sinon Brabant wallon + Wallonie). */
+  schemaRegions?: string[];
   /** Hero */
   hero: {
     eyebrow: string;
     h1: string;
+    /** Ligne courte sous le h1 (ex. certification, zone). */
+    sousTitre?: string;
     intro: string;
+    /** Liste « En bref » sous l'intro. */
+    points?: ReactNode[];
+    /**
+     * Libellés des boutons. Quand ils sont fournis, le hero affiche quatre
+     * boutons (devis, simulateur, appel, WhatsApp) et plus le lien discret
+     * vers le simulateur.
+     */
+    boutons?: {
+      devis: string;
+      simulateur: string;
+      appel: string;
+      /**
+       * Lien WhatsApp pré-rempli. Quand il est fourni, le bouton « devis »
+       * ouvre WhatsApp et le formulaire est proposé en second, à la place du
+       * bouton WhatsApp générique.
+       */
+      devisWhatsapp?: string;
+      /** Libellé du lien vers le formulaire (avec `devisWhatsapp`). */
+      formulaire?: string;
+    };
   };
   /**
    * Affiche un accès discret au simulateur juste sous les boutons du hero,
@@ -76,6 +94,12 @@ export interface ServicePageProps {
   /** Free body content (sections) */
   children: ReactNode;
   faqs: ServiceFAQ[];
+  /**
+   * Contenu propre à la page, rendu APRÈS la FAQ. Quand il est fourni, il
+   * remplace les blocs standard (réalisations liées, zones, bandeau avis,
+   * appel final), que la page compose alors elle-même.
+   */
+  piedDePage?: ReactNode;
 }
 
 const ServicePageLayout = ({
@@ -87,10 +111,12 @@ const ServicePageLayout = ({
   schemaServiceName,
   schemaServiceDescription,
   schemaAreaServed,
+  schemaRegions,
   hero,
   simulateurCta,
   children,
   faqs,
+  piedDePage,
 }: ServicePageProps) => {
   const canonical = `https://cuivre-electrique.com/services/${slug}`;
   const whatsappUrl =
@@ -111,6 +137,8 @@ const ServicePageLayout = ({
         serviceName={schemaServiceName}
         serviceDescription={schemaServiceDescription}
         areaServed={schemaAreaServed}
+        regions={schemaRegions}
+        url={canonical}
       />
       <StructuredData type="FAQPage" questions={faqs} />
       <Header />
@@ -149,10 +177,97 @@ const ServicePageLayout = ({
               <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
                 {hero.h1}
               </h1>
+              {hero.sousTitre && (
+                <p className="text-base md:text-lg font-semibold text-primary mb-6">
+                  {hero.sousTitre}
+                </p>
+              )}
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10">
                 {hero.intro}
               </p>
+              {hero.points && hero.points.length > 0 && (
+                <ul className="max-w-2xl mx-auto mb-10 space-y-2 text-left text-foreground">
+                  {hero.points.map((point, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="mt-2 w-2 h-2 rounded-full bg-primary shrink-0" />
+                      <span className="leading-relaxed">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
+              {hero.boutons ? (
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-3">
+                  {hero.boutons.devisWhatsapp ? (
+                    <Button variant="copper" size="lg" asChild>
+                      <a
+                        href={hero.boutons.devisWhatsapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-analytics="whatsapp_click"
+                        onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        {hero.boutons.devis}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="copper" size="lg" asChild>
+                      <Link
+                        to="/contact"
+                        data-analytics="quote_request"
+                        onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
+                      >
+                        {hero.boutons.devis}
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="copperOutline" size="lg" asChild>
+                    <Link to={`/simulateur?besoin=${simulateurCta ?? "borne"}`}>
+                      {hero.boutons.simulateur}
+                    </Link>
+                  </Button>
+                  <Button variant="copperOutline" size="lg" asChild>
+                    <a
+                      href="tel:+32485755227"
+                      data-analytics="call_click"
+                      onClick={() => trackEvent("call_click", { source_section: "service_page_hero", service: slug })}
+                      className="flex items-center gap-2"
+                    >
+                      <Phone className="w-5 h-5" />
+                      {hero.boutons.appel}
+                    </a>
+                  </Button>
+                  {hero.boutons.devisWhatsapp ? (
+                    <Button variant="ghost" size="lg" asChild>
+                      <Link
+                        to="/contact"
+                        data-analytics="quote_request"
+                        onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
+                      >
+                        {hero.boutons.formulaire ?? "Formulaire de devis"}
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="lg" asChild>
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-analytics="whatsapp_click"
+                        onClick={() => trackEvent("whatsapp_click", { source_section: "service_page_hero", service: slug })}
+                        className="flex items-center gap-2"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              ) : (
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button variant="copper" size="lg" asChild>
                   <a
@@ -189,8 +304,9 @@ const ServicePageLayout = ({
                   </a>
                 </Button>
               </div>
+              )}
 
-              {simulateurCta && (
+              {simulateurCta && !hero.boutons && (
                 <p className="mt-5 text-sm text-muted-foreground">
                   Ou{" "}
                   <Link
@@ -232,19 +348,23 @@ const ServicePageLayout = ({
           </div>
         </section>
 
-        {/* Réalisations liées à ce service — snapshot du build, lisible sans JavaScript */}
-        <RealisationsLiees
-          items={realisationsPourService(slug)}
-          titre="Quelques chantiers récents"
-          intro="Des exemples réels de ce service : photos, commune et contexte de chaque intervention."
-        />
+        {!piedDePage && (
+          <>
+            {/* Réalisations liées à ce service — snapshot du build, lisible sans JavaScript */}
+            <RealisationsLiees
+              items={realisationsPourService(slug)}
+              titre="Quelques chantiers récents"
+              intro="Des exemples réels de ce service : photos, commune et contexte de chaque intervention."
+            />
 
-        {/* Maillage interne : zones desservies */}
-        <InternalLinks
-          mode="zones"
-          title="Nos zones d'intervention"
-          intro={`Nous intervenons dans tout le Brabant wallon pour ${schemaServiceName.toLowerCase()}. Découvrez nos pages dédiées à chaque commune.`}
-        />
+            {/* Maillage interne : zones desservies */}
+            <InternalLinks
+              mode="zones"
+              title="Nos zones d'intervention"
+              intro={`Nous intervenons dans tout le Brabant wallon pour ${schemaServiceName.toLowerCase()}. Découvrez nos pages dédiées à chaque commune.`}
+            />
+          </>
+        )}
 
         {/* FAQ */}
         {faqs.length > 0 && (
@@ -254,27 +374,38 @@ const ServicePageLayout = ({
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground text-center mb-10">
                   Questions fréquentes
                 </h2>
-                <Accordion type="single" collapsible className="space-y-3">
+                {/* <details> natif et non l'accordéon Radix : celui-ci n'écrit pas
+                    la réponse dans le HTML tant que la question est fermée, donc
+                    ni Google ni les IA ne la lisaient dans le texte visible. Ici
+                    la réponse est toujours dans le HTML, et s'ouvre sans JavaScript. */}
+                <div className="space-y-3">
                   {faqs.map((faq, i) => (
-                    <AccordionItem
+                    <details
                       key={i}
-                      value={`item-${i}`}
-                      className="bg-background border border-border/60 rounded-2xl px-5"
+                      className="group bg-background border border-border/60 rounded-2xl px-5"
                     >
-                      <AccordionTrigger className="text-left font-semibold text-foreground hover:text-primary">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground leading-relaxed">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left font-semibold text-foreground hover:text-primary [&::-webkit-details-marker]:hidden">
+                        <h3 className="text-base font-semibold">{faq.question}</h3>
+                        <ChevronDown
+                          className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+                          aria-hidden="true"
+                        />
+                      </summary>
+                      <p className="pb-4 text-sm text-muted-foreground leading-relaxed">
                         {faq.answer}
-                      </AccordionContent>
-                    </AccordionItem>
+                      </p>
+                    </details>
                   ))}
-                </Accordion>
+                </div>
               </div>
             </div>
           </section>
         )}
 
+        {piedDePage}
+
+        {!piedDePage && (
+          <>
         {/* Bandeau avis Google compact */}
         <HomeReviewsBanner />
 
@@ -315,6 +446,8 @@ const ServicePageLayout = ({
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       <Footer />

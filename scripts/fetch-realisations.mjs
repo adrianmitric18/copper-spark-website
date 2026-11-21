@@ -24,6 +24,11 @@ try {
   console.log(
     `realisations.json — ${snapshot.projects.length} réalisation(s) publiée(s), ${nbImages} photo(s)`,
   );
+  console.log(
+    snapshot.googleRating
+      ? `note Google — ${snapshot.googleRating.rating} / 5 sur ${snapshot.googleRating.total} avis`
+      : "  ⚠ note Google absente (table google_rating vide ou illisible) — valeur de secours du site",
+  );
 } catch (err) {
   const message = `Récupération des réalisations impossible (${err.message})`;
   if (process.env.REALISATIONS_STRICT === "1") {
