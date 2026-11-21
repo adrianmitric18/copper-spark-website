@@ -55,6 +55,7 @@ export const NOINDEX_ROUTES = [
   { path: "/mentions-legales", sourceFile: "src/pages/MentionsLegales.tsx" },
   { path: "/cgv", sourceFile: "src/pages/CGV.tsx" },
   { path: "/confidentialite", sourceFile: "src/pages/Confidentialite.tsx" },
+  { path: "/cookies", sourceFile: "src/pages/Cookies.tsx" },
 ];
 
 /**

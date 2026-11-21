@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, Star } from "lucide-react";
+import { Mail, MessageCircle, Phone, MapPin, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import LogoIcon from "@/components/LogoIcon";
 import { openCookiePreferences } from "@/hooks/useCookieConsent";
@@ -58,6 +58,22 @@ const Footer = () => {
                   <Mail className="w-5 h-5 text-primary" />
                   contact@cuivre-electrique.com
                 </a>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/32485755227"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-analytics="whatsapp_click"
+                  onClick={() => trackEvent("whatsapp_click", { source_section: "footer" })}
+                  className="flex items-center gap-3 text-muted-foreground hover:text-copper-deep transition-colors"
+                >
+                  <MessageCircle className="w-5 h-5 text-primary" />
+                  WhatsApp
+                </a>
+                <p className="mt-1 pl-8 text-xs text-muted-foreground">
+                  WhatsApp applique sa propre politique de confidentialité.
+                </p>
               </li>
               <li>
                 <span className="flex items-start gap-3 text-muted-foreground">
@@ -142,6 +158,14 @@ const Footer = () => {
                   className="text-muted-foreground hover:text-copper-deep transition-colors"
                 >
                   Confidentialité
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/cookies"
+                  className="text-muted-foreground hover:text-copper-deep transition-colors"
+                >
+                  Cookies
                 </Link>
               </li>
               <li>

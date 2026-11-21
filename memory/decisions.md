@@ -14,6 +14,43 @@
 
 ## Journal
 
+### 2026-11-21 — Conformité légale : Google seulement après accord (lot « cookies et mesure »)
+- **Décision (brief légal d'Adrian du 21/11, textes dans son dossier OneDrive « Claude
+  Business ») :** aucun script Google avant « Tout accepter », rien en cas de refus ; Google Ads
+  retiré (aucune campagne, à remettre plus tard derrière un accord) ; cookie GA4 à 13 mois,
+  données conservées 2 mois chez Google (réglage fait par Adrian dans GA4) ; page `/cookies`
+  avec la liste réelle ; mention WhatsApp dans le pied de page, pas sous chaque bouton.
+  Branche `feat/cookies-mesure`. Aucune migration.
+- **Pourquoi :** les deux balises gtag de `index.html` partaient dès l'arrivée ; la CSP bloquait
+  en plus les envois vers `region1.google-analytics.com` (mesure perdue en silence).
+- **Conséquences / pièges à ne pas réapprendre :**
+  - **Plus aucune balise Google dans `index.html`.** Tout passe par `src/lib/analytics/gtag.ts`
+    (`chargerMesure`, `arreterMesure`, `envoyerVueDePage`, `mesureActive`), appelé par
+    `useCookieConsent`. L'ancienne note « index.html déclare function gtag » est caduque.
+  - Clé du choix : `cookie_consent_v2` (6 mois). Le passage en v2 redemande le choix à tout le
+    monde, voulu : l'accord donné sous l'ancien bandeau ne vaut pas pour le nouveau.
+  - Au refus ou au retrait : drapeau `ga-disable-…`, consentement « denied », et effacement des
+    cookies `_ga*` sur l'hôte ET tous ses domaines parents (Google les pose sur le domaine le
+    plus large : sur un aperçu `*.pages.dev`, l'effacement sur le seul hôte ne suffisait pas).
+  - **Le bandeau cookies est monté en dehors du routeur** (App.tsx) : jamais de `<Link>` dedans,
+    sinon toute l'application plante (« Cannot destructure property 'basename' »).
+  - **Un pré-rendu qui échoue donne un build vert avec un site cassé** : après tout changement
+    d'un composant global, lancer `npm run build` en local et lire « N/N routes pré-rendues ».
+    Un build interrompu laisse parfois le port 41873 occupé (tuer le processus node).
+  - Toute nouvelle clé de stockage ou tout nouveau cookie du site public s'ajoute au tableau de
+    `src/pages/Cookies.tsx` dans la même livraison. Vérification : script puppeteer avec un
+    User-Agent normal (le User-Agent « Headless » est traité comme un robot : rien ne se charge).
+  - La phrase « aucun outil de Google n'est chargé » de `/cookies` est limitée à l'outil de
+    mesure tant que les polices viennent de Google Fonts : à rétablir au lot « polices ».
+- **Suite du chantier légal (ordre validé par Adrian) :** 2. polices hébergées · 3. pages légales
+  (mentions, confidentialité, CGV : publier `cgv-site-version-2026-11-21.md`, PAS la version du
+  17/07, sans toucher au fond ; sans les passages [À CONFIRMER] ; Supabase = « Union européenne
+  (Irlande) ») · 4. vraie 404 · 5. lot 3 + formulaire + purge à 12 mois (montrer la règle à Adrian
+  avant de l'activer : aucun client ni devis signé effacé) · à part : rapport d'accessibilité avant
+  toute correction. Reste aussi : compteur anonyme sans cookie des clics WhatsApp et téléphone de
+  la page bornes + décompte des demandes de bornes dans l'admin (demande une migration, à montrer
+  d'abord). Au lot dépannage : prix TVA comprise pour les particuliers (rappeler à Adrian).
+
 ### 2026-11-21 — Priorité du site : les bornes de recharge d'abord
 - **Décision (brief d'Adrian du 21/11, avis demandé, rien codé à cette date) :** ordre à
   appliquer partout (accueil, menu, pied de page, données structurées) : 1. Bornes de recharge ·

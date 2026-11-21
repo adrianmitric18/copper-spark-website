@@ -21,14 +21,10 @@ type Props = {
 
 const CookiePreferencesModal = ({ open, onOpenChange, initialChoices, onSave }: Props) => {
   const [analytics, setAnalytics] = useState(initialChoices.analytics);
-  const [marketing, setMarketing] = useState(initialChoices.marketing);
 
   useEffect(() => {
-    if (open) {
-      setAnalytics(initialChoices.analytics);
-      setMarketing(initialChoices.marketing);
-    }
-  }, [open, initialChoices.analytics, initialChoices.marketing]);
+    if (open) setAnalytics(initialChoices.analytics);
+  }, [open, initialChoices.analytics]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,52 +38,36 @@ const CookiePreferencesModal = ({ open, onOpenChange, initialChoices, onSave }: 
             Préférences cookies
           </DialogTitle>
           <DialogDescription id="cookie-prefs-desc">
-            Choisissez les catégories de cookies que vous souhaitez activer.
+            Choisissez ce que vous acceptez. Sans votre accord, aucun cookie de mesure n'est
+            déposé et le site fonctionne de la même façon.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="flex items-start justify-between gap-4 p-3 rounded-lg border border-border/50 bg-muted/30 opacity-70">
             <div className="flex-1">
-              <Label className="text-foreground font-semibold">Cookies essentiels</Label>
+              <Label className="text-foreground font-semibold">Nécessaires</Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Nécessaires au fonctionnement du site.
+                Retiennent votre choix sur les cookies. Toujours actifs.
               </p>
             </div>
-            <Switch checked disabled aria-label="Cookies essentiels (toujours actifs)" />
+            <Switch checked disabled aria-label="Cookies nécessaires (toujours actifs)" />
           </div>
 
           <div className="flex items-start justify-between gap-4 p-3 rounded-lg border border-border/50">
             <div className="flex-1">
               <Label htmlFor="analytics-toggle" className="text-foreground font-semibold cursor-pointer">
-                Cookies analytiques (GA4)
+                Mesure d'audience (Google Analytics 4)
               </Label>
               <p className="text-xs text-muted-foreground mt-1">
-                Nous aident à comprendre comment vous utilisez le site.
+                Compte les visites de façon agrégée. Google n'est chargé que si vous l'activez.
               </p>
             </div>
             <Switch
               id="analytics-toggle"
               checked={analytics}
               onCheckedChange={setAnalytics}
-              aria-label="Activer les cookies analytiques"
-            />
-          </div>
-
-          <div className="flex items-start justify-between gap-4 p-3 rounded-lg border border-border/50">
-            <div className="flex-1">
-              <Label htmlFor="marketing-toggle" className="text-foreground font-semibold cursor-pointer">
-                Cookies marketing (Google Ads)
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Permettent de mesurer l'efficacité de nos campagnes.
-              </p>
-            </div>
-            <Switch
-              id="marketing-toggle"
-              checked={marketing}
-              onCheckedChange={setMarketing}
-              aria-label="Activer les cookies marketing"
+              aria-label="Activer la mesure d'audience"
             />
           </div>
         </div>
@@ -99,7 +79,7 @@ const CookiePreferencesModal = ({ open, onOpenChange, initialChoices, onSave }: 
           <Button
             variant="copper"
             onClick={() => {
-              onSave({ analytics, marketing });
+              onSave({ analytics });
               onOpenChange(false);
             }}
           >
