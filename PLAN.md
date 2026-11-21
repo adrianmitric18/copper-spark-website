@@ -214,9 +214,9 @@ si Adrian veut des rappels datés explicites.
       lead Nouveau en Traité. Question « Tu l'as eu ? » (accueil, Leads, fiche) : « Oui » → Traité ;
       « Pas de réponse » → le lead reste dans « À faire » avec « à rappeler · N essais · dernier
       le JJ/MM ». Déduit des notes (`etatAppel`), aucune colonne.
-- [ ] **S7 — Aperçu sur le téléphone d'Adrian, puis merge sur son OK.** ⚠️ L'aperçu écrit dans la
+- [x] **S7 — Aperçu sur le téléphone d'Adrian, puis merge sur son OK.** Testé par Adrian le 21/11 (5 étapes de l'appel sans réponse, deux leads de test), « fusionne » reçu, mergé dans main le 2026-11-21. ⚠️ L'aperçu écrit dans la
       vraie base : les RDV datés du 21/11 ou après y seront traités automatiquement.
-- [ ] **Au merge** : caler `AUTO_DEPUIS` sur le jour du merge (décidé par Adrian le 21/11) dans
+- [x] **Au merge** (fait le 2026-11-21 : merge le jour même, `AUTO_DEPUIS` reste "2026-11-21", 107 tests OK) : caler `AUTO_DEPUIS` sur le jour du merge (décidé par Adrian le 21/11) dans
       `statuts-auto.ts`, et relancer les tests.
 
 ## ❌ Hors-scope (acté)
