@@ -82,6 +82,8 @@ export interface ServicePageProps {
       devisWhatsapp?: string;
       /** Libellé du lien vers le formulaire (avec `devisWhatsapp`). */
       formulaire?: string;
+      /** Page ouverte par le bouton « devis » (défaut : /contact). */
+      devisLien?: string;
     };
   };
   /**
@@ -215,7 +217,7 @@ const ServicePageLayout = ({
                   ) : (
                     <Button variant="copper" size="lg" asChild>
                       <Link
-                        to="/contact"
+                        to={hero.boutons.devisLien ?? "/contact"}
                         data-analytics="quote_request"
                         onClick={() => trackEvent("quote_request", { source_section: "service_page_hero", service: slug })}
                       >

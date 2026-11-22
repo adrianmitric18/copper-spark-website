@@ -29,6 +29,7 @@ describe("demandes de bornes", () => {
         { created_at: "2026-11-23T10:00:00Z", source: "rdv_rapide", services: [SERVICE_BORNE] },
         { created_at: "2026-11-23T10:00:00Z", source: "simulateur", services: ["Mise en conformité RGIE"] },
         { created_at: "2026-12-02T10:00:00Z", source: "simulateur", services: [SERVICE_BORNE] },
+        { created_at: "2026-12-03T10:00:00Z", source: "devis_borne", services: [SERVICE_BORNE] },
       ],
       [
         { jour: "2026-11-21", page: "bornes", action: "whatsapp", nombre: 3 },
@@ -38,8 +39,8 @@ describe("demandes de bornes", () => {
       ],
     );
     expect(lignes).toEqual([
-      { mois: "2026-12", formulaire: 0, simulateur: 1, whatsapp: 0, telephone: 0 },
-      { mois: "2026-11", formulaire: 2, simulateur: 1, whatsapp: 5, telephone: 4 },
+      { mois: "2026-12", formulaire: 0, simulateur: 1, devisPhotos: 1, whatsapp: 0, telephone: 0 },
+      { mois: "2026-11", formulaire: 2, simulateur: 1, devisPhotos: 0, whatsapp: 5, telephone: 4 },
     ]);
   });
 

@@ -44,9 +44,8 @@ const PRIX_ALFEN = prix(BORNE.alfen);
 const PRIX_POSE_SEULE = prix(BORNE.poseSeule);
 
 /**
- * Tant que le formulaire de contact n'accepte que 3 photos (limite de la
- * policy Supabase, levée au lot 3), « Envoyer mes photos » ouvre WhatsApp, où
- * les quatre photos passent. Le formulaire reste proposé en second.
+ * Deux façons d'envoyer ses photos : le formulaire /devis-borne (bouton
+ * principal, depuis le 2026-11-22) et WhatsApp, avec ce message pré-rempli.
  */
 const WHATSAPP_PHOTOS =
   "https://wa.me/32485755227?text=" +
@@ -254,8 +253,7 @@ const BornesDeRecharge = () => {
         ],
         boutons: {
           devis: "Envoyer mes photos pour un devis",
-          devisWhatsapp: WHATSAPP_PHOTOS,
-          formulaire: "Ou par le formulaire",
+          devisLien: "/devis-borne",
           simulateur: "Estimer mon prix en 1 minute",
           appel: "Appeler le 0485 75 52 27",
         },
@@ -359,7 +357,7 @@ const BornesDeRecharge = () => {
                     asChild
                     className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
                   >
-                    <Link to="/contact" data-analytics="quote_request">
+                    <Link to="/devis-borne" data-analytics="quote_request">
                       Envoyer mes photos par le formulaire
                       <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
