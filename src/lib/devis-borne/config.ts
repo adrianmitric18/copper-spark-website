@@ -21,6 +21,17 @@
  */
 export const SOURCE_DEVIS_BORNE = "devis_borne";
 
+/**
+ * Règle de clarté (Adrian, 2026-11-22) : le client ne doit jamais avoir à
+ * choisir entre plusieurs formulaires. Sur les pages qui parlent de bornes,
+ * tout bouton « devis » mène à /devis-borne ; partout ailleurs, à /contact.
+ * /devis-borne n'est ni dans le menu ni sur les pages qui ne parlent pas de bornes.
+ */
+export const PAGE_DEVIS_BORNE = "/devis-borne";
+export const PAGES_BORNES: ReadonlySet<string> = new Set(["/services/bornes-de-recharge", PAGE_DEVIS_BORNE]);
+export const lienDevisPour = (pathname: string): string =>
+  PAGES_BORNES.has(pathname.replace(/\/+$/, "") || "/") ? PAGE_DEVIS_BORNE : "/contact";
+
 /** Service imposé par la policy : la demande est ainsi toujours comptée. */
 export const SERVICE_BORNE = "Borne de recharge voiture électrique";
 

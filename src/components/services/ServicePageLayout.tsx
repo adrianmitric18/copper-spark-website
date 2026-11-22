@@ -72,8 +72,11 @@ export interface ServicePageProps {
      */
     boutons?: {
       devis: string;
-      simulateur: string;
+      /** Gros bouton vers le simulateur. Absent = pas de bouton. */
+      simulateur?: string;
       appel: string;
+      /** Petit lien discret vers le simulateur, sous les boutons. */
+      lienPrix?: { question: string; lien: string };
       /**
        * Lien WhatsApp pré-rempli. Quand il est fourni, le bouton « devis »
        * ouvre WhatsApp et le formulaire est proposé en second, à la place du
@@ -226,11 +229,13 @@ const ServicePageLayout = ({
                       </Link>
                     </Button>
                   )}
-                  <Button variant="copperOutline" size="lg" asChild>
-                    <Link to={`/simulateur?besoin=${simulateurCta ?? "borne"}`}>
-                      {hero.boutons.simulateur}
-                    </Link>
-                  </Button>
+                  {hero.boutons.simulateur && (
+                    <Button variant="copperOutline" size="lg" asChild>
+                      <Link to={`/simulateur?besoin=${simulateurCta ?? "borne"}`}>
+                        {hero.boutons.simulateur}
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="copperOutline" size="lg" asChild>
                     <a
                       href="tel:+32485755227"
@@ -306,6 +311,18 @@ const ServicePageLayout = ({
                   </a>
                 </Button>
               </div>
+              )}
+
+              {hero.boutons?.lienPrix && (
+                <p className="mt-5 text-sm text-muted-foreground">
+                  {hero.boutons.lienPrix.question}{" "}
+                  <Link
+                    to={`/simulateur?besoin=${simulateurCta ?? "borne"}`}
+                    className="font-semibold text-primary underline underline-offset-4 hover:no-underline"
+                  >
+                    {hero.boutons.lienPrix.lien}
+                  </Link>
+                </p>
               )}
 
               {simulateurCta && !hero.boutons && (

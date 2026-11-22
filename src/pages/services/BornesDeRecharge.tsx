@@ -1,12 +1,13 @@
 import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { ArrowRight, MessageCircle, Phone } from "lucide-react";
 import ServicePageLayout from "@/components/services/ServicePageLayout";
 import RealisationsLiees from "@/components/realisations/RealisationsLiees";
 import { Button } from "@/components/ui/button";
 import { useDisplayRating } from "@/hooks/useDisplayRating";
 import { realisationsPourService } from "@/lib/chantiers/liens";
 import { actionDuLien, compterClic } from "@/lib/compteur";
+import { PAGE_DEVIS_BORNE } from "@/lib/devis-borne/config";
 import { BORNE, NB_QUESTIONS, type Fourchette } from "@/lib/simulateur/config";
 // Certificat fourni par Adrian le 2026-11-21 (1241 × 1754). La vignette (360 px
 // de large, affichée en 180 px) est seule chargée avec la page ; l'original ne
@@ -252,10 +253,12 @@ const BornesDeRecharge = () => {
           noteGoogle,
         ],
         boutons: {
-          devis: "Envoyer mes photos pour un devis",
-          devisLien: "/devis-borne",
-          simulateur: "Estimer mon prix en 1 minute",
+          // Un seul bouton principal (règle de clarté du 2026-11-22) : le devis de
+          // borne. Téléphone et WhatsApp en secondaires, simulateur en petit lien.
+          devis: "Demander mon devis de borne",
+          devisLien: PAGE_DEVIS_BORNE,
           appel: "Appeler le 0485 75 52 27",
+          lienPrix: { question: "Juste une idée de prix ?", lien: "Estimez-la en 1 minute" },
         },
       }}
       simulateurCta="borne"
@@ -338,30 +341,32 @@ const BornesDeRecharge = () => {
                   Ajoutez la marque de votre voiture, votre commune et l'âge de la maison (plus
                   ou moins de 10 ans). Réponse sous 24 h, devis gratuit sous 48 h.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                {/* Même bouton principal qu'en haut de page ; WhatsApp et téléphone en secondaires. */}
+                <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
                   <Button size="lg" variant="secondary" asChild>
-                    <a
-                      href={WHATSAPP_PHOTOS}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      data-analytics="whatsapp_click"
-                      className="flex items-center gap-2"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      Envoyer mes photos par WhatsApp
-                    </a>
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    asChild
-                    className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                  >
-                    <Link to="/devis-borne" data-analytics="quote_request">
-                      Envoyer mes photos par le formulaire
+                    <Link to={PAGE_DEVIS_BORNE} data-analytics="quote_request">
+                      Demander mon devis de borne
                       <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
                   </Button>
+                  <a
+                    href={WHATSAPP_PHOTOS}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-analytics="whatsapp_click"
+                    className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold underline underline-offset-4 hover:no-underline"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    WhatsApp
+                  </a>
+                  <a
+                    href="tel:+32485755227"
+                    data-analytics="call_click"
+                    className="inline-flex min-h-11 items-center gap-2 px-2 font-semibold underline underline-offset-4 hover:no-underline"
+                  >
+                    <Phone className="w-5 h-5" />
+                    0485 75 52 27
+                  </a>
                 </div>
               </div>
               <p className="max-w-3xl mx-auto mt-6 text-center text-sm text-muted-foreground">
@@ -571,25 +576,17 @@ const BornesDeRecharge = () => {
         du devis.
       </P>
 
-      <aside className="my-10 rounded-3xl border-2 border-primary/40 bg-primary/[0.05] p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center gap-5">
-          <div className="min-w-0 flex-1">
-            <h3 className="font-display text-xl md:text-2xl font-bold text-foreground mb-1">
-              Estimez votre prix en une minute
-            </h3>
-            <p className="text-muted-foreground leading-relaxed">
-              Notre simulateur pose {NB_QUESTIONS.borne === 5 ? "cinq" : NB_QUESTIONS.borne}{" "}
-              questions et affiche une estimation poste par poste.
-            </p>
-          </div>
-          <Button variant="copper" size="lg" asChild className="shrink-0 w-full md:w-auto">
-            <Link to="/simulateur?besoin=borne">
-              Lancer le simulateur
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </aside>
+      {/* Le simulateur n'est plus qu'un lien dans le texte : la page ne met en
+          avant qu'un seul parcours, le devis de borne. */}
+      <H3>Juste une idée de prix ?</H3>
+      <P>
+        Notre simulateur pose {NB_QUESTIONS.borne === 5 ? "cinq" : NB_QUESTIONS.borne} questions
+        et affiche une estimation poste par poste.{" "}
+        <Link to="/simulateur?besoin=borne" className={lien}>
+          Estimer mon prix en une minute
+        </Link>
+        .
+      </P>
 
       {/* ===== Comment ça se passe ? ===== */}
       <H2>Comment ça se passe ?</H2>

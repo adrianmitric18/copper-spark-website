@@ -2,6 +2,7 @@ import { Phone, FileText, Calculator } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { PAGE_DEPANNAGE, type Parcours } from "@/lib/simulateur/config";
+import { PAGES_BORNES, lienDevisPour } from "@/lib/devis-borne/config";
 
 /**
  * Barre de conversion mobile.
@@ -51,7 +52,10 @@ const MobileStickyBar = () => {
   if (pathname.startsWith("/admin")) return null;
 
   // Sur le simulateur lui-même, inutile de proposer d'y aller.
-  const surSimulateur = pathname.startsWith("/simulateur") || PAGES_PRIX_AFFICHES.has(pathname);
+  // Pages bornes : un seul parcours mis en avant, le devis de borne. Le
+  // simulateur n'y est qu'un petit lien dans la page, pas un bandeau permanent.
+  const surSimulateur =
+    pathname.startsWith("/simulateur") || PAGES_PRIX_AFFICHES.has(pathname) || PAGES_BORNES.has(pathname);
 
   const besoin = BESOIN_PAR_PAGE[pathname];
   const lienVersSimulateur = besoin ? `/simulateur?besoin=${besoin}` : "/simulateur";
@@ -70,7 +74,7 @@ const MobileStickyBar = () => {
 
   const lienDevis = (
     <Link
-      to="/contact"
+      to={lienDevisPour(pathname)}
       data-analytics="quote_request"
       onClick={() => trackEvent("quote_request", { source_section: "mobile_sticky_bar" })}
       className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-primary text-copper-deep font-semibold text-sm active:scale-95 transition-transform"
