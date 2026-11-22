@@ -58,7 +58,7 @@ const ElectricienNivelles = () => (
       {[
         "Installation électrique complète pour maison neuve ou appartement : étude, tableau Schneider, appareillage Niko, mise en service et certificat de conformité.",
         "Rénovation électrique : remplacement d'installations anciennes, mise aux normes RGIE, modernisation du tableau, création de circuits supplémentaires.",
-        "Installation de bornes de recharge : voitures électriques de plus en plus nombreuses à Nivelles. Bornes Alfen ou Hager, de 7,4 kW à 22 kW.",
+        "Installation de bornes de recharge : voitures électriques de plus en plus nombreuses à Nivelles. Bornes Zaptec ou Alfen, de 7,4 kW à 22 kW.",
         "Panneaux photovoltaïques : toitures pavillonnaires idéales pour l'installation solaire. Onduleurs Huawei ou SolarEdge, étude de rentabilité personnalisée.",
         "Mise en conformité RGIE : obligatoire avant vente ou location. Diagnostic, travaux, coordination avec organismes agréés (Vinçotte, AIB, BTV).",
         "Dépannage électrique urgent : intervention rapide avec diagnostic précis.",

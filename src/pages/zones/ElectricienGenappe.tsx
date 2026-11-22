@@ -59,7 +59,7 @@ const ElectricienGenappe = () => (
         "Installation électrique complète pour maison neuve ou rénovation : étude, tableau Schneider, appareillage Niko, mise en service et certificat de conformité.",
         "Rénovation électrique de maisons anciennes et fermes : mise aux normes RGIE, remplacement de tableau vétuste, modernisation complète du câblage.",
         "Mise en conformité RGIE : diagnostic, travaux correctifs, coordination avec organismes agréés. Obligatoire avant vente ou location.",
-        "Installation de bornes de recharge pour voiture électrique : Alfen ou Hager, dimensionnées selon le véhicule et l'installation.",
+        "Installation de bornes de recharge pour voiture électrique : Zaptec ou Alfen, dimensionnées selon le véhicule et l'installation.",
         "Panneaux photovoltaïques : toitures rurales souvent bien orientées et dégagées. Étude gratuite, onduleurs Huawei ou SolarEdge.",
         "Dépannage électrique urgent : intervention rapide malgré la distance, diagnostic précis.",
         "Éclairage extérieur LED (jardins, allées, façades), parlophonie, câblage informatique RJ45, remplacement de tableau.",

@@ -126,8 +126,8 @@ const services = [
     icon: Lightbulb,
     title: "Bornes de Recharge",
     description:
-      "Installation de bornes Alfen et Hager pour particuliers, entreprises et copropriétés.",
-    features: ["Alfen & Hager", "7,4 / 11 / 22 kW", "Pilotage app + délestage"],
+      "Installation de bornes Zaptec et Alfen pour particuliers, entreprises et copropriétés.",
+    features: ["Zaptec & Alfen", "7,4 / 11 / 22 kW", "Pilotage app + délestage"],
     href: "/services/bornes-de-recharge",
   },
   {
