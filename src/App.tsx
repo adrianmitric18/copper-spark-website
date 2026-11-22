@@ -47,6 +47,7 @@ const AdminInterventions = lazy(() => import("./admin/pages/Interventions"));
 const AdminHeures = lazy(() => import("./admin/pages/Heures"));
 const AdminDepannage = lazy(() => import("./admin/pages/Depannage"));
 const AdminAvisADemander = lazy(() => import("./admin/pages/AvisADemander"));
+const AdminDemandesBornes = lazy(() => import("./admin/pages/DemandesBornes"));
 const AdminMiseAJour = lazy(() => import("./admin/pages/MiseAJour"));
 
 // Pages zones SEO — peu visitées en direct depuis la home, donc lazy
@@ -142,6 +143,7 @@ const App = () => (
             <Route path="/admin/heures" element={<AdminHeures />} />
             <Route path="/admin/depannage" element={<AdminDepannage />} />
             <Route path="/admin/avis-a-demander" element={<AdminAvisADemander />} />
+            <Route path="/admin/demandes-bornes" element={<AdminDemandesBornes />} />
             <Route path="/admin/mise-a-jour" element={<AdminMiseAJour />} />
             <Route path="/admin/chantiers" element={<AdminChantiers />} />
             <Route path="/admin/chantiers/nouveau" element={<AdminChantierEditor />} />

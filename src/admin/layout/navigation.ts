@@ -1,5 +1,6 @@
 import {
   Archive,
+  BatteryCharging,
   Calendar,
   Clock,
   Hammer,
@@ -19,8 +20,8 @@ import {
  *
  * Barre du bas : RDV rapide · Aujourd'hui · Leads · Heures · Plus.
  * « Plus » ouvre : Dépannage au téléphone, Calendrier, Chantiers, Réalisations,
- * Avis à demander, Avis clients, Import archives. Même ordre dans la barre
- * latérale. Rien n'est supprimé, seulement déplacé.
+ * Avis à demander, Avis clients, Demandes de bornes, Import archives. Même ordre
+ * dans la barre latérale. Rien n'est supprimé, seulement déplacé.
  */
 export interface NavItem {
   to: string;
@@ -84,6 +85,13 @@ export const NAV_PLUS: NavItem[] = [
   // Lot 2 bis : clients dont le chantier est fini, sans demande d'avis Google.
   { to: AVIS_A_DEMANDER, label: "Avis à demander", icon: ThumbsUp, match: (p) => p.startsWith(AVIS_A_DEMANDER) },
   { to: "/admin/avis", label: "Avis clients", icon: Star, match: (p) => p === "/admin/avis" },
+  // 2026-11 : décompte mensuel des demandes de bornes (leads + compteur anonyme).
+  {
+    to: "/admin/demandes-bornes",
+    label: "Demandes de bornes",
+    icon: BatteryCharging,
+    match: (p) => p.startsWith("/admin/demandes-bornes"),
+  },
   { to: IMPORT_ARCHIVES, label: "Import archives", icon: Archive, match: (p) => p === IMPORT_ARCHIVES },
 ];
 
