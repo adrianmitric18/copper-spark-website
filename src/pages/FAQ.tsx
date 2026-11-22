@@ -247,11 +247,7 @@ const faqData: FaqItem[] = [
     category: "materiel",
     question: "Quelles marques de matériel utilisez-vous d'office ?",
     answer:
-<<<<<<< HEAD
-      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider le plus souvent, ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Alfen (référence), Hager ou Wallbox. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
-=======
-      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Zaptec le plus souvent, Alfen en haut de gamme. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
->>>>>>> main
+      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider le plus souvent, ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Zaptec le plus souvent, Alfen en haut de gamme. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
     answerNode: (
       <>
         <p>
