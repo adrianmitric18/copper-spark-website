@@ -14,6 +14,28 @@
 
 ## Journal
 
+### 2026-11-22 — Le simulateur n'a jamais enregistré de lead ; Zaptec Pro pour plusieurs bornes
+- **Constat :** aucune demande du simulateur n'est dans `leads` depuis sa mise en ligne (10/08/2026).
+  Cause : la contrainte `leads_source_allowed` (avril 2026) ne contient pas `'simulateur'` ;
+  chaque insertion échoue (23514). Les e-mails partent quand même, avec « ECHEC BASE — lead à
+  ré-encoder à la main » dans celui d'Adrian. La note d'août « circuit lead validé » était fausse
+  pour la base. Correction : migration `20261122100000_leads_source_simulateur.sql` (branche
+  `fix/simulateur-leads-source`), **à appliquer à la main par Adrian**, puis re-tester avec
+  l'insertion directe à la clé publique (elle reproduit `src/lib/simulateur/submit.ts`).
+- **Leçon :** toute nouvelle valeur de `leads.source` doit être ajoutée à cette contrainte dans
+  la même migration, et un parcours qui écrit en base se vérifie par une vraie insertion, pas
+  seulement par l'e-mail reçu. Claude n'a pas de clé de service : il ne peut pas lire `leads`,
+  seulement tenter une insertion publique ou donner une requête SQL à Adrian.
+- **Décision d'Adrian (bornes) :** pour copropriété, lotissement, entreprise, la borne proposée
+  est la **Zaptec Pro**, pas la Hager Witty. « Nous travaillons surtout avec Zaptec », Alfen =
+  haut de gamme, plus de « marque de référence » pour Alfen. On ne critique aucune marque.
+  « 22 kW » toujours « jusqu'à ». Aucun prix Zaptec Pro. Branche `fix/bornes-zaptec-pro`
+  (page bornes, 5 pages communes, /services, /faq), en attente de son test ; gates de contenu à
+  passer avant le merge, une fois les deux phrases « module de mesure » tranchées.
+- **À faire ensuite, signalé à Adrian :** la FAQ de `/faq` et des pages communes utilise encore
+  l'accordéon Radix (réponses absentes du HTML visible, présentes seulement dans le JSON-LD) ;
+  Hager comme marque de tableaux (À propos, page installation, /faq) : liste donnée, attend son OK.
+
 ### 2026-11-21 — Conformité légale : Google seulement après accord (lot « cookies et mesure »)
 - **Décision (brief légal d'Adrian du 21/11, textes dans son dossier OneDrive « Claude
   Business ») :** aucun script Google avant « Tout accepter », rien en cas de refus ; Google Ads
