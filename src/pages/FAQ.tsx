@@ -119,7 +119,7 @@ const faqData: FaqItem[] = [
     category: "general",
     question: "Quelles garanties proposez-vous ?",
     answer:
-      "Toutes nos installations sont conformes au Règlement Général sur les Installations Électriques (RGIE) en vigueur en Belgique. La main-d'œuvre est garantie 2 ans à compter de la fin de chantier (garantie légale de conformité). Le matériel posé bénéficie en plus de la garantie constructeur (Schneider, Niko, Hager, Alfen, etc.) qui peut aller jusqu'à 5 ou 10 ans selon les marques et les références.",
+      "Toutes nos installations sont conformes au Règlement Général sur les Installations Électriques (RGIE) en vigueur en Belgique. La main-d'œuvre est garantie 2 ans à compter de la fin de chantier (garantie légale de conformité). Le matériel posé bénéficie en plus de la garantie constructeur (Schneider, Niko, Zaptec, Alfen, etc.) qui peut aller jusqu'à 5 ou 10 ans selon les marques et les références.",
     answerNode: (
       <>
         <p>
@@ -129,7 +129,7 @@ const faqData: FaqItem[] = [
         <p>
           La main-d'œuvre est garantie 2 ans à compter de la fin de chantier
           (garantie légale de conformité). Le matériel posé bénéficie en plus
-          de la garantie constructeur (Schneider, Niko, Hager, Alfen, etc.)
+          de la garantie constructeur (Schneider, Niko, Zaptec, Alfen, etc.)
           qui peut aller jusqu'à 5 ou 10 ans selon les marques et les
           références.
         </p>
@@ -247,7 +247,7 @@ const faqData: FaqItem[] = [
     category: "materiel",
     question: "Quelles marques de matériel utilisez-vous d'office ?",
     answer:
-      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Alfen (référence), Hager ou Wallbox. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
+      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider le plus souvent. Prises et interrupteurs : Niko. Bornes de recharge : Alfen (référence), Hager ou Wallbox. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
     answerNode: (
       <>
         <p>
@@ -256,8 +256,8 @@ const faqData: FaqItem[] = [
         </p>
         <ul className="list-disc pl-5 space-y-1.5 my-2">
           <li>
-            <strong className="text-foreground">Tableaux électriques</strong> : Schneider
-            (principal) ou Hager
+            <strong className="text-foreground">Tableaux électriques</strong> : Schneider le
+            plus souvent
           </li>
           <li>
             <strong className="text-foreground">Prises et interrupteurs</strong> : Niko
