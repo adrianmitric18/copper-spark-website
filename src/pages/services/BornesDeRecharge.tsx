@@ -465,7 +465,7 @@ const BornesDeRecharge = () => {
             // d'où « en option ». Aucun prix : Adrian n'en a pas donné.
             "Zaptec Pro",
             "Copropriété, lotissement, entreprise",
-            "Faite pour plusieurs bornes sur une même arrivée électrique : elles se partagent toutes seules la puissance disponible, sans dépasser la puissance prévue pour les bornes. En option, un module de mesure sur l'arrivée générale fait baisser la puissance des bornes quand le bâtiment consomme beaucoup, pour ne pas faire sauter le compteur. Chaque borne compte sa propre consommation avec un compteur certifié, pour répartir les frais entre voisins ou collègues. On peut en ajouter plus tard. Jusqu'à 22 kW selon le réseau. Garantie 5 ans, fabriquée en Norvège. Installateur certifié Zaptec.",
+            "Faite pour plusieurs bornes sur une même arrivée électrique : elles se partagent toutes seules la puissance disponible, sans dépasser la puissance prévue pour les bornes. En option, un module de mesure sur l'arrivée générale fait baisser la puissance des bornes quand le bâtiment consomme beaucoup, pour ne pas faire sauter le compteur. Chaque borne compte sa propre consommation avec un compteur certifié, pour répartir les frais entre voisins ou collègues. On peut en ajouter plus tard. Jusqu'à 22 kW selon le réseau. Garantie fabricant de 5 ans, fabriquée en Norvège. Installateur certifié Zaptec.",
           ],
           [
             "Votre borne",
