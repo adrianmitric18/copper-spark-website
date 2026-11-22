@@ -3,6 +3,13 @@
 > Texte fourni par Adrian le 2026-11-21 (collé en conversation), recopié tel quel. Il fait foi pour
 > le lot 2 (page bornes). **Ne publier aucun passage marqué « [à confirmer N] ».**
 > Adresse de la page inchangée.
+>
+> **Correction d'Adrian du 22/11/2026 :** pour plusieurs bornes (copropriété, lotissement,
+> entreprise), la borne proposée est la **Zaptec Pro**, pas la Hager Witty. Le texte ci-dessous est
+> la version d'origine du 21/11 ; ce qui est publié pour le premier paragraphe, la description
+> Google, « En bref » et « Quelle borne choisir ? » est dans
+> `src/pages/services/BornesDeRecharge.tsx`. On ne critique aucune marque ; « 22 kW » est
+> toujours « jusqu'à » ; aucun prix pour la Zaptec Pro tant qu'Adrian n'en donne pas.
 
 TEXTE DE LA PAGE /services/bornes-de-recharge (adresse inchangée) — version du 21/11/2026
 

@@ -60,7 +60,7 @@ const ElectricienOttigniesLLN = () => (
         "Rénovation électrique complète d'appartements et maisons : remplacement de tableau, mise aux normes, création de circuits adaptés aux usages modernes.",
         "Dépannage électrique urgent : panne de disjoncteur, prise défaillante, coupure partielle. Intervention rapide avec diagnostic précis.",
         "Installation électrique neuve : maisons individuelles, rénovations lourdes, constructions neuves. Tableau Schneider, appareillage Niko, mise en service et certificat.",
-        "Installation de bornes de recharge pour voiture électrique : Alfen ou Hager, dimensionnées selon véhicule et installation.",
+        "Installation de bornes de recharge pour voiture électrique : Zaptec ou Alfen, dimensionnées selon véhicule et installation.",
         "Panneaux photovoltaïques : étude d'orientation, dimensionnement sur mesure, onduleurs Huawei ou SolarEdge.",
         "Éclairage LED, parlophonie, câblage informatique RJ45, remplacement de tableau électrique.",
       ].map((item) => (

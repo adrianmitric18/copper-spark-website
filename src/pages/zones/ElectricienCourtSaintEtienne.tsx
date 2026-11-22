@@ -80,7 +80,7 @@ const ElectricienCourtSaintEtienne = () => (
         "Rénovation électrique : remplacement d'une installation vétuste, mise aux normes RGIE, modernisation du tableau principal, création de nouveaux circuits adaptés à vos usages.",
         "Dépannage électrique urgent : disjoncteur qui saute régulièrement, prise qui ne fonctionne plus, coupure partielle, défaut d'isolation. Diagnostic rapide et réparation durable.",
         "Mise en conformité RGIE : obligatoire avant vente, location ou après 25 ans d'installation. Nous réalisons le diagnostic, les travaux correctifs, et coordonnons le passage de l'organisme agréé (Vinçotte, AIB, BTV).",
-        "Installation de bornes de recharge voiture électrique : bornes Alfen ou Hager de 7,4 kW à 22 kW, dimensionnées selon votre véhicule et votre installation.",
+        "Installation de bornes de recharge voiture électrique : bornes Zaptec ou Alfen de 7,4 kW à 22 kW, dimensionnées selon votre véhicule et votre installation.",
         "Installation de panneaux photovoltaïques : étude d'orientation, dimensionnement sur mesure, onduleurs Huawei ou SolarEdge, raccordement et mise en service.",
         "Éclairage LED intérieur et extérieur, parlophonie et vidéophonie, câblage informatique RJ45.",
       ].map((item) => (

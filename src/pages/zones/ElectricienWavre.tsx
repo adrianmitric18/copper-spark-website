@@ -58,7 +58,7 @@ const ElectricienWavre = () => (
       {[
         "Rénovation électrique complète de maisons individuelles ou d'appartements : mise aux normes du tableau, remplacement du câblage ancien, création de circuits supplémentaires pour les usages modernes (électroménager, chauffage électrique, bornes).",
         "Dépannage électrique urgent : disjoncteur qui saute, prise qui chauffe, panne partielle. Nous intervenons rapidement avec un diagnostic précis et une réparation durable.",
-        "Installation de bornes de recharge pour voiture électrique : dimensionnement selon votre véhicule et votre installation, marques Alfen ou Hager, raccordement propre au tableau principal.",
+        "Installation de bornes de recharge pour voiture électrique : dimensionnement selon votre véhicule et votre installation, marques Zaptec ou Alfen, raccordement propre au tableau principal.",
         "Panneaux photovoltaïques : étude d'orientation de votre toiture, calcul de rentabilité, installation complète avec onduleur Huawei ou SolarEdge.",
         "Mise en conformité RGIE : diagnostic, travaux de mise aux normes, accompagnement avec les organismes agréés (Vinçotte, AIB, BTV).",
         "Installation neuve, câblage informatique RJ45, parlophonie, éclairage LED.",
