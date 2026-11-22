@@ -1,4 +1,4 @@
-// Demande de devis de borne avec photos — page /devis-borne.
+// Demande de devis de borne avec photos — deuxième choix de la page /contact.
 //
 // Tout ce que le formulaire demande est décrit ici : questions, choix, photos.
 // La page (src/pages/DevisBorne.tsx) ne fait que l'afficher, et l'envoi
@@ -24,11 +24,19 @@ export const SOURCE_DEVIS_BORNE = "devis_borne";
 /**
  * Règle de clarté (Adrian, 2026-11-22) : le client ne doit jamais avoir à
  * choisir entre plusieurs formulaires. Sur les pages qui parlent de bornes,
- * tout bouton « devis » mène à /devis-borne ; partout ailleurs, à /contact.
- * /devis-borne n'est ni dans le menu ni sur les pages qui ne parlent pas de bornes.
+ * tout bouton « devis » ouvre /contact avec le choix « borne » déjà sélectionné ;
+ * partout ailleurs, /contact s'ouvre sur la demande classique.
  */
-export const PAGE_DEVIS_BORNE = "/devis-borne";
-export const PAGES_BORNES: ReadonlySet<string> = new Set(["/services/bornes-de-recharge", PAGE_DEVIS_BORNE]);
+/**
+ * Un seul endroit pour les demandes : la page /contact, avec deux choix en haut
+ * (« Demande classique » et « Borne : devis sans déplacement »). Le choix borne
+ * se sélectionne par `?demande=borne`. L'ancienne adresse /devis-borne
+ * redirige ici (public/_redirects et App.tsx) : pas de deuxième page pour Google.
+ */
+export const PARAM_DEMANDE = "demande";
+export const DEMANDE_BORNE = "borne";
+export const PAGE_DEVIS_BORNE = `/contact?${PARAM_DEMANDE}=${DEMANDE_BORNE}`;
+export const PAGES_BORNES: ReadonlySet<string> = new Set(["/services/bornes-de-recharge"]);
 export const lienDevisPour = (pathname: string): string =>
   PAGES_BORNES.has(pathname.replace(/\/+$/, "") || "/") ? PAGE_DEVIS_BORNE : "/contact";
 

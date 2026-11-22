@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Camera, CheckCircle, Loader2, X } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import SEO from "@/components/SEO";
-import Breadcrumbs from "@/components/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import {
@@ -27,8 +23,12 @@ import {
 import { envoyerDevisBorne, type ResultatEnvoi } from "@/lib/devis-borne/submit";
 
 /**
- * Page /devis-borne — demander un devis de borne sans appeler, avec les
- * réponses et les photos qui permettent de chiffrer.
+ * Formulaire « Borne : devis sans déplacement » — demander un devis de borne
+ * sans appeler, avec les réponses et les photos qui permettent de chiffrer.
+ *
+ * Il n'a PAS de page à lui : c'est le deuxième choix de la page /contact
+ * (règle d'Adrian du 2026-11-22 : un seul endroit pour les demandes). L'adresse
+ * /devis-borne redirige vers /contact?demande=borne.
  *
  * Obligatoires : nom, téléphone OU e-mail, code postal. Tout le reste est
  * facultatif. Les questions et les photos sont décrites dans
@@ -146,7 +146,7 @@ const QuestionACocher = ({
 
 const Bloc = ({ titre, aide, children }: { titre: string; aide?: string; children: ReactNode }) => (
   <section className="rounded-3xl border border-border/60 bg-card p-5 md:p-8">
-    <h2 className="font-display text-xl md:text-2xl font-bold text-foreground">{titre}</h2>
+    <h3 className="font-display text-xl md:text-2xl font-bold text-foreground">{titre}</h3>
     {aide && <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{aide}</p>}
     <div className="mt-5 space-y-6">{children}</div>
   </section>
@@ -159,7 +159,7 @@ interface PhotoLocale {
 
 // ---------------------------------------------------------------------------
 
-const DevisBorne = () => {
+const DevisBorneForm = () => {
   const { trackEvent } = useAnalyticsEvents();
   const ouvertA = useRef(Date.now());
 
@@ -263,32 +263,15 @@ const DevisBorne = () => {
   const nbPhotos = PHOTOS.filter((p) => photos[p.id]).length;
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <SEO
-        title="Devis de borne de recharge sur photos | Le Cuivre Électrique"
-        description="Demandez un devis de borne de recharge sans appeler : quelques questions à cocher et, si possible, cinq photos de votre installation. Brabant wallon, Namur, Bruxelles."
-        canonical="https://cuivre-electrique.com/devis-borne"
-      />
-      <Header />
-      <main className="pt-24">
-        <div className="container mx-auto px-4">
-          <Breadcrumbs
-            items={[
-              { label: "Bornes de recharge", href: "/services/bornes-de-recharge" },
-              { label: "Devis sur photos", href: "/devis-borne" },
-            ]}
-          />
-        </div>
-
-        <section className="py-8 md:py-12">
+    <section id="contact" className="pt-4 md:pt-8 pb-20 md:pb-28 bg-background">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto">
               {resultat ? (
                 <div className="rounded-3xl border border-border/60 bg-card p-6 md:p-10 text-center" role="status">
                   <CheckCircle className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
-                  <h1 className="mt-4 font-display text-3xl md:text-4xl font-bold text-foreground">
+                  <h2 className="mt-4 font-display text-3xl md:text-4xl font-bold text-foreground">
                     Votre demande est bien partie
-                  </h1>
+                  </h2>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
                     Merci{coord.nom.trim() ? `, ${coord.nom.trim().split(/\s+/)[0]}` : ""}. {DELAI}
                   </p>
@@ -312,9 +295,9 @@ const DevisBorne = () => {
                 </div>
               ) : (
                 <>
-                  <h1 className="font-display text-3xl md:text-5xl font-bold text-foreground leading-tight">
+                  <h2 className="font-display text-2xl md:text-4xl font-bold text-foreground leading-tight">
                     Votre devis de borne, sur photos
-                  </h1>
+                  </h2>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
                     Quelques cases à cocher et, si possible, cinq photos : c'est ce qu'il nous faut pour
                     chiffrer votre borne sans passer chez vous. Seuls votre nom, un moyen de vous joindre et
@@ -423,9 +406,9 @@ const DevisBorne = () => {
                                   <Schema id={p.id} />
                                 )}
                                 <div className="min-w-0 flex-1">
-                                  <h3 className="font-semibold text-foreground">
+                                  <h4 className="font-semibold text-foreground">
                                     {i + 1}. {p.titre}
-                                  </h3>
+                                  </h4>
                                   <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{p.consigne}</p>
                                   <div className="mt-3 flex flex-wrap items-center gap-2">
                                     <label
@@ -624,11 +607,8 @@ const DevisBorne = () => {
               )}
             </div>
           </div>
-        </section>
-      </main>
-      <Footer />
-    </div>
+    </section>
   );
 };
 
-export default DevisBorne;
+export default DevisBorneForm;

@@ -30,7 +30,6 @@ const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
 const CGV = lazy(() => import("./pages/CGV"));
 const Confidentialite = lazy(() => import("./pages/Confidentialite"));
 const Cookies = lazy(() => import("./pages/Cookies"));
-const DevisBorne = lazy(() => import("./pages/DevisBorne"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin — bundle séparé (téléchargé uniquement à l'arrivée sur /admin)
@@ -99,7 +98,8 @@ const App = () => (
             <Route path="/services/mise-en-conformite-rgie" element={<MiseEnConformiteRgie />} />
             <Route path="/services/bornes-de-recharge" element={<BornesDeRecharge />} />
             <Route path="/services/panneaux-photovoltaiques" element={<PanneauxPhotovoltaiques />} />
-            <Route path="/devis-borne" element={<DevisBorne />} />
+            {/* Pas de page à part : le devis de borne est un choix de /contact. */}
+            <Route path="/devis-borne" element={<Navigate to="/contact?demande=borne" replace />} />
             <Route path="/simulateur" element={<Simulateur />} />
             <Route path="/realisations" element={<Realisations />} />
             {/* Redirections 301 (client-side) des anciennes pages catégories

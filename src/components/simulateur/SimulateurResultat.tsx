@@ -279,7 +279,7 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
       {reponses.parcours === "borne" && (
         <p className="text-center text-sm text-muted-foreground">
           Pour un devis précis, sans appeler :{" "}
-          <Link to="/devis-borne" className="font-semibold text-primary underline underline-offset-4 hover:no-underline">
+          <Link to="/contact?demande=borne" className="font-semibold text-primary underline underline-offset-4 hover:no-underline">
             envoyer mes photos pour un devis
           </Link>
           .
