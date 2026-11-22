@@ -55,7 +55,7 @@ const WHATSAPP_PHOTOS =
   );
 
 const INTRO =
-  "Le Cuivre Électrique installe des bornes de recharge pour voitures électriques à domicile, en copropriété et en entreprise, en Brabant wallon, en province de Namur et à Bruxelles. Adrian Mitric, électricien indépendant à Court-Saint-Étienne, est installateur certifié Zaptec depuis novembre 2026 et pose aussi les bornes Alfen et Hager. Tout est compris, de A à Z : le câble, les protections dans le tableau, la pose et le réglage de la borne, puis le contrôle par un organisme agréé.";
+  "Le Cuivre Électrique installe des bornes de recharge pour voitures électriques à domicile, en copropriété et en entreprise, en Brabant wallon, en province de Namur et à Bruxelles. Adrian Mitric, électricien indépendant à Court-Saint-Étienne, est installateur certifié Zaptec depuis novembre 2026. Il pose les bornes Zaptec et Alfen, et la borne que vous avez déjà achetée. Tout est compris, de A à Z : le câble, les protections dans le tableau, la pose et le réglage de la borne, puis le contrôle par un organisme agréé.";
 
 // Non publiées (document) : « Mon compteur est triphasé sans neutre » [à confirmer 10]
 // et « La borne fonctionne-t-elle avec des panneaux solaires ? » [à confirmer 5].
@@ -235,8 +235,8 @@ const BornesDeRecharge = () => {
       slug={SLUG}
       breadcrumbLabel="Bornes de recharge"
       seoTitle="Borne de recharge Brabant wallon – Installateur certifié Zaptec"
-      seoDescription="Borne de recharge Zaptec, Alfen ou Hager posée de A à Z en Brabant wallon, province de Namur et Bruxelles. Contrôle compris, devis gratuit sous 48 h."
-      seoKeywords="borne de recharge, borne de recharge Brabant wallon, installateur certifié Zaptec, Zaptec Go 2, Alfen Eve, Hager Witty, borne voiture électrique, Namur, Bruxelles"
+      seoDescription="Borne de recharge Zaptec ou Alfen, ou la vôtre, posée de A à Z en Brabant wallon, province de Namur et Bruxelles. Contrôle compris, devis gratuit sous 48 h."
+      seoKeywords="borne de recharge, borne de recharge Brabant wallon, installateur certifié Zaptec, Zaptec Go 2, Zaptec Pro, Alfen Eve, borne voiture électrique, Namur, Bruxelles"
       schemaServiceName="Installation de bornes de recharge"
       schemaServiceDescription={INTRO}
       schemaRegions={["Brabant wallon", "Province de Namur", "Région de Bruxelles-Capitale"]}
@@ -246,7 +246,7 @@ const BornesDeRecharge = () => {
         sousTitre: "Installateur certifié Zaptec · Brabant wallon, province de Namur et Bruxelles",
         intro: INTRO,
         points: [
-          "Installateur certifié Zaptec. Bornes Zaptec, Alfen et Hager, ou la vôtre.",
+          "Installateur certifié Zaptec. Bornes Zaptec et Alfen, et la borne que vous avez déjà achetée.",
           "Tout est compris pour une installation standard, contrôle par un organisme agréé compris.",
           "Réponse sous 24 h, devis gratuit sous 48 h, le plus souvent sur simples photos.",
           "Pose en une journée dans la plupart des maisons.",
@@ -396,7 +396,7 @@ const BornesDeRecharge = () => {
           <>
             <strong>Les protections dans le tableau</strong> : un différentiel et un disjoncteur
             réservés à la borne, ou un petit coffret dédié si le tableau est plein. Avec une
-            borne Zaptec, nous posons aussi le module qui fait ralentir la borne quand la maison
+            Zaptec Go 2, nous posons aussi le module qui fait ralentir la borne quand la maison
             consomme beaucoup.
           </>,
           <>
@@ -435,8 +435,9 @@ const BornesDeRecharge = () => {
       {/* ===== Quelle borne choisir ? ===== */}
       <H2>Quelle borne choisir ?</H2>
       <P>
-        Zaptec est notre premier choix pour une maison, Alfen le haut de gamme, Hager la borne de
-        nos chantiers à plusieurs bornes. Nous posons aussi la borne que vous avez déjà achetée.
+        Nous travaillons surtout avec Zaptec : la Go 2 pour une maison, la Pro dès qu'il y a
+        plusieurs bornes. Alfen est notre haut de gamme. Nous avons aussi l'expérience des autres
+        marques et nous posons la borne que vous avez déjà achetée.
       </P>
       <Tableau
         entetes={["Borne", "Pour qui", "Ce qu'elle a de particulier"]}
@@ -444,7 +445,9 @@ const BornesDeRecharge = () => {
           [
             "Zaptec Go 2",
             "La plupart des maisons",
-            "Petite (24 × 18 cm), simple, compteur certifié avec écran, pilotée depuis le téléphone. Conçue et fabriquée en Norvège.",
+            // Le module de mesure (Zaptec Sense) est compris dans notre prix de la Go 2
+            // (tableau des prix, plus bas) : d'où « compris chez nous » et pas « en option ».
+            "Petite (24 × 18 cm), simple, compteur certifié avec écran, pilotée depuis le téléphone. Avec son module de mesure, compris chez nous, elle baisse toute seule sa puissance quand la maison consomme beaucoup, pour ne pas faire sauter le compteur. Conçue et fabriquée en Norvège.",
           ],
           [
             "Alfen Eve",
@@ -452,17 +455,22 @@ const BornesDeRecharge = () => {
             "Câble attaché : on se gare, on branche. Écran de suivi et badge. Fabriquée aux Pays-Bas.",
           ],
           [
-            "Hager Witty",
-            "Lotissement, copropriété, entreprise",
-            // Document : « Borne robuste, déjà posée par nos soins en série de quatre
-            // dans un lotissement du Brabant wallon (2026). » [à confirmer 14] — non
-            // publié. En attendant : la formule de l'introduction, qui est confirmée.
-            "La borne de nos chantiers à plusieurs bornes.",
+            // Correction d'Adrian du 2026-11-22 : pour plusieurs bornes, il pose la
+            // Zaptec Pro (et non la Hager Witty). Faits vérifiés sur la fiche officielle
+            // « Zaptec Pro (MID) » de help.zaptec.com (© Zaptec, 12.10.2023) : partage
+            // automatique entre bornes et phases, compteur MID par borne, extensible,
+            // 22 kW en triphasé avec neutre seulement (12,7 kW en 3 × 230 V), garantie
+            // 5 ans, fabriquée en Norvège. La fiche ne dit pas que les bornes protègent
+            // le compteur du bâtiment : cela demande un module de mesure (Zaptec Sense),
+            // d'où « en option ». Aucun prix : Adrian n'en a pas donné.
+            "Zaptec Pro",
+            "Copropriété, lotissement, entreprise",
+            "Faite pour plusieurs bornes sur une même arrivée électrique : elles se partagent toutes seules la puissance disponible, sans dépasser la puissance prévue pour les bornes. En option, un module de mesure sur l'arrivée générale fait baisser la puissance des bornes quand le bâtiment consomme beaucoup, pour ne pas faire sauter le compteur. Chaque borne compte sa propre consommation avec un compteur certifié, pour répartir les frais entre voisins ou collègues. On peut en ajouter plus tard. Jusqu'à 22 kW selon le réseau. Garantie 5 ans, fabriquée en Norvège. Installateur certifié Zaptec.",
           ],
           [
             "Votre borne",
             "Vous l'avez déjà achetée",
-            "Wallbox ou autre marque : nous vérifions sa fiche technique, puis nous la posons.",
+            "Hager, Wallbox ou autre marque : nous vérifions sa fiche technique, puis nous la posons.",
           ],
         ]}
       />
@@ -483,7 +491,7 @@ const BornesDeRecharge = () => {
       <P>
         Un petit module placé dans le tableau mesure ce que la maison consomme. Quand le four, la
         plaque de cuisson ou la pompe à chaleur tournent, la borne ralentit toute seule. Quand la
-        maison est calme, elle charge plus vite. Ce module est compris avec chaque borne Zaptec
+        maison est calme, elle charge plus vite. Ce module est compris avec chaque Zaptec Go 2
         que nous posons.
       </P>
 

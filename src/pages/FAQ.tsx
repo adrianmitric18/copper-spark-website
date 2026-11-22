@@ -247,7 +247,7 @@ const faqData: FaqItem[] = [
     category: "materiel",
     question: "Quelles marques de matériel utilisez-vous d'office ?",
     answer:
-      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Alfen (référence), Hager ou Wallbox. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
+      "Nous posons d'office du matériel de marques reconnues pour leur fiabilité et leur durabilité : Tableaux électriques : Schneider (principal) ou Hager. Prises et interrupteurs : Niko. Bornes de recharge : Zaptec le plus souvent, Alfen en haut de gamme. Onduleurs photovoltaïques : Huawei ou SolarEdge. Ces marques sont choisies pour leur qualité professionnelle, leur disponibilité en Belgique et leur service après-vente.",
     answerNode: (
       <>
         <p>
@@ -263,8 +263,8 @@ const faqData: FaqItem[] = [
             <strong className="text-foreground">Prises et interrupteurs</strong> : Niko
           </li>
           <li>
-            <strong className="text-foreground">Bornes de recharge</strong> : Alfen (référence),
-            Hager ou Wallbox
+            <strong className="text-foreground">Bornes de recharge</strong> : Zaptec le plus
+            souvent, Alfen en haut de gamme
           </li>
           <li>
             <strong className="text-foreground">Onduleurs photovoltaïques</strong> : Huawei ou
@@ -387,14 +387,13 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Installez-vous des bornes de recharge pour voiture électrique ?",
     answer:
-      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Alfen est notre marque de référence ; nous installons aussi Hager, Wallbox et les autres marques du marché. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
+      "Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Nous travaillons surtout avec Zaptec ; Alfen est notre haut de gamme. Nous avons aussi l'expérience des autres marques et nous posons la borne que vous avez déjà achetée. Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons installer des bornes de 7,4 kW, 11 kW ou 22 kW. Nous réalisons toujours une étude préalable pour dimensionner la borne correctement et vérifier si des adaptations électriques sont nécessaires. Des aides régionales existent pour les bornes — nous vous donnons les informations à jour lors du devis et vous orientons sur les démarches.",
     answerNode: (
       <>
         <p>
           Oui. Nous installons des bornes de recharge pour véhicules électriques, tant pour les
-          particuliers (à domicile) que pour les professionnels (entreprises, copropriétés). Alfen
-          est notre marque de référence ; nous installons aussi Hager, Wallbox et les autres
-          marques du marché.
+          particuliers (à domicile) que pour les professionnels (entreprises, copropriétés).
+          Nous travaillons surtout avec Zaptec ; Alfen est notre haut de gamme. Nous avons aussi l'expérience des autres marques et nous posons la borne que vous avez déjà achetée.
         </p>
         <p>
           Selon votre installation électrique existante (monophasée ou triphasée), nous pouvons
@@ -462,7 +461,7 @@ const faqData: FaqItem[] = [
     category: "specialites",
     question: "Combien coûte l'installation d'une borne de recharge ?",
     answer:
-      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Alfen fournie et posée, comptez en ordre de grandeur entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris. Pensez à comparer ce point sur les autres devis que vous recevrez : ces deux postes n'y sont pas toujours compris. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les autres marques du marché : dans ce cas, la borne est chiffrée à part, selon le modèle choisi. Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
+      "Le prix dépend de la marque, de la distance entre votre tableau et la borne, et de l'état de votre tableau électrique. Pour une borne Zaptec Go 2 fournie et posée, comptez en ordre de grandeur entre 2 000 et 2 400 € TTC ; pour une borne Alfen, notre haut de gamme, entre 2 650 et 3 000 € TTC. Matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris. Pensez à comparer ce point sur les autres devis que vous recevrez : ces deux postes n'y sont pas toujours compris. Si vous fournissez vous-même votre borne, la pose seule se situe entre 950 et 1 300 € TTC. Nous posons aussi les autres marques : dans ce cas, la borne est chiffrée à part, selon le modèle choisi. Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de 10 ans. Les chantiers nécessitant une tranchée ou un terrassement sortent de cette fourchette. Le devis est gratuit après visite technique sur place et détaille chaque poste séparément.",
     answerNode: (
       <>
         <p>
@@ -470,17 +469,13 @@ const faqData: FaqItem[] = [
           borne, et de l'état de votre tableau électrique.
         </p>
         <p>
-          Pour une borne Alfen fournie et posée, comptez en ordre de grandeur
-          entre 2 650 et 3 000 € TTC, matériel, main-d'œuvre, dossier technique
-          et passage de l'organisme agréé compris. Pensez à comparer ce point
+          Pour une borne Zaptec Go 2 fournie et posée, comptez en ordre de grandeur entre 2 000 et 2 400 € TTC ; pour une borne Alfen, notre haut de gamme, entre 2 650 et 3 000 € TTC. Matériel, main-d'œuvre, dossier technique et passage de l'organisme agréé compris. Pensez à comparer ce point
           sur les autres devis que vous recevrez : ces deux postes n'y sont pas
           toujours compris.
         </p>
         <p>
           Si vous fournissez vous-même votre borne, la pose seule se situe entre
-          950 et 1 300 € TTC. Nous installons également Hager, Wallbox et les
-          autres marques du marché : dans ce cas, la borne est chiffrée à part,
-          selon le modèle choisi.
+          950 et 1 300 € TTC. Nous posons aussi les autres marques : dans ce cas, la borne est chiffrée à part, selon le modèle choisi.
         </p>
         <p>
           Prix indiqués avec la TVA à 6 %, celle des logements privés de plus de
