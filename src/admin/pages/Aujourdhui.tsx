@@ -70,7 +70,8 @@ import { marquerJournalVu } from "@/lib/admin/journal-auto";
 import { useJournalAuto } from "@/admin/hooks/useStatutsAuto";
 import { useChangerStatutLead } from "@/admin/hooks/useChangerStatutLead";
 import type { CanalEnvoi } from "@/lib/admin/envois";
-import { estARappeler, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
+import { estARappeler, estNouveauARelancer, isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
+import { TON } from "@/lib/admin/badges";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
 import { leadsAvisADemander } from "@/lib/admin/avis";
 import { addDays } from "@/lib/admin/heures";
@@ -296,7 +297,9 @@ const Aujourdhui = () => {
         return {
           genre: "rappel",
           lead: l,
-          detail: mention ? mention.charAt(0).toUpperCase() + mention.slice(1) : `Nouveau · ${ageTexte(l.created_at)}`,
+          detail: mention
+            ? mention.charAt(0).toUpperCase() + mention.slice(1)
+            : `${estNouveauARelancer(l) ? "À relancer" : "Nouveau"} · ${ageTexte(l.created_at)}`,
         };
       });
     const relances: AFaire[] = [];
@@ -332,6 +335,13 @@ const Aujourdhui = () => {
   const nbPropositions = useMemo(
     () => (chantiers && aujourdhui ? calculerPropositions(leads, rdvs, chantiers).length : 0),
     [leads, rdvs, chantiers, aujourdhui],
+  );
+  // « À relancer » : leads toujours `nouveau` après 5 jours. Même nombre que le
+  // filtre de la liste des leads (sans limite d'âge), pour n'oublier personne ;
+  // les lignes du bloc « À faire », elles, gardent la limite des 30 jours.
+  const nbARelancer = useMemo(
+    () => (aujourdhui ? leads.filter((l) => estNouveauARelancer(l)).length : 0),
+    [leads, aujourdhui],
   );
   const nbAFaire = aConfirmer.length + devisAFaire.length + aFaireTous.length;
 
@@ -514,6 +524,17 @@ const Aujourdhui = () => {
                   À valider : {nbPropositions} ancienne{nbPropositions > 1 ? "s" : ""} fiche
                   {nbPropositions > 1 ? "s" : ""}
                 </span>
+              </span>
+              <ChevronRight className="w-4 h-4 shrink-0" />
+            </Link>
+          </Button>
+        )}
+        {!loading && nbARelancer > 0 && (
+          <Button asChild variant="outline" className={`w-full min-h-[48px] justify-between ${TON.rouge}`}>
+            <Link to="/admin/pipeline?filtre=a-relancer">
+              <span className="flex items-center gap-2 min-w-0">
+                <Phone className="w-4 h-4 shrink-0" />
+                <span className="truncate">À relancer ({nbARelancer}) · plus de 5 jours</span>
               </span>
               <ChevronRight className="w-4 h-4 shrink-0" />
             </Link>

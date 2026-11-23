@@ -144,6 +144,33 @@ export const estARappeler = (
   joursDepuis(new Date(lead.created_at).getTime(), now) <= ACCUEIL_MAX_AGE_JOURS;
 
 // ---------------------------------------------------------------------
+//  « Nouveau » 5 jours, puis « À relancer » (lot fiche + liste, 2026-11)
+// ---------------------------------------------------------------------
+
+/** Un lead reste étiqueté « Nouveau » ce nombre de jours après son arrivée. */
+export const NOUVEAU_JOURS = 5;
+
+/**
+ * « À relancer » = toujours `nouveau` en base, arrivé depuis 5 jours ou plus.
+ * C'est seulement une étiquette : le statut enregistré ne change pas (la base
+ * impose `nouveau` à l'arrivée, et « Tu l'as eu ? » s'appuie dessus). Le lead
+ * en sort comme avant : un message ou un appel abouti le passe en « traité ».
+ */
+export const estNouveauARelancer = (
+  lead: Pick<Lead, "status" | "created_at">,
+  now: Date = new Date(),
+): boolean =>
+  lead.status === "nouveau" &&
+  joursDepuis(new Date(lead.created_at).getTime(), now) >= NOUVEAU_JOURS;
+
+/** Étiquette d'un lead `nouveau` : « Nouveau » puis « À relancer » ; null pour les autres statuts. */
+export const etiquetteNouveau = (
+  lead: Pick<Lead, "status" | "created_at">,
+  now: Date = new Date(),
+): "Nouveau" | "À relancer" | null =>
+  lead.status !== "nouveau" ? null : estNouveauARelancer(lead, now) ? "À relancer" : "Nouveau";
+
+// ---------------------------------------------------------------------
 //  « Archiver les anciens » : dernière action et éligibilité
 // ---------------------------------------------------------------------
 
@@ -262,6 +289,7 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   formulaire_site: "Site web",
   rdv_rapide: "RDV rapide",
   simulateur: "Simulateur",
+  devis_borne: "Devis borne avec photos",
   telephone: "Téléphone",
   whatsapp: "WhatsApp",
   facebook: "Facebook",

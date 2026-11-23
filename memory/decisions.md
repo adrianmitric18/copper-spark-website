@@ -14,6 +14,30 @@
 
 ## Journal
 
+### 2026-11-23 — Admin : fiche d'un lead réordonnée, « Nouveau » 5 jours puis « À relancer »
+- **Décision (Adrian, 23/11) :** ordre de la fiche = coordonnées et boutons d'appel, demande du
+  client (ouverte : message, réponses, photos en vignettes), notes internes (ouvertes, dictée),
+  un message en un clic (« Confirmation RDV » si un RDV est calé et à venir, sinon « Bien reçu »),
+  rendez-vous en une ligne, puis le reste replié. Checklist de visite retirée de l'écran. Liste
+  des leads : le plus récent en haut, dans tous les filtres. Un lead reste « Nouveau » 5 jours,
+  puis s'affiche « À relancer » en rouge (filtre en tête de liste, compteur sur l'accueil).
+- **Pourquoi :** il fallait descendre et cliquer pour lire ce que le client demande ; la checklist
+  n'a jamais servi ; un lead de test arrivait tout en bas ; « Nouveau » restait pour toujours.
+- **Conséquences / pièges :**
+  - **Aucun changement en base.** « À relancer » est une étiquette déduite (`estNouveauARelancer`,
+    `etiquetteNouveau` dans `src/lib/admin/types.ts`) : le statut enregistré reste `nouveau`
+    (imposé par la base à l'arrivée, et « Tu l'as eu ? » s'appuie dessus).
+  - **Refusé par Adrian, ne pas reproposer :** garder un « À relancer » sur l'accueil au-delà de
+    30 jours, et l'exclure du « sans suite » automatique à 60 jours. Les deux règles restent. Seul
+    le compteur « À relancer (N) » (accueil et liste) compte sans limite d'âge.
+  - Le composant `ChecklistVisite` et la table `checklist_items` restent (1 352 lignes, 44
+    cochées le 23/11). Le composant créait ses lignes à l'ouverture d'une fiche : il n'est plus
+    monté, `scripts/admin-audit.mjs` échoue si une requête part vers `checklist_items`.
+  - Le message en un clic repose sur les identifiants `confirmation-rdv` et `bien-recu` de
+    `FICHE_MESSAGES` ; les titres tracés ne changent pas (règle `cibleDuMessage`).
+  - Anciens leads : pas de nouvelle règle, Adrian passe par « Mise à jour proposée » (17 fiches
+    avec un RDV d'avant le 21/11 resté ouvert, comptées le 23/11).
+
 ### 2026-11-23 — Un seul endroit pour les demandes ; devis de borne avec photos
 - **Décision (Adrian, 22-23/11) :** le client ne doit jamais avoir à choisir entre plusieurs
   formulaires. Toutes les demandes passent par `/contact`, avec deux choix en haut : « Demande

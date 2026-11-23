@@ -63,7 +63,25 @@ enregistrée (201) et ses deux e-mails sont acceptés par EmailJS (200).
    site public.
 10. Plus tard : vitesse mobile, `llms.txt` (priorité basse).
 
+### Lot intercalé le 23/11 au soir : fiche d'un lead et liste des leads
+
+Branche `feat/admin-fiche-liste`, en attente du « fusionne » d'Adrian. Aucune migration. Détail
+dans `memory/decisions.md` (entrée du 23/11). Après ce lot, la suite ci-dessus reprend au point 1,
+sans rien intercaler.
+
+### Idées pour l'admin, à choisir par Adrian après les lots légaux (rien n'est codé)
+
+| # | Idée | Ce qu'elle fait gagner | Travail |
+|---|---|---|---|
+| 1 | Notes enregistrées toutes seules, sans bouton | Plus de note dictée perdue par oubli d'« Enregistrer » | 2 heures environ |
+| 2 | Photos prises pendant la visite, ajoutées à la fiche | Les photos de visite sont avec le client et partent dans « Préparer le devis » | 1 jour environ ; règle du stockage à montrer |
+| 3 | Après « Oui, je l'ai eu » : note dictée et RDV sur le même écran | L'appel se termine sans rouvrir la fiche | Une demi-journée |
+| 4 | Fiches et RDV du jour lisibles sans réseau | Adresse, demande et notes disponibles dans une cave | 1 à 2 jours |
+| 5 | Alerte sur le téléphone à l'arrivée d'une demande | La demande se voit sans ouvrir la boîte mail | 1 à 2 jours ; demande un changement en base |
+
 ## 3. En attente du côté d'Adrian
+- Passer par « Mise à jour proposée » pour les 17 fiches dont le RDV d'avant le 21/11 est resté
+  ouvert (comptage du 23/11 : 37 leads actifs, dont 14 fiches TEST).
 
 - Supprimer les fiches et fichiers TEST (section 6).
 - Relire puis appliquer `suppression-regles-deny-lead-photos.sql` (dossier « Claude Business ») :
