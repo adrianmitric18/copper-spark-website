@@ -11,11 +11,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, RotateCcw, ClipboardList, Share2 } from "lucide-react";
+import { Phone, Mail, Loader2, Copy, Star, Save, Trash2, CalendarPlus, MessageCircle, Smartphone, ArrowLeft, Hammer, Mic, MicOff, FileText, RotateCcw, ClipboardList, Share2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import RendezVousForm, { type RdvFormValues } from "@/components/admin/RendezVousForm";
 import RendezVousCard from "@/components/admin/RendezVousCard";
-import ChecklistVisite from "@/components/admin/ChecklistVisite";
 import InterventionDialog from "@/components/admin/InterventionDialog";
 import InterventionCard from "@/components/admin/InterventionCard";
 import SimulateurPayloadCard from "@/components/admin/SimulateurPayloadCard";
@@ -74,6 +73,7 @@ import {
   type TerminalLeadStatus,
   STATUT_REACTIVATION,
   TERMINER_CHOIX,
+  etiquetteNouveau,
   isRdvPasse,
   isTerminal,
   leadSourceLabel,
@@ -423,6 +423,8 @@ const LeadDetail = () => {
   const [editing, setEditing] = useState(false);
   const [submittingRdv, setSubmittingRdv] = useState(false);
   const [cancellingRdv, setCancellingRdv] = useState(false);
+  // Le rendez-vous tient en une ligne ; elle s'ouvre sur le détail.
+  const [rdvOuvert, setRdvOuvert] = useState(false);
   // RDV annulé à l'instant : on garde ses infos pour prévenir le client par message.
   const [rdvAnnule, setRdvAnnule] = useState<RendezVous | null>(null);
   // Lot 2 bis — texte du devis affiché pour copie manuelle si le presse-papiers refuse.
@@ -1098,6 +1100,12 @@ const LeadDetail = () => {
   // Libellé du badge d'en-tête : « RDV passé » (orange, comme partout) quand le
   // lead est en « RDV confirmé » / rdv_pris sans RDV à venir.
   const libelleEntete = libelleStatutLead(lead.status, Boolean(rdv) && !isRdvPasse(rdv));
+  // « Nouveau » pendant 5 jours, puis « À relancer » en rouge (statut en base inchangé).
+  const etiquette = etiquetteNouveau(lead);
+  // Message en un clic : « Confirmation RDV » si un rendez-vous est calé (à
+  // venir), sinon « Bien reçu ». Ce sont les identifiants de FICHE_MESSAGES.
+  const rdvAVenir = Boolean(rdv) && !isRdvPasse(rdv);
+  const idMessagePrincipal = rdvAVenir ? "confirmation-rdv" : "bien-recu";
   // Lead « nouveau » : question « Tu l'as eu ? » et nombre d'appels sans réponse.
   const appel = etatAppel(lead);
   const quickMessage = communicationMessage();
@@ -1118,10 +1126,11 @@ const LeadDetail = () => {
   return (
     <AdminShell email={user.email} mobileTitle={lead.name}>
       <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Fiche lead — ordre du lot 2.3 du brief admin : (1) identité + actions,
-          (2) rendez-vous, (3) messages, (4) le reste replié par défaut,
-          (5) « Terminer ce lead » toujours visible. Rien n'est supprimé : les
-          blocs sont seulement déplacés ou repliés. */}
+      {/* Fiche lead — ordre du 23/11/2026 (demande d'Adrian) : (1) coordonnées et
+          boutons d'appel, (2) demande du client, (3) notes internes, (4) le
+          message en un clic, (5) rendez-vous en une ligne, (6) le reste replié,
+          (7) « Terminer ce lead » toujours visible. La checklist de visite
+          n'est plus affichée (jamais utilisée) : ses données restent en base. */}
       {/* 1 — Identité : nom, téléphone, commune. */}
       <div className="flex items-start gap-2">
         <Button asChild variant="ghost" size="icon" className="hidden md:inline-flex shrink-0">
@@ -1149,9 +1158,15 @@ const LeadDetail = () => {
         </div>
         <Badge
           variant="outline"
-          className={`shrink-0 ${libelleEntete === "RDV passé" ? TON.orange : leadStatusColor(lead.status)}`}
+          className={`shrink-0 ${
+            etiquette === "À relancer"
+              ? TON.rouge
+              : libelleEntete === "RDV passé"
+                ? TON.orange
+                : leadStatusColor(lead.status)
+          }`}
         >
-          {libelleEntete}
+          {etiquette ?? libelleEntete}
         </Badge>
       </div>
 
@@ -1203,7 +1218,118 @@ const LeadDetail = () => {
 
       {appel.question && <QuestionAppel leadName={lead.name} onReponse={repondreALAppel} />}
 
-      {/* 2 — Rendez-vous : créer / modifier / annuler / terminer, puis les boutons de message. */}
+      {/* 2 — Demande du client : ouverte, lisible sans cliquer. Message, réponses
+          (simulateur ; le devis de borne met ses réponses dans le message) et
+          photos en vignettes. */}
+      <Card className="p-4 sm:p-6 space-y-3">
+        <div className="flex items-baseline justify-between gap-x-3 gap-y-1 flex-wrap">
+          <h2 className="font-semibold text-lg">Demande du client</h2>
+          <p className="text-xs text-muted-foreground">Reçue le {formatDate(lead.created_at)}</p>
+        </div>
+        {lead.services && lead.services.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {lead.services.map((sv) => <Badge key={sv} variant="secondary">{sv}</Badge>)}
+          </div>
+        )}
+        {lead.message ? (
+          <div className="bg-muted/50 rounded-md p-3 sm:p-4 text-sm whitespace-pre-wrap break-words">{lead.message}</div>
+        ) : (
+          <p className="text-sm text-muted-foreground italic">Pas de message.</p>
+        )}
+        {lead.source === "simulateur" && lead.payload && (
+          <SimulateurPayloadCard payload={lead.payload} sansCadre />
+        )}
+        {photoUrls.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {photoUrls.length} photo{photoUrls.length > 1 ? "s" : ""} — touche une photo pour l'agrandir
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {photoUrls.map((url, i) => (
+                <a key={i} href={url} target="_blank" rel="noreferrer" className="block aspect-square overflow-hidden rounded-md border hover:opacity-80 transition">
+                  <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        {(lead.photo_urls?.length ?? 0) > photoUrls.length && (
+          <p className="text-sm text-muted-foreground">
+            {(lead.photo_urls?.length ?? 0) - photoUrls.length} photo(s) introuvable(s) dans le dossier.
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {lead.client_type || "Type de client non précisé"} · Délai : {lead.timing || "non précisé"} · Origine :{" "}
+          {leadSourceLabel(lead.source)}
+        </p>
+      </Card>
+
+      {/* 3 — Notes internes, ouvertes, avec la dictée. */}
+      <Card className="p-4 sm:p-6">
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-semibold text-lg">Notes internes</h2>
+            {canDictate && (
+              <Button
+                type="button"
+                variant={listening ? "destructive" : "outline"}
+                size="sm"
+                onClick={toggleDictation}
+                aria-label={listening ? "Arrêter la dictée" : "Dicter une note"}
+              >
+                {listening ? (
+                  <>
+                    <MicOff className="w-4 h-4" /> Stop
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-4 h-4" /> Dicter
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={2000}
+            rows={4}
+            placeholder="Vos notes sur ce lead... (ou dictez avec le micro)"
+          />
+          {listening && (
+            <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              Dictée en cours… parlez, puis « Stop ». Pensez à enregistrer.
+            </p>
+          )}
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
+            <Button onClick={saveNotes} disabled={saving} variant="copper" size="sm">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Enregistrer les notes
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* 4 — Le message en un clic : « Confirmation RDV » si un rendez-vous est
+          calé, sinon « Bien reçu ». Les autres messages sont repliés plus bas. */}
+      <ErrorBoundary label="MessagePrincipal">
+        <MessagesCard
+          lead={lead}
+          rdv={rdv}
+          onDevisEnvoye={handleDevisEnvoye}
+          onTrace={tracer}
+          seulement={idMessagePrincipal}
+          sousTitre={
+            rdvAVenir && rdv
+              ? `Rendez-vous du ${formatRdvDateShort(rdv.date_rdv)} à ${formatHeure(rdv.heure_rdv)}`
+              : undefined
+          }
+        />
+      </ErrorBoundary>
+
+      {/* 5 — Rendez-vous, en une ligne : la ligne s'ouvre sur le détail (modifier, annuler, agenda). */}
       {/* RDV passé encore ouvert : plus de bloc « À clôturer » (lot statuts
           auto). Il se clôture tout seul ou depuis l'accueil ; ici, on peut
           seulement le replanifier. */}
@@ -1243,14 +1369,36 @@ const LeadDetail = () => {
       )}
 
       {rdv && !showForm && !isRdvPasse(rdv) && (
-        <RendezVousCard
-          rdv={rdv}
-          lead={info}
-          cancelling={cancellingRdv}
-          onEdit={() => { setEditing(true); setShowForm(true); }}
-          onCancel={handleRdvCancel}
-          onTrace={tracer}
-        />
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setRdvOuvert((o) => !o)}
+            aria-expanded={rdvOuvert}
+            className="w-full min-h-[48px] rounded-lg border-2 border-[hsl(var(--copper))] bg-[hsl(var(--copper))]/5 px-4 py-2 flex items-center gap-3 text-left"
+          >
+            <CalendarPlus className="w-5 h-5 shrink-0 text-[hsl(var(--copper))]" aria-hidden="true" />
+            <span className="min-w-0 flex-1 text-sm">
+              <span className="font-semibold">
+                RDV {formatRdvDateShort(rdv.date_rdv)} à {formatHeure(rdv.heure_rdv)}
+              </span>
+              <span className="text-muted-foreground"> · {rdv.type_visite}</span>
+            </span>
+            <ChevronDown
+              className={`w-5 h-5 text-muted-foreground shrink-0 transition-transform ${rdvOuvert ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+          {rdvOuvert && (
+            <RendezVousCard
+              rdv={rdv}
+              lead={info}
+              cancelling={cancellingRdv}
+              onEdit={() => { setEditing(true); setShowForm(true); }}
+              onCancel={handleRdvCancel}
+              onTrace={tracer}
+            />
+          )}
+        </div>
       )}
 
       {/* RDV annulé à l'instant : prévenir le client par message (règle 2 —
@@ -1293,48 +1441,119 @@ const LeadDetail = () => {
         </Card>
       )}
 
-      {/* 2 (suite) — Planifier / modifier le rendez-vous */}
-      {/* scroll-mt : marge sous la barre d'actions collée (top-14 mobile / top-0 desktop)
-          pour que le titre ne soit pas masqué par la barre au scrollIntoView. */}
-      {/* Affichée seulement s'il y a quelque chose à y faire : un formulaire
-          ouvert, ou aucun RDV. Sinon l'encadré du RDV juste au-dessus porte déjà
-          « Modifier » / « Replanifier ». */}
-      {(showForm || !rdv) && (
-      <Card ref={rdvSectionRef} className="scroll-mt-32 md:scroll-mt-20 p-6 space-y-4 border-[hsl(var(--copper))]/30">
+      {/* Planifier / modifier le rendez-vous. Sans RDV : un seul bouton, sur une
+          ligne. Le formulaire s'ouvre dans sa carte (scroll-mt : marge sous la
+          barre d'actions collée, pour que le titre ne soit pas masqué). */}
+      {!rdv && !showForm && (
+        <Button
+          onClick={() => { setEditing(false); setShowForm(true); }}
+          variant="outline"
+          size="lg"
+          className="w-full min-h-[48px] border-[hsl(var(--copper))]/50"
+        >
+          <CalendarPlus className="w-4 h-4" /> Planifier un rendez-vous
+        </Button>
+      )}
+      {showForm && (
+      <Card ref={rdvSectionRef} className="scroll-mt-32 md:scroll-mt-20 p-4 sm:p-6 space-y-4 border-[hsl(var(--copper))]/30">
         <h2 className="font-semibold text-lg flex items-center gap-2">
           <CalendarPlus className="w-5 h-5 text-[hsl(var(--copper))]" />
           {editing ? "Modifier le rendez-vous" : rdv ? "Replanifier" : "Planifier un rendez-vous"}
         </h2>
-        {showForm ? (
-          <RendezVousForm
-            initial={editing ? rdv : null}
-            submitting={submittingRdv}
-            submitLabel={editing ? "Enregistrer les modifications" : undefined}
-            onSubmit={handleRdvSubmit}
-            onCancel={() => { setShowForm(false); setEditing(false); }}
-          />
-        ) : (
-          <Button
-            onClick={() => { setEditing(false); setShowForm(true); }}
-            variant="copper"
-            size="lg"
-          >
-            <CalendarPlus className="w-4 h-4" /> Planifier un nouveau RDV
-          </Button>
-        )}
+        <RendezVousForm
+          initial={editing ? rdv : null}
+          submitting={submittingRdv}
+          submitLabel={editing ? "Enregistrer les modifications" : undefined}
+          onSubmit={handleRdvSubmit}
+          onCancel={() => { setShowForm(false); setEditing(false); }}
+        />
       </Card>
       )}
 
-      {/* 3 — Messages (liste FICHE_MESSAGES, inchangée) — isolé dans un ErrorBoundary : si la carte
-          plante (donnée inattendue), elle disparaît sans casser la fiche. */}
-      <ErrorBoundary label="MessagesCard">
-        <MessagesCard lead={lead} rdv={rdv} onDevisEnvoye={handleDevisEnvoye} onTrace={tracer} />
-      </ErrorBoundary>
+      {/* 6 — Le reste, replié par défaut. Rien n'est supprimé. */}
+      {/* Autres messages : tous les messages tout faits sauf celui en un clic,
+          puis les réponses rapides et les actions rapides. */}
+      <CollapsibleCard title="Autres messages">
+        <ErrorBoundary label="MessagesCard">
+          <MessagesCard
+            lead={lead}
+            rdv={rdv}
+            onDevisEnvoye={handleDevisEnvoye}
+            onTrace={tracer}
+            sauf={idMessagePrincipal}
+            sansCadre
+          />
+        </ErrorBoundary>
+        <h3 className="font-semibold pt-3 border-t">Réponses rapides</h3>
+        <p className="text-sm text-muted-foreground">
+          Un message type pré-rempli, à envoyer en SMS ou WhatsApp sans rien retaper.
+        </p>
+        <ul className="space-y-2">
+          {QUICK_REPLIES.map((q) => {
+            const enc = encodeURIComponent(q.body(firstNameOf(lead.name)));
+            return (
+              <li
+                key={q.label}
+                className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
+              >
+                <span className="flex-1 min-w-[8rem] text-sm font-medium">{q.label}</span>
+                <Button asChild size="sm" variant="outline" className="min-h-[40px]">
+                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`} onClick={() => tracer("SMS", `Réponse rapide : ${q.label}`)}>
+                    <Smartphone className="w-4 h-4" /> SMS
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                >
+                  <a
+                    href={`https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${enc}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => tracer("WhatsApp", `Réponse rapide : ${q.label}`)}
+                    aria-label={`WhatsApp : ${q.label}`}
+                  >
+                    <MessageCircle className="w-4 h-4" /> WhatsApp
+                  </a>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+        <h3 className="font-semibold pt-3 border-t">Actions rapides</h3>
+        <div className="grid sm:grid-cols-3 gap-2">
+          <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
+            <a href={whatsappHref} target="_blank" rel="noreferrer" onClick={() => tracer("WhatsApp", "Message rapide")}>
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+          </Button>
+          <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
+            <a href={smsHref} onClick={() => tracer("SMS", "Message rapide")}>
+              <Smartphone className="w-4 h-4" /> SMS
+            </a>
+          </Button>
+          {hasUsableEmail(lead.email) && (
+            <Button asChild variant="copper" size="lg" className="min-h-[48px]">
+              <a href={emailHref} onClick={() => tracer("Email", "Message rapide")}>
+                <Mail className="w-4 h-4" /> Email rapide
+              </a>
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button variant="outline" onClick={copyContact} className="flex-1">
+            <Copy className="w-4 h-4" /> Copier les coordonnées
+          </Button>
+          <Button variant="outline" onClick={copyReviewSms} className="flex-1">
+            <Star className="w-4 h-4" /> Envoyer le lien avis Google
+          </Button>
+        </div>
+      </CollapsibleCard>
 
       {/* Lot 2 bis — Préparer le devis avec Claude (texte brut, aucun appel d'API). */}
-      <Card className="p-4 sm:p-6 space-y-3">
+      <CollapsibleCard title="Préparer le devis avec Claude">
         <div>
-          <h2 className="font-semibold text-lg">Devis</h2>
           <p className="text-sm text-muted-foreground">
             Copie tout ce que la fiche sait du client (coordonnées, besoin, visite, notes, photos,
             simulateur) pour le coller dans Claude.
@@ -1368,64 +1587,7 @@ const LeadDetail = () => {
             onFocus={(e) => e.currentTarget.select()}
           />
         )}
-      </Card>
-
-      {/* 4 — Le reste, replié par défaut. */}
-      {/* Notes internes, avec dictée (repliées) */}
-      <CollapsibleCard title="Notes internes">
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm text-muted-foreground">Notes internes</label>
-            {canDictate && (
-              <Button
-                type="button"
-                variant={listening ? "destructive" : "outline"}
-                size="sm"
-                onClick={toggleDictation}
-                aria-label={listening ? "Arrêter la dictée" : "Dicter une note"}
-              >
-                {listening ? (
-                  <>
-                    <MicOff className="w-4 h-4" /> Stop
-                  </>
-                ) : (
-                  <>
-                    <Mic className="w-4 h-4" /> Dicter
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={2000}
-            rows={4}
-            placeholder="Vos notes sur ce lead... (ou dictez avec le micro)"
-          />
-          {listening && (
-            <p className="text-xs text-primary mt-1 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Dictée en cours… parlez, puis « Stop ». Pensez à enregistrer.
-            </p>
-          )}
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-muted-foreground">{notes.length}/2000</span>
-            <Button onClick={saveNotes} disabled={saving} variant="copper" size="sm">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Enregistrer les notes
-            </Button>
-          </div>
-        </div>
       </CollapsibleCard>
-
-      {/* Checklist visite */}
-      <ChecklistVisite
-        leadId={lead.id}
-        leadServices={lead.services || []}
-        rdvTypeVisite={rdv?.type_visite}
-        defaultOpen={false}
-      />
 
       {/* Chantiers programmés (devis accepté → blocage de dates) */}
       <CollapsibleCard title={`Chantiers programmés${interventions.length ? ` (${interventions.length})` : ""}`}>
@@ -1470,12 +1632,28 @@ const LeadDetail = () => {
         </Button>
       </CollapsibleCard>
 
-      {/* Réponses du simulateur de prix (leads source = simulateur) */}
-      {lead.source === "simulateur" && lead.payload && (
-        <CollapsibleCard title="Détail simulateur">
-          <SimulateurPayloadCard payload={lead.payload} sansCadre />
-        </CollapsibleCard>
-      )}
+      {/* Suivi du devis (replié). Lot « statuts auto » : le sélecteur de statut
+          est retiré — le statut suit les messages et les RDV ; l'exception se
+          règle en bas (« Terminer ce lead » / « Réactiver »). */}
+      <CollapsibleCard title="Suivi du devis">
+
+        {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
+            J+3/7/14 (carte « Relances devis » du cockpit). */}
+        <div>
+          <label className="text-sm text-muted-foreground mb-2 block">Devis</label>
+          <div className="flex flex-wrap items-center gap-2">
+            {lead.devis_envoye_at ? (
+              <span className="text-sm">Envoyé le <strong>{formatDevisDate(lead.devis_envoye_at)}</strong></span>
+            ) : (
+              <span className="text-sm text-muted-foreground italic">Pas encore envoyé</span>
+            )}
+            <Button variant="outline" size="sm" onClick={markDevisToday} className="min-h-[40px]">
+              <FileText className="w-4 h-4" />
+              {lead.devis_envoye_at ? "Renvoyé aujourd'hui" : "Marquer envoyé aujourd'hui"}
+            </Button>
+          </div>
+        </div>
+      </CollapsibleCard>
 
       {/* Coordonnées complètes (repliées) */}
       <CollapsibleCard title="Coordonnées">
@@ -1520,144 +1698,6 @@ const LeadDetail = () => {
             </Button>
           )}
         </div>
-      </CollapsibleCard>
-
-      {/* Détails de la demande (repliés) */}
-      <CollapsibleCard title="Détails de la demande">
-        <div className="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><span className="text-muted-foreground">Type de client :</span> {lead.client_type || "—"}</div>
-          <div><span className="text-muted-foreground">Timing :</span> {lead.timing || "Non précisé"}</div>
-          <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Source :</span>
-            <Badge
-              variant="secondary"
-              className={
-                lead.source === "simulateur"
-                  ? "bg-primary/15 text-primary border-primary/30"
-                  : undefined
-              }
-            >
-              {leadSourceLabel(lead.source)}
-            </Badge>
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Services demandés :</p>
-          <div className="flex flex-wrap gap-2">
-            {lead.services?.map(s => <Badge key={s} variant="secondary">{s}</Badge>)}
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Message :</p>
-          <div className="bg-muted/50 rounded-md p-4 text-sm whitespace-pre-wrap">{lead.message || "—"}</div>
-        </div>
-      </CollapsibleCard>
-
-      {/* Photos */}
-      {photoUrls.length > 0 && (
-        <CollapsibleCard title={`Photos (${photoUrls.length})`}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {photoUrls.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noreferrer" className="block aspect-square overflow-hidden rounded-md border hover:opacity-80 transition">
-                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
-              </a>
-            ))}
-          </div>
-        </CollapsibleCard>
-      )}
-
-      {/* Suivi du devis (replié). Lot « statuts auto » : le sélecteur de statut
-          est retiré — le statut suit les messages et les RDV ; l'exception se
-          règle en bas (« Terminer ce lead » / « Réactiver »). */}
-      <CollapsibleCard title="Suivi du devis">
-
-        {/* Tier 1 / Phase 3 — suivi devis : la date d'envoi arme les relances
-            J+3/7/14 (carte « Relances devis » du cockpit). */}
-        <div>
-          <label className="text-sm text-muted-foreground mb-2 block">Devis</label>
-          <div className="flex flex-wrap items-center gap-2">
-            {lead.devis_envoye_at ? (
-              <span className="text-sm">Envoyé le <strong>{formatDevisDate(lead.devis_envoye_at)}</strong></span>
-            ) : (
-              <span className="text-sm text-muted-foreground italic">Pas encore envoyé</span>
-            )}
-            <Button variant="outline" size="sm" onClick={markDevisToday} className="min-h-[40px]">
-              <FileText className="w-4 h-4" />
-              {lead.devis_envoye_at ? "Renvoyé aujourd'hui" : "Marquer envoyé aujourd'hui"}
-            </Button>
-          </div>
-        </div>
-      </CollapsibleCard>
-
-      {/* Actions (repliable, fermée par défaut) */}
-      <CollapsibleCard title="Actions rapides">
-        <div className="grid sm:grid-cols-3 gap-2">
-          <Button asChild size="lg" className="min-h-[48px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90">
-            <a href={whatsappHref} target="_blank" rel="noreferrer" onClick={() => tracer("WhatsApp", "Message rapide")}>
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </a>
-          </Button>
-          <Button asChild size="lg" className="min-h-[48px] bg-sms text-sms-foreground hover:bg-sms/90">
-            <a href={smsHref} onClick={() => tracer("SMS", "Message rapide")}>
-              <Smartphone className="w-4 h-4" /> SMS
-            </a>
-          </Button>
-          {hasUsableEmail(lead.email) && (
-            <Button asChild variant="copper" size="lg" className="min-h-[48px]">
-              <a href={emailHref} onClick={() => tracer("Email", "Message rapide")}>
-                <Mail className="w-4 h-4" /> Email rapide
-              </a>
-            </Button>
-          )}
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-          <Button variant="outline" onClick={copyContact} className="flex-1">
-            <Copy className="w-4 h-4" /> Copier les coordonnées
-          </Button>
-          <Button variant="outline" onClick={copyReviewSms} className="flex-1">
-            <Star className="w-4 h-4" /> Envoyer le lien avis Google
-          </Button>
-        </div>
-      </CollapsibleCard>
-
-      {/* Réponses rapides (Phase 2.2) — repliable, fermée par défaut */}
-      <CollapsibleCard title="Réponses rapides">
-        <p className="text-sm text-muted-foreground">
-          Un message type pré-rempli, à envoyer en SMS ou WhatsApp sans rien retaper.
-        </p>
-        <ul className="space-y-2">
-          {QUICK_REPLIES.map((q) => {
-            const enc = encodeURIComponent(q.body(firstNameOf(lead.name)));
-            return (
-              <li
-                key={q.label}
-                className="flex items-center gap-2 flex-wrap sm:flex-nowrap"
-              >
-                <span className="flex-1 min-w-[8rem] text-sm font-medium">{q.label}</span>
-                <Button asChild size="sm" variant="outline" className="min-h-[40px]">
-                  <a href={`sms:${lead.phone}?body=${enc}`} aria-label={`SMS : ${q.label}`} onClick={() => tracer("SMS", `Réponse rapide : ${q.label}`)}>
-                    <Smartphone className="w-4 h-4" /> SMS
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  size="sm"
-                  className="min-h-[40px] bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-                >
-                  <a
-                    href={`https://wa.me/${cleanPhoneForWhatsapp(lead.phone)}?text=${enc}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => tracer("WhatsApp", `Réponse rapide : ${q.label}`)}
-                    aria-label={`WhatsApp : ${q.label}`}
-                  >
-                    <MessageCircle className="w-4 h-4" /> WhatsApp
-                  </a>
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
       </CollapsibleCard>
 
       {/* 5 — Terminer ce lead : toujours visible en bas de fiche. */}
@@ -1824,12 +1864,24 @@ const MessagesCard = ({
   rdv,
   onDevisEnvoye,
   onTrace,
+  seulement,
+  sousTitre,
+  sauf,
+  sansCadre = false,
 }: {
   lead: Lead;
   rdv: RendezVous | null;
   onDevisEnvoye: () => void;
   /** Règle 6 : trace l'envoi dans les notes du lead. */
   onTrace: (canal: CanalEnvoi, titre: string) => void;
+  /** N'afficher que ce message, en carte (le message en un clic). */
+  seulement?: string;
+  /** Sous-titre de la carte du message en un clic (sinon : son « moment »). */
+  sousTitre?: string;
+  /** Retirer ce message de la liste (déjà affiché en un clic). */
+  sauf?: string;
+  /** Sans carte ni titre : la liste est déjà dans un bloc repliable. */
+  sansCadre?: boolean;
 }) => {
   const ctx: MsgCtx = { lead, rdv };
   let messageVars: Record<string, string> = {};
@@ -1843,7 +1895,7 @@ const MessagesCard = ({
   // Adrian le saisit). Évite d'écrire au placeholder local.
   const emailTo = hasUsableEmail(lead.email) ? lead.email : undefined;
 
-  const rows = FICHE_MESSAGES.map((m) => {
+  const rows = FICHE_MESSAGES.filter((m) => (!seulement || m.id === seulement) && m.id !== sauf).map((m) => {
     try {
       if (m.show && !m.show(ctx)) return null;
       const out = m.build(ctx, messageVars);
@@ -1857,6 +1909,94 @@ const MessagesCard = ({
 
   if (rows.length === 0) return null;
 
+  const boutons = (m: FicheMessage, out: MessageOutput) => (
+    <>
+      {(out.sms !== undefined || out.wa !== undefined) && (
+        <div className="grid grid-cols-2 gap-2">
+          {out.sms !== undefined && (
+            <Button
+              asChild
+              size="lg"
+              className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
+            >
+              <a
+                href={buildSmsHref(lead.phone, out.sms)}
+                onClick={() => {
+                  onTrace("SMS", m.title);
+                  if (m.stampDevis) onDevisEnvoye();
+                }}
+                aria-label={`SMS : ${m.title}`}
+              >
+                <Smartphone className="w-5 h-5" /> SMS
+              </a>
+            </Button>
+          )}
+          {out.wa !== undefined && (
+            <Button
+              asChild
+              size="lg"
+              className="min-h-[48px] text-base bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+            >
+              <a
+                href={buildWhatsappHref(lead.phone, out.wa)}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => {
+                  onTrace("WhatsApp", m.title);
+                  if (m.stampDevis) onDevisEnvoye();
+                }}
+                aria-label={`WhatsApp : ${m.title}`}
+              >
+                <MessageCircle className="w-5 h-5" /> WhatsApp
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
+
+      {out.email && emailTo && (
+        <Button asChild size="lg" variant="copper" className="w-full min-h-[48px] text-base">
+          <a
+            href={buildMailtoHref(emailTo, out.email.subject, out.email.body)}
+            onClick={() => onTrace("Email", m.title)}
+            aria-label={`Email : ${m.title}`}
+          >
+            <Mail className="w-5 h-5" /> Email
+          </a>
+        </Button>
+      )}
+    </>
+  );
+
+  // Le message en un clic : une carte à lui, son titre et ses boutons.
+  if (seulement) {
+    const { m, out } = rows[0];
+    return (
+      <Card className="p-4 md:p-6 space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">{m.title}</h2>
+          <p className="text-sm text-muted-foreground">{sousTitre ?? m.moment}</p>
+        </div>
+        {boutons(m, out)}
+      </Card>
+    );
+  }
+
+  const liste = (
+    <div className="space-y-3">
+      {rows.map(({ m, out }) => (
+        <div key={m.id} className="rounded-lg border bg-background p-3 space-y-2.5">
+          <div>
+            <p className="font-semibold text-sm leading-tight">{m.title}</p>
+            <p className="text-xs text-muted-foreground">{m.moment}</p>
+          </div>
+          {boutons(m, out)}
+        </div>
+      ))}
+    </div>
+  );
+  if (sansCadre) return liste;
+
   return (
     <Card className="p-4 md:p-6 space-y-4">
       <div className="flex items-center gap-2">
@@ -1866,71 +2006,7 @@ const MessagesCard = ({
       <p className="text-sm text-muted-foreground">
         Le bon message, pré-rempli, en 1 tap (SMS, WhatsApp ou Email).
       </p>
-      <div className="space-y-3">
-        {rows.map(({ m, out }) => (
-          <div key={m.id} className="rounded-lg border bg-background p-3 space-y-2.5">
-            <div>
-              <p className="font-semibold text-sm leading-tight">{m.title}</p>
-              <p className="text-xs text-muted-foreground">{m.moment}</p>
-            </div>
-
-            {(out.sms !== undefined || out.wa !== undefined) && (
-              <div className="grid grid-cols-2 gap-2">
-                {out.sms !== undefined && (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="min-h-[48px] text-base bg-sms text-sms-foreground hover:bg-sms/90"
-                  >
-                    <a
-                      href={buildSmsHref(lead.phone, out.sms)}
-                      onClick={() => {
-                        onTrace("SMS", m.title);
-                        if (m.stampDevis) onDevisEnvoye();
-                      }}
-                      aria-label={`SMS : ${m.title}`}
-                    >
-                      <Smartphone className="w-5 h-5" /> SMS
-                    </a>
-                  </Button>
-                )}
-                {out.wa !== undefined && (
-                  <Button
-                    asChild
-                    size="lg"
-                    className="min-h-[48px] text-base bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-                  >
-                    <a
-                      href={buildWhatsappHref(lead.phone, out.wa)}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => {
-                        onTrace("WhatsApp", m.title);
-                        if (m.stampDevis) onDevisEnvoye();
-                      }}
-                      aria-label={`WhatsApp : ${m.title}`}
-                    >
-                      <MessageCircle className="w-5 h-5" /> WhatsApp
-                    </a>
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {out.email && emailTo && (
-              <Button asChild size="lg" variant="copper" className="w-full min-h-[48px] text-base">
-                <a
-                  href={buildMailtoHref(emailTo, out.email.subject, out.email.body)}
-                  onClick={() => onTrace("Email", m.title)}
-                  aria-label={`Email : ${m.title}`}
-                >
-                  <Mail className="w-5 h-5" /> Email
-                </a>
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
+      {liste}
     </Card>
   );
 };

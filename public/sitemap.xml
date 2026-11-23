@@ -32,7 +32,7 @@
   </url>
   <url>
     <loc>https://cuivre-electrique.com/services/bornes-de-recharge</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
@@ -44,31 +44,31 @@
   </url>
   <url>
     <loc>https://cuivre-electrique.com/electricien-court-saint-etienne</loc>
-    <lastmod>2026-08-10</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/electricien-wavre</loc>
-    <lastmod>2026-08-10</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/electricien-ottignies-louvain-la-neuve</loc>
-    <lastmod>2026-08-10</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/electricien-nivelles</loc>
-    <lastmod>2026-08-10</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/electricien-genappe</loc>
-    <lastmod>2026-08-10</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -80,7 +80,7 @@
   </url>
   <url>
     <loc>https://cuivre-electrique.com/contact</loc>
-    <lastmod>2026-10-26</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.95</priority>
   </url>
@@ -98,15 +98,21 @@
   </url>
   <url>
     <loc>https://cuivre-electrique.com/a-propos</loc>
-    <lastmod>2026-06-15</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/faq</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://cuivre-electrique.com/realisations/remplacement-tableau-electrique-fusibles-brabant-wallon</loc>
+    <lastmod>2026-11-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
   </url>
   <url>
     <loc>https://cuivre-electrique.com/realisations/borne-recharge-zaptec-court-saint-etienne</loc>
@@ -146,12 +152,6 @@
   </url>
   <url>
     <loc>https://cuivre-electrique.com/realisations/archives-installation-reseaux</loc>
-    <lastmod>2026-05-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
-  </url>
-  <url>
-    <loc>https://cuivre-electrique.com/realisations/archives-decoration-de-noel</loc>
     <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>

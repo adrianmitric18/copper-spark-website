@@ -10,6 +10,8 @@ import {
   estArchivable,
   estChantierATerminer,
   estChantierEnCours,
+  estNouveauARelancer,
+  etiquetteNouveau,
   isARelancerStatus,
   isRdvPasse,
   isTerminal,
@@ -143,5 +145,24 @@ describe("chantiers programmés", () => {
     expect(estChantierATerminer(c("en_cours", "2026-11-04", TODAY), TODAY)).toBe(true);
     expect(estChantierATerminer(c("programme", "2026-11-04", "2026-11-06"), TODAY)).toBe(false);
     expect(estChantierATerminer(c("termine", "2026-10-20", "2026-10-22"), TODAY)).toBe(false);
+  });
+});
+
+describe("« Nouveau » 5 jours, puis « À relancer »", () => {
+  const l = (status: string, jours: number) => ({ status, created_at: ilYA(jours) });
+  it("un lead nouveau reste « Nouveau » moins de 5 jours", () => {
+    expect(etiquetteNouveau(l("nouveau", 0), NOW)).toBe("Nouveau");
+    expect(etiquetteNouveau(l("nouveau", 4.9), NOW)).toBe("Nouveau");
+    expect(estNouveauARelancer(l("nouveau", 4.9), NOW)).toBe(false);
+  });
+  it("à 5 jours il devient « À relancer », et le reste même très vieux", () => {
+    expect(etiquetteNouveau(l("nouveau", 5), NOW)).toBe("À relancer");
+    expect(estNouveauARelancer(l("nouveau", 200), NOW)).toBe(true);
+  });
+  it("un lead traité, terminé ou avec RDV n'est jamais « À relancer »", () => {
+    for (const s of ["traité", "devis envoyé", "converti", "sans suite", "perdu", "RDV confirmé", "rdv_pris"]) {
+      expect(estNouveauARelancer(l(s, 30), NOW)).toBe(false);
+      expect(etiquetteNouveau(l(s, 30), NOW)).toBeNull();
+    }
   });
 });

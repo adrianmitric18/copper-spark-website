@@ -97,6 +97,26 @@ const LEADS = [
       trace(0, "09:20", "Appel"),
     ].join("\n"),
   }),
+  // « À relancer » : toujours nouveau après 5 jours. Demande de devis de borne
+  // avec un long message et trois photos (vignettes en haut de la fiche).
+  lead("l-arelancer", "Fatima Haddou", "nouveau", {
+    created_at: instant(-9),
+    commune: "Nivelles",
+    source: "devis_borne",
+    notes_internes: null,
+    photo_urls: ["devis-borne/a-compteur.jpg", "devis-borne/a-tableau.jpg", "devis-borne/a-trajet.jpg"],
+    message: [
+      "DEVIS BORNE AVEC PHOTOS",
+      "Logement : maison, propriétaire",
+      "Place de parking : allée devant la maison, à 12 m du compteur",
+      "Compteur : triphasé 3 × 400 V + N, 25 A",
+      "Voiture : Renault Scenic E-Tech",
+      "Quand : dans le mois",
+      "Photos : compteur, tableau, trajet du câble",
+      "",
+      "Message du client : le câble peut passer par le garage, il y a déjà une gaine vide.",
+    ].join("\n"),
+  }),
   lead("l-traite", "Jean Peeters", "traité", { created_at: instant(-10), commune: "Grimbergen" }),
   lead("l-devis", "Sophie Lambert", "devis envoyé", { created_at: instant(-15), devis_envoye_at: jour(-8) }),
   lead("l-converti", "Luc Janssens", "converti", { created_at: instant(-40) }),
@@ -377,6 +397,8 @@ const SESSION = {
   user: UTILISATEUR,
 };
 
+const REQUETES_CHECKLIST = [];
+
 async function intercepter(page) {
   await page.setRequestInterception(true);
   page.on("request", (req) => {
@@ -395,6 +417,25 @@ async function intercepter(page) {
       if (req.method() === "OPTIONS") return req.respond({ status: 204, headers: cors, body: "" });
       if (url.pathname.startsWith("/rest/v1/rpc/")) {
         return req.respond({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: "[]" });
+      }
+      // Lot fiche + liste : la checklist de visite n'est plus affichée, donc plus
+      // aucune requête ne doit partir vers sa table (elle créait ses lignes à
+      // l'ouverture d'une fiche).
+      if (url.pathname.startsWith("/rest/v1/checklist_items")) REQUETES_CHECKLIST.push(`${req.method()} ${page.url()}`);
+      // Photos d'une demande : lien signé factice, puis une image grise.
+      if (url.pathname.startsWith("/storage/v1/object/sign/")) {
+        if (req.method() === "POST") {
+          return req.respond({
+            status: 200,
+            headers: { ...cors, "content-type": "application/json" },
+            body: JSON.stringify({ signedURL: `${url.pathname.replace("/storage/v1", "")}?token=factice` }),
+          });
+        }
+        return req.respond({
+          status: 200,
+          headers: { ...cors, "content-type": "image/svg+xml" },
+          body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#8a8f98"/><circle cx="150" cy="150" r="60" fill="#c9ced6"/></svg>',
+        });
       }
       if (url.pathname.startsWith("/rest/v1/")) return req.respond(repondreRest(url, req.method(), req.headers(), req.postData()));
       if (url.pathname.startsWith("/auth/v1/user")) {
@@ -668,7 +709,10 @@ const ECRANS = [
   { nom: "leads-termines", url: "/admin/pipeline", apres: (p) => cliquer(p, "Terminés") },
   { nom: "leads-menu-terminer", url: "/admin/pipeline", apres: (p) => cliquer(p, "Terminer", "button[aria-label^='Terminer le lead']") },
   { nom: "leads-nouveau-lead", url: "/admin/pipeline", apres: (p) => cliquer(p, "Nouveau lead") },
+  { nom: "leads-a-relancer", url: "/admin/pipeline?filtre=a-relancer" },
+  { nom: "fiche-a-relancer-photos", url: "/admin/lead/l-arelancer" },
   { nom: "fiche-rdv-planifie", url: "/admin/lead/l-rdvconf" },
+  { nom: "fiche-rdv-ligne-ouverte", url: "/admin/lead/l-rdvconf", apres: (p) => cliquer(p, "RDV ", "main button[aria-expanded]") },
   {
     nom: "fiche-sections-ouvertes",
     url: "/admin/lead/l-rdvconf",
@@ -844,5 +888,10 @@ for (const t of THEMES) {
   console.log(`\nStatuts (${t === "dark" ? "sombre" : "clair"}) : contraste ${s.contrasteOk ? "ok" : "INSUFFISANT"} · paire la plus proche ${s.paireLaPlusProche.paire} ΔE ${s.paireLaPlusProche.deltaE}`);
   for (const b of s.badges) console.log(`  ${b.statut.padEnd(13)} ${b.ratio}:1  ${b.texte} sur ${b.fond}`);
 }
+console.log(
+  REQUETES_CHECKLIST.length === 0
+    ? "\nChecklist de visite : aucune requête vers checklist_items (ok)."
+    : `\nChecklist de visite : ${REQUETES_CHECKLIST.length} requête(s) vers checklist_items — INATTENDU\n  ${[...new Set(REQUETES_CHECKLIST)].join("\n  ")}`,
+);
 console.log(`\nRapport : ${path.join(OUT, "rapport.json")}`);
-process.exit(echecsTotal > 0 ? 1 : 0);
+process.exit(echecsTotal > 0 || REQUETES_CHECKLIST.length > 0 ? 1 : 0);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Phone,
@@ -21,6 +21,8 @@ import QuestionAppel from "@/components/admin/QuestionAppel";
 import {
   type Lead,
   STATUT_REACTIVATION,
+  estNouveauARelancer,
+  etiquetteNouveau,
   isTerminal,
   leadSourceLabel,
   leadStatusColor,
@@ -56,17 +58,25 @@ const ACTIVE_COLUMNS = COLUMNS.filter((c) => !isTerminal(c.key));
 
 // Chips de filtre (réutilise le pattern Phase 1.4). Défaut = "Actifs" (exclut
 // converti/perdu) ; "Terminés" regroupe converti + perdu (archive consultable).
+// « À relancer » (lot fiche + liste) : lead toujours `nouveau` après 5 jours.
+// En tête, en rouge dès qu'il y en a un : personne ne doit être oublié.
+const FILTRE_A_RELANCER = "a-relancer";
 const STATUS_CHIPS = [
+  { key: FILTRE_A_RELANCER, label: "À relancer" },
   { key: "active", label: "Actifs" },
   ...ACTIVE_COLUMNS.map((c) => ({ key: c.key, label: c.label })),
   { key: "termines", label: "Terminés" },
 ];
 
-// Vrai si un lead correspond au filtre courant (statut exact, "active" ou "termines").
-const matchesStatusFilter = (status: string, filter: string): boolean => {
-  if (filter === "active") return !isTerminal(status);
-  if (filter === "termines") return isTerminal(status);
-  return status === filter;
+// Vrai si un lead correspond au filtre courant (statut exact, "active", "termines"
+// ou « à relancer »). « Nouveau » = arrivé depuis moins de 5 jours : passé ce
+// délai, le lead est compté dans « À relancer », pas dans les deux.
+const matchesStatusFilter = (lead: Pick<Lead, "status" | "created_at">, filter: string): boolean => {
+  if (filter === "active") return !isTerminal(lead.status);
+  if (filter === "termines") return isTerminal(lead.status);
+  if (filter === FILTRE_A_RELANCER) return estNouveauARelancer(lead);
+  if (filter === "nouveau") return lead.status === "nouveau" && !estNouveauARelancer(lead);
+  return lead.status === filter;
 };
 
 const ageInHours = (createdAt: string): number =>
@@ -97,6 +107,8 @@ const LeadCard = ({ lead, upcoming, onStatusChange, onAppel, onReponseAppel, app
   // « RDV confirmé » sans RDV à venir = RDV passé : on ne l'affiche jamais confirmé.
   const libelle = libelleStatutLead(lead.status, Boolean(upcoming));
   const statutConnu = COLUMNS.some((c) => c.key === lead.status);
+  // « Nouveau » pendant 5 jours, puis « À relancer » en rouge (le statut en base reste `nouveau`).
+  const etiquette = etiquetteNouveau(lead);
 
   return (
     <Card className="p-3 space-y-2 hover:border-primary/40 transition-colors">
@@ -112,6 +124,14 @@ const LeadCard = ({ lead, upcoming, onStatusChange, onAppel, onReponseAppel, app
                 className={`mt-1 text-[10px] px-1.5 py-0 ${leadStatusColor(lead.status)}`}
               >
                 {lead.status}
+              </Badge>
+            )}
+            {etiquette && (
+              <Badge
+                variant="outline"
+                className={`mt-1 text-[10px] px-1.5 py-0 ${etiquette === "À relancer" ? TON.rouge : TON.orange}`}
+              >
+                {etiquette}
               </Badge>
             )}
             {libelle === "RDV passé" && (
@@ -238,7 +258,11 @@ const Pipeline = () => {
   const [search, setSearch] = useState("");
   // Défaut "active" : la liste principale n'affiche pas les leads terminés
   // (converti/perdu) — ils restent accessibles via le chip "Terminés".
-  const [statusFilter, setStatusFilter] = useState<string>("active");
+  // « ?filtre=a-relancer » : lien du compteur de l'accueil.
+  const [searchParams] = useSearchParams();
+  const [statusFilter, setStatusFilter] = useState<string>(
+    searchParams.get("filtre") === FILTRE_A_RELANCER ? FILTRE_A_RELANCER : "active",
+  );
 
   useEffect(() => {
     document.title = "Leads – Le Cuivre Admin";
@@ -284,18 +308,14 @@ const Pipeline = () => {
     );
   }, [leads, search]);
 
-  // Liste plate filtrée par chip ("Actifs" / sous-statut / "Terminés") puis triée.
-  // Actifs : plus anciens d'abord (urgence). Terminés : plus récents d'abord (historique).
+  // Liste plate filtrée par chip, puis triée : le lead le plus récent en haut,
+  // dans tous les filtres (demande d'Adrian du 23/11/2026). Les leads restés
+  // sans réponse ne sont pas perdus pour autant : filtre « À relancer » en tête.
   const listed = useMemo(() => {
-    const arr = filtered.filter((l) => matchesStatusFilter(l.status, statusFilter));
-    // Terminés : historique → plus récents d'abord. Actifs / sous-statuts :
-    // plus anciens d'abord (l'urgence remonte en tête).
-    const reverse = statusFilter === "termines";
-    return [...arr].sort((a, b) => {
-      const da = new Date(a.created_at).getTime();
-      const db = new Date(b.created_at).getTime();
-      return reverse ? db - da : da - db;
-    });
+    const arr = filtered.filter((l) => matchesStatusFilter(l, statusFilter));
+    return [...arr].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }, [filtered, statusFilter]);
 
   // Changement de statut partagé avec Aujourd'hui et le calendrier : mise à
@@ -381,10 +401,10 @@ const Pipeline = () => {
         {/* Filtres par statut (Phase 1.4 — liste filtrable, pouce, sans scroll horizontal du contenu) */}
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
           {STATUS_CHIPS.map((chip) => {
-            const count = filtered.filter((l) =>
-              matchesStatusFilter(l.status, chip.key),
-            ).length;
+            const count = filtered.filter((l) => matchesStatusFilter(l, chip.key)).length;
             const active = statusFilter === chip.key;
+            // « À relancer » : rouge tant qu'il en reste, pour ne pas le rater.
+            const alerte = chip.key === FILTRE_A_RELANCER && count > 0;
             return (
               <button
                 key={chip.key}
@@ -393,15 +413,17 @@ const Pipeline = () => {
                 aria-pressed={active}
                 className={cn(
                   "shrink-0 min-h-[40px] px-3 rounded-full border text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/40",
+                  alerte
+                    ? cn(TON.rouge, active && "ring-2 ring-offset-1 ring-offset-background ring-rose-500")
+                    : active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-border hover:border-primary/40",
                 )}
               >
                 {chip.label}
-                {count > 0 && (
-                  <span className={cn("ml-1.5 text-xs", active ? "opacity-90" : "text-muted-foreground")}>
-                    {count}
+                {(count > 0 || chip.key === FILTRE_A_RELANCER) && (
+                  <span className={cn("ml-1.5 text-xs", alerte ? "font-semibold" : active ? "opacity-90" : "text-muted-foreground")}>
+                    {chip.key === FILTRE_A_RELANCER ? `(${count})` : count}
                   </span>
                 )}
               </button>
