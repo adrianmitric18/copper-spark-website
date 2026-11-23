@@ -109,6 +109,7 @@ const DemandesBornes = () => {
                   <th scope="col" className="p-3 font-semibold">Mois</th>
                   <th scope="col" className="p-3 font-semibold text-right">Formulaire</th>
                   <th scope="col" className="p-3 font-semibold text-right">Simulateur</th>
+                  <th scope="col" className="p-3 font-semibold text-right">Devis sur photos</th>
                   <th scope="col" className="p-3 font-semibold text-right">Clics WhatsApp</th>
                   <th scope="col" className="p-3 font-semibold text-right">Clics téléphone</th>
                 </tr>
@@ -121,6 +122,7 @@ const DemandesBornes = () => {
                     </th>
                     <td className="p-3 text-right tabular-nums">{l.formulaire}</td>
                     <td className="p-3 text-right tabular-nums">{l.simulateur}</td>
+                    <td className="p-3 text-right tabular-nums">{l.devisPhotos}</td>
                     <td className="p-3 text-right tabular-nums">{l.whatsapp}</td>
                     <td className="p-3 text-right tabular-nums">{l.telephone}</td>
                   </tr>
@@ -131,8 +133,8 @@ const DemandesBornes = () => {
         )}
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          « Formulaire » et « Simulateur » comptent les demandes arrivées dans les leads avec le
-          service « Borne de recharge ». Les clics sont ceux des boutons WhatsApp et téléphone de
+          « Formulaire », « Simulateur » et « Devis sur photos » comptent les demandes arrivées dans
+          les leads avec le service « Borne de recharge ». Les clics sont ceux des boutons WhatsApp et téléphone de
           la page bornes : un clic n'est pas forcément un message ou un appel abouti. Le compteur
           n'enregistre qu'un nombre par jour, sans rien sur la personne.
         </p>

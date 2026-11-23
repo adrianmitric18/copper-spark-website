@@ -1,5 +1,8 @@
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import ContactSection from "@/components/ContactSection";
+import DevisBorneForm from "@/components/devis-borne/DevisBorneForm";
+import { DEMANDE_BORNE, PARAM_DEMANDE } from "@/lib/devis-borne/config";
 import ZoneSection from "@/components/ZoneSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -13,6 +16,7 @@ import {
   Phone,
   Mail,
   FileText,
+  BatteryCharging,
 } from "lucide-react";
 
 const steps = [
@@ -65,7 +69,40 @@ const channels = [
   },
 ];
 
+/**
+ * Un seul endroit pour les demandes (règle d'Adrian du 2026-11-22) : cette page,
+ * avec deux choix en haut. Le choix vit dans l'adresse (`?demande=borne`) : la
+ * page bornes ouvre directement le devis de borne, le reste du site ouvre la
+ * demande classique. Les deux choix partagent la même adresse canonique
+ * (/contact) : une seule page pour Google.
+ */
+const CHOIX = [
+  {
+    valeur: "classique",
+    icone: FileText,
+    titre: "Demande classique",
+    aide: "Dépannage, rénovation, mise en conformité ou tout autre projet.",
+  },
+  {
+    valeur: DEMANDE_BORNE,
+    icone: BatteryCharging,
+    titre: "Borne : devis sans déplacement",
+    aide: "Quelques cases à cocher et vos photos : votre borne est chiffrée sans passer chez vous.",
+  },
+] as const;
+
 const Contact = () => {
+  const [params, setParams] = useSearchParams();
+  const demande = params.get(PARAM_DEMANDE) === DEMANDE_BORNE ? DEMANDE_BORNE : "classique";
+
+  const choisir = (valeur: string) => {
+    const suite = new URLSearchParams(params);
+    if (valeur === DEMANDE_BORNE) suite.set(PARAM_DEMANDE, DEMANDE_BORNE);
+    else suite.delete(PARAM_DEMANDE);
+    // `replace` : changer de choix n'ajoute pas une étape au bouton « retour ».
+    setParams(suite, { replace: true, preventScrollReset: true });
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
@@ -107,8 +144,49 @@ const Contact = () => {
           </div>
         </section>
 
-        {/* === Formulaire — ContactSection (priorité mobile, insight 2026-05-22) === */}
-        <ContactSection />
+        {/* === Les deux choix : demande classique ou devis de borne === */}
+        <section className="pb-2" aria-labelledby="choix-demande-titre">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <h2 id="choix-demande-titre" className="sr-only">
+              Quel type de demande ?
+            </h2>
+            <div role="group" aria-labelledby="choix-demande-titre" className="grid gap-3 sm:grid-cols-2">
+              {CHOIX.map((c) => {
+                const actif = demande === c.valeur;
+                return (
+                  <button
+                    key={c.valeur}
+                    type="button"
+                    aria-pressed={actif}
+                    onClick={() => choisir(c.valeur)}
+                    className={`flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                      actif
+                        ? "border-primary bg-primary/[0.07]"
+                        : "border-border bg-card hover:border-primary/50"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`mt-1 h-4 w-4 shrink-0 rounded-full border-2 ${
+                        actif ? "border-primary bg-primary" : "border-muted-foreground/50"
+                      }`}
+                    />
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
+                        <c.icone className="h-5 w-5 text-primary" aria-hidden="true" />
+                        {c.titre}
+                      </span>
+                      <span className="mt-1 block text-sm text-muted-foreground leading-relaxed">{c.aide}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* === Formulaire du choix sélectionné. Les deux portent id="contact". === */}
+        {demande === DEMANDE_BORNE ? <DevisBorneForm /> : <ContactSection />}
 
         {/* === 3 cartes canaux de contact === */}
         <section className="py-12 md:py-16 bg-muted/30 border-y border-border">

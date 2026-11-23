@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 /**
  * Simulateur de prix v2 — écrans finaux.
  *
@@ -273,6 +274,17 @@ export const EcranDevis = ({ reponses, devis, prenom }: Props) => {
         libelleAppel="Appeler pour valider ce tarif"
         libelleWhatsApp="Envoyer la photo de mon tableau sur WhatsApp"
       />
+
+      {/* Parcours borne : la suite logique d'une estimation est un devis sur photos. */}
+      {reponses.parcours === "borne" && (
+        <p className="text-center text-sm text-muted-foreground">
+          Pour un devis précis, sans appeler :{" "}
+          <Link to="/contact?demande=borne" className="font-semibold text-primary underline underline-offset-4 hover:no-underline">
+            envoyer mes photos pour un devis
+          </Link>
+          .
+        </p>
+      )}
 
     </motion.div>
   );

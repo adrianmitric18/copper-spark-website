@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useAnalyticsEvents } from "@/hooks/useAnalyticsEvents";
 import { PAGE_DEPANNAGE } from "@/lib/simulateur/config";
+import { lienDevisPour } from "@/lib/devis-borne/config";
 
 const navItems = [
   { label: "Accueil", href: "/" },
@@ -54,6 +55,8 @@ const Header = () => {
   };
 
   const isActive = (href: string) => location.pathname === href;
+  // Sur les pages bornes, « Devis gratuit » mène au devis de borne : un seul formulaire.
+  const lienDevis = lienDevisPour(location.pathname);
   const isServicesActive = location.pathname.startsWith("/services");
 
   return (
@@ -179,7 +182,7 @@ const Header = () => {
           </a>
           <Button variant="copper" size="default" asChild>
             <Link
-              to="/contact"
+              to={lienDevis}
               data-analytics="quote_request"
               onClick={() => trackEvent("quote_request", { source_section: "header_desktop" })}
             >
@@ -320,7 +323,7 @@ const Header = () => {
                 </a>
                 <Button variant="copper" size="lg" className="w-full" asChild>
                   <Link
-                    to="/contact"
+                    to={lienDevis}
                     onClick={() => {
                       trackEvent("quote_request", { source_section: "header_mobile_menu" });
                       handleNavClick();

@@ -98,6 +98,8 @@ const App = () => (
             <Route path="/services/mise-en-conformite-rgie" element={<MiseEnConformiteRgie />} />
             <Route path="/services/bornes-de-recharge" element={<BornesDeRecharge />} />
             <Route path="/services/panneaux-photovoltaiques" element={<PanneauxPhotovoltaiques />} />
+            {/* Pas de page à part : le devis de borne est un choix de /contact. */}
+            <Route path="/devis-borne" element={<Navigate to="/contact?demande=borne" replace />} />
             <Route path="/simulateur" element={<Simulateur />} />
             <Route path="/realisations" element={<Realisations />} />
             {/* Redirections 301 (client-side) des anciennes pages catégories

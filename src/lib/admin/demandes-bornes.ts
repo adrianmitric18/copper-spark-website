@@ -27,6 +27,8 @@ export interface MoisBornes {
   mois: string;
   formulaire: number;
   simulateur: number;
+  /** Formulaire /devis-borne (origine « devis_borne »). */
+  devisPhotos: number;
   whatsapp: number;
   telephone: number;
 }
@@ -50,7 +52,8 @@ export const estDemandeBorne = (lead: LeadPourDecompte): boolean =>
 
 /**
  * Une ligne par mois où il s'est passé quelque chose, du plus récent au plus
- * ancien. Un lead du simulateur a `source = 'simulateur'` ; tout le reste
+ * ancien. Un lead du simulateur a `source = 'simulateur'`, une demande du
+ * formulaire /devis-borne a `source = 'devis_borne'` ; tout le reste
  * (formulaire de contact, saisie manuelle) est compté en « formulaire ».
  */
 export function decompteParMois(leads: LeadPourDecompte[], compteur: LigneCompteur[]): MoisBornes[] {
@@ -58,7 +61,7 @@ export function decompteParMois(leads: LeadPourDecompte[], compteur: LigneCompte
   const ligne = (mois: string): MoisBornes => {
     let l = parMois.get(mois);
     if (!l) {
-      l = { mois, formulaire: 0, simulateur: 0, whatsapp: 0, telephone: 0 };
+      l = { mois, formulaire: 0, simulateur: 0, devisPhotos: 0, whatsapp: 0, telephone: 0 };
       parMois.set(mois, l);
     }
     return l;
@@ -68,6 +71,7 @@ export function decompteParMois(leads: LeadPourDecompte[], compteur: LigneCompte
     if (!estDemandeBorne(lead)) continue;
     const l = ligne(moisDe(lead.created_at));
     if (lead.source === "simulateur") l.simulateur += 1;
+    else if (lead.source === "devis_borne") l.devisPhotos += 1;
     else l.formulaire += 1;
   }
 
