@@ -93,7 +93,11 @@ sans rien intercaler.
 - Texte bornes : passages [à confirmer] 5, 7, 9, 10, 11, 13, 14 (pour le 10, la fiche Zaptec donne
   12,7 kW en 3 × 230 V) ; deux ou trois avis qui parlent d'une borne ; vraies photos d'exemple pour
   le formulaire (les schémas actuels sont des dessins provisoires).
-- `/faq`, réponse « marques » : elle cite encore des onduleurs photovoltaïques (réponse d'Adrian attendue).
+- `/faq`, réponse « marques » : **répondu le 23/11** — retirer la mention des onduleurs
+  photovoltaïques (Adrian n'en pose plus). À faire dans un lot de contenu, avec les trois contrôles.
+- Zaptec Pro : **répondu le 23/11** — aucun prix, « sur devis ».
+- Assurance : pas encore de réponse du courtier (23/11). Les pages légales sortent sans la phrase
+  sur la zone couverte, comme prévu.
 - Admin : vérifier une fiche sans téléphone (boutons Appeler et WhatsApp) ; l'écran « Demandes de
   bornes » n'a pas été vu connecté par Claude.
 
