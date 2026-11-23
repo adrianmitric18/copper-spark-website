@@ -14,6 +14,32 @@
 
 ## Journal
 
+### 2026-11-23 — Un seul endroit pour les demandes ; devis de borne avec photos
+- **Décision (Adrian, 22-23/11) :** le client ne doit jamais avoir à choisir entre plusieurs
+  formulaires. Toutes les demandes passent par `/contact`, avec deux choix en haut : « Demande
+  classique » (`ContactSection`, inchangé) et « Borne : devis sans déplacement »
+  (`src/components/devis-borne/DevisBorneForm.tsx`). Le choix vit dans l'adresse :
+  `/contact?demande=borne`. `/devis-borne` n'est pas une page (301 dans `public/_redirects`
+  et `<Navigate>` dans App.tsx). Page bornes : un seul bouton principal « Demander mon devis de
+  borne », téléphone et WhatsApp en secondaires, simulateur en petit lien. Mergé le 2026-11-23.
+- **Pourquoi :** une demande de borne plus qualifiée, sans appel, et sans page de formulaire en plus.
+- **Conséquences / pièges à ne pas réapprendre :**
+  - Devis borne : obligatoires = nom, téléphone OU e-mail, code postal ; tout le reste est
+    facultatif. Origine `devis_borne`, service imposé par la policy. Téléphone absent = chaîne
+    vide (colonne NOT NULL). Questions, photos et résumé : `src/lib/devis-borne/config.ts`.
+    Les réponses sont écrites en clair dans `leads.message` : l'admin n'a rien à décoder.
+  - `lienDevisPour(pathname)` décide où mènent « Devis gratuit » (en-tête) et « Devis » (barre
+    du bas) : choix borne depuis la page bornes, demande classique ailleurs.
+  - Photos : réduites avant l'envoi (1600 px, ~0,6 Mo), déposées une à une, jamais bloquantes ;
+    dossier privé, aucun lien dans l'e-mail. Le dossier n'accepte que des images de 8 Mo au plus
+    (migration `20261122120000`), ce qui vaut aussi pour le simulateur et le formulaire classique.
+  - EmailJS refuse les envois depuis une adresse d'aperçu (« origin not allowed ») : l'e-mail ne
+    se vérifie que sur le site en ligne. Vérifié le 23/11 : deux réponses 200.
+  - Suppression automatique des photos : règle validée, PAS codée ni activée (voir
+    `docs/passation-2026-11-23.md`). Ne pas écrire « effacées après 6 mois » avant.
+  - Tableaux : « Schneider le plus souvent, ou Hager » (Adrian pose les deux marques).
+- **Suite :** `docs/passation-2026-11-23.md` (ce qui reste, règles, fiches TEST à supprimer).
+
 ### 2026-11-22 — Le simulateur n'a jamais enregistré de lead ; Zaptec Pro pour plusieurs bornes
 - **Constat :** aucune demande du simulateur n'est dans `leads` depuis sa mise en ligne (10/08/2026).
   Cause : la contrainte `leads_source_allowed` (avril 2026) ne contient pas `'simulateur'` ;
