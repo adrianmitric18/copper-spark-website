@@ -1,9 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { appliquerActionsAuto, fetchAllRdvs, fetchLeadsWithUpcomingRdvs } from "@/lib/admin/queries";
+import { appliquerActionsAuto, fetchAllRdvs, fetchLeadsWithUpcomingRdvs, supprimerPhotosAuto } from "@/lib/admin/queries";
 import { fetchAllInterventions } from "@/lib/admin/interventions";
 import { calculerActionsAuto } from "@/lib/admin/statuts-auto";
+import { SUPPRESSION_PHOTOS_ACTIVE, photosASupprimer } from "@/lib/admin/photos-auto";
 import { abonnerJournal, ajouterAuJournal, lireJournal, type JournalAuto } from "@/lib/admin/journal-auto";
 
 // Clés de cache partagées avec Aujourd'hui, Leads, le calendrier et Chantiers.
@@ -33,6 +34,25 @@ const passer = async (queryClient: QueryClient): Promise<void> => {
       queryClient.fetchQuery({ queryKey: CLE_CHANTIERS, queryFn: fetchAllInterventions, staleTime: FRAICHEUR_MS }),
     ]);
     dernierPassage = Date.now();
+
+    // Photos des demandes de plus de 6 mois (règle : photos-auto.ts). Avant les
+    // statuts, sur les données telles qu'elles sont en base. Rien ne part tant
+    // que l'interrupteur est à false.
+    if (SUPPRESSION_PHOTOS_ACTIVE) {
+      const cibles = photosASupprimer(overview.leads, rdvs, chantiers);
+      const effacees = cibles.length > 0 ? await supprimerPhotosAuto(cibles) : [];
+      if (effacees.length > 0) {
+        await queryClient.invalidateQueries({ queryKey: CLE_LEADS });
+        ajouterAuJournal(
+          effacees.map((c) => ({
+            leadId: c.leadId,
+            nom: c.leadName,
+            texte: `${c.chemins.length} photo${c.chemins.length > 1 ? "s" : ""} supprimée${c.chemins.length > 1 ? "s" : ""} (demande de plus de 6 mois)`,
+          })),
+        );
+      }
+    }
+
     const actions = calculerActionsAuto(overview.leads, rdvs, chantiers);
     if (actions.length === 0) return;
 

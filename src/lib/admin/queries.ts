@@ -28,6 +28,7 @@ import {
   type ActionAuto,
   type StatutRattrapage,
 } from "@/lib/admin/statuts-auto";
+import { TRACE_PHOTOS_SUPPRIMEES, type PhotosASupprimer } from "@/lib/admin/photos-auto";
 
 // Source unique de « l'email est-il réel ? » pour toutes les pages admin.
 export { hasUsableEmail } from "@/lib/admin/envois";
@@ -406,6 +407,38 @@ export async function deleteLeadWithPhotos(lead: Pick<Lead, "id" | "photo_urls">
   }
   const { error } = await supabase.from("leads").delete().eq("id", lead.id);
   if (error) throw error;
+}
+
+/**
+ * Suppression automatique des photos (règle : `photosASupprimer`). Pour chaque
+ * fiche, dans cet ordre :
+ *   1. les fichiers sont effacés du dossier privé `lead-photos` ;
+ *   2. on vérifie qu'ils ont VRAIMENT disparu (un refus de droits ne renvoie
+ *      pas d'erreur) : s'il en reste un, la fiche n'est pas touchée et on
+ *      réessaiera au prochain passage ;
+ *   3. la fiche perd ses chemins de photos (`photo_urls` vide) — elle reste ;
+ *   4. une ligne datée est ajoutée à ses notes.
+ * Fichiers d'abord, fiche ensuite : l'inverse laisserait des photos que plus
+ * rien ne référence. Ne lève jamais ; retourne les fiches réellement traitées.
+ */
+export async function supprimerPhotosAuto(cibles: PhotosASupprimer[]): Promise<PhotosASupprimer[]> {
+  const faites: PhotosASupprimer[] = [];
+  for (const c of cibles) {
+    try {
+      const { error: storageErr } = await supabase.storage.from("lead-photos").remove(c.chemins);
+      if (storageErr) throw storageErr;
+      const restantes = await fetchLeadPhotoSignedUrls(c.chemins);
+      if (restantes.length > 0) throw new Error(`${restantes.length} photo(s) encore présentes`);
+      const { error } = await supabase.from("leads").update({ photo_urls: null }).eq("id", c.leadId);
+      if (error) throw error;
+      const trace = await traceNote(c.leadId, TRACE_PHOTOS_SUPPRIMEES);
+      if (!trace) console.warn("Photos supprimées, mais la note n'a pas été écrite :", c.leadName);
+      faites.push(c);
+    } catch (e) {
+      console.warn("Photos non supprimées :", c.leadName, e);
+    }
+  }
+  return faites;
 }
 
 /**

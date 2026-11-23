@@ -14,6 +14,23 @@
 
 ## Journal
 
+### 2026-11-23 — Suppression automatique des photos : codée, désactivée
+- **Décision :** la règle validée par Adrian (plus de 6 mois, pas « converti », aucun chantier non
+  annulé, aucun RDV à venir, aucun devis ou devis de plus de 6 mois) est codée dans
+  `src/lib/admin/photos-auto.ts`, avec l'interrupteur `SUPPRESSION_PHOTOS_ACTIVE = false`.
+  **Ne le passer à `true` que sur l'accord écrit d'Adrian** (un test échoue exprès si on le change).
+- **Pourquoi :** Adrian veut voir la règle codée avant de l'activer.
+- **Conséquences / pièges :**
+  - Passage dans `useStatutsAuto` (ouverture de l'admin), écriture dans `supprimerPhotosAuto`
+    (`queries.ts`) : fichiers d'abord, vérification qu'ils ont disparu, puis `photo_urls` vidé et
+    ligne dans les notes. Un refus de droits du stockage ne renvoie pas d'erreur : d'où la vérification.
+  - La règle s'applique aussi aux fiches d'avant `AUTO_DEPUIS` (voulu : elle vise les vieilles demandes).
+  - La ligne ajoutée aux notes compte comme une « dernière action » pour l'archivage à 60 jours.
+  - Le 23/11 : 12 fiches avec photos (32 photos), la plus ancienne du 05/06/2026 ; rien à effacer
+    avant le 05/12/2026 au plus tôt.
+  - Après l'activation seulement : « effacées après 6 mois » dans le formulaire et la politique de
+    confidentialité.
+
 ### 2026-11-23 — Admin : fiche d'un lead réordonnée, « Nouveau » 5 jours puis « À relancer »
 - **Décision (Adrian, 23/11) :** ordre de la fiche = coordonnées et boutons d'appel, demande du
   client (ouverte : message, réponses, photos en vignettes), notes internes (ouvertes, dictée),
