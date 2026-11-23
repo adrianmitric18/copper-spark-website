@@ -20,10 +20,10 @@ const lead = (p: Partial<LeadPhotos> & { id: string }): LeadPhotos => ({
 const ids = (r: { leadId: string }[]) => r.map((x) => x.leadId);
 
 describe("interrupteur", () => {
-  // Garde-fou : ce test doit être modifié en même temps que l'activation,
-  // qui ne se fait que sur l'accord d'Adrian.
-  it("la suppression est désactivée", () => {
-    expect(SUPPRESSION_PHOTOS_ACTIVE).toBe(false);
+  // Garde-fou : ce test se modifie en même temps que l'interrupteur, qui ne
+  // change que sur l'accord d'Adrian (activé le 23/11/2026).
+  it("la suppression est activée", () => {
+    expect(SUPPRESSION_PHOTOS_ACTIVE).toBe(true);
   });
 });
 

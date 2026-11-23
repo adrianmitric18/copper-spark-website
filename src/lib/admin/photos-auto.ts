@@ -23,10 +23,11 @@ import { isRdvActif, todayIsoLocal, type Lead } from "@/lib/admin/types";
 import type { ChantierAuto, RdvAuto } from "@/lib/admin/statuts-auto";
 
 /**
- * Interrupteur. Tant qu'il est à `false`, RIEN n'est supprimé : la règle est
- * calculée, jamais appliquée. À passer à `true` seulement sur l'accord d'Adrian.
+ * Interrupteur. À `false`, RIEN n'est supprimé : la règle est calculée, jamais
+ * appliquée. Activé le 23/11/2026 sur l'accord d'Adrian (« active »), d'abord
+ * sur la branche pour un essai sur une fiche TEST depuis l'aperçu.
  */
-export const SUPPRESSION_PHOTOS_ACTIVE = false;
+export const SUPPRESSION_PHOTOS_ACTIVE = true;
 
 /** Les photos d'une demande sont gardées ce nombre de mois. */
 export const PHOTOS_CONSERVEES_MOIS = 6;
