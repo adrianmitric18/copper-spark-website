@@ -595,8 +595,8 @@ const DevisBorneForm = () => {
 
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       En envoyant ce formulaire, vous acceptez que vos réponses et vos photos servent à
-                      préparer votre devis. Vos photos ne sont visibles que par Adrian Mitric ; elles ne sont
-                      ni publiées ni transmises. En savoir plus :{" "}
+                      préparer votre devis. Vos photos ne sont visibles que par Adrian Mitric et ne sont
+                      jamais publiées. En savoir plus :{" "}
                       <Link to="/confidentialite" className="font-semibold text-primary underline underline-offset-4 hover:no-underline">
                         politique de confidentialité
                       </Link>
