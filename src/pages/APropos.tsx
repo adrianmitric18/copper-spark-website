@@ -66,9 +66,12 @@ const tools = [
 ];
 
 const installed = [
-  { brand: "Schneider Electric", note: "Tableaux, disjoncteurs" },
+  // 2026-11-22 (Adrian) : il pose les deux marques de tableaux, Schneider le plus
+  // souvent et Hager aussi ; pour les bornes, Zaptec d'abord, Alfen ensuite.
+  { brand: "Schneider Electric", note: "Tableaux et disjoncteurs, le plus souvent" },
   { brand: "Hager", note: "Tableaux résidentiels, modulaire" },
   { brand: "Niko", note: "Appareillage, domotique" },
+  { brand: "Zaptec", note: "Bornes de recharge Go 2 et Pro" },
   { brand: "Alfen", note: "Bornes VE Eve Pro-line" },
 ];
 
